@@ -1,0 +1,107 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  STUDENT
+  AGENT
+  ADMIN
+}
+
+model User {
+  id                String          @id @default(uuid())
+  email             String          @unique
+  phone             String
+  password          String
+  role              Role            @default(STUDENT)
+  createdAt         DateTime        @default(now())
+  updatedAt         DateTime        @updatedAt
+  
+  // Profile associations
+  studentProfile    StudentProfile?
+  agentProfile      AgentProfile?
+
+  // Inquiries sent (for students) and received (for agents)
+  inquiries         Inquiry[]       @relation(name: "StudentInquiries")
+  receivedInquiries Inquiry[]       @relation(name: "AgentReceivedInquiries")
+}
+
+model StudentProfile {
+  id          String   @id @default(uuid())
+  userId      String   @unique
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  fullName    String
+  university  String
+  username    String   @unique
+  preferences Json?    // Preferences object (budget, roommate preferences, layout type, etc.)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model AgentProfile {
+  id          String     @id @default(uuid())
+  userId      String     @unique
+  user        User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  fullName    String
+  address     String?    // Office/Business address
+  agencyName  String?
+  bio         String?
+  ninDocument String?
+  isVerified  Boolean    @default(false)
+  properties  Property[]
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+}
+
+model Property {
+  id           String       @id @default(uuid())
+  title        String
+  hostelType   String       // e.g., Self-Contain, Single Room, 2-Bedroom Flat
+  price        Float
+  location     String
+  distance     String       // e.g., "5 mins walk to campus"
+  description  String
+  amenities    String[]     // Postgres string array
+  images       String[]     // Postgres string array
+  latitude     Float?
+  longitude    Float?
+  isAvailable  Boolean      @default(true)
+  isVerified   Boolean      @default(false)
+  
+  // Owner Agent
+  agentId      String
+  agent        AgentProfile @relation(fields: [agentId], references: [id], onDelete: Cascade)
+  
+  // Inquiries sent for this property
+  inquiries    Inquiry[]
+  
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+}
+
+model Inquiry {
+  id         String   @id @default(uuid())
+  
+  // Student who sent the inquiry
+  studentId  String
+  student    User     @relation(name: "StudentInquiries", fields: [studentId], references: [id], onDelete: Cascade)
+  
+  // Property queried
+  propertyId String
+  property   Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  
+  // Agent who received the inquiry
+  agentId    String
+  agent      User     @relation(name: "AgentReceivedInquiries", fields: [agentId], references: [id], onDelete: Cascade)
+  
+  message    String
+  createdAt  DateTime @default(now())
+}
