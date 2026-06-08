@@ -7,7 +7,7 @@ import { useRouter } from "next/navigation";
 import "./styles.css";
 import "../globals.css";
 
-export default function Privacy() {
+export default function TenantGuide() {
   const router = useRouter();
   const [user, setUser] = useState<any>(null);
   const [isProfileDropdownOpen, setIsProfileDropdownOpen] = useState(false);
@@ -119,91 +119,77 @@ export default function Privacy() {
         </button>
       </nav>
 
-      {/* Hero Header */}
-      <section className="static-hero">
-        <h1>Privacy Policy</h1>
-        <p>Last updated: April 2026</p>
+      {/* Hero Section */}
+      <section className="guide-hero">
+        <h1>Student <span>Tenant Guide</span></h1>
+        <p>Your step-by-step handbook to safely finding, inspecting, and securing the best off-campus hostels near your university.</p>
       </section>
 
-      {/* Main Content */}
-      <main className="static-content-container">
-        <div className="content-card">
-          <section className="content-section">
-            <h2>1. Introduction</h2>
-            <p>Welcome to Campus Stay. By accessing our platform, you agree to these terms. 
-                We serve the university community by connecting students with verified landlords.</p>
-          </section>
-
-          <section className="content-section">
-            <h2>2. The Information We Collect</h2>
-            <p>To provide a secure, reliable, and trustworthy marketplace for the university community, Campus Stay collects specific personal and verification data when you register and use our platform.</p>
-
-            <h3>A. Basic Account Information</h3>
-            <p>When you create an account, whether as a Student or an Agent, we collect standard profile information, including:</p>
-            <ul>
-              <li>Your full name</li>
-              <li>Email address</li>
-              <li>Phone number</li>
-              <li>Account password</li>
-            </ul>
-
-            <h3>B. Identity & Verification Data</h3>
-            <p>Because Campus Stay facilitates real-world housing transactions, the safety of our community is our highest priority. To prevent fraud and ensure that users are who they claim to be, we require specific verification documents based on your account type:</p>
-            <ul>
-              <li><strong>For Students:</strong> To maintain Campus Stay as a dedicated student community, you may be required to provide proof of your active student status. This may include uploading a valid University ID card, an official admission letter, or relevant university portal documentation.</li>
-              <li><strong>For Agents & Landlords:</strong> To protect our students and verify the legitimacy of property managers on our platform, you will be required to undergo an identity verification process. This will require submitting a valid, government-issued identification document, which may specifically include your <strong>National Identification Number (NIN)</strong> or other approved statutory identification.</li>
-            </ul>
-
-            <h3>C. Platform Activity & Communication Data</h3>
-            <p>We collect data on how you interact with the platform to improve your experience. This includes:</p>
-            <ul>
-              <li>Properties you view, save, or inquire about.</li>
-              <li>Messages, inquiries, and communications sent through the Campus Stay platform between Students and Agents.</li>
-            </ul>
-
-            <h3>D. Why We Collect This Information</h3>
-            <p>Your verification documents (such as your NIN or Student ID) are strictly used for security, compliance, and identity authentication. We collect this data to:</p>
-            <ul>
-              <li>Verify that you are a legitimate student or a genuine property agent.</li>
-              <li>Prevent fraudulent listings, scams, and unauthorized access.</li>
-              <li>Resolve disputes and enforce our platform’s safety guidelines.</li>
-            </ul>
-          </section>
-
-          <section className="content-section">
-            <h2>3. How We Use Your Information</h2>
-            <p>Campus Stay uses the data we collect to operate, improve, and protect our platform. Specifically, your information allows us to:</p>
-            <ul>
-              <li><strong>Facilitate Connections:</strong> Enable students to seamlessly browse, save, and inquire about properties, and allow agents to manage and respond to these inquiries.</li>
-              <li><strong>Maintain Platform Safety:</strong> Authenticate accounts, verify NINs and Student IDs, and actively monitor for fraudulent or suspicious activity.</li>
-              <li><strong>Communicate with You:</strong> Send essential service updates, account notifications, password reset links, and responses to your support inquiries.</li>
-              <li><strong>Improve User Experience:</strong> Analyze how our platform is used to fix bugs, design better features, and optimize the overall Campus Stay experience.</li>
-            </ul>
-          </section>
-
-          <section className="content-section">
-            <h2>4. Sharing Your Information</h2>
-            <p>We do not sell, rent, or trade your personal information to third parties. We only share your information in the following limited circumstances:</p>
-            <ul>
-              <li><strong>Between Students and Agents:</strong> When a student makes an inquiry on a property, we share necessary details (such as the student's name, university, and message) with the verified agent to facilitate communication.</li>
-              <li><strong>Service Providers:</strong> We may share data with trusted third-party services that help us operate our platform (e.g., secure cloud hosting providers, database management, and email delivery services). These providers are legally obligated to protect your data.</li>
-              <li><strong>Legal and Safety Requirements:</strong> We may disclose your information if required by Nigerian law, legal processes, or to protect the rights, property, and safety of Campus Stay, our users, or the public.</li>
-            </ul>
-          </section>
-
-          <section className="content-section">
-            <h2>5. Security</h2>
-            <p>We take the security of your personal information and verification documents seriously. Campus Stay implements industry-standard technical and organizational measures to protect your data.</p>
+      {/* Main Guide Content */}
+      <main className="guide-container">
+        <div className="guide-grid">
+          <div className="guide-main">
+            <h2>The Campus Stay Tenant Journey</h2>
             
-            <h3>A. Data Protection Measures</h3>
-            <ul>
-              <li><strong>Encryption:</strong> Sensitive data, including passwords and verification documents like your NIN or Student ID, are encrypted and stored securely within our database infrastructure.</li>
-              <li><strong>Access Control:</strong> Strict access controls are in place to ensure that only authorized system administrators can access verification documents solely for the purpose of account approval.</li>
-            </ul>
+            <div className="guide-step-card">
+              <div className="step-num">1</div>
+              <div className="step-content">
+                <h3>Browse & Filter Smartly</h3>
+                <p>
+                  Start by searching for listings near your specific institution. Use advanced search filters to narrow down properties based on hostel type (self-contain, flat, shared room), budget limits, and walk proximity from campus gates (e.g. under 5 minutes walk).
+                </p>
+              </div>
+            </div>
 
-            <h3>B. Your Responsibilities</h3>
-            <p>While we strive to use commercially acceptable means to protect your personal information, no method of transmission over the internet or electronic storage is 100% secure. You are responsible for keeping your password confidential and for ensuring you log out of shared devices after using the Campus Stay platform.</p>
-          </section>
+            <div className="guide-step-card">
+              <div className="step-num">2</div>
+              <div className="step-content">
+                <h3>Look for Verification Badges</h3>
+                <p>
+                  We verify agent/landlord identities using government statutory requirements. Prioritize listings that feature green verification checks, indicating that the host has submitted valid identity credentials and verified property ownership.
+                </p>
+              </div>
+            </div>
+
+            <div className="guide-step-card">
+              <div className="step-num">3</div>
+              <div className="step-content">
+                <h3>Initiate Direct Inquiry</h3>
+                <p>
+                  Click "Chat on WhatsApp" on the property details page. Our platform immediately constructs a pre-filled listing inquiry message for you. Communicate directly with the host to ask questions, check details, and arrange a viewing schedule without broker fee markups.
+                </p>
+              </div>
+            </div>
+
+            <div className="guide-step-card">
+              <div className="step-num">4</div>
+              <div className="step-content">
+                <h3>Physical Inspection & Sign-off</h3>
+                <p>
+                  Never make payments before carrying out a physical inspection. Walk around the compound, check utilities (electricity meter, running water, gate security), confirm lease lengths, and verify that a legitimate written tenancy agreement is signed by both parties.
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <div className="guide-sidebar">
+            <div className="sidebar-box safety-box">
+              <h4><i className="fas fa-shield-alt"></i> Safety Checklist</h4>
+              <p>Follow these essential rules to guard against off-campus housing scams:</p>
+              <ul>
+                <li><i className="fas fa-check"></i> Inspect the actual room in person first.</li>
+                <li><i className="fas fa-check"></i> Meet the agent/landlord in a public place.</li>
+                <li><i className="fas fa-check"></i> Pay directly to verified bank accounts.</li>
+                <li><i className="fas fa-check"></i> Request a valid payment receipt.</li>
+              </ul>
+            </div>
+
+            <div className="sidebar-box">
+              <h4><i className="fas fa-user-friends"></i> Split the Rent?</h4>
+              <p>Off-campus flats can be split with roommate partners to save costs. Complete your student profile roommate preferences and find verified students on the platform to share rent.</p>
+              <Link href="/auth/rolepick" className="start-btn" style={{ display: "inline-block", width: "100%", textAlign: "center", padding: "10px 0", textDecoration: "none" }}>Find Roommate Now</Link>
+            </div>
+          </div>
         </div>
       </main>
 

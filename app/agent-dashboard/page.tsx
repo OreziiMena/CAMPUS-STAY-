@@ -118,7 +118,7 @@ export default function AgentDashboard() {
                         </div>
 
                         <div className={`dropdown-menu ${isProfileDropdownOpen ? "active" : ""}`} onClick={(e) => e.stopPropagation()}>
-                            <a href="/"><i className="fas fa-user"></i> My Profile</a>
+                            <Link href="/agent-dashboard/profile"><i className="fas fa-user"></i> My Profile</Link>
                             <Link href="/agent-dashboard/settings"><i className="fas fa-cog"></i> Settings</Link>
                             <div className="dropdown-divider"></div>
                             <button onClick={handleLogout} className="logout-link" style={{ background: "none", border: "none", padding: "12px 20px", width: "100%", textAlign: "left", cursor: "pointer", fontFamily: "Poppins", fontSize: "13px", display: "flex", gap: "10px", alignItems: "center" }}>

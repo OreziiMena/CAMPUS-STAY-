@@ -166,7 +166,7 @@ export default function Explore() {
                 </div>
 
                 <div className={`explore-dropdown-menu ${isProfileDropdownOpen ? "active" : ""}`} onClick={(e) => e.stopPropagation()}>
-                  <Link href="/" className="explore-dropdown-item">
+                  <Link href={user.role === "AGENT" ? "/agent-dashboard/profile" : "/"} className="explore-dropdown-item">
                     <i className="fas fa-user" style={{ width: "16px" }}></i> Profile
                   </Link>
                   {user.role === "AGENT" && (
@@ -174,9 +174,9 @@ export default function Explore() {
                       <i className="fas fa-th-large" style={{ width: "16px" }}></i> Dashboard
                     </Link>
                   )}
-                  <a href="#" className="explore-dropdown-item" onClick={(e) => e.preventDefault()}>
+                  <Link href={user.role === "AGENT" ? "/agent-dashboard/settings" : "/"} className="explore-dropdown-item">
                     <i className="fas fa-cog" style={{ width: "16px" }}></i> Settings
-                  </a>
+                  </Link>
                   <div className="explore-dropdown-divider"></div>
                   <button 
                     onClick={handleLogout} 
@@ -198,7 +198,7 @@ export default function Explore() {
         </div>
       </div>
       <button className="mobilebtn" onClick={toggleMobileMenu}>
-        <i className="fas fa-bars"></i>
+        <i className={`fas ${isMobileMenuOpen ? "fa-times" : "fa-bars"}`}></i>
       </button>
     </nav>
 

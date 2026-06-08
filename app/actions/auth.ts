@@ -3,6 +3,8 @@
 import prisma from "@/lib/prisma";
 import bcrypt from "bcryptjs";
 import { cookies } from "next/headers";
+import { writeFile, mkdir } from "fs/promises";
+import path from "path";
 
 const SESSION_COOKIE_NAME = "campus_stay_session";
 
@@ -192,5 +194,126 @@ export async function getCurrentUser() {
     };
   } catch {
     return null;
+  }
+}
+
+export async function updateAgentProfile(data: {
+  firstName: string;
+  lastName: string;
+  phone: string;
+  agencyName?: string;
+  bio?: string;
+  address?: string;
+}) {
+  try {
+    const user = await getCurrentUser();
+    if (!user || user.role !== "AGENT" || !user.agentProfile) {
+      return { success: false, error: "Unauthorized." };
+    }
+
+    const { firstName, lastName, phone, agencyName, bio, address } = data;
+    const fullName = `${firstName.trim()} ${lastName.trim()}`.trim();
+
+    if (!fullName) {
+      return { success: false, error: "Name cannot be empty." };
+    }
+    if (!phone) {
+      return { success: false, error: "Phone number is required." };
+    }
+
+    await prisma.$transaction([
+      prisma.user.update({
+        where: { id: user.id },
+        data: { phone },
+      }),
+      prisma.agentProfile.update({
+        where: { id: user.agentProfile.id },
+        data: {
+          fullName,
+          agencyName: agencyName || null,
+          bio: bio || null,
+          address: address || null,
+        },
+      }),
+    ]);
+
+    return { success: true };
+  } catch (err: any) {
+    return { success: false, error: getFriendlyErrorMessage(err, "Failed to update profile details.") };
+  }
+}
+
+export async function uploadAgentVerification(formData: FormData) {
+  try {
+    const user = await getCurrentUser();
+    if (!user || user.role !== "AGENT" || !user.agentProfile) {
+      return { success: false, error: "Unauthorized." };
+    }
+
+    const file = formData.get("ninDocument") as File;
+    if (!file) {
+      return { success: false, error: "No document file uploaded." };
+    }
+
+    const buffer = Buffer.from(await file.arrayBuffer());
+    const uploadDir = path.join(process.cwd(), "public", "uploads", "verification");
+    await mkdir(uploadDir, { recursive: true });
+
+    const ext = path.extname(file.name) || ".pdf";
+    const filename = `${user.agentProfile.id}-${Date.now()}${ext}`;
+    const filePath = path.join(uploadDir, filename);
+
+    await writeFile(filePath, buffer);
+
+    const relativePath = `/uploads/verification/${filename}`;
+
+    await prisma.agentProfile.update({
+      where: { id: user.agentProfile.id },
+      data: {
+        ninDocument: relativePath,
+      },
+    });
+
+    return { success: true, filePath: relativePath };
+  } catch (err: any) {
+    return { success: false, error: getFriendlyErrorMessage(err, "Failed to upload document.") };
+  }
+}
+
+export async function updateAgentPassword(data: any) {
+  try {
+    const user = await getCurrentUser();
+    if (!user) {
+      return { success: false, error: "Unauthorized." };
+    }
+
+    const { currentPassword, newPassword } = data;
+    
+    const dbUser = await prisma.user.findUnique({
+      where: { id: user.id },
+    });
+
+    if (!dbUser) {
+      return { success: false, error: "User not found." };
+    }
+
+    const isValidPassword = await bcrypt.compare(currentPassword, dbUser.password);
+    if (!isValidPassword) {
+      return { success: false, error: "Incorrect current password." };
+    }
+
+    if (newPassword.length < 8) {
+      return { success: false, error: "New password must be at least 8 characters long." };
+    }
+
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+    await prisma.user.update({
+      where: { id: user.id },
+      data: { password: hashedPassword },
+    });
+
+    return { success: true };
+  } catch (err: any) {
+    return { success: false, error: getFriendlyErrorMessage(err, "Failed to update password.") };
   }
 }

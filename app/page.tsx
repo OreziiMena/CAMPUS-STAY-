@@ -111,7 +111,7 @@ export default function CampusStayLanding() {
                 </div>
 
                 <div className={`explore-dropdown-menu ${isProfileDropdownOpen ? "active" : ""}`} onClick={(e) => e.stopPropagation()}>
-                  <Link href="/" className="explore-dropdown-item">
+                  <Link href={user.role === "AGENT" ? "/agent-dashboard/profile" : "/"} className="explore-dropdown-item">
                     <i className="fas fa-user" style={{ width: "16px" }}></i> PROFILE
                   </Link>
                   {user.role === "AGENT" && (
@@ -119,9 +119,9 @@ export default function CampusStayLanding() {
                       <i className="fas fa-th-large" style={{ width: "16px" }}></i> DASHBOARD
                     </Link>
                   )}
-                  <a href="./agent-dashboard/settings" className="explore-dropdown-item" onClick={(e) => e.preventDefault()}>
+                  <Link href={user.role === "AGENT" ? "/agent-dashboard/settings" : "/"} className="explore-dropdown-item">
                     <i className="fas fa-cog" style={{ width: "16px" }}></i> SETTINGS
-                  </a>
+                  </Link>
                   <div className="explore-dropdown-divider"></div>
                   <button 
                     onClick={handleLogout} 
@@ -138,7 +138,7 @@ export default function CampusStayLanding() {
         </div>
         
         <button className="mobilebtn" onClick={toggleMobileMenu}>
-          <i className="fas fa-bars"></i>
+          <i className={`fas ${isMobileMenuOpen ? "fa-times" : "fa-bars"}`}></i>
         </button>
       </nav>
 
@@ -336,7 +336,6 @@ export default function CampusStayLanding() {
               <li><Link href="/about">About Us</Link></li>
               <li><Link href="/explore">Explore Properties</Link></li>
               <li><Link href="/auth/rolepick">Find a Roommate</Link></li>
-              <li><Link href="/how-it-works">How it Works</Link></li>
             </ul>
           </div>
 
@@ -346,8 +345,6 @@ export default function CampusStayLanding() {
               <li><Link href="/support">Help Center / Support</Link></li>
               <li><Link href="/tenant-guide">Tenant Guide</Link></li>
               <li><Link href="/landlord-hub">Landlord Hub</Link></li>
-              <li><Link href="/blog">Blog</Link></li>
-              <li><Link href="/careers">Careers</Link></li>
             </ul>
           </div>
 
