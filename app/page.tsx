@@ -2,16 +2,13 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import Image from "next/image";
-import { getCurrentUser, logoutUser } from "@/app/actions/auth";
-import { useRouter } from "next/navigation";
+import { getCurrentUser } from "@/app/actions/auth";
+import Navbar from "@/components/Navbar";
+import Footer from "@/components/Footer";
 
 export default function CampusStayLanding() {
-  const router = useRouter();
   const [stats, setStats] = useState({ properties: 0, customers: 0, collaborations: 0 });
   const [user, setUser] = useState<any>(null);
-  const [isProfileDropdownOpen, setIsProfileDropdownOpen] = useState(false);
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState<boolean>(false);
 
   useEffect(() => {
     const checkUser = async () => {
@@ -40,107 +37,10 @@ export default function CampusStayLanding() {
     return () => clearInterval(timer);
   }, []);
 
-  // Close profile dropdown when clicking outside
-  useEffect(() => {
-    const handleDocumentClick = (e: MouseEvent) => {
-      const target = e.target as HTMLElement;
-      if (!target.closest(".explore-profile-dropdown")) {
-        setIsProfileDropdownOpen(false);
-      }
-    };
-    document.addEventListener("click", handleDocumentClick);
-    return () => document.removeEventListener("click", handleDocumentClick);
-  }, []);
-
-  const toggleMobileMenu = () => {
-    setIsMobileMenuOpen(!isMobileMenuOpen);
-  };
-
-  const handleLogout = async () => {
-    await logoutUser();
-    setUser(null);
-    router.refresh();
-  };
-
-  
-
   return (
     <>
       {/* Navigation */}
-      <nav className="sticky-top">
-        <div className="brand">
-          <Image 
-            src="/Assets/CAMPUS STAY LOGO.png" 
-            alt="logo" 
-            width={50} 
-            height={50} 
-            className="logo" 
-            style={{ width: "auto", height: "auto" }}
-          />
-          <h2 className="logo-text">Campus Stay</h2>
-        </div>
-        
-        <div className={`navlinks ${isMobileMenuOpen ? "active" : ""}`}>
-          <ul>
-            <li><Link className="active" href="/">Home</Link></li>
-            <li><Link href="/about">About</Link></li>
-            <li><Link href="/explore">Explore</Link></li>
-            <li><Link href="/support">Support</Link></li>
-          </ul>
-          {user ? (
-            <div style={{ display: "flex", gap: "10px", alignItems: "center" }}>
-          
-              {/* Profile Avatar Dropdown */}
-              <div 
-                className="explore-profile-dropdown" 
-                onClick={(e) => {
-                  setIsProfileDropdownOpen(!isProfileDropdownOpen);
-                  e.stopPropagation();
-                }}
-              >
-                <div className="explore-profile-info">
-                  <img 
-                    src={`https://ui-avatars.com/api/?name=${encodeURIComponent(user.name || "Student")}&background=02351c&color=fff`} 
-                    alt="Profile" 
-                    className="explore-profile-pic" 
-                  />
-                  <span className="explore-profile-name" style={{ fontFamily: "Poppins, sans-serif" }}>
-                    {user.name ? user.name.split(" ")[0] : "Student"}
-                  </span>
-                  <i className="fas fa-chevron-down" style={{ fontSize: "11px", color: "white", marginLeft: "2px" }}></i>
-                </div>
-
-                <div className={`explore-dropdown-menu ${isProfileDropdownOpen ? "active" : ""}`} onClick={(e) => e.stopPropagation()}>
-                  <Link href={user.role === "AGENT" ? "/agent-dashboard/profile" : "/"} className="explore-dropdown-item">
-                    <i className="fas fa-user" style={{ width: "16px" }}></i> PROFILE
-                  </Link>
-                  {user.role === "AGENT" && (
-                    <Link href="/agent-dashboard" className="explore-dropdown-item">
-                      <i className="fas fa-th-large" style={{ width: "16px" }}></i> DASHBOARD
-                    </Link>
-                  )}
-                  <Link href={user.role === "AGENT" ? "/agent-dashboard/settings" : "/"} className="explore-dropdown-item">
-                    <i className="fas fa-cog" style={{ width: "16px" }}></i> SETTINGS
-                  </Link>
-                  <div className="explore-dropdown-divider"></div>
-                  <button 
-                    onClick={handleLogout} 
-                    className="explore-dropdown-item logout-link" 
-                  >
-                    <i className="fas fa-sign-out-alt" style={{ width: "16px" }}></i> LOG OUT
-                  </button>
-                </div>
-              </div>
-            </div>
-          ) : (
-            <Link href="/auth/rolepick" className="start-btn">Get Started</Link>
-          )}
-        </div>
-        
-        <button className="mobilebtn" onClick={toggleMobileMenu}>
-          <i className={`fas ${isMobileMenuOpen ? "fa-times" : "fa-bars"}`}></i>
-        </button>
-      </nav>
+      <Navbar />
 
       {/* First Section */}
       <section className="hero">
@@ -169,10 +69,10 @@ export default function CampusStayLanding() {
             Choose your path below.
           </p>
           <div className="cta-buttons">
-            <Link href="/auth/rolepick">
+            <Link href={user ? (user.role === "AGENT" ? "/agent-dashboard" : "/explore") : "/auth/rolepick"}>
               <button className="btn primary-btn">Rent a House <i className="fas fa-arrow-right"></i></button>
             </Link>
-            <Link href="/auth/rolepick">
+            <Link href={user ? (user.role === "AGENT" ? "/agent-dashboard" : "/explore") : "/auth/rolepick"}>
               <button className="btn secondary-btn">Find a Roommate <i className="fas fa-arrow-right"></i></button>
             </Link>
           </div>
@@ -309,60 +209,13 @@ export default function CampusStayLanding() {
             </ul>
           </div>
           <div className="cta-action">
-            <Link href="/auth/rolepick" className="primary-btn landlord-btn">List Property For Free →</Link>
+            <Link href={user ? (user.role === "AGENT" ? "/agent-dashboard/add-property" : "/explore") : "/auth/rolepick"} className="primary-btn landlord-btn">List Property For Free →</Link>
           </div>
         </div>
       </section>
 
       {/* Footer */}
-      <footer className="main-footer">
-        <div className="footer-grid">
-          <div className="footer-brand">
-            <Image 
-              src="/Assets/CAMPUS STAY LOGO.png" 
-              alt="logo" 
-              width={150} 
-              height={50} 
-              className="footer-logo" 
-              style={{ width: "auto", height: "auto" }}
-            />
-            <p className="brand-tagline">Connecting Students with <br />Trusted Off-Campus Housing.</p>
-          </div>
-
-          <div className="footer-links">
-            <h4>PLATFORM</h4>
-            <ul>
-              <li><Link href="/">Home</Link></li>
-              <li><Link href="/about">About Us</Link></li>
-              <li><Link href="/explore">Explore Properties</Link></li>
-              <li><Link href="/auth/rolepick">Find a Roommate</Link></li>
-            </ul>
-          </div>
-
-          <div className="footer-links">
-            <h4>RESOURCES</h4>
-            <ul>
-              <li><Link href="/support">Help Center / Support</Link></li>
-              <li><Link href="/tenant-guide">Tenant Guide</Link></li>
-              <li><Link href="/landlord-hub">Landlord Hub</Link></li>
-            </ul>
-          </div>
-
-          <div className="footer-contact">
-            <h4>CONNECT</h4>
-            <ul>
-              <li><a href="mailto:support@campusstay.com"><i className="fa-solid fa-envelope"></i> support@campusstay.com</a></li>
-              <li><a href="https://wa.me/2349161863877?text=Hi%20Campus%20Stay%20Support,%20I%20need%20help" target="_blank" rel="noopener noreferrer"><i className="fa-brands fa-whatsapp"></i> Chat with Us</a></li>
-              <li><Link href="/terms">Terms of Service</Link></li>
-              <li><Link href="/privacy">Privacy Policy</Link></li>
-            </ul>
-          </div>
-        </div>
-
-        <div className="footer-bottom">
-          <p>© 2024 Campus Stay. All rights reserved.</p>
-        </div>
-      </footer>
+      <Footer />
     </>
   );
 }

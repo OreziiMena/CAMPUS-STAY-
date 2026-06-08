@@ -50,7 +50,7 @@ export default function Login() {
         </Link>
 
         <section className="auth-container">
-          <div className="auth-card" style={{ maxWidth: "450px", margin: "0 auto" }}>
+          <div className="auth-card auth-card-narrow">
             <div className="auth-header">
               <h2>Welcome Back</h2>
               <p>Log in to your Campus Stay account.</p>
@@ -58,7 +58,7 @@ export default function Login() {
 
             <form id="login-form" className="auth-form" onSubmit={handleSubmit}>
               {error && (
-                <small className="error-text" id="login-error" style={{ display: "block", color: "#dc3545", marginBottom: "15px", fontWeight: "600", fontSize: "14px" }}>
+                <small className="error-text login-error-msg" id="login-error">
                   {error}
                 </small>
               )}
@@ -93,7 +93,7 @@ export default function Login() {
                 </div>
 
                 <div className="rf-flex">
-                  <div className="checkbox-group" style={{ marginBottom: 0 }}>
+                  <div className="checkbox-group checkbox-group-no-margin">
                     <input type="checkbox" id="remember-me" disabled={isLoading} />
                     <label htmlFor="remember-me">Remember me</label>
                   </div>
@@ -105,7 +105,7 @@ export default function Login() {
                 </div>
               </div>
 
-              <button type="submit" className="auth-submit-btn" style={{ marginTop: "-15px" }} disabled={isLoading}>
+              <button type="submit" className="auth-submit-btn submit-btn-login-adjust" disabled={isLoading}>
                 {isLoading ? "Logging in..." : "Log In"}
               </button>
 

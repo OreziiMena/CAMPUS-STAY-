@@ -1,0 +1,66 @@
+.h1Title {
+  font-family: 'Poppins', sans-serif;
+  margin: 0 0 5px 0;
+  color: var(--text-main);
+}
+
+.pieIcon {
+  color: rgb(2, 53, 28);
+  margin-right: 10px;
+}
+
+.pSub {
+  margin: 0;
+  color: #666;
+  font-family: 'Open Sans', sans-serif;
+}
+
+.exportBtn {
+  background-color: rgb(2, 53, 28);
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-family: 'Poppins', sans-serif;
+  font-weight: 600;
+}
+
+.loader {
+  text-align: center;
+  padding: 100px 50px;
+  font-family: Poppins, sans-serif;
+  color: rgb(2, 53, 28);
+  font-size: 18px;
+}
+
+.spinnerIcon {
+  margin-right: 10px;
+}
+
+.statsGridCustom {
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+}
+
+.chartIcon {
+  color: rgb(2, 53, 28);
+  margin-right: 8px;
+}
+
+.chartWrapper300 {
+  padding: 10px;
+  background-color: transparent;
+  border: none;
+  height: 300px;
+}
+
+.chartWrapper350 {
+  padding: 10px;
+  background-color: transparent;
+  border: none;
+  height: 350px;
+}
+
+.fullWidthCard {
+  grid-column: 1 / -1;
+}

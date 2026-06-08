@@ -110,10 +110,10 @@ export default function AgentSignup() {
             </div>
 
             {success ? (
-              <div style={{ textAlign: "center", padding: "40px 20px" }}>
-                <i className="fas fa-check-circle" style={{ fontSize: "60px", color: "#28a745", marginBottom: "20px" }}></i>
-                <h3 style={{ fontFamily: "Poppins", marginBottom: "10px" }}>Agent Profile Registered!</h3>
-                <p style={{ color: "#666" }}>Redirecting you to your agent dashboard...</p>
+              <div className="auth-success-container">
+                <i className="fas fa-check-circle auth-success-icon"></i>
+                <h3 className="auth-success-title">Agent Profile Registered!</h3>
+                <p className="auth-success-text">Redirecting you to your agent dashboard...</p>
               </div>
             ) : (
               <form id="agent-signup-form" className="auth-form" onSubmit={handleSubmit}>
@@ -133,7 +133,7 @@ export default function AgentSignup() {
                   </small>
                 </div>
 
-                <div className="input-row" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "20px" }}>
+                <div className="input-row">
                   <div className="input-group">
                     <label htmlFor="email">Email Address</label>
                     <input
@@ -175,8 +175,8 @@ export default function AgentSignup() {
 
                 <div className="input-group">
                   <label htmlFor="username">Username</label>
-                  <div className="username-wrapper" style={{ display: "flex", alignItems: "center" }}>
-                    <span className="at-prefix" style={{ padding: "12px", background: "#eee", borderRadius: "8px 0 0 8px", border: "1px solid #ccc", borderRight: "none" }}>@</span>
+                  <div className="username-wrapper">
+                    <span className="at-prefix">@</span>
                     <input
                       type="text"
                       id="username"
@@ -185,17 +185,16 @@ export default function AgentSignup() {
                       onChange={(e) => handleUsernameChange(e.target.value)}
                       disabled={isLoading}
                       required
-                      style={{ borderRadius: "0 8px 8px 0", width: "100%" }}
                     />
                   </div>
                   {usernameStatus === "checking" && <small className="helper-text">Checking availability...</small>}
-                  {usernameStatus === "taken" && <small className="error-text" id="username-error" style={{ display: "block", color: "#dc3545" }}>This username is already taken.</small>}
-                  {usernameStatus === "available" && <small className="success-text" id="username-success" style={{ display: "block", color: "#28a745" }}>This username is available.</small>}
+                  {usernameStatus === "taken" && <small className="error-text validation-error" id="username-error">This username is already taken.</small>}
+                  {usernameStatus === "available" && <small className="success-text validation-success" id="username-success">This username is available.</small>}
                 </div>
 
                 <div className="input-group">
                   <label htmlFor="password">Password</label>
-                  <div className="password-wrapper" style={{ position: "relative" }}>
+                  <div className="password-wrapper">
                     <input
                       type={showPassword ? "text" : "password"}
                       id="password"
@@ -204,13 +203,11 @@ export default function AgentSignup() {
                       onChange={(e) => setPassword(e.target.value)}
                       disabled={isLoading}
                       required
-                      style={{ paddingRight: "45px" }}
                     />
                     <i 
                       className={`fas ${showPassword ? "fa-eye-slash" : "fa-eye"} toggle-password`} 
                       id="toggle-password-icon" 
                       onClick={() => setShowPassword(!showPassword)}
-                      style={{ position: "absolute", right: "15px", top: "50%", transform: "translateY(-50%)", cursor: "pointer", color: "#666" }}
                     ></i>
                   </div>
                   <small className="helper-text" id="password-reqs">
@@ -220,7 +217,7 @@ export default function AgentSignup() {
 
                 <div className="input-group">
                   <label htmlFor="confirm-password">Confirm Password</label>
-                  <div className="password-wrapper" style={{ position: "relative" }}>
+                  <div className="password-wrapper">
                     <input
                       type={showConfirmPassword ? "text" : "password"}
                       id="confirm-password"
@@ -229,21 +226,19 @@ export default function AgentSignup() {
                       onChange={(e) => setConfirmPassword(e.target.value)}
                       disabled={isLoading}
                       required
-                      style={{ paddingRight: "45px" }}
                     />
                     <i 
                       className={`fas ${showConfirmPassword ? "fa-eye-slash" : "fa-eye"} toggle-password`} 
                       id="toggle-confirm-password-icon" 
                       onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                      style={{ position: "absolute", right: "15px", top: "50%", transform: "translateY(-50%)", cursor: "pointer", color: "#666" }}
                     ></i>
                   </div>
                   {password && confirmPassword && password !== confirmPassword && (
-                    <small className="error-text" id="password-error" style={{ display: "block", color: "#dc3545" }}>Passwords do not match.</small>
+                    <small className="error-text validation-error" id="password-error">Passwords do not match.</small>
                   )}
                 </div>
 
-                <div className="checkbox-group" style={{ display: "flex", gap: "10px", alignItems: "flex-start", marginTop: "15px" }}>
+                <div className="checkbox-group checkbox-group-signup">
                   <input
                     type="checkbox"
                     id="terms-checkbox"
@@ -251,18 +246,18 @@ export default function AgentSignup() {
                     onChange={(e) => setAgreeTerms(e.target.checked)}
                     disabled={isLoading}
                   />
-                  <label htmlFor="terms-checkbox" style={{ fontSize: "14px", lineHeight: "1.4" }}>
+                  <label htmlFor="terms-checkbox" className="terms-label">
                     I have read and agree to the <Link href="/terms" target="_blank" className="auth-link">Terms and Conditions</Link> and <Link href="/privacy" target="_blank" className="auth-link">Privacy Policy</Link>.
                   </label>
                 </div>
 
                 {error && (
-                  <small className="error-text" id="terms-error" style={{ display: "block", color: "#dc3545", marginTop: "15px", fontWeight: "600" }}>
+                  <small className="error-text terms-error-msg" id="terms-error">
                     {error}
                   </small>
                 )}
 
-                <button type="submit" className="auth-submit-btn agent-submit-btn" disabled={isLoading} style={{ marginTop: "20px" }}>
+                <button type="submit" className="auth-submit-btn agent-submit-btn auth-submit-btn-signup" disabled={isLoading}>
                   {isLoading ? "Creating Agent Account..." : "Create Agent Account"}
                 </button>
 

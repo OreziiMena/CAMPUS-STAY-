@@ -40,7 +40,7 @@ export default function ForgotPassword() {
         </Link>
 
         <div className="auth-container">
-          <div className="auth-card" style={{ maxWidth: "450px", margin: "0 auto" }}>
+          <div className="auth-card auth-card-narrow">
             <div className="auth-header">
               <h2>Reset Your Password</h2>
               <p>Enter your email address and we will send you a secure link to reset your password.</p>
@@ -60,12 +60,12 @@ export default function ForgotPassword() {
                 />
                 
                 {error && (
-                  <small className="error-text" id="reset-error" style={{ display: "block", color: "#dc3545", marginTop: "10px", fontWeight: "600" }}>
+                  <small className="error-text reset-status-error" id="reset-error">
                     {error}
                   </small>
                 )}
                 {success && (
-                  <small className="success-text" id="reset-success" style={{ display: "block", color: "#28a745", marginTop: "10px", fontWeight: "600" }}>
+                  <small className="success-text reset-status-success" id="reset-success">
                     Reset link sent! Please check your inbox.
                   </small>
                 )}
@@ -73,16 +73,15 @@ export default function ForgotPassword() {
 
               <button
                 type="submit"
-                className="auth-submit-btn"
+                className="auth-submit-btn auth-submit-btn-full auth-submit-btn-signup"
                 id="submit-btn"
                 disabled={isLoading || success}
-                style={{ width: "100%", marginTop: "20px" }}
               >
                 {isLoading ? "Sending..." : success ? "Link Sent" : "Send Reset Link"}
               </button>
             </form>
 
-            <div className="auth-footer-text" style={{ marginTop: "25px" }}>
+            <div className="auth-footer-text auth-footer-margin">
               <p>
                 Remembered your password? <Link href="/auth/login" className="auth-link">Back to Login</Link>
               </p>

@@ -1,0 +1,19 @@
+.emptyText {
+  color: #888;
+  font-family: 'Open Sans', sans-serif;
+  font-size: 14px;
+}
+
+.messageText {
+  margin: 5px 0 10px 0;
+  color: #333;
+  font-size: 15px;
+}
+
+.metaText {
+  color: #666;
+}
+
+.replyBtnLink {
+  text-decoration: none;
+}

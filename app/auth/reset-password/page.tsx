@@ -52,23 +52,23 @@ export default function ResetPassword() {
         </Link>
 
         <div className="auth-container">
-          <div className="auth-card" style={{ maxWidth: "450px", margin: "0 auto" }}>
+          <div className="auth-card auth-card-narrow">
             <div className="auth-header">
-              <h2>Set New Password</h2>
-              <p>Your new password must be different from previous used passwords.</p>
+               <h2>Set New Password</h2>
+               <p>Your new password must be different from previous used passwords.</p>
             </div>
 
             {success ? (
-              <div style={{ textAlign: "center", padding: "40px 20px" }}>
-                <i className="fas fa-check-circle" style={{ fontSize: "60px", color: "#28a745", marginBottom: "20px" }}></i>
-                <h3 style={{ fontFamily: "Poppins", marginBottom: "10px" }}>Password Updated!</h3>
-                <p style={{ color: "#666" }}>Redirecting you to login...</p>
+              <div className="auth-success-container">
+                <i className="fas fa-check-circle auth-success-icon"></i>
+                <h3 className="auth-success-title">Password Updated!</h3>
+                <p className="auth-success-text">Redirecting you to login...</p>
               </div>
             ) : (
               <form id="new-password-form" onSubmit={handleSubmit}>
                 <div className="input-group">
                   <label htmlFor="new-password">New Password</label>
-                  <div className="password-wrapper" style={{ position: "relative" }}>
+                  <div className="password-wrapper">
                     <input
                       type={showPassword ? "text" : "password"}
                       id="new-password"
@@ -81,17 +81,16 @@ export default function ResetPassword() {
                       className={`fas ${showPassword ? "fa-eye-slash" : "fa-eye"} toggle-password`} 
                       id="toggle-password-icon" 
                       onClick={() => setShowPassword(!showPassword)}
-                      style={{ position: "absolute", right: "15px", top: "50%", transform: "translateY(-50%)", cursor: "pointer", color: "#666" }}
                     ></i>
                   </div>
-                  <small className="helper-text" id="password-reqs" style={{ fontSize: "12px", color: "#666", marginTop: "5px", display: "block" }}>
+                  <small className="helper-text password-reqs-style" id="password-reqs">
                     Must be at least 8 characters.
                   </small>
                 </div>
 
                 <div className="input-group">
                   <label htmlFor="confirm-password">Confirm Password</label>
-                  <div className="password-wrapper" style={{ position: "relative" }}>
+                  <div className="password-wrapper">
                     <input
                       type={showConfirmPassword ? "text" : "password"}
                       id="confirm-password"
@@ -104,28 +103,26 @@ export default function ResetPassword() {
                       className={`fas ${showConfirmPassword ? "fa-eye-slash" : "fa-eye"} toggle-password`} 
                       id="toggle-confirm-password-icon" 
                       onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                      style={{ position: "absolute", right: "15px", top: "50%", transform: "translateY(-50%)", cursor: "pointer", color: "#666" }}
                     ></i>
                   </div>
                   {newPassword && confirmPassword && newPassword !== confirmPassword && (
-                    <small className="error-text" id="match-error" style={{ display: "block", color: "#dc3545", marginTop: "5px" }}>
+                    <small className="error-text validation-error" id="match-error">
                       Passwords do not match.
                     </small>
                   )}
                 </div>
 
                 {error && (
-                  <small className="error-text" style={{ display: "block", color: "#dc3545", marginTop: "15px", fontWeight: "600" }}>
+                  <small className="error-text terms-error-msg">
                     {error}
                   </small>
                 )}
 
                 <button
                   type="submit"
-                  className="auth-submit-btn"
+                  className="auth-submit-btn auth-submit-btn-full auth-submit-btn-signup"
                   id="submit-btn"
                   disabled={isLoading}
-                  style={{ width: "100%", marginTop: "20px" }}
                 >
                   {isLoading ? "Updating..." : "Update Password"}
                 </button>

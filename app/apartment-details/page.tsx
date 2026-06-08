@@ -2,10 +2,10 @@
 import React, { useEffect, useState, Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import Link from "next/link";
-import "./styles.css";
-import "../globals.css";
+import Navbar from "@/components/Navbar";
+import Footer from "@/components/Footer";
 import { getPropertyDetails, createInquiry } from "@/app/actions/properties";
-import { getCurrentUser, logoutUser } from "@/app/actions/auth";
+import "./styles.css";
 
 interface Property {
   id: string;
@@ -84,31 +84,11 @@ const mockProperties: Record<string, Property> = {
 
 function ApartmentDetailsContent() {
   const searchParams = useSearchParams();
-  const router = useRouter();
   const id = searchParams.get("id") || "1";
 
   const [property, setProperty] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const [user, setUser] = useState<any>(null);
-  const [isProfileDropdownOpen, setIsProfileDropdownOpen] = useState(false);
-
-  const toggleMobileMenu = () => {
-    setIsMobileMenuOpen(!isMobileMenuOpen);
-  };
-
-  // Close profile dropdown when clicking outside
-  useEffect(() => {
-    const handleDocumentClick = (e: MouseEvent) => {
-      const target = e.target as HTMLElement;
-      if (!target.closest(".explore-profile-dropdown")) {
-        setIsProfileDropdownOpen(false);
-      }
-    };
-    document.addEventListener("click", handleDocumentClick);
-    return () => document.removeEventListener("click", handleDocumentClick);
-  }, []);
 
   useEffect(() => {
     const fetchDetails = async () => {
@@ -138,19 +118,7 @@ function ApartmentDetailsContent() {
       setLoading(false);
     };
     fetchDetails();
-
-    const checkUser = async () => {
-      const currentUser = await getCurrentUser();
-      setUser(currentUser);
-    };
-    checkUser();
   }, [id]);
-
-  const handleLogout = async () => {
-    await logoutUser();
-    setUser(null);
-    router.refresh();
-  };
 
   const handleWhatsAppClick = async () => {
     if (!property) return;
@@ -176,7 +144,7 @@ function ApartmentDetailsContent() {
 
   if (loading || !property) {
     return (
-      <div style={{ display: "flex", justifyContent: "center", alignItems: "center", height: "100vh", fontFamily: "Poppins" }}>
+      <div className="details-loading-screen">
         Loading property details...
       </div>
     );
@@ -184,72 +152,9 @@ function ApartmentDetailsContent() {
 
   return (
     <>
-      <nav className="sticky-top">
-        <div className="brand">
-          <img src="/Assets/CAMPUS STAY LOGO.png" alt="logo" className="logo" />
-          <h2 className="logo-text">Campus Stay</h2>
-        </div>
-        <div className={`navlinks ${isMobileMenuOpen ? "active" : ""}`}>
-          <ul>
-            <li><Link href="/">Home</Link></li>
-            <li><Link href="/about">About</Link></li>
-            <li><Link className="active" href="/explore">Explore</Link></li>
-            <li><Link href="/support">Support</Link></li>
-          </ul>
-          {user ? (
-            <div style={{ display: "flex", gap: "10px", alignItems: "center" }}>
-              {/* Profile Avatar Dropdown */}
-              <div 
-                className="explore-profile-dropdown" 
-                onClick={(e) => {
-                  setIsProfileDropdownOpen(!isProfileDropdownOpen);
-                  e.stopPropagation();
-                }}
-              >
-                <div className="explore-profile-info">
-                  <img 
-                    src={`https://ui-avatars.com/api/?name=${encodeURIComponent(user.name || "Student")}&background=02351c&color=fff`} 
-                    alt="Profile" 
-                    className="explore-profile-pic" 
-                  />
-                  <span className="explore-profile-name" style={{ fontFamily: "Poppins, sans-serif" }}>
-                    Hi, {user.name ? user.name.split(" ")[0] : "Student"}
-                  </span>
-                  <i className="fas fa-chevron-down" style={{ fontSize: "11px", color: "white", marginLeft: "2px" }}></i>
-                </div>
+      <Navbar />
 
-                <div className={`explore-dropdown-menu ${isProfileDropdownOpen ? "active" : ""}`} onClick={(e) => e.stopPropagation()}>
-                  <Link href={user.role === "AGENT" ? "/agent-dashboard/profile" : "/"} className="explore-dropdown-item">
-                    <i className="fas fa-user" style={{ width: "16px" }}></i> Profile
-                  </Link>
-                  {user.role === "AGENT" && (
-                    <Link href="/agent-dashboard" className="explore-dropdown-item">
-                      <i className="fas fa-th-large" style={{ width: "16px" }}></i> Dashboard
-                    </Link>
-                  )}
-                  <Link href={user.role === "AGENT" ? "/agent-dashboard/settings" : "/"} className="explore-dropdown-item">
-                    <i className="fas fa-cog" style={{ width: "16px" }}></i> Settings
-                  </Link>
-                  <div className="explore-dropdown-divider"></div>
-                  <button 
-                    onClick={handleLogout} 
-                    className="explore-dropdown-item logout-link" 
-                  >
-                    <i className="fas fa-sign-out-alt" style={{ width: "16px" }}></i> Log Out
-                  </button>
-                </div>
-              </div>
-            </div>
-          ) : (
-            <Link href="/auth/rolepick" className="start-btn">Get Started</Link>
-          )}
-        </div>
-        <button className="mobilebtn" onClick={toggleMobileMenu}>
-          <i className={`fas ${isMobileMenuOpen ? "fa-times" : "fa-bars"}`}></i>
-        </button>
-      </nav>
-
-      <main className="property-details-layout" style={{ marginTop: "15vh" }}>
+      <main className="property-details-layout details-layout-margin">
         <div className="main-info">
           <div className="property-image-container">
             <img 
@@ -263,10 +168,10 @@ function ApartmentDetailsContent() {
                   {currentImageIndex + 1} / {property.images.length}
                 </div>
                 <button className="carousel-control-prev" type="button" onClick={prevSlide}>
-                  <i className="fas fa-chevron-left" style={{ color: "white" }}></i>
+                  <i className="fas fa-chevron-left"></i>
                 </button>
                 <button className="carousel-control-next" type="button" onClick={nextSlide}>
-                  <i className="fas fa-chevron-right" style={{ color: "white" }}></i>
+                  <i className="fas fa-chevron-right"></i>
                 </button>
               </>
             )}
@@ -321,7 +226,6 @@ function ApartmentDetailsContent() {
               rel="noopener noreferrer" 
               className="whatsapp-btn full-width"
               onClick={handleWhatsAppClick}
-              style={{ display: "block", textAlign: "center", textDecoration: "none" }}
             >
               <i className="fab fa-whatsapp"></i> Chat on WhatsApp
             </a>
@@ -348,58 +252,14 @@ function ApartmentDetailsContent() {
         </aside>
       </main>
 
-      {/* Footer */}
-      <footer className="main-footer">
-        <div className="footer-grid">
-          <div className="footer-brand">
-            <img src="/Assets/CAMPUS STAY LOGO.png" alt="logo" className="footer-logo" />
-            <p className="brand-tagline">Connecting Students with <br />Trusted Off-Campus Housing.</p>
-          </div>
-
-          <div className="footer-links">
-            <h4>PLATFORM</h4>
-            <ul>
-              <li><Link href="/">Home</Link></li>
-              <li><Link href="/about">About Us</Link></li>
-              <li><Link href="/explore">Explore Properties</Link></li>
-              <li><Link href="/auth/rolepick">Find a Roommate</Link></li>
-              <li><Link href="/how-it-works">How it Works</Link></li>
-            </ul>
-          </div>
-
-          <div className="footer-links">
-            <h4>RESOURCES</h4>
-            <ul>
-              <li><Link href="/support">Help Center / Support</Link></li>
-              <li><Link href="/tenant-guide">Tenant Guide</Link></li>
-              <li><Link href="/landlord-hub">Landlord Hub</Link></li>
-              <li><Link href="/blog">Blog</Link></li>
-              <li><Link href="/careers">Careers</Link></li>
-            </ul>
-          </div>
-
-          <div className="footer-contact">
-            <h4>CONNECT</h4>
-            <ul>
-              <li><a href="mailto:support@campusstay.com"><i className="fa-solid fa-envelope"></i> support@campusstay.com</a></li>
-              <li><a href="https://wa.me/2349161863877?text=Hi%20Campus%20Stay%20Support,%20I%20need%20help" target="_blank" rel="noopener noreferrer"><i className="fa-brands fa-whatsapp"></i> Chat with Us</a></li>
-              <li><Link href="/terms">Terms of Service</Link></li>
-              <li><Link href="/privacy">Privacy Policy</Link></li>
-            </ul>
-          </div>
-        </div>
-
-        <div className="footer-bottom">
-          <p>© 2024 Campus Stay. All rights reserved.</p>
-        </div>
-      </footer>
+      <Footer />
     </>
   );
 }
 
 export default function ApartmentDetails() {
   return (
-    <Suspense fallback={<div style={{ display: "flex", justifyContent: "center", alignItems: "center", height: "100vh", fontFamily: "Poppins" }}>Loading...</div>}>
+    <Suspense fallback={<div className="details-loading-screen">Loading...</div>}>
       <ApartmentDetailsContent />
     </Suspense>
   );

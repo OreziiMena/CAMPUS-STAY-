@@ -1,0 +1,26 @@
+.savePreferencesBtn {
+  margin-top: 15px;
+  transition: background-color 0.3s;
+}
+
+.savedSuccess {
+  background-color: #28a745 !important;
+  color: #fff !important;
+}
+
+.loader {
+  text-align: center;
+  padding: 50px;
+  font-family: Poppins, sans-serif;
+  color: rgb(2, 53, 28);
+  font-size: 18px;
+}
+
+.spinnerIcon {
+  margin-right: 10px;
+}
+
+.profileLayoutCustom {
+  margin: 0 auto;
+  padding: 0;
+}

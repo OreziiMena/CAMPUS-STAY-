@@ -1,0 +1,15 @@
+.addPropBtn {
+  text-decoration: none;
+}
+
+.loader {
+  text-align: center;
+  padding: 50px;
+  font-family: Poppins, sans-serif;
+  color: rgb(2, 53, 28);
+  font-size: 18px;
+}
+
+.spinnerIcon {
+  margin-right: 10px;
+}

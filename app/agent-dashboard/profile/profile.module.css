@@ -1,0 +1,62 @@
+.backLinkCustom {
+  position: relative;
+  top: 0;
+  left: 0;
+  display: inline-flex;
+  margin-bottom: 20px;
+}
+
+.loader {
+  text-align: center;
+  padding: 50px;
+  font-family: Poppins, sans-serif;
+  color: rgb(2, 53, 28);
+  font-size: 18px;
+}
+
+.spinnerIcon {
+  margin-right: 10px;
+}
+
+.profileLayoutCustom {
+  margin: 0 auto;
+  padding: 0;
+}
+
+.successGreen {
+  color: var(--success-green);
+}
+
+.saveStatusText {
+  font-family: "Poppins", sans-serif;
+  font-size: 14px;
+  margin: 15px 0;
+}
+
+.errorColor {
+  color: #e74c3c;
+}
+
+.successColor {
+  color: #28a745;
+}
+
+.displayFlex {
+  display: flex;
+}
+
+.fileMeta {
+  font-size: 14px;
+  color: #666;
+  margin-top: 15px;
+}
+
+.fileLink {
+  color: var(--accent-orange);
+  font-weight: 600;
+  text-decoration: underline;
+}
+
+.btnMarginTop {
+  margin-top: 20px;
+}

@@ -1,0 +1,39 @@
+.h1Title {
+  margin: 0 0 5px 0;
+}
+
+.plusIcon {
+  margin-right: 10px;
+}
+
+.pSub {
+  margin: 0;
+}
+
+.successCard {
+  text-align: center;
+  padding: 50px 30px;
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.02);
+}
+
+.checkIcon {
+  font-size: 60px;
+  color: #28a745;
+  margin-bottom: 20px;
+}
+
+.successTitle {
+  font-family: "Poppins", sans-serif;
+  color: rgb(2, 53, 28);
+  margin-bottom: 10px;
+}
+
+.successDesc {
+  color: #666;
+}
+
+.fullWidthGroup {
+  grid-column: 1 / -1;
+}

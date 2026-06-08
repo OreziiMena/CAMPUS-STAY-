@@ -199,7 +199,7 @@ body {
     font-family: 'Open Sans', sans-serif;
 }
 
-.whatsapp-btn {
+.whatsapp-btn, .chat-whatsapp-btn {
     background: #25D366; /* Official WhatsApp Green */
     color: white;
     border: none;
@@ -211,9 +211,12 @@ body {
     cursor: pointer;
     transition: background 0.3s;
     margin-bottom: 20px;
+    display: block;
+    text-align: center;
+    text-decoration: none;
 }
-.whatsapp-btn:hover { background: #1ebe57; }
-.whatsapp-btn i { margin-right: 8px; font-size: 18px; }
+.whatsapp-btn:hover, .chat-whatsapp-btn:hover { background: #1ebe57; }
+.whatsapp-btn i, .chat-whatsapp-btn i { margin-right: 8px; font-size: 18px; }
 
 .view-listings-link {
     display: block;
@@ -320,4 +323,20 @@ body {
 }
 @media (max-width: 480px) {
     .amenities-check-list { grid-template-columns: 1fr; } /* 1 col on small phones */
+}
+
+.details-loading-screen {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    font-family: 'Poppins', sans-serif;
+}
+
+.details-layout-margin {
+    margin-top: 15vh !important;
+}
+
+.carousel-control-prev i, .carousel-control-next i {
+    color: white;
 }

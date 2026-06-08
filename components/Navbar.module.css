@@ -1,0 +1,65 @@
+.brandLink {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  text-decoration: none;
+}
+
+.logoImg {
+  width: auto;
+  height: auto;
+}
+
+.logoH2 {
+  margin: 0;
+}
+
+.userDropdownWrapper {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+.profileDropdownTrigger {
+  cursor: pointer;
+}
+
+.profileName {
+  font-family: 'Poppins', sans-serif;
+}
+
+.chevronIcon {
+  font-size: 11px;
+  color: white;
+  margin-left: 2px;
+}
+
+.icon16 {
+  width: 16px;
+}
+
+.logoutBtn {
+  background: none;
+  border: none;
+  padding: 12px 20px;
+  width: 100%;
+  text-align: left;
+  cursor: pointer;
+  font-family: 'Poppins', sans-serif;
+  font-size: 13px;
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  color: inherit;
+}
+
+.authGroup {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+.authBtnLink {
+  text-decoration: none;
+  margin-right: 0 !important;
+}

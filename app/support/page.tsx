@@ -1,18 +1,11 @@
 "use client";
 import React, { useState, useEffect } from "react";
-import Link from "next/link";
-import Image from "next/image";
-import { getCurrentUser, logoutUser } from "@/app/actions/auth";
-import { useRouter } from "next/navigation";
+import { getCurrentUser } from "@/app/actions/auth";
+import Navbar from "@/components/Navbar";
+import Footer from "@/components/Footer";
 import "./styles.css";
-import "../globals.css";
 
 export default function SupportPage() {
-  const router = useRouter();
-  const [user, setUser] = useState<any>(null);
-  const [isProfileDropdownOpen, setIsProfileDropdownOpen] = useState(false);
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-
   // FAQ accordion open index state
   const [openFaqIndex, setOpenFaqIndex] = useState<number | null>(0);
 
@@ -27,7 +20,6 @@ export default function SupportPage() {
   useEffect(() => {
     const checkUser = async () => {
       const currentUser = await getCurrentUser();
-      setUser(currentUser);
       if (currentUser) {
         setTicketName(currentUser.name || "");
         setTicketEmail(currentUser.email || "");
@@ -35,27 +27,6 @@ export default function SupportPage() {
     };
     checkUser();
   }, []);
-
-  useEffect(() => {
-    const handleDocumentClick = (e: MouseEvent) => {
-      const target = e.target as HTMLElement;
-      if (!target.closest(".explore-profile-dropdown")) {
-        setIsProfileDropdownOpen(false);
-      }
-    };
-    document.addEventListener("click", handleDocumentClick);
-    return () => document.removeEventListener("click", handleDocumentClick);
-  }, []);
-
-  const toggleMobileMenu = () => {
-    setIsMobileMenuOpen(!isMobileMenuOpen);
-  };
-
-  const handleLogout = async () => {
-    await logoutUser();
-    setUser(null);
-    router.refresh();
-  };
 
   const toggleFaq = (index: number) => {
     setOpenFaqIndex(openFaqIndex === index ? null : index);
@@ -100,79 +71,7 @@ export default function SupportPage() {
   return (
     <>
       {/* Navigation */}
-      <nav className="sticky-top">
-        <div className="brand">
-          <Image 
-            src="/Assets/CAMPUS STAY LOGO.png" 
-            alt="logo" 
-            width={50} 
-            height={50} 
-            className="logo" 
-            style={{ width: "auto", height: "auto" }}
-          />
-          <h2 className="logo-text">Campus Stay</h2>
-        </div>
-        
-        <div className={`navlinks ${isMobileMenuOpen ? "active" : ""}`}>
-          <ul>
-            <li><Link href="/">Home</Link></li>
-            <li><Link href="/about">About</Link></li>
-            <li><Link href="/explore">Explore</Link></li>
-            <li><Link className="active" href="/support">Support</Link></li>
-          </ul>
-          {user ? (
-            <div style={{ display: "flex", gap: "10px", alignItems: "center" }}>
-              {/* Profile Avatar Dropdown */}
-              <div 
-                className="explore-profile-dropdown" 
-                onClick={(e) => {
-                  setIsProfileDropdownOpen(!isProfileDropdownOpen);
-                  e.stopPropagation();
-                }}
-              >
-                <div className="explore-profile-info">
-                  <img 
-                    src={`https://ui-avatars.com/api/?name=${encodeURIComponent(user.name || "Student")}&background=02351c&color=fff`} 
-                    alt="Profile" 
-                    className="explore-profile-pic" 
-                  />
-                  <span className="explore-profile-name" style={{ fontFamily: "Poppins, sans-serif" }}>
-                    {user.name ? user.name.split(" ")[0] : "Student"}
-                  </span>
-                  <i className="fas fa-chevron-down" style={{ fontSize: "11px", color: "white", marginLeft: "2px" }}></i>
-                </div>
-
-                <div className={`explore-dropdown-menu ${isProfileDropdownOpen ? "active" : ""}`} onClick={(e) => e.stopPropagation()}>
-                  <Link href={user.role === "AGENT" ? "/agent-dashboard/profile" : "/"} className="explore-dropdown-item">
-                    <i className="fas fa-user" style={{ width: "16px" }}></i> PROFILE
-                  </Link>
-                  {user.role === "AGENT" && (
-                    <Link href="/agent-dashboard" className="explore-dropdown-item">
-                      <i className="fas fa-th-large" style={{ width: "16px" }}></i> DASHBOARD
-                    </Link>
-                  )}
-                  <Link href={user.role === "AGENT" ? "/agent-dashboard/settings" : "/"} className="explore-dropdown-item">
-                    <i className="fas fa-cog" style={{ width: "16px" }}></i> SETTINGS
-                  </Link>
-                  <div className="explore-dropdown-divider"></div>
-                  <button 
-                    onClick={handleLogout} 
-                    className="explore-dropdown-item logout-link" 
-                  >
-                    <i className="fas fa-sign-out-alt" style={{ width: "16px" }}></i> LOG OUT
-                  </button>
-                </div>
-              </div>
-            </div>
-          ) : (
-            <Link href="/auth/rolepick" className="start-btn">Get Started</Link>
-          )}
-        </div>
-        
-        <button className="mobilebtn" onClick={toggleMobileMenu}>
-          <i className={`fas ${isMobileMenuOpen ? "fa-times" : "fa-bars"}`}></i>
-        </button>
-      </nav>
+      <Navbar />
 
       {/* Hero Header */}
       <section className="support-hero">
@@ -185,7 +84,7 @@ export default function SupportPage() {
         <div className="support-grid">
           {/* FAQ list */}
           <div>
-            <h2 className="faq-section-title"><i className="fas fa-question-circle" style={{ color: "rgb(2, 53, 28)", marginRight: "10px" }}></i> Frequently Asked Questions</h2>
+            <h2 className="faq-section-title"><i className="fas fa-question-circle faq-title-icon"></i> Frequently Asked Questions</h2>
             <div className="faq-list">
               {faqData.map((faq, i) => (
                 <div key={i} className={`faq-item ${openFaqIndex === i ? "active" : ""}`}>
@@ -226,7 +125,7 @@ export default function SupportPage() {
               </div>
 
               {ticketStatus && (
-                <p style={{ color: "#28a745", fontFamily: "Poppins", fontSize: "14px", margin: "10px 0" }}>
+                <p className="support-success-msg">
                   {ticketStatus}
                 </p>
               )}
@@ -250,55 +149,7 @@ export default function SupportPage() {
       </section>
 
       {/* Footer */}
-      <footer className="main-footer">
-        <div className="footer-grid">
-          <div className="footer-brand">
-            <Image 
-              src="/Assets/CAMPUS STAY LOGO.png" 
-              alt="logo" 
-              width={150} 
-              height={50} 
-              className="footer-logo" 
-              style={{ width: "auto", height: "auto" }}
-            />
-            <p className="brand-tagline">Connecting Students with <br />Trusted Off-Campus Housing.</p>
-          </div>
-
-          <div className="footer-links">
-            <h4>PLATFORM</h4>
-            <ul>
-              <li><Link href="/">Home</Link></li>
-              <li><Link href="/about">About Us</Link></li>
-              <li><Link href="/explore">Explore Properties</Link></li>
-              <li><Link href="/auth/rolepick">Find a Roommate</Link></li>
-              <li><Link href="/how-it-works">How it Works</Link></li>
-            </ul>
-          </div>
-
-          <div className="footer-links">
-            <h4>RESOURCES</h4>
-            <ul>
-              <li><Link href="/support">Help Center / Support</Link></li>
-              <li><Link href="/tenant-guide">Tenant Guide</Link></li>
-              <li><Link href="/landlord-hub">Landlord Hub</Link></li>
-            </ul>
-          </div>
-
-          <div className="footer-contact">
-            <h4>CONNECT</h4>
-            <ul>
-              <li><a href="mailto:support@campusstay.com"><i className="fa-solid fa-envelope"></i> support@campusstay.com</a></li>
-              <li><a href="https://wa.me/2349161863877?text=Hi%20Campus%20Stay%20Support,%20I%20need%20help" target="_blank" rel="noopener noreferrer"><i className="fa-brands fa-whatsapp"></i> Chat with Us</a></li>
-              <li><Link href="/terms">Terms of Service</Link></li>
-              <li><Link href="/privacy">Privacy Policy</Link></li>
-            </ul>
-          </div>
-        </div>
-
-        <div className="footer-bottom">
-          <p>© 2024 Campus Stay. All rights reserved.</p>
-        </div>
-      </footer>
+      <Footer />
     </>
   );
 }
