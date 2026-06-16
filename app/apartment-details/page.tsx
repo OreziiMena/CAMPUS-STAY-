@@ -5,6 +5,8 @@ import Link from "next/link";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import { getPropertyDetails, createInquiry } from "@/app/actions/properties";
+import { getCurrentUser } from "@/app/actions/auth";
+import { scheduleViewing } from "@/app/actions/student";
 import "./styles.css";
 
 interface Property {
@@ -90,9 +92,20 @@ function ApartmentDetailsContent() {
   const [loading, setLoading] = useState(true);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
 
+  // Student verification and scheduling states
+  const [currentUser, setCurrentUser] = useState<any>(null);
+  const [viewingDateTime, setViewingDateTime] = useState("");
+  const [schedulingStatus, setSchedulingStatus] = useState("");
+  const [isScheduling, setIsScheduling] = useState(false);
+
   useEffect(() => {
     const fetchDetails = async () => {
       setLoading(true);
+
+      // Fetch user session details
+      const user = await getCurrentUser();
+      setCurrentUser(user);
+
       const res = await getPropertyDetails(id);
       if (res.success && res.property) {
         const prop = res.property;
@@ -106,9 +119,9 @@ function ApartmentDetailsContent() {
           amenities: prop.amenities,
           images: prop.images,
           agent: {
-            name: prop.agent.fullName,
-            role: prop.agent.isVerified ? "Verified Agent" : "Agent/Landlord",
-            phone: prop.agent.user.phone || "+2349161863877",
+            name: prop.agent ? prop.agent.fullName : (prop.student ? prop.student.fullName : "Campus Stay Official"),
+            role: prop.agent ? (prop.agent.isVerified ? "Verified Agent" : "Agent/Landlord") : "Student (Roommate Option)",
+            phone: prop.agent ? (prop.agent.user?.phone || "+2349161863877") : (prop.student?.user?.phone || "+2349161863877"),
           }
         });
       } else {
@@ -126,6 +139,27 @@ function ApartmentDetailsContent() {
       propertyId: property.id,
       message: `Hi, I am interested in your listing "${property.title}" on Campus Stay.`,
     });
+  };
+
+  const handleScheduleViewing = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!viewingDateTime || !property) return;
+    setIsScheduling(true);
+    setSchedulingStatus("");
+    
+    const res = await scheduleViewing({
+      propertyId: property.id,
+      dateTime: viewingDateTime,
+    });
+    
+    if (res.success) {
+      setSchedulingStatus("Viewing requested successfully! The agent has been notified.");
+      setViewingDateTime("");
+      setTimeout(() => setSchedulingStatus(""), 4000);
+    } else {
+      setSchedulingStatus(`Error: ${res.error}`);
+    }
+    setIsScheduling(false);
   };
 
   const nextSlide = (e: React.MouseEvent) => {
@@ -206,6 +240,47 @@ function ApartmentDetailsContent() {
               ))}
             </ul>
           </div>
+
+          {/* Viewing Scheduler Card */}
+          <div className="info-card scheduling-card">
+            <h3><i className="fas fa-calendar-alt"></i> Schedule a Viewing</h3>
+            
+            {!currentUser || (currentUser.role === "STUDENT" && !currentUser.studentProfile?.isVerified) ? (
+              <div className="scheduling-locked-overlay">
+                <i className="fas fa-lock"></i>
+                <h4>Viewing Scheduler Locked</h4>
+                <p>You must be a logged-in, verified student to schedule physical viewing appointments.</p>
+                {!currentUser ? (
+                  <Link href="/auth/login" className="primary-btn btn-sm">Log in to view</Link>
+                ) : (
+                  <Link href="/student-dashboard/profile" className="primary-btn btn-sm">Verify Profile</Link>
+                )}
+              </div>
+            ) : (
+              <form onSubmit={handleScheduleViewing} className="scheduling-form">
+                <p>Select a preferred date and time to inspect this hostel in person with the agent.</p>
+                <div className="input-group">
+                  <label htmlFor="viewing-time">Preferred Date & Time</label>
+                  <input 
+                    type="datetime-local" 
+                    id="viewing-time" 
+                    value={viewingDateTime}
+                    onChange={(e) => setViewingDateTime(e.target.value)}
+                    required 
+                    className="scheduling-time-input"
+                  />
+                </div>
+                {schedulingStatus && (
+                  <p className={`status-message-text ${schedulingStatus.startsWith("Error") ? "error" : "success"}`}>
+                    {schedulingStatus}
+                  </p>
+                )}
+                <button type="submit" className="primary-btn" disabled={isScheduling || !viewingDateTime}>
+                  {isScheduling ? "Requesting..." : "Schedule Viewing Appointment"}
+                </button>
+              </form>
+            )}
+          </div>
         </div>
 
         <aside className="property-sidebar">
@@ -217,18 +292,36 @@ function ApartmentDetailsContent() {
               <div className="agent-info">
                 <h5>{property.agent.name} <i className="fas fa-check-circle verified-icon"></i></h5>
                 <p className="agent-role">{property.agent.role}</p>
+                <p className="agent-phone-display">
+                  Phone: {!currentUser || (currentUser.role === "STUDENT" && !currentUser.studentProfile?.isVerified) ? "+234 916 *** ****" : property.agent.phone}
+                </p>
               </div>
             </div>
 
-            <a 
-              href={`https://wa.me/${property.agent.phone.replace(/[^0-9+]/g, "")}?text=Hi%20${encodeURIComponent(property.agent.name)},%20I%20am%20interested%20in%20your%20listing%20"${encodeURIComponent(property.title)}"%20on%20Campus%20Stay.`} 
-              target="_blank" 
-              rel="noopener noreferrer" 
-              className="whatsapp-btn full-width"
-              onClick={handleWhatsAppClick}
-            >
-              <i className="fab fa-whatsapp"></i> Chat on WhatsApp
-            </a>
+            {!currentUser || (currentUser.role === "STUDENT" && !currentUser.studentProfile?.isVerified) ? (
+              <>
+                <div className="verification-lock-banner">
+                  <p><i className="fas fa-lock"></i> Verification Required</p>
+                  <small>Please verify your student profile to view phone numbers and contact agents.</small>
+                  <Link href={currentUser ? "/student-dashboard/profile" : "/auth/login"} className="verify-link-btn">
+                    {currentUser ? "Verify Now" : "Log In to Verify"}
+                  </Link>
+                </div>
+                <button className="whatsapp-btn full-width locked" disabled>
+                  <i className="fab fa-whatsapp"></i> Chat on WhatsApp (Locked)
+                </button>
+              </>
+            ) : (
+              <a 
+                href={`https://wa.me/${property.agent.phone.replace(/[^0-9+]/g, "")}?text=Hi%20${encodeURIComponent(property.agent.name)},%20I%20am%20interested%20in%20your%20listing%20"${encodeURIComponent(property.title)}"%20on%20Campus%20Stay.`} 
+                target="_blank" 
+                rel="noopener noreferrer" 
+                className="whatsapp-btn full-width"
+                onClick={handleWhatsAppClick}
+              >
+                <i className="fab fa-whatsapp"></i> Chat on WhatsApp
+              </a>
+            )}
             <Link href="/explore" className="view-listings-link">View all listings &rarr;</Link>
           </div>
 

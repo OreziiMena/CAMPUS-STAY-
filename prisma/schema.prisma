@@ -29,18 +29,24 @@ model User {
   // Inquiries sent (for students) and received (for agents)
   inquiries         Inquiry[]       @relation(name: "StudentInquiries")
   receivedInquiries Inquiry[]       @relation(name: "AgentReceivedInquiries")
+  viewings          Viewing[]
 }
 
 model StudentProfile {
-  id          String   @id @default(uuid())
-  userId      String   @unique
-  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  fullName    String
-  university  String
-  username    String   @unique
-  preferences Json?    // Preferences object (budget, roommate preferences, layout type, etc.)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id                  String   @id @default(uuid())
+  userId              String   @unique
+  user                User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  fullName            String
+  university          String
+  username            String   @unique
+  preferences         Json?    // Preferences object (budget, roommate preferences, layout type, etc.)
+  isVerified          Boolean  @default(false)
+  idCardDoc           String?
+  feesReceiptDoc      String?
+  portalScreenshotDoc String?
+  properties          Property[]
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
 }
 
 model AgentProfile {
@@ -74,15 +80,22 @@ model Property {
   isVerified   Boolean      @default(false)
   views        Int          @default(0)
   
+  isRoommateOption    Boolean         @default(false)
+  
   // Owner Agent
-  agentId      String
-  agent        AgentProfile @relation(fields: [agentId], references: [id], onDelete: Cascade)
+  agentId             String?
+  agent               AgentProfile?   @relation(fields: [agentId], references: [id], onDelete: Cascade)
+  
+  // Owner Student
+  studentId           String?
+  student             StudentProfile? @relation(fields: [studentId], references: [id], onDelete: Cascade)
   
   // Inquiries sent for this property
-  inquiries    Inquiry[]
+  inquiries           Inquiry[]
+  viewings            Viewing[]
   
-  createdAt    DateTime     @default(now())
-  updatedAt    DateTime     @updatedAt
+  createdAt           DateTime        @default(now())
+  updatedAt           DateTime        @updatedAt
 }
 
 model Inquiry {
@@ -102,4 +115,16 @@ model Inquiry {
   
   message    String
   createdAt  DateTime @default(now())
+}
+
+model Viewing {
+  id          String   @id @default(uuid())
+  studentId   String
+  student     User     @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  propertyId  String
+  property    Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  dateTime    DateTime
+  status      String   @default("PENDING") // PENDING, CONFIRMED, CANCELLED
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 }

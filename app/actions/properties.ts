@@ -86,6 +86,7 @@ export async function getProperties(filterParam?: string | {
       where: whereClause,
       include: {
         agent: true,
+        student: true,
       },
       orderBy: {
         createdAt: "desc",
@@ -132,6 +133,11 @@ export async function getPropertyDetails(id: string) {
             user: true,
           },
         },
+        student: {
+          include: {
+            user: true,
+          },
+        },
       },
     });
 
@@ -148,24 +154,41 @@ export async function getPropertyDetails(id: string) {
 export async function addProperty(data: any) {
   try {
     const user = await getCurrentUser();
-    if (!user || user.role !== "AGENT" || !user.agentProfile) {
-      return { success: false, error: "Unauthorized. Only registered agents can list properties." };
+    if (!user) {
+      return { success: false, error: "Unauthorized. Please log in." };
     }
 
     const { title, hostelType, price, location, distance, description, amenities, images } = data;
 
+    let createData: any = {
+      title,
+      hostelType,
+      price: parseFloat(price),
+      location,
+      distance,
+      description,
+      amenities: amenities || [],
+      images: images || [],
+    };
+
+    if (user.role === "STUDENT") {
+      if (!user.studentProfile) {
+        return { success: false, error: "Student profile not found." };
+      }
+      createData.studentId = user.studentProfile.id;
+      createData.isRoommateOption = true; // Enforce roommate option for students
+    } else if (user.role === "AGENT") {
+      if (!user.agentProfile) {
+        return { success: false, error: "Agent profile not found." };
+      }
+      createData.agentId = user.agentProfile.id;
+      createData.isRoommateOption = false;
+    } else {
+      return { success: false, error: "Unauthorized role." };
+    }
+
     const property = await prisma.property.create({
-      data: {
-        title,
-        hostelType,
-        price: parseFloat(price),
-        location,
-        distance,
-        description,
-        amenities: amenities || [],
-        images: images || [],
-        agentId: user.agentProfile.id,
-      },
+      data: createData,
     });
 
     return { success: true, propertyId: property.id };
@@ -181,12 +204,21 @@ export async function createInquiry(data: { propertyId: string; message: string 
       return { success: false, error: "You must be logged in to send inquiries." };
     }
 
+    if (user.role === "STUDENT" && !user.studentProfile?.isVerified) {
+      return { success: false, error: "Verification required. You must verify your student profile to contact agents." };
+    }
+
     const { propertyId, message } = data;
 
     const property = await prisma.property.findUnique({
       where: { id: propertyId },
       include: {
         agent: {
+          include: {
+            user: true,
+          },
+        },
+        student: {
           include: {
             user: true,
           },
@@ -198,11 +230,16 @@ export async function createInquiry(data: { propertyId: string; message: string 
       return { success: false, error: "Property not found." };
     }
 
+    const recipientId = property.agent?.userId || property.student?.userId;
+    if (!recipientId) {
+      return { success: false, error: "Listing owner not found." };
+    }
+
     const inquiry = await prisma.inquiry.create({
       data: {
         studentId: user.id,
         propertyId,
-        agentId: property.agent.userId,
+        agentId: recipientId,
         message,
       },
     });

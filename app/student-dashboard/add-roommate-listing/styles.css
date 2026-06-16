@@ -1,0 +1,401 @@
+/* Add Roommate Listing Form Styles */
+
+:root {
+    --primary-green: rgb(2, 53, 28);
+    --primary-green-hover: rgb(1, 38, 20);
+    --accent-orange: #d35400;
+    --accent-orange-hover: #b24700;
+    --text-dark: #333;
+    --text-muted: #666;
+    --border-light: #eaeaea;
+    --radius-sm: 6px;
+    --radius-md: 8px;
+    --radius-lg: 12px;
+    --transition: 0.3s ease;
+}
+
+.roommate-loader {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    font-family: 'Poppins', sans-serif;
+    font-size: 18px;
+    color: var(--primary-green);
+}
+
+.roommate-listing-layout {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 120px 20px 60px 20px;
+    min-height: calc(100vh - 80px);
+}
+
+.roommate-welcome-banner {
+    background: linear-gradient(135deg, var(--primary-green), #034827);
+    color: #fff;
+    border-radius: var(--radius-lg);
+    padding: 30px 40px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    box-shadow: 0 10px 35px rgba(2, 53, 28, 0.1);
+    margin-bottom: 30px;
+    font-family: 'Poppins', sans-serif;
+}
+
+.roommate-welcome-banner h1 {
+    font-size: 24px;
+    font-weight: 700;
+    margin-bottom: 6px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.roommate-welcome-banner p {
+    font-size: 14px;
+    font-family: 'Open Sans', sans-serif;
+    opacity: 0.9;
+    margin: 0;
+}
+
+.back-to-dash-btn {
+    background-color: transparent;
+    border: 2px solid #fff;
+    color: white;
+    text-decoration: none;
+    padding: 10px 20px;
+    border-radius: 50px;
+    font-family: 'Poppins', sans-serif;
+    font-weight: 600;
+    font-size: 13.5px;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    transition: all var(--transition);
+}
+
+.back-to-dash-btn:hover {
+    background-color: #fff;
+    color: var(--primary-green);
+    transform: translateY(-2px);
+}
+
+.success-banner-card {
+    background: #fff;
+    padding: 50px 30px;
+    border-radius: var(--radius-lg);
+    border: 1px solid var(--border-light);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.02);
+    text-align: center;
+    font-family: 'Poppins', sans-serif;
+}
+
+.success-banner-card i {
+    font-size: 60px;
+    color: #28a745;
+    margin-bottom: 20px;
+}
+
+.success-banner-card h2 {
+    color: var(--primary-green);
+    font-size: 24px;
+    font-weight: 700;
+    margin-bottom: 10px;
+}
+
+.success-banner-card p {
+    color: var(--text-muted);
+    font-family: 'Open Sans', sans-serif;
+    font-size: 15px;
+    margin: 0;
+}
+
+.property-form-card {
+    background: #fff;
+    padding: 40px;
+    border-radius: var(--radius-lg);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.02);
+    border: 1px solid var(--border-light);
+    margin-bottom: 40px;
+    font-family: 'Open Sans', sans-serif;
+}
+
+.error-message-bar {
+    background-color: #fff5f5;
+    border: 1px solid #fed7d7;
+    color: #c53030;
+    padding: 15px 20px;
+    border-radius: var(--radius-sm);
+    margin-bottom: 25px;
+    font-size: 14.5px;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.verification-warning-banner {
+    background-color: #fffaf0;
+    border: 1px solid #feebc8;
+    color: #c05621;
+    padding: 15px 20px;
+    border-radius: var(--radius-sm);
+    margin-bottom: 25px;
+    font-size: 14px;
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    line-height: 1.5;
+}
+
+.verification-warning-banner i {
+    font-size: 18px;
+    margin-top: 2px;
+    flex-shrink: 0;
+}
+
+.verification-warning-banner p {
+    margin: 0;
+}
+
+.form-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 25px;
+}
+
+.input-group {
+    display: flex;
+    flex-direction: column;
+}
+
+.input-group label {
+    font-family: 'Poppins', sans-serif;
+    font-size: 13.5px;
+    font-weight: 700;
+    color: var(--primary-green);
+    margin-bottom: 8px;
+}
+
+.input-group input,
+.input-group textarea,
+.input-group select {
+    width: 100%;
+    padding: 12px 15px;
+    border: 1px solid #cbd5e0;
+    border-radius: var(--radius-sm);
+    font-family: 'Open Sans', sans-serif;
+    font-size: 15px;
+    color: var(--text-dark);
+    outline: none;
+    box-sizing: border-box;
+    transition: all var(--transition);
+}
+
+.input-group input:focus,
+.input-group textarea:focus,
+.input-group select:focus {
+    border-color: var(--primary-green);
+    box-shadow: 0 0 0 3px rgba(2, 53, 28, 0.1);
+}
+
+.full-width-group {
+    grid-column: span 2;
+}
+
+.form-section-title {
+    font-family: 'Poppins', sans-serif;
+    font-size: 17px;
+    font-weight: 700;
+    color: var(--primary-green);
+    margin-top: 35px;
+    margin-bottom: 20px;
+    border-bottom: 2px solid var(--border-light);
+    padding-bottom: 10px;
+}
+
+/* Amenities Checkboxes */
+.amenities-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 15px;
+}
+
+.checkbox-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    cursor: pointer;
+    font-family: 'Open Sans', sans-serif;
+    font-size: 14.5px;
+    color: var(--text-dark);
+}
+
+.checkbox-item input[type="checkbox"] {
+    width: 18px;
+    height: 18px;
+    cursor: pointer;
+    accent-color: var(--primary-green);
+}
+
+/* Image Upload Area */
+.image-upload-section {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.upload-box-wrapper {
+    border: 2px dashed #cbd5e0;
+    border-radius: var(--radius-md);
+    background-color: #f7fafc;
+    padding: 40px 20px;
+    text-align: center;
+    cursor: pointer;
+    position: relative;
+    transition: border-color var(--transition);
+}
+
+.upload-box-wrapper:hover {
+    border-color: var(--primary-green);
+}
+
+.upload-box-wrapper i {
+    font-size: 36px;
+    color: #a0aec0;
+    margin-bottom: 12px;
+}
+
+.upload-box-wrapper p {
+    margin: 0;
+    font-family: 'Poppins', sans-serif;
+    font-size: 14px;
+    color: var(--text-muted);
+}
+
+.upload-box-wrapper input[type="file"] {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    opacity: 0;
+    cursor: pointer;
+}
+
+.uploaded-previews-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 15px;
+}
+
+.preview-image-card {
+    position: relative;
+    aspect-ratio: 1;
+    border-radius: var(--radius-md);
+    overflow: hidden;
+    border: 1px solid var(--border-light);
+}
+
+.preview-image-card img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.delete-preview-btn {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    background-color: rgba(220, 53, 69, 0.9);
+    border: none;
+    color: white;
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: background-color var(--transition);
+}
+
+.delete-preview-btn:hover {
+    background-color: #c82333;
+}
+
+.submit-listing-btn {
+    width: 100%;
+    background: linear-gradient(to right, var(--accent-orange), #e67e22);
+    border: none;
+    color: white;
+    padding: 14px;
+    border-radius: var(--radius-sm);
+    font-family: 'Poppins', sans-serif;
+    font-weight: 700;
+    font-size: 16px;
+    cursor: pointer;
+    box-shadow: 0 4px 15px rgba(211, 84, 0, 0.2);
+    margin-top: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    transition: all var(--transition);
+}
+
+.submit-listing-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(211, 84, 0, 0.3);
+}
+
+.submit-listing-btn:disabled {
+    background: #cbd5e0;
+    color: #a0aec0;
+    cursor: not-allowed;
+    box-shadow: none;
+    transform: none;
+}
+
+/* RESPONSIVE BREAKPOINTS */
+@media (max-width: 768px) {
+    .roommate-welcome-banner {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 20px;
+        padding: 25px 30px;
+    }
+    
+    .roommate-welcome-banner h1 {
+        font-size: 20px;
+    }
+
+    .property-form-card {
+        padding: 25px;
+    }
+
+    .form-grid {
+        grid-template-columns: 1fr;
+        gap: 15px;
+    }
+
+    .full-width-group {
+        grid-column: span 1;
+    }
+
+    .amenities-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .uploaded-previews-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (max-width: 480px) {
+    .amenities-grid {
+        grid-template-columns: 1fr;
+    }
+}

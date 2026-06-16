@@ -151,10 +151,7 @@ export default function AgentProfilePage() {
 
   return (
     <>
-      <Link href="/agent-dashboard" className={`back-link ${styles.backLinkCustom}`}>
-        <i className="fas fa-arrow-left"></i> Go back
-      </Link>
-
+    
       {loading ? (
         <div className={styles.loader}>
           <i className={`fas fa-spinner fa-spin ${styles.spinnerIcon}`}></i> Loading profile...

@@ -17,6 +17,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const [isSidebarMobileOpen, setIsSidebarMobileOpen] = useState(false);
 
   useEffect(() => {
+    setIsSidebarMobileOpen(false);
     const loadUser = async () => {
       setLoading(true);
       const user = await getCurrentUser();
@@ -38,7 +39,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
   const handleLogout = async () => {
     await logoutUser();
-    router.push("/");
+    router.push("/explore");
   };
 
 

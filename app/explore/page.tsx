@@ -262,6 +262,11 @@ export default function Explore() {
                   <span className={`property-card-badge ${property.isAvailable ? "status-available" : "status-taken"}`}>
                     {property.isAvailable ? "Available" : "Taken"}
                   </span>
+                  {property.isRoommateOption && (
+                    <span className="property-card-badge roommate-badge">
+                      Roommate Needed
+                    </span>
+                  )}
                   <img src={property.images?.[0] || "https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80"} alt={property.title} className="property-img" />
                 </div>
                 <div className="property-content">

@@ -114,6 +114,7 @@
     justify-content: space-between;
     align-items: center;
     padding: 12px 0;
+    gap: 15px;
 }
 
 .settings-item.dropdown-item {
@@ -226,6 +227,7 @@
     display: inline-block;
     width: 44px;
     height: 24px;
+    flex-shrink: 0;
 }
 
 .custom-toggle input {
@@ -285,6 +287,20 @@
 }
 
 @media (max-width: 768px) {
+    .profile-layout {
+        margin: 20px auto;
+        padding: 0;
+    }
+    .tab-content {
+        padding: 20px 15px;
+    }
+    .profile-header-card {
+        padding: 20px 15px;
+        gap: 15px;
+    }
+    .settings-dropdown {
+        max-width: 100%;
+    }
     .profile-tabs {
         overflow-x: auto;
         white-space: nowrap;

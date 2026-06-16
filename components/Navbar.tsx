@@ -39,7 +39,7 @@ export default function Navbar() {
   const handleLogout = async () => {
     await logoutUser();
     setUser(null);
-    router.refresh();
+    router.push("/explore");
   };
 
   const isActive = (path: string) => {
@@ -58,6 +58,7 @@ export default function Navbar() {
             alt="logo" 
             width={50} 
             height={50} 
+            unoptimized
             className={`logo ${styles.logoImg}`}
           />
           <h2 className={`logo-text ${styles.logoH2}`}>Campus Stay</h2>
@@ -93,7 +94,7 @@ export default function Navbar() {
               </div>
 
               <div className={`explore-dropdown-menu ${isProfileDropdownOpen ? "active" : ""}`} onClick={(e) => e.stopPropagation()}>
-                <Link href={user.role === "AGENT" ? "/agent-dashboard/profile" : "/"} className="explore-dropdown-item">
+                <Link href={user.role === "AGENT" ? "/agent-dashboard/profile" : "/student-dashboard/profile"} className="explore-dropdown-item">
                   <i className={`fas fa-user ${styles.icon16}`}></i> PROFILE
                 </Link>
                 {user.role === "AGENT" && (
@@ -101,7 +102,12 @@ export default function Navbar() {
                     <i className={`fas fa-th-large ${styles.icon16}`}></i> DASHBOARD
                   </Link>
                 )}
-                <Link href={user.role === "AGENT" ? "/agent-dashboard/settings" : "/"} className="explore-dropdown-item">
+                {user.role === "STUDENT" && (
+                  <Link href="/student-dashboard" className="explore-dropdown-item">
+                    <i className={`fas fa-th-large ${styles.icon16}`}></i> DASHBOARD
+                  </Link>
+                )}
+                <Link href={user.role === "AGENT" ? "/agent-dashboard/settings" : "/student-dashboard/settings"} className="explore-dropdown-item">
                   <i className={`fas fa-cog ${styles.icon16}`}></i> SETTINGS
                 </Link>
                 <div className="explore-dropdown-divider"></div>

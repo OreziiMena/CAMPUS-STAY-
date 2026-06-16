@@ -1,0 +1,38 @@
+/* Student Settings Page Styles */
+
+@import "../profile/styles.css";
+
+.student-settings-layout {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 120px 5% 60px 5%;
+    min-height: calc(100vh - 80px);
+}
+
+.student-settings-loader {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 50vh;
+    font-family: 'Poppins', sans-serif;
+    font-size: 18px;
+    color: var(--primary-green);
+    gap: 10px;
+}
+
+.prefer {
+    font-family: var(--font-heading);
+    color: var(--primary-green);
+    margin-bottom: 20px;
+    font-size: 18px;
+    font-weight: 600;
+}
+
+.settings-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px 0;
+    border-bottom: 1px solid var(--border-light);
+    gap: 15px;
+}

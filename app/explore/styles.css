@@ -240,6 +240,11 @@ nav{
 .status-taken {
     background-color: #d9534f; /* Red */
 }
+.property-card-badge.roommate-badge {
+    left: auto;
+    right: 15px;
+    background-color: #d35400;
+}
 .property-content {
     padding: 25px;
 }
