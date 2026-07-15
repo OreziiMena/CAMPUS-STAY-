@@ -55,7 +55,7 @@ export default function StudentProfile() {
         return;
       }
 
-      const profile = user.studentProfile as any;
+      const profile = user.studentProfile;
       setEmail(user.email);
       setPhone(user.phone);
       setUniversity(profile?.university || "");
@@ -319,7 +319,7 @@ export default function StudentProfile() {
                   </button>
                 </form>
 
-                {/* Dev test toggle utility */}
+                {/* Test toggle utility, uncomment before deployment */}
                 <div className="dev-test-verification-card">
                   <div className="dev-test-info">
                     <h4><i className="fas fa-flask"></i> Testing Tool (Instant Verification)</h4>

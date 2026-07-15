@@ -6,39 +6,6 @@ import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import "./styles.css";
 
-const fallbackProperties = [
-  {
-    id: "1",
-    title: "Standard Self-Con near FUPRE Main Gate",
-    price: 150000,
-    location: "FUPRE Road, Effurun",
-    distance: "5 mins walk to campus",
-    isAvailable: true,
-    amenities: ["1 Bed", "1 Bath", "Prepaid Meter"],
-    images: ["https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80"]
-  },
-  {
-    id: "2",
-    title: "2-Bedroom Flat for Roommate Sharing",
-    price: 250000,
-    location: "PTI Road Junction",
-    distance: "10 mins walk to campus",
-    isAvailable: false,
-    amenities: ["2 Beds", "2 Baths", "Gated Compound"],
-    images: ["https://images.unsplash.com/photo-1493809842364-78817add7ffb?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80"]
-  },
-  {
-    id: "3",
-    title: "Single Room Off-Campus",
-    price: 80000,
-    location: "Ugbomro Community",
-    distance: "12 mins walk to campus",
-    isAvailable: true,
-    amenities: ["1 Bed", "Shared Bath", "Borehole Water"],
-    images: ["https://images.unsplash.com/photo-1522771739844-6a9f6d5f14af?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80"]
-  }
-];
-
 export default function Explore() {
   const [searchQuery, setSearchQuery] = useState("");
   const [properties, setProperties] = useState<any[]>([]);
@@ -89,7 +56,8 @@ export default function Explore() {
     setSearchQuery("");
   };
 
-  const displayProperties = properties.length > 0 ? properties : fallbackProperties;
+  const hasActiveFilters = searchQuery !== "" || university !== "All" || hostelType !== "All" || proximity !== "Any" || minPrice !== "" || maxPrice !== "";
+  const displayProperties = properties;
 
   return (
     <>
@@ -255,36 +223,52 @@ export default function Explore() {
             <i className="fas fa-spinner fa-spin"></i> Loading Properties...
           </div>
         ) : (
-          <div className="property-grid">
-            {displayProperties.map((property: any) => (
-              <div key={property.id} className="property-card">
-                <div className="card-img-wrapper">
-                  <span className={`property-card-badge ${property.isAvailable ? "status-available" : "status-taken"}`}>
-                    {property.isAvailable ? "Available" : "Taken"}
-                  </span>
-                  {property.isRoommateOption && (
-                    <span className="property-card-badge roommate-badge">
-                      Roommate Needed
-                    </span>
-                  )}
-                  <img src={property.images?.[0] || "https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80"} alt={property.title} className="property-img" />
-                </div>
-                <div className="property-content">
-                  <h3 className="property-price">₦{property.price.toLocaleString()} <span>/ year</span></h3>
-                  <h4 className="property-title">{property.title}</h4>
-                  <p className="property-location"><i className="fas fa-map-marker-alt"></i> {property.location}</p>
-
-                  <div className="property-amenities">
-                    {property.amenities.slice(0, 3).map((amenity: string, idx: number) => (
-                      <span key={idx}><i className="fas fa-check"></i> {amenity}</span>
-                    ))}
-                  </div>
-
-                  <Link href={`/apartment-details?id=${property.id}`} className="view-btn">View Details</Link>
-                </div>
+          <>
+            {displayProperties.length === 0 ? (
+              <div className="no-properties-found" style={{ textAlign: "center", padding: "50px 20px", background: "white", borderRadius: "12px", width: "100%", border: "1px solid #eaeaea", fontFamily: "'Poppins', sans-serif" }}>
+                <i className="fas fa-search" style={{ fontSize: "40px", color: "#ccc", marginBottom: "15px" }}></i>
+                <h3 style={{ color: "rgb(2, 53, 28)", marginBottom: "10px" }}>
+                  {hasActiveFilters ? "No properties found" : "No available properties"}
+                </h3>
+                <p style={{ color: "#666", fontSize: "15px" }}>
+                  {hasActiveFilters 
+                    ? "We couldn't find any hostels matching your criteria. Try widening your filters or clearing your search." 
+                    : "There are currently no hostels listed on the platform. Please check back later!"}
+                </p>
               </div>
-            ))}
-          </div>
+            ) : (
+              <div className="property-grid">
+                {displayProperties.map((property: any) => (
+                  <div key={property.id} className="property-card">
+                    <div className="card-img-wrapper">
+                      <span className={`property-card-badge ${property.isAvailable ? "status-available" : "status-taken"}`}>
+                        {property.isAvailable ? "Available" : "Taken"}
+                      </span>
+                      {property.isRoommateOption && (
+                        <span className="property-card-badge roommate-badge">
+                          Roommate Needed
+                        </span>
+                      )}
+                      <img src={property.images?.[0] || "https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80"} alt={property.title} className="property-img" />
+                    </div>
+                    <div className="property-content">
+                      <h3 className="property-price">₦{property.price.toLocaleString()} <span>/ year</span></h3>
+                      <h4 className="property-title">{property.title}</h4>
+                      <p className="property-location"><i className="fas fa-map-marker-alt"></i> {property.location}</p>
+
+                      <div className="property-amenities">
+                        {property.amenities.slice(0, 3).map((amenity: string, idx: number) => (
+                          <span key={idx}><i className="fas fa-check"></i> {amenity}</span>
+                        ))}
+                      </div>
+
+                      <Link href={`/apartment-details?id=${property.id}`} className="view-btn">View Details</Link>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </>
         )}
       </section>
 

@@ -1,0 +1,335 @@
+"use client";
+
+import React, { useEffect, useState, useRef, Suspense } from "react";
+import { useSearchParams, useRouter } from "next/navigation";
+import Link from "next/link";
+import Navbar from "@/components/Navbar";
+import { 
+  getChatRooms, 
+  getChatMessages, 
+  sendChatMessage, 
+  getOrCreateChatRoom 
+} from "@/app/actions/chat";
+import { pusherClient, isPusherClientConfigured } from "@/lib/pusher-client";
+import "./chat.css";
+
+interface ChatRoom {
+  id: string;
+  propertyId: string;
+  propertyTitle: string;
+  propertyImage: string;
+  targetName: string;
+  targetRoleLabel: string;
+  lastMessage: string;
+  lastMessageAt: Date | string;
+}
+
+interface Message {
+  id: string;
+  chatRoomId: string;
+  senderId: string;
+  text: string;
+  createdAt: Date | string;
+}
+
+function ChatContent() {
+  const searchParams = useSearchParams();
+  const router = useRouter();
+  const initPropertyId = searchParams.get("propertyId");
+  const initRoomId = searchParams.get("roomId");
+
+  const [rooms, setRooms] = useState<ChatRoom[]>([]);
+  const [selectedRoomId, setSelectedRoomId] = useState<string | null>(null);
+  const [messages, setMessages] = useState<Message[]>([]);
+  const [currentUserId, setCurrentUserId] = useState<string>("");
+
+  const [loadingRooms, setLoadingRooms] = useState(true);
+  const [loadingMessages, setLoadingMessages] = useState(false);
+  const [inputText, setInputText] = useState("");
+  const [isSending, setIsSending] = useState(false);
+
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  // Load rooms and handle initial property conversation trigger
+  useEffect(() => {
+    const initializeChat = async () => {
+      setLoadingRooms(true);
+      
+      // 1. Fetch conversations list
+      const roomsRes = await getChatRooms();
+      if (roomsRes.success && roomsRes.chatRooms) {
+        setRooms(roomsRes.chatRooms);
+        setCurrentUserId(roomsRes.currentUserId || "");
+        
+        // 2. If a specific property chat was initiated
+        if (initPropertyId) {
+          const createRes = await getOrCreateChatRoom(initPropertyId);
+          if (createRes.success && createRes.chatRoomId) {
+            const newRoomId = createRes.chatRoomId;
+            
+            // Refresh list to include newly created room
+            const refreshRes = await getChatRooms();
+            if (refreshRes.success && refreshRes.chatRooms) {
+              setRooms(refreshRes.chatRooms);
+            }
+            setSelectedRoomId(newRoomId);
+            
+            // Remove propertyId query param from url cleanly
+            router.replace("/chat");
+          } else {
+            alert(createRes.error || "Failed to initialize conversation.");
+          }
+        } else if (initRoomId) {
+          // 3. If a specific chat room was selected directly
+          setSelectedRoomId(initRoomId);
+          router.replace("/chat");
+        } else if (roomsRes.chatRooms.length > 0) {
+          // Pre-select first conversation if no propertyId passed
+          setSelectedRoomId(roomsRes.chatRooms[0].id);
+        }
+      }
+      setLoadingRooms(false);
+    };
+
+    initializeChat();
+  }, [initPropertyId, router]);
+
+  // Load message history on conversation select
+  useEffect(() => {
+    if (!selectedRoomId) return;
+
+    const loadMessages = async () => {
+      setLoadingMessages(true);
+      const res = await getChatMessages(selectedRoomId);
+      if (res.success && res.messages) {
+        setMessages(res.messages);
+      }
+      setLoadingMessages(false);
+    };
+
+    loadMessages();
+  }, [selectedRoomId]);
+
+  // Real-Time Listener (WebSockets - Pusher)
+  useEffect(() => {
+    if (!selectedRoomId || !pusherClient || !isPusherClientConfigured) return;
+
+    const channelName = `chat-${selectedRoomId}`;
+    const channel = pusherClient!.subscribe(channelName);
+
+    channel.bind("new-message", (data: any) => {
+      // Append if not duplicate
+      setMessages((prev) => {
+        if (prev.some((m) => m.id === data.id)) return prev;
+        return [...prev, data];
+      });
+      
+      // Update sidebar preview
+      setRooms((prevRooms) =>
+        prevRooms.map((room) =>
+          room.id === selectedRoomId
+            ? { ...room, lastMessage: data.text, lastMessageAt: data.createdAt }
+            : room
+        )
+      );
+    });
+
+    return () => {
+      pusherClient!.unsubscribe(channelName);
+    };
+  }, [selectedRoomId]);
+
+  // Real-Time Fallback (Polling) if Pusher credentials are not provided
+  useEffect(() => {
+    if (!selectedRoomId || isPusherClientConfigured) return;
+
+    const pollInterval = setInterval(async () => {
+      const res = await getChatMessages(selectedRoomId);
+      if (res.success && res.messages) {
+        setMessages((prev) => {
+          // Silent compare: only set state if length differs or last message differs to avoid layout jumps
+          if (
+            prev.length !== res.messages.length ||
+            prev[prev.length - 1]?.id !== res.messages[res.messages.length - 1]?.id
+          ) {
+            return res.messages;
+          }
+          return prev;
+        });
+      }
+    }, 3000);
+
+    return () => clearInterval(pollInterval);
+  }, [selectedRoomId]);
+
+  // Auto scroll to message bottom
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [messages]);
+
+  const handleSendMessage = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!selectedRoomId || !inputText.trim() || isSending) return;
+
+    const textToSend = inputText.trim();
+    setInputText("");
+    setIsSending(true);
+
+    const res = await sendChatMessage(selectedRoomId, textToSend);
+    if (res.success && res.message) {
+      const msg = res.message;
+      setMessages((prev) => [...prev, {
+        id: msg.id,
+        chatRoomId: msg.chatRoomId,
+        senderId: msg.senderId,
+        text: msg.text,
+        createdAt: msg.createdAt.toISOString(),
+      }]);
+      
+      // Update sidebar preview immediately
+      setRooms((prevRooms) =>
+        prevRooms.map((room) =>
+          room.id === selectedRoomId
+            ? { ...room, lastMessage: textToSend, lastMessageAt: new Date().toISOString() }
+            : room
+        )
+      );
+    } else {
+      alert(res.error || "Failed to send message.");
+    }
+    setIsSending(false);
+  };
+
+  const selectedRoom = rooms.find((r) => r.id === selectedRoomId);
+
+  return (
+    <>
+      <Navbar />
+
+      <div className={`chat-container ${selectedRoomId ? "show-chat" : ""}`}>
+        {/* Sidebar */}
+        <aside className="chat-sidebar">
+          <div className="sidebar-search">
+            <input type="text" placeholder="Filter conversations..." disabled />
+          </div>
+
+          <div className="conversations-list">
+            {loadingRooms ? (
+              <div className="chat-loader">
+                <i className="fas fa-spinner fa-spin"></i> Loading...
+              </div>
+            ) : rooms.length === 0 ? (
+              <div style={{ textAlign: "center", padding: "40px 10px", color: "#888", fontSize: "14px" }}>
+                No active conversations yet.
+              </div>
+            ) : (
+              rooms.map((room) => (
+                <div 
+                  key={room.id}
+                  className={`conversation-item ${room.id === selectedRoomId ? "active" : ""}`}
+                  onClick={() => setSelectedRoomId(room.id)}
+                >
+                  <img src={room.propertyImage} alt="property thumbnail" className="conversation-img" />
+                  <div className="conversation-details">
+                    <h4>{room.targetName}</h4>
+                    <p className="listing-title-sub">{room.propertyTitle}</p>
+                    <p className="last-msg">{room.lastMessage}</p>
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
+        </aside>
+
+        {/* Main Conversation Window */}
+        <main className="chat-main">
+          {!selectedRoomId ? (
+            <div className="chat-empty-state">
+              <i className="far fa-comments"></i>
+              <h3>Select a conversation</h3>
+              <p>Choose an active student inquiry from the sidebar panel to start chatting live.</p>
+            </div>
+          ) : (
+            <>
+              {/* Chat Header */}
+              <div className="chat-header">
+                {selectedRoom && (
+                  <>
+                    <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+                      <button onClick={() => setSelectedRoomId(null)} className="chat-back-btn">
+                        <i className="fas fa-arrow-left"></i>
+                      </button>
+                      <div className="header-info">
+                        <h3>{selectedRoom.targetName}</h3>
+                        <p>Query about: {selectedRoom.propertyTitle}</p>
+                      </div>
+                    </div>
+                    <Link href={`/apartment-details?id=${selectedRoom.propertyId}`} className="property-link-btn">
+                      View Listing Details
+                    </Link>
+                  </>
+                )}
+              </div>
+
+              {/* Chat Messages */}
+              <div className="messages-feed">
+                {loadingMessages ? (
+                  <div className="chat-loader">
+                    <i className="fas fa-spinner fa-spin"></i> Loading messages...
+                  </div>
+                ) : (
+                  <>
+                    {messages.map((msg) => (
+                      <div 
+                        key={msg.id}
+                        className={`message-bubble-wrapper ${msg.senderId === currentUserId ? "sent" : "received"}`}
+                      >
+                        <div className="message-bubble">
+                          {msg.text}
+                          <span className="message-time">
+                            {new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                          </span>
+                        </div>
+                      </div>
+                    ))}
+                    <div ref={messagesEndRef} />
+                  </>
+                )}
+              </div>
+
+              {/* Message Input */}
+              <form onSubmit={handleSendMessage} className="chat-input-bar">
+                <input 
+                  type="text" 
+                  placeholder="Type your message here..."
+                  value={inputText}
+                  onChange={(e) => setInputText(e.target.value)}
+                  disabled={loadingMessages || isSending}
+                />
+                <button 
+                  type="submit" 
+                  className="send-message-btn"
+                  disabled={!inputText.trim() || loadingMessages || isSending}
+                >
+                  <i className="fas fa-paper-plane"></i>
+                </button>
+              </form>
+            </>
+          )}
+        </main>
+      </div>
+    </>
+  );
+}
+
+export default function ChatPage() {
+  return (
+    <Suspense fallback={
+      <div className="chat-loader" style={{ height: "100vh" }}>
+        <i className="fas fa-spinner fa-spin"></i> Loading chat workspace...
+      </div>
+    }>
+      <ChatContent />
+    </Suspense>
+  );
+}

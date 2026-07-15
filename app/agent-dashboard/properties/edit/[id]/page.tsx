@@ -1,14 +1,17 @@
 "use client";
+
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useParams } from "next/navigation";
 import { getCurrentUser } from "@/app/actions/auth";
-import { addProperty, uploadPropertyImages } from "@/app/actions/properties";
-import styles from "./add-property.module.css";
+import { getPropertyDetails, updateProperty, uploadPropertyImages } from "@/app/actions/properties";
 import "./styles.css";
 
-export default function AddProperty() {
+export default function EditProperty() {
   const router = useRouter();
+  const params = useParams();
+  const id = params?.id as string;
+
   const [title, setTitle] = useState("");
   const [hostelType, setHostelType] = useState("Self-Contain");
   const [university, setUniversity] = useState("FUPRE");
@@ -18,47 +21,94 @@ export default function AddProperty() {
   const [description, setDescription] = useState("");
 
   const [amenities, setAmenities] = useState({
-    bed: true,
-    bath: true,
+    bed: false,
+    bath: false,
     prepaid: false,
-    water: true,
+    water: false,
     gated: false,
     security: false
   });
 
-  const [images, setImages] = useState<string[]>([]);
-  const [imageFiles, setImageFiles] = useState<File[]>([]);
+  // Stored URL strings in DB
+  const [existingImages, setExistingImages] = useState<string[]>([]);
+  // Newly added Files
+  const [newImageFiles, setNewImageFiles] = useState<File[]>([]);
+  // Preview blob URLs for new files
+  const [newImagePreviews, setNewImagePreviews] = useState<string[]>([]);
+
+  const [isPageLoading, setIsPageLoading] = useState(true);
   const [isLoading, setIsLoading] = useState(false);
   const [success, setSuccess] = useState(false);
   const [error, setError] = useState("");
 
   useEffect(() => {
-    const checkUser = async () => {
+    const initData = async () => {
+      setIsPageLoading(true);
+      setError("");
+
       const user = await getCurrentUser();
       if (!user || user.role !== "AGENT") {
         router.push("/auth/login");
         return;
       }
+
+      if (!id) {
+        setError("Invalid Property ID.");
+        setIsPageLoading(false);
+        return;
+      }
+
+      const res = await getPropertyDetails(id);
+      if (res.success && res.property) {
+        const prop = res.property;
+        setTitle(prop.title);
+        setHostelType(prop.hostelType);
+        setUniversity(prop.university || "FUPRE");
+        setPrice(String(prop.price));
+        setLocation(prop.location);
+        setDistance(prop.distance);
+        setDescription(prop.description);
+        setExistingImages(prop.images || []);
+
+        // Parse amenities
+        const parsedAmenities = {
+          bed: prop.amenities.includes("Bed included") || prop.amenities.includes("Shared Bedspace"),
+          bath: prop.amenities.includes("Private Bathroom") || prop.amenities.includes("Shared Bathroom"),
+          prepaid: prop.amenities.includes("Prepaid Meter"),
+          water: prop.amenities.includes("Borehole Water"),
+          gated: prop.amenities.includes("Gated Compound"),
+          security: prop.amenities.includes("Security Guard")
+        };
+        setAmenities(parsedAmenities);
+      } else {
+        setError(res.error || "Failed to load property details.");
+      }
+      setIsPageLoading(false);
     };
-    checkUser();
-  }, [router]);
+
+    initData();
+  }, [id, router]);
 
   const handleCheckboxChange = (name: keyof typeof amenities) => {
     setAmenities((prev) => ({ ...prev, [name]: !prev[name] }));
   };
 
-  const handleMockUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleNewImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files.length > 0) {
       const selectedFiles = Array.from(e.target.files);
-      setImageFiles((prev) => [...prev, ...selectedFiles]);
+      setNewImageFiles((prev) => [...prev, ...selectedFiles]);
       const fileNames = selectedFiles.map(file => URL.createObjectURL(file));
-      setImages((prev) => [...prev, ...fileNames]);
+      setNewImagePreviews((prev) => [...prev, ...fileNames]);
     }
   };
 
-  const removeImage = (index: number) => {
-    setImages((prev) => prev.filter((_, i) => i !== index));
-    setImageFiles((prev) => prev.filter((_, i) => i !== index));
+  const removeExistingImage = (index: number) => {
+    setExistingImages((prev) => prev.filter((_, i) => i !== index));
+  };
+
+  const removeNewImage = (index: number) => {
+    setNewImagePreviews((prev) => prev.filter((_, i) => i !== index));
+    setNewImageFiles((prev) => prev.filter((_, i) => i !== index));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -81,25 +131,29 @@ export default function AddProperty() {
     if (amenities.security) activeAmenities.push("Security Guard");
 
     try {
-      let uploadedUrls: string[] = [];
-      if (imageFiles.length > 0) {
+      let newlyUploadedUrls: string[] = [];
+      if (newImageFiles.length > 0) {
         const formData = new FormData();
-        imageFiles.forEach((file) => {
+        newImageFiles.forEach((file) => {
           formData.append("images", file);
         });
         const uploadRes = await uploadPropertyImages(formData);
         if (!uploadRes.success) {
-          setError(uploadRes.error || "Failed to upload images.");
+          setError(uploadRes.error || "Failed to upload new images.");
           setIsLoading(false);
           return;
         }
-        uploadedUrls = uploadRes.urls || [];
+        newlyUploadedUrls = uploadRes.urls || [];
       }
 
-      // Fallback if no images uploaded
-      const finalImages = uploadedUrls.length > 0 ? uploadedUrls : ["https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?ixlib=rb-4.0.3"];
+      // Combined images: remaining existing ones + newly uploaded ones
+      const finalImages = [...existingImages, ...newlyUploadedUrls];
+      
+      if (finalImages.length === 0) {
+        finalImages.push("https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?ixlib=rb-4.0.3");
+      }
 
-      const res = await addProperty({
+      const res = await updateProperty(id, {
         title,
         hostelType,
         price,
@@ -119,7 +173,7 @@ export default function AddProperty() {
           router.push("/agent-dashboard/properties");
         }, 1500);
       } else {
-        setError(res.error || "Failed to list property.");
+        setError(res.error || "Failed to update property.");
       }
     } catch (err: any) {
       setIsLoading(false);
@@ -127,25 +181,33 @@ export default function AddProperty() {
     }
   };
 
+  if (isPageLoading) {
+    return (
+      <div className="loader">
+        <i className="fas fa-spinner fa-spin"></i> Loading property details...
+      </div>
+    );
+  }
+
   return (
     <>
       <div className="welcome-banner">
         <div>
-          <h1 className={styles.h1Title}>
-            <i className={`fas fa-plus-circle ${styles.plusIcon}`}></i> Add New Property
+          <h1>
+            <i className="fas fa-edit"></i> Edit Property Listing
           </h1>
-          <p className={styles.pSub}>List a new student hostel, apartment, or flat near campus.</p>
+          <p>Modify listings details, prices, amenities, and media.</p>
         </div>
-        <Link href="/agent-dashboard" className="back-to-dash-btn">
-          <i className="fas fa-arrow-left"></i> Back to Dashboard
+        <Link href="/agent-dashboard/properties" className="back-to-dash-btn">
+          <i className="fas fa-arrow-left"></i> Cancel & Go Back
         </Link>
       </div>
 
       {success ? (
-        <div className={`success-banner-card ${styles.successCard}`}>
-          <i className={`fas fa-check-circle ${styles.checkIcon}`}></i>
-          <h2 className={styles.successTitle}>Property Listed Successfully!</h2>
-          <p className={styles.successDesc}>Your listing is now live. Redirecting you to dashboard...</p>
+        <div className="success-banner-card" style={{ background: "#fff", padding: "35px", borderRadius: "12px", textAlign: "center", border: "1px solid #eaeaea" }}>
+          <i className="fas fa-check-circle" style={{ fontSize: "48px", color: "#2e7d32", marginBottom: "15px" }}></i>
+          <h2>Property Updated Successfully!</h2>
+          <p>Your updates are now live. Redirecting to properties listing...</p>
         </div>
       ) : (
         <form className="property-form-card" onSubmit={handleSubmit}>
@@ -231,7 +293,7 @@ export default function AddProperty() {
               />
             </div>
 
-            <div className={`input-group ${styles.fullWidthGroup}`}>
+            <div className="input-group" style={{ gridColumn: "1 / -1" }}>
               <label htmlFor="distance">Distance from Campus Gate *</label>
               <input
                 type="text"
@@ -243,7 +305,7 @@ export default function AddProperty() {
               />
             </div>
 
-            <div className={`input-group ${styles.fullWidthGroup}`}>
+            <div className="input-group" style={{ gridColumn: "1 / -1" }}>
               <label htmlFor="description">Property Description *</label>
               <textarea
                 id="description"
@@ -310,28 +372,49 @@ export default function AddProperty() {
 
           <div className="form-section-title">Property Media</div>
           <div className="upload-container">
-            <div className="file-upload-zone">
-              <i className="fas fa-cloud-upload-alt"></i>
-              <p>Drag and drop property images or <span>Browse files</span></p>
-              <input type="file" multiple accept="image/*" onChange={handleMockUpload} />
-            </div>
-
-            {images.length > 0 && (
-              <div className="uploaded-previews">
-                {images.map((url, i) => (
-                  <div key={i} className="preview-img-wrapper">
-                    <img src={url} alt="preview" />
-                    <button type="button" onClick={() => removeImage(i)}>
-                      <i className="fas fa-times"></i>
-                    </button>
-                  </div>
-                ))}
+            {/* Existing Images */}
+            {existingImages.length > 0 && (
+              <div style={{ marginBottom: "20px" }}>
+                <p style={{ fontFamily: "Open Sans", fontSize: "14px", fontWeight: "600", color: "rgb(2,53,28)", marginBottom: "10px" }}>Existing Images</p>
+                <div className="uploaded-previews">
+                  {existingImages.map((url, i) => (
+                    <div key={i} className="preview-img-wrapper">
+                      <img src={url} alt="existing preview" />
+                      <button type="button" onClick={() => removeExistingImage(i)}>
+                        <i className="fas fa-trash-alt"></i>
+                      </button>
+                    </div>
+                  ))}
+                </div>
               </div>
             )}
+
+            {/* Upload Zone for New Images */}
+            <div>
+              <p style={{ fontFamily: "Open Sans", fontSize: "14px", fontWeight: "600", color: "rgb(2,53,28)", marginBottom: "10px" }}>Upload New Images</p>
+              <div className="file-upload-zone">
+                <i className="fas fa-cloud-upload-alt"></i>
+                <p>Drag and drop property images or <span>Browse files</span></p>
+                <input type="file" multiple accept="image/*" onChange={handleNewImageUpload} />
+              </div>
+
+              {newImagePreviews.length > 0 && (
+                <div className="uploaded-previews">
+                  {newImagePreviews.map((url, i) => (
+                    <div key={i} className="preview-img-wrapper">
+                      <img src={url} alt="new preview" />
+                      <button type="button" onClick={() => removeNewImage(i)}>
+                        <i className="fas fa-times"></i>
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
           </div>
 
           <button type="submit" className="submit-btn" disabled={isLoading}>
-            {isLoading ? "Listing Property..." : "List Property"}
+            {isLoading ? "Saving changes..." : "Save Changes"}
           </button>
         </form>
       )}

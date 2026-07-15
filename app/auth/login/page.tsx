@@ -28,7 +28,9 @@ export default function Login() {
       setIsLoading(false);
 
       if (res.success) {
-        if (res.role === "AGENT" || res.role === "ADMIN") {
+        if (res.role === "ADMIN") {
+          router.push("/admin-dashboard");
+        } else if (res.role === "AGENT") {
           router.push("/agent-dashboard");
         } else {
           router.push("/explore");

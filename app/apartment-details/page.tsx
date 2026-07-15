@@ -18,6 +18,7 @@ interface Property {
   description: string;
   amenities: string[];
   images: string[];
+  views?: number;
   agent: {
     name: string;
     role: string;
@@ -118,6 +119,7 @@ function ApartmentDetailsContent() {
           description: prop.description,
           amenities: prop.amenities,
           images: prop.images,
+          views: prop.views || 0,
           agent: {
             name: prop.agent ? prop.agent.fullName : (prop.student ? prop.student.fullName : "Campus Stay Official"),
             role: prop.agent ? (prop.agent.isVerified ? "Verified Agent" : "Agent/Landlord") : "Student (Roommate Option)",
@@ -215,7 +217,7 @@ function ApartmentDetailsContent() {
             <h1 className="listing-title">{property.title}</h1>
 
             <div className="meta-row">
-              <span><i className="far fa-eye"></i> 124 views</span>
+              <span><i className="far fa-eye"></i> {property.views || 0} views</span>
               <span><i className="fas fa-home"></i> Student Hostel</span>
               <span><i className="far fa-calendar-alt"></i> Listed recently</span>
             </div>
@@ -302,25 +304,23 @@ function ApartmentDetailsContent() {
               <>
                 <div className="verification-lock-banner">
                   <p><i className="fas fa-lock"></i> Verification Required</p>
-                  <small>Please verify your student profile to view phone numbers and contact agents.</small>
+                  <small>Please verify your student profile to message listing owners.</small>
                   <Link href={currentUser ? "/student-dashboard/profile" : "/auth/login"} className="verify-link-btn">
                     {currentUser ? "Verify Now" : "Log In to Verify"}
                   </Link>
                 </div>
-                <button className="whatsapp-btn full-width locked" disabled>
-                  <i className="fab fa-whatsapp"></i> Chat on WhatsApp (Locked)
+                <button className="whatsapp-btn full-width locked" disabled style={{ backgroundColor: "#888" }}>
+                  <i className="fas fa-comments"></i> Message Landlord (Locked)
                 </button>
               </>
             ) : (
-              <a 
-                href={`https://wa.me/${property.agent.phone.replace(/[^0-9+]/g, "")}?text=Hi%20${encodeURIComponent(property.agent.name)},%20I%20am%20interested%20in%20your%20listing%20"${encodeURIComponent(property.title)}"%20on%20Campus%20Stay.`} 
-                target="_blank" 
-                rel="noopener noreferrer" 
+              <Link 
+                href={`/chat?propertyId=${property.id}`} 
                 className="whatsapp-btn full-width"
-                onClick={handleWhatsAppClick}
+                style={{ display: "flex", justifyContent: "center", alignItems: "center", textDecoration: "none", backgroundColor: "#d35400" }}
               >
-                <i className="fab fa-whatsapp"></i> Chat on WhatsApp
-              </a>
+                <i className="fas fa-comments" style={{ marginRight: "8px" }}></i> Message Landlord
+              </Link>
             )}
             <Link href="/explore" className="view-listings-link">View all listings &rarr;</Link>
           </div>

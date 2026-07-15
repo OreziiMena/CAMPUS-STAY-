@@ -2,6 +2,8 @@
 
 import prisma from "@/lib/prisma";
 import { getCurrentUser } from "./auth";
+import { writeFile, mkdir } from "fs/promises";
+import path from "path";
 
 export async function getProperties(filterParam?: string | {
   searchQuery?: string;
@@ -32,6 +34,7 @@ export async function getProperties(filterParam?: string | {
 
     const whereClause: any = {
       isAvailable: true,
+      isVerified: true,
     };
 
     const andConditions: any[] = [];
@@ -52,6 +55,7 @@ export async function getProperties(filterParam?: string | {
     if (university && university !== "All") {
       andConditions.push({
         OR: [
+          { university: { equals: university, mode: "insensitive" } },
           { title: { contains: university, mode: "insensitive" } },
           { location: { contains: university, mode: "insensitive" } },
           { description: { contains: university, mode: "insensitive" } },
@@ -158,7 +162,7 @@ export async function addProperty(data: any) {
       return { success: false, error: "Unauthorized. Please log in." };
     }
 
-    const { title, hostelType, price, location, distance, description, amenities, images } = data;
+    const { title, hostelType, price, location, distance, description, amenities, images, university } = data;
 
     let createData: any = {
       title,
@@ -167,6 +171,7 @@ export async function addProperty(data: any) {
       location,
       distance,
       description,
+      university: university || "FUPRE",
       amenities: amenities || [],
       images: images || [],
     };
@@ -267,11 +272,11 @@ export async function getAgentDashboardData() {
       where: { agentId: agentProfileId, isAvailable: true },
     });
 
-    const newInquiries = await prisma.inquiry.count({
+    const newInquiries = await prisma.chatRoom.count({
       where: { agentId: user.id },
     });
 
-    const recentInquiries = await prisma.inquiry.findMany({
+    const recentChatRooms = await prisma.chatRoom.findMany({
       where: { agentId: user.id },
       include: {
         student: {
@@ -280,6 +285,10 @@ export async function getAgentDashboardData() {
           },
         },
         property: true,
+        messages: {
+          orderBy: { createdAt: "desc" },
+          take: 1,
+        },
       },
       orderBy: {
         createdAt: "desc",
@@ -294,14 +303,14 @@ export async function getAgentDashboardData() {
         activeListings,
         newInquiries,
       },
-      recentInquiries: recentInquiries.map((inq) => ({
-        id: inq.id,
-        studentName: inq.student.studentProfile?.fullName || "Student",
-        phone: inq.student.phone,
-        email: inq.student.email,
-        propertyName: inq.property.title,
-        message: inq.message,
-        createdAt: inq.createdAt.toISOString(),
+      recentInquiries: recentChatRooms.map((room) => ({
+        id: room.id,
+        studentName: room.student.studentProfile?.fullName || "Student",
+        phone: room.student.phone,
+        email: room.student.email,
+        propertyName: room.property.title,
+        message: room.messages?.[0]?.text || "No messages yet",
+        createdAt: (room.messages?.[0]?.createdAt || room.createdAt).toISOString(),
       })),
     };
   } catch (err: any) {
@@ -405,5 +414,151 @@ export async function getAgentAnalyticsData() {
     };
   } catch (err: any) {
     return { success: false, error: err.message || "Failed to load analytics data." };
+  }
+}
+
+export async function uploadPropertyImages(formData: FormData) {
+  try {
+    const user = await getCurrentUser();
+    if (!user) {
+      return { success: false, error: "Unauthorized. Please log in." };
+    }
+
+    const files = formData.getAll("images") as File[];
+    if (files.length === 0) {
+      return { success: true, urls: [] };
+    }
+
+    const uploadDir = path.join(process.cwd(), "public", "uploads", "properties");
+    await mkdir(uploadDir, { recursive: true });
+
+    const urls: string[] = [];
+    const timestamp = Date.now();
+
+    for (let i = 0; i < files.length; i++) {
+      const file = files[i];
+      if (!file || file.size === 0) continue;
+
+      const buffer = Buffer.from(await file.arrayBuffer());
+      const ext = path.extname(file.name) || ".jpg";
+      const filename = `${user.id}-property-${timestamp}-${i}${ext}`;
+      await writeFile(path.join(uploadDir, filename), buffer);
+      urls.push(`/uploads/properties/${filename}`);
+    }
+
+    return { success: true, urls };
+  } catch (err: any) {
+    return { success: false, error: err.message || "Failed to upload images." };
+  }
+}
+
+export async function getAgentProperties() {
+  try {
+    const user = await getCurrentUser();
+    if (!user || user.role !== "AGENT" || !user.agentProfile) {
+      return { success: false, error: "Unauthorized." };
+    }
+
+    const properties = await prisma.property.findMany({
+      where: {
+        agentId: user.agentProfile.id,
+      },
+      orderBy: {
+        createdAt: "desc",
+      },
+    });
+
+    return { success: true, properties };
+  } catch (err: any) {
+    return { success: false, error: err.message || "Failed to fetch properties." };
+  }
+}
+
+export async function togglePropertyAvailability(propertyId: string) {
+  try {
+    const user = await getCurrentUser();
+    if (!user || user.role !== "AGENT" || !user.agentProfile) {
+      return { success: false, error: "Unauthorized." };
+    }
+
+    const property = await prisma.property.findUnique({
+      where: { id: propertyId },
+    });
+
+    if (!property || property.agentId !== user.agentProfile.id) {
+      return { success: false, error: "Property not found or unauthorized." };
+    }
+
+    const updated = await prisma.property.update({
+      where: { id: propertyId },
+      data: { isAvailable: !property.isAvailable },
+    });
+
+    return { success: true, isAvailable: updated.isAvailable };
+  } catch (err: any) {
+    return { success: false, error: err.message || "Failed to toggle availability." };
+  }
+}
+
+export async function updateProperty(propertyId: string, data: any) {
+  try {
+    const user = await getCurrentUser();
+    if (!user || user.role !== "AGENT" || !user.agentProfile) {
+      return { success: false, error: "Unauthorized." };
+    }
+
+    const existingProperty = await prisma.property.findUnique({
+      where: { id: propertyId },
+    });
+
+    if (!existingProperty || existingProperty.agentId !== user.agentProfile.id) {
+      return { success: false, error: "Property not found or unauthorized." };
+    }
+
+    const { title, hostelType, price, location, distance, description, amenities, images, university } = data;
+
+    const updated = await prisma.property.update({
+      where: { id: propertyId },
+      data: {
+        title,
+        hostelType,
+        price: parseFloat(price),
+        location,
+        distance,
+        description,
+        university: university || existingProperty.university || "FUPRE",
+        amenities: amenities || [],
+        images: images || [],
+      },
+    });
+
+    return { success: true, propertyId: updated.id };
+  } catch (err: any) {
+    return { success: false, error: err.message || "Failed to update property." };
+  }
+}
+
+export async function deleteProperty(propertyId: string) {
+  try {
+    const user = await getCurrentUser();
+    if (!user || user.role !== "AGENT" || !user.agentProfile) {
+      return { success: false, error: "Unauthorized." };
+    }
+
+    const property = await prisma.property.findUnique({
+      where: { id: propertyId },
+    });
+
+    if (!property || property.agentId !== user.agentProfile.id) {
+      return { success: false, error: "Property not found or unauthorized." };
+    }
+
+    await prisma.property.delete({
+      where: { id: propertyId },
+    });
+
+    return { success: true };
+  } catch (err: any) {
+    return { success: false, error: err.message || "Failed to delete property." };
   }
 }

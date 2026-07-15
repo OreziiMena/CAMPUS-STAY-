@@ -1,0 +1,13 @@
+import PusherClient from "pusher-js";
+
+export const isPusherClientConfigured = !!(
+  process.env.NEXT_PUBLIC_PUSHER_KEY &&
+  process.env.NEXT_PUBLIC_PUSHER_CLUSTER
+);
+
+export const pusherClient = isPusherClientConfigured
+  ? new PusherClient(process.env.NEXT_PUBLIC_PUSHER_KEY || "", {
+      cluster: process.env.NEXT_PUBLIC_PUSHER_CLUSTER || "",
+      forceTLS: true,
+    })
+  : null;

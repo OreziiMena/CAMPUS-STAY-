@@ -1,4 +1,5 @@
 import React from "react";
+import Link from "next/link";
 import styles from "./InquiryList.module.css";
 
 interface Inquiry {
@@ -6,8 +7,6 @@ interface Inquiry {
   studentName: string;
   propertyName: string;
   message: string;
-  phone: string;
-  email: string;
   createdAt: string;
 }
 
@@ -20,9 +19,9 @@ export default function InquiryList({ inquiries }: InquiryListProps) {
     <div className="recent-section" id="inquiries-section">
       <div className="section-header">
         <h2>Recent Student Inquiries</h2>
-        <a href="#" onClick={(e) => e.preventDefault()}>
+        <Link href="/chat">
           View All
-        </a>
+        </Link>
       </div>
 
       <div className="inquiry-list" id="inquiries-container">
@@ -40,26 +39,17 @@ export default function InquiryList({ inquiries }: InquiryListProps) {
                 <p className={styles.messageText}>
                   "{inq.message}"
                 </p>
-                <small className={styles.metaText}>
-                  <i className="fas fa-phone"></i> {inq.phone} | <i className="fas fa-envelope"></i>{" "}
-                  {inq.email}
-                </small>
               </div>
               <div className="inquiry-time">
                 {new Date(inq.createdAt).toLocaleDateString()}
               </div>
-              <a
-                href={`https://wa.me/${inq.phone.replace(/[^0-9+]/g, "")}?text=Hi%20${encodeURIComponent(
-                  inq.studentName
-                )},%20I%20am%20replying%20to%20your%20inquiry%20about%20"${encodeURIComponent(
-                  inq.propertyName
-                )}"%20on%20Campus%20Stay.`}
-                target="_blank"
-                rel="noopener noreferrer"
+              <Link
+                href={`/chat?roomId=${inq.id}`}
                 className={`reply-btn ${styles.replyBtnLink}`}
+                style={{ backgroundColor: "#d35400", border: "1px solid #d35400", color: "white", display: "inline-flex", alignItems: "center", justifyContent: "center" }}
               >
-                Reply on WhatsApp
-              </a>
+                Reply in Chat
+              </Link>
             </div>
           ))
         )}

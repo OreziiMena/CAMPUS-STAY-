@@ -30,6 +30,11 @@ model User {
   inquiries         Inquiry[]       @relation(name: "StudentInquiries")
   receivedInquiries Inquiry[]       @relation(name: "AgentReceivedInquiries")
   viewings          Viewing[]
+
+  // Chat Room Associations
+  studentChatRooms  ChatRoom[]      @relation(name: "StudentChatRooms")
+  agentChatRooms    ChatRoom[]      @relation(name: "AgentChatRooms")
+  messagesSent      Message[]
 }
 
 model StudentProfile {
@@ -79,6 +84,7 @@ model Property {
   isAvailable  Boolean      @default(true)
   isVerified   Boolean      @default(false)
   views        Int          @default(0)
+  university   String       @default("FUPRE")
   
   isRoommateOption    Boolean         @default(false)
   
@@ -93,6 +99,7 @@ model Property {
   // Inquiries sent for this property
   inquiries           Inquiry[]
   viewings            Viewing[]
+  chatRooms           ChatRoom[]
   
   createdAt           DateTime        @default(now())
   updatedAt           DateTime        @updatedAt
@@ -127,4 +134,29 @@ model Viewing {
   status      String   @default("PENDING") // PENDING, CONFIRMED, CANCELLED
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
+}
+
+model ChatRoom {
+  id          String    @id @default(uuid())
+  studentId   String
+  student     User      @relation(name: "StudentChatRooms", fields: [studentId], references: [id], onDelete: Cascade)
+  agentId     String
+  agent       User      @relation(name: "AgentChatRooms", fields: [agentId], references: [id], onDelete: Cascade)
+  propertyId  String
+  property    Property  @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  messages    Message[]
+  createdAt   DateTime  @default(now())
+  
+  @@unique([studentId, agentId, propertyId])
+}
+
+model Message {
+  id         String   @id @default(uuid())
+  chatRoomId String
+  chatRoom   ChatRoom @relation(fields: [chatRoomId], references: [id], onDelete: Cascade)
+  senderId   String
+  sender     User     @relation(fields: [senderId], references: [id], onDelete: Cascade)
+  text       String
+  isRead     Boolean  @default(false)
+  createdAt  DateTime @default(now())
 }

@@ -1,0 +1,453 @@
+/* Admin Dashboard Stylesheet */
+
+.admin-loading-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+  background-color: #f4f7f6;
+  font-family: 'Poppins', sans-serif;
+  color: rgb(2, 53, 28);
+  font-size: 18px;
+  gap: 10px;
+}
+
+.spinner-icon {
+  font-size: 24px;
+}
+
+.admin-layout {
+  display: flex;
+  height: 100vh;
+  overflow: hidden;
+  background-color: #f4f7f6;
+}
+
+.admin-sidebar {
+  width: 250px;
+  background-color: rgb(2, 53, 28);
+  color: white;
+  display: flex;
+  flex-direction: column;
+  border-right: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.sidebar-brand {
+  padding: 25px 20px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.sidebar-brand h2 {
+  font-family: 'Poppins', sans-serif;
+  font-size: 20px;
+  font-weight: 700;
+  margin: 0;
+  color: #fff;
+}
+
+.sidebar-menu {
+  flex: 1;
+  padding: 20px 0;
+}
+
+.sidebar-menu ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.sidebar-menu ul li a {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  padding: 12px 20px;
+  color: rgba(255, 255, 255, 0.7);
+  text-decoration: none;
+  font-family: 'Poppins', sans-serif;
+  font-size: 15px;
+  font-weight: 500;
+  transition: all 0.3s ease;
+  border-left: 4px solid transparent;
+}
+
+.sidebar-menu ul li a i {
+  width: 20px;
+  text-align: center;
+}
+
+.sidebar-menu ul li a:hover,
+.sidebar-menu ul li a.active {
+  color: #d35400;
+  background-color: rgba(211, 84, 0, 0.05);
+  border-left-color: #d35400;
+}
+
+.sidebar-footer {
+  padding: 20px;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.admin-logout-btn {
+  width: 100%;
+  background: none;
+  border: none;
+  color: #f87171;
+  text-align: left;
+  font-family: 'Poppins', sans-serif;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 0;
+  transition: color 0.3s;
+}
+
+.admin-logout-btn:hover {
+  color: #f87171;
+  opacity: 0.8;
+}
+
+.admin-main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+}
+
+.admin-header {
+  background-color: white;
+  padding: 15px 30px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid #eaeaea;
+}
+
+.header-title h3 {
+  margin: 0;
+  font-family: 'Poppins', sans-serif;
+  font-size: 18px;
+  color: rgb(2, 53, 28);
+}
+
+.admin-profile-info {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-family: 'Poppins', sans-serif;
+  font-size: 14px;
+  font-weight: 600;
+  color: rgb(2, 53, 28);
+}
+
+.admin-avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background-color: #d35400;
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 16px;
+}
+
+.admin-content {
+  padding: 30px;
+  max-width: 1250px;
+  margin: 0;
+  width: 100%;
+}
+
+/* Tabs Section */
+.admin-tabs {
+  display: flex;
+  gap: 15px;
+  margin-bottom: 25px;
+  border-bottom: 1px solid #eaeaea;
+  padding-bottom: 10px;
+}
+
+.tab-btn {
+  background: none;
+  border: none;
+  font-family: 'Poppins', sans-serif;
+  font-size: 15px;
+  font-weight: 600;
+  padding: 8px 16px;
+  cursor: pointer;
+  color: #666;
+  border-bottom: 3px solid transparent;
+  transition: all 0.3s;
+}
+
+.tab-btn.active {
+  color: #d35400;
+  border-bottom-color: #d35400;
+}
+
+/* Verification Tables Card */
+.admin-card {
+  background: white;
+  border-radius: 12px;
+  padding: 25px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.02);
+  border: 1px solid #eaeaea;
+  margin-bottom: 30px;
+}
+
+.admin-card h2 {
+  font-family: 'Poppins', sans-serif;
+  font-size: 20px;
+  color: rgb(2, 53, 28);
+  margin-top: 0;
+  margin-bottom: 20px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+/* Table styles */
+.admin-table-wrapper {
+  overflow-x: auto;
+}
+
+.admin-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-family: 'Open Sans', sans-serif;
+  font-size: 14px;
+}
+
+.admin-table th,
+.admin-table td {
+  padding: 15px;
+  text-align: left;
+  border-bottom: 1px solid #eaeaea;
+}
+
+.admin-table th {
+  background-color: #fcfcfc;
+  color: rgb(2, 53, 28);
+  font-family: 'Poppins', sans-serif;
+  font-weight: 600;
+}
+
+.admin-table tr:hover {
+  background-color: #fafafa;
+}
+
+/* Document links */
+.doc-links-cell {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.doc-link {
+  color: #d35400;
+  text-decoration: none;
+  font-weight: 600;
+  font-size: 13px;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.doc-link:hover {
+  text-decoration: underline;
+}
+
+/* Verification buttons */
+.admin-action-btns {
+  display: flex;
+  gap: 8px;
+}
+
+.approve-btn {
+  background-color: #2e7d32;
+  color: white;
+  border: none;
+  padding: 6px 12px;
+  border-radius: 4px;
+  font-family: 'Poppins', sans-serif;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: opacity 0.3s;
+}
+
+.approve-btn:hover {
+  opacity: 0.9;
+}
+
+.reject-btn {
+  background-color: #d32f2f;
+  color: white;
+  border: none;
+  padding: 6px 12px;
+  border-radius: 4px;
+  font-family: 'Poppins', sans-serif;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: opacity 0.3s;
+}
+
+.reject-btn:hover {
+  opacity: 0.9;
+}
+
+.no-data-text {
+  text-align: center;
+  color: #888;
+  font-family: 'Open Sans', sans-serif;
+  padding: 40px 0;
+  font-size: 15px;
+}
+
+.property-preview-cell {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.property-preview-img {
+  width: 60px;
+  height: 45px;
+  border-radius: 4px;
+  object-fit: cover;
+}
+
+.property-preview-title {
+  font-weight: 600;
+  color: rgb(2, 53, 28);
+}
+
+/* Mobile Toggle buttons in Admin Header */
+.admin-menu-toggle {
+  display: none;
+  background: none;
+  border: none;
+  color: rgb(2, 53, 28);
+  font-size: 20px;
+  cursor: pointer;
+  padding: 5px;
+}
+
+.admin-close-sidebar {
+  display: none;
+  background: none;
+  border: none;
+  color: white;
+  font-size: 20px;
+  cursor: pointer;
+  padding: 5px;
+}
+
+.sidebar-overlay {
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.4);
+  z-index: 999;
+}
+
+@media (max-width: 768px) {
+  .admin-menu-toggle {
+    display: block;
+  }
+  
+  .admin-close-sidebar {
+    display: block;
+  }
+  
+  .sidebar-overlay {
+    display: block;
+  }
+  
+  .admin-sidebar {
+    position: fixed;
+    top: 0;
+    bottom: 0;
+    left: -250px;
+    z-index: 1000;
+    transition: left 0.3s ease-in-out;
+  }
+  
+  .admin-sidebar.open {
+    left: 0;
+  }
+  
+  .sidebar-brand {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  
+  .admin-content {
+    padding: 15px;
+  }
+  
+  .admin-tabs {
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+  
+  .tab-btn {
+    padding: 6px 12px;
+    font-size: 13px;
+  }
+}
+
+/* Badges for All Users tab */
+.role-badge {
+  display: inline-block;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  font-family: 'Poppins', sans-serif;
+}
+.role-badge.student {
+  background-color: rgba(2, 53, 28, 0.08);
+  color: rgb(2, 53, 28);
+}
+.role-badge.agent {
+  background-color: rgba(211, 84, 0, 0.08);
+  color: #d35400;
+}
+.role-badge.admin {
+  background-color: rgba(0, 0, 0, 0.08);
+  color: #111;
+}
+
+.status-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 700;
+  font-family: 'Poppins', sans-serif;
+}
+.status-badge.verified {
+  background-color: rgba(46, 125, 50, 0.08);
+  color: #2e7d32;
+}
+.status-badge.unverified {
+  background-color: rgba(211, 47, 47, 0.08);
+  color: #d32f2f;
+}
+.status-badge.admin {
+  background-color: rgba(2, 53, 28, 0.08);
+  color: rgb(2, 53, 28);
+}

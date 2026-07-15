@@ -33,14 +33,17 @@ export default function Sidebar({
         </li>
         <li>
           <Link
-            href="/agent-dashboard/add-property"
-            className={activePath === "/agent-dashboard/add-property" ? "active" : ""}
+            href="/agent-dashboard/properties"
+            className={activePath.startsWith("/agent-dashboard/properties") ? "active" : ""}
           >
             <i className="fas fa-building"></i> My Properties
           </Link>
         </li>
         <li>
-          <Link href="/agent-dashboard#inquiries-section">
+          <Link
+            href="/chat"
+            className={activePath === "/chat" ? "active" : ""}
+          >
             <i className="fas fa-envelope"></i> Inquiries{" "}
             <span className="badge" id="nav-inquiry-badge">
               {newInquiriesCount}
@@ -61,6 +64,11 @@ export default function Sidebar({
             className={activePath === "/agent-dashboard/settings" ? "active" : ""}
           >
             <i className="fas fa-cog"></i> Settings
+          </Link>
+        </li>
+        <li>
+          <Link href="/explore">
+            <i className="fas fa-globe"></i> Explore Properties
           </Link>
         </li>
       </ul>
