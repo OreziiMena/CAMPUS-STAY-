@@ -61,6 +61,47 @@ function ChatContent() {
     };
   }, []);
 
+  // Keep navbar visible and resize chat-container to match visual viewport (prevent keyboard panning)
+  useEffect(() => {
+    if (typeof window === "undefined" || !window.visualViewport) return;
+
+    const handleViewportChange = () => {
+      const viewport = window.visualViewport;
+      if (!viewport) return;
+
+      const chatContainer = document.querySelector(".chat-container") as HTMLElement;
+      if (chatContainer) {
+        // Adjust the container height to fit the visible area between navbar (80px) and keyboard top
+        chatContainer.style.height = `${viewport.height - 80}px`;
+        
+        // Offset for top panning (keep navbar at the top of the viewport)
+        if (viewport.offsetTop > 0) {
+          chatContainer.style.top = `${80 - viewport.offsetTop}px`;
+        } else {
+          chatContainer.style.top = "80px";
+        }
+      }
+      
+      // Force page scroll offset back to 0 to keep fixed navbar visible
+      window.scrollTo(0, 0);
+    };
+
+    window.visualViewport.addEventListener("resize", handleViewportChange);
+    window.visualViewport.addEventListener("scroll", handleViewportChange);
+
+    return () => {
+      window.visualViewport?.removeEventListener("resize", handleViewportChange);
+      window.visualViewport?.removeEventListener("scroll", handleViewportChange);
+      
+      // Reset styles on unmount
+      const chatContainer = document.querySelector(".chat-container") as HTMLElement;
+      if (chatContainer) {
+        chatContainer.style.height = "";
+        chatContainer.style.top = "";
+      }
+    };
+  }, []);
+
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -211,6 +252,14 @@ function ChatContent() {
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
+
+  const handleInputFocus = () => {
+    // Reset body scrolls immediately to override mobile safari automatic zoom/pan offsets
+    setTimeout(() => {
+      window.scrollTo(0, 0);
+      document.body.scrollTop = 0;
+    }, 40);
+  };
 
   const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -374,6 +423,7 @@ function ChatContent() {
                   placeholder="Type your message here..."
                   value={inputText}
                   onChange={(e) => setInputText(e.target.value)}
+                  onFocus={handleInputFocus}
                   disabled={loadingMessages}
                 />
                 <button 
