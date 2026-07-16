@@ -98,6 +98,34 @@ function ApartmentDetailsContent() {
   const [viewingDateTime, setViewingDateTime] = useState("");
   const [schedulingStatus, setSchedulingStatus] = useState("");
   const [isScheduling, setIsScheduling] = useState(false);
+  const [showToast, setShowToast] = useState(false);
+
+  const handleShare = async () => {
+    if (!property) return;
+    const shareUrl = window.location.href;
+    const shareData = {
+      title: property.title,
+      text: `Check out this listing on Campus Stay: ${property.title}`,
+      url: shareUrl,
+    };
+
+    if (typeof navigator !== "undefined" && navigator.share && navigator.canShare && navigator.canShare(shareData)) {
+      try {
+        await navigator.share(shareData);
+      } catch (err) {
+        console.log("Web Share API error:", err);
+      }
+    } else {
+      // Fallback: Copy to clipboard
+      try {
+        await navigator.clipboard.writeText(shareUrl);
+        setShowToast(true);
+        setTimeout(() => setShowToast(false), 3000);
+      } catch (err) {
+        console.error("Failed to copy link:", err);
+      }
+    }
+  };
 
   useEffect(() => {
     const fetchDetails = async () => {
@@ -294,9 +322,6 @@ function ApartmentDetailsContent() {
               <div className="agent-info">
                 <h5>{property.agent.name} <i className="fas fa-check-circle verified-icon"></i></h5>
                 <p className="agent-role">{property.agent.role}</p>
-                <p className="agent-phone-display">
-                  Phone: {!currentUser || (currentUser.role === "STUDENT" && !currentUser.studentProfile?.isVerified) ? "+234 916 *** ****" : property.agent.phone}
-                </p>
               </div>
             </div>
 
@@ -310,7 +335,7 @@ function ApartmentDetailsContent() {
                   </Link>
                 </div>
                 <button className="whatsapp-btn full-width locked" disabled style={{ backgroundColor: "#888" }}>
-                  <i className="fas fa-comments"></i> Message Landlord (Locked)
+                  <i className="fas fa-comments"></i> Message (Locked)
                 </button>
               </>
             ) : (
@@ -319,7 +344,7 @@ function ApartmentDetailsContent() {
                 className="whatsapp-btn full-width"
                 style={{ display: "flex", justifyContent: "center", alignItems: "center", textDecoration: "none", backgroundColor: "#d35400" }}
               >
-                <i className="fas fa-comments" style={{ marginRight: "8px" }}></i> Message Landlord
+                <i className="fas fa-comments" style={{ marginRight: "8px" }}></i> Message 
               </Link>
             )}
             <Link href="/explore" className="view-listings-link">View all listings &rarr;</Link>
@@ -328,7 +353,7 @@ function ApartmentDetailsContent() {
           <div className="sidebar-card">
             <h4 className="card-heading">Actions</h4>
             <div className="action-buttons">
-              <button className="action-btn" onClick={() => alert("Link copied to clipboard!")}><i className="fas fa-share-alt"></i> Share</button>
+              <button className="action-btn" onClick={handleShare}><i className="fas fa-share-alt"></i> Share</button>
               <button className="action-btn" onClick={() => alert("Listing reported. Thank you.")}><i className="far fa-flag"></i> Report</button>
             </div>
           </div>
@@ -344,6 +369,29 @@ function ApartmentDetailsContent() {
           </div>
         </aside>
       </main>
+
+      {/* Premium Toast Notification */}
+      {showToast && (
+        <div style={{
+          position: "fixed",
+          bottom: "30px",
+          right: "30px",
+          backgroundColor: "#d35400",
+          color: "white",
+          padding: "12px 24px",
+          borderRadius: "8px",
+          boxShadow: "0 4px 15px rgba(0,0,0,0.15)",
+          zIndex: 9999,
+          fontFamily: "'Poppins', sans-serif",
+          fontWeight: "bold",
+          fontSize: "14px",
+          display: "flex",
+          alignItems: "center",
+          gap: "8px"
+        }}>
+          <i className="fas fa-check-circle"></i> Link copied!
+        </div>
+      )}
 
       <Footer />
     </>

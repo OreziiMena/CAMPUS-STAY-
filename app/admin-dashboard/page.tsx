@@ -30,6 +30,7 @@ function AdminDashboardContent() {
   const [activeTab, setActiveTab] = useState("verifications");
   const [activeQueueTab, setActiveQueueTab] = useState("students");
   const [actionLoading, setActionLoading] = useState<string | null>(null);
+  const [searchQuery, setSearchQuery] = useState("");
 
   const fetchQueues = async () => {
     setLoading(true);
@@ -53,6 +54,7 @@ function AdminDashboardContent() {
 
   useEffect(() => {
     setActiveTab(tabParam);
+    setSearchQuery(""); // Clear search query when changing tabs
   }, [tabParam]);
 
   const handleVerifyUser = async (profileId: string, role: "STUDENT" | "AGENT") => {
@@ -233,6 +235,64 @@ function AdminDashboardContent() {
   const studentUsers = users.filter((u) => u.role === "STUDENT");
   const agentUsers = users.filter((u) => u.role === "AGENT");
 
+  // Search filter logic
+  const filteredStudents = studentUsers.filter((u) => {
+    const name = u.studentProfile?.fullName?.toLowerCase() || "";
+    const username = u.studentProfile?.username?.toLowerCase() || "";
+    const email = u.email?.toLowerCase() || "";
+    const phone = u.phone?.toLowerCase() || "";
+    const query = searchQuery.toLowerCase();
+    return name.includes(query) || username.includes(query) || email.includes(query) || phone.includes(query);
+  });
+
+  const filteredAgents = agentUsers.filter((u) => {
+    const name = u.agentProfile?.fullName?.toLowerCase() || "";
+    const email = u.email?.toLowerCase() || "";
+    const phone = u.phone?.toLowerCase() || "";
+    const query = searchQuery.toLowerCase();
+    return name.includes(query) || email.includes(query) || phone.includes(query);
+  });
+
+  const filteredAllProperties = allProperties.filter((p) => {
+    const title = p.title?.toLowerCase() || "";
+    const location = p.location?.toLowerCase() || "";
+    const university = p.university?.toLowerCase() || "";
+    const agentName = p.agent?.fullName?.toLowerCase() || "";
+    const studentName = p.student?.fullName?.toLowerCase() || "";
+    const query = searchQuery.toLowerCase();
+    return title.includes(query) || location.includes(query) || university.includes(query) || agentName.includes(query) || studentName.includes(query);
+  });
+
+  // Filter queues under verification tab too if query exists
+  const filteredQueueStudents = students.filter((s) => {
+    const name = s.fullName?.toLowerCase() || "";
+    const username = s.username?.toLowerCase() || "";
+    const university = s.university?.toLowerCase() || "";
+    const email = s.user?.email?.toLowerCase() || "";
+    const phone = s.user?.phone?.toLowerCase() || "";
+    const query = searchQuery.toLowerCase();
+    return name.includes(query) || username.includes(query) || university.includes(query) || email.includes(query) || phone.includes(query);
+  });
+
+  const filteredQueueAgents = agents.filter((a) => {
+    const name = a.fullName?.toLowerCase() || "";
+    const address = a.address?.toLowerCase() || "";
+    const email = a.user?.email?.toLowerCase() || "";
+    const phone = a.user?.phone?.toLowerCase() || "";
+    const query = searchQuery.toLowerCase();
+    return name.includes(query) || address.includes(query) || email.includes(query) || phone.includes(query);
+  });
+
+  const filteredQueueProperties = properties.filter((p) => {
+    const title = p.title?.toLowerCase() || "";
+    const location = p.location?.toLowerCase() || "";
+    const university = p.university?.toLowerCase() || "";
+    const agentName = p.agent?.fullName?.toLowerCase() || "";
+    const studentName = p.student?.fullName?.toLowerCase() || "";
+    const query = searchQuery.toLowerCase();
+    return title.includes(query) || location.includes(query) || university.includes(query) || agentName.includes(query) || studentName.includes(query);
+  });
+
   return (
     <div>
       {error && (
@@ -240,6 +300,45 @@ function AdminDashboardContent() {
           <i className="fas fa-exclamation-circle"></i> {error}
         </div>
       )}
+
+      {/* Dynamic Directory Search Bar */}
+      <div style={{ marginBottom: "25px", display: "flex", gap: "10px" }}>
+        <div style={{ position: "relative", flex: 1 }}>
+          <i className="fas fa-search" style={{ position: "absolute", left: "15px", top: "50%", transform: "translateY(-50%)", color: "#888" }}></i>
+          <input
+            type="text"
+            placeholder={
+              activeTab === "students" 
+                ? "Search students by name, username, email, or phone..." 
+                : activeTab === "agents" 
+                  ? "Search agents by name, email, or phone..." 
+                  : activeTab === "properties" 
+                    ? "Search properties by title, location, school, or owner..."
+                    : "Search verification queues..."
+            }
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            style={{
+              width: "100%",
+              padding: "12px 15px 12px 40px",
+              borderRadius: "8px",
+              border: "1px solid #eaeaea",
+              fontSize: "14px",
+              outline: "none",
+              boxShadow: "0 2px 8px rgba(0,0,0,0.01)"
+            }}
+          />
+        </div>
+        {searchQuery && (
+          <button 
+            onClick={() => setSearchQuery("")}
+            className="reject-btn"
+            style={{ borderRadius: "8px", display: "flex", alignItems: "center", gap: "5px" }}
+          >
+            Clear
+          </button>
+        )}
+      </div>
 
       {loading ? (
         <div className="no-data-text">
@@ -276,6 +375,8 @@ function AdminDashboardContent() {
                   <h2><i className="fas fa-user-graduate"></i> Pending Student Verifications</h2>
                   {students.length === 0 ? (
                     <div className="no-data-text">No pending student verification requests.</div>
+                  ) : filteredQueueStudents.length === 0 ? (
+                    <div className="no-data-text">No matching student verification requests.</div>
                   ) : (
                     <div className="admin-table-wrapper">
                       <table className="admin-table">
@@ -290,7 +391,7 @@ function AdminDashboardContent() {
                           </tr>
                         </thead>
                         <tbody>
-                          {students.map((student) => (
+                          {filteredQueueStudents.map((student) => (
                             <tr key={student.id}>
                               <td><strong>{student.fullName}</strong></td>
                               <td>@{student.username}</td>
@@ -353,6 +454,8 @@ function AdminDashboardContent() {
                   <h2><i className="fas fa-user-tie"></i> Pending Agent/Landlord Verifications</h2>
                   {agents.length === 0 ? (
                     <div className="no-data-text">No pending agent verification requests.</div>
+                  ) : filteredQueueAgents.length === 0 ? (
+                    <div className="no-data-text">No matching agent verification requests.</div>
                   ) : (
                     <div className="admin-table-wrapper">
                       <table className="admin-table">
@@ -366,7 +469,7 @@ function AdminDashboardContent() {
                           </tr>
                         </thead>
                         <tbody>
-                          {agents.map((agent) => (
+                          {filteredQueueAgents.map((agent) => (
                             <tr key={agent.id}>
                               <td><strong>{agent.fullName}</strong></td>
                               <td>{agent.address || "No office address provided"}</td>
@@ -415,6 +518,8 @@ function AdminDashboardContent() {
                   <h2><i className="fas fa-building"></i> Pending Property Approvals</h2>
                   {properties.length === 0 ? (
                     <div className="no-data-text">No pending property approvals.</div>
+                  ) : filteredQueueProperties.length === 0 ? (
+                    <div className="no-data-text">No matching property approvals.</div>
                   ) : (
                     <div className="admin-table-wrapper">
                       <table className="admin-table">
@@ -429,7 +534,7 @@ function AdminDashboardContent() {
                           </tr>
                         </thead>
                         <tbody>
-                          {properties.map((property) => (
+                          {filteredQueueProperties.map((property) => (
                             <tr key={property.id}>
                               <td>
                                 <div className="property-preview-cell">
@@ -450,12 +555,26 @@ function AdminDashboardContent() {
                               <td>
                                 {property.agent ? (
                                   <div>
-                                    <strong>{property.agent.fullName}</strong>
+                                    <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                                      <strong>{property.agent.fullName}</strong>
+                                      {property.agent.isVerified && (
+                                        <span style={{ color: "#2e7d32" }} title="Verified Owner">
+                                          <i className="fas fa-check-circle"></i>
+                                        </span>
+                                      )}
+                                    </div>
                                     <div style={{ fontSize: "12px", color: "#666" }}>Agent/Landlord</div>
                                   </div>
                                 ) : property.student ? (
                                   <div>
-                                    <strong>{property.student.fullName}</strong>
+                                    <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                                      <strong>{property.student.fullName}</strong>
+                                      {property.student.isVerified && (
+                                        <span style={{ color: "#2e7d32" }} title="Verified Owner">
+                                          <i className="fas fa-check-circle"></i>
+                                        </span>
+                                      )}
+                                    </div>
                                     <div style={{ fontSize: "12px", color: "#666" }}>Student (Roommate Space)</div>
                                   </div>
                                 ) : (
@@ -497,6 +616,8 @@ function AdminDashboardContent() {
               <h2><i className="fas fa-user-graduate"></i> Student Users Directory</h2>
               {studentUsers.length === 0 ? (
                 <div className="no-data-text">No student accounts found.</div>
+              ) : filteredStudents.length === 0 ? (
+                <div className="no-data-text">No matching student accounts found.</div>
               ) : (
                 <div className="admin-table-wrapper">
                   <table className="admin-table">
@@ -511,7 +632,7 @@ function AdminDashboardContent() {
                       </tr>
                     </thead>
                     <tbody>
-                      {studentUsers.map((u) => {
+                      {filteredStudents.map((u) => {
                         const isVerified = u.studentProfile?.isVerified || false;
                         return (
                           <tr key={u.id}>
@@ -564,6 +685,8 @@ function AdminDashboardContent() {
               <h2><i className="fas fa-user-tie"></i> Agent / Landlord Directory</h2>
               {agentUsers.length === 0 ? (
                 <div className="no-data-text">No agent accounts found.</div>
+              ) : filteredAgents.length === 0 ? (
+                <div className="no-data-text">No matching agent accounts found.</div>
               ) : (
                 <div className="admin-table-wrapper">
                   <table className="admin-table">
@@ -577,7 +700,7 @@ function AdminDashboardContent() {
                       </tr>
                     </thead>
                     <tbody>
-                      {agentUsers.map((u) => {
+                      {filteredAgents.map((u) => {
                         const isVerified = u.agentProfile?.isVerified || false;
                         return (
                           <tr key={u.id}>
@@ -629,6 +752,8 @@ function AdminDashboardContent() {
               <h2><i className="fas fa-building"></i> Properties Directory</h2>
               {allProperties.length === 0 ? (
                 <div className="no-data-text">No listed properties found.</div>
+              ) : filteredAllProperties.length === 0 ? (
+                <div className="no-data-text">No matching properties found.</div>
               ) : (
                 <div className="admin-table-wrapper">
                   <table className="admin-table">
@@ -638,13 +763,15 @@ function AdminDashboardContent() {
                         <th>Type</th>
                         <th>Yearly Cost</th>
                         <th>Location & School</th>
+                        <th>Listed By</th>
                         <th>Verification Status</th>
                         <th>Actions</th>
                       </tr>
                     </thead>
                     <tbody>
-                      {allProperties.map((p) => {
+                      {filteredAllProperties.map((p) => {
                         const isVerified = p.isVerified || false;
+                        const isOwnerVerified = p.agent ? p.agent.isVerified : (p.student ? p.student.isVerified : false);
                         return (
                           <tr key={p.id}>
                             <td>
@@ -664,10 +791,33 @@ function AdminDashboardContent() {
                               <div style={{ color: "#666", fontSize: "12px" }}>Near {p.university} ({p.distance})</div>
                             </td>
                             <td>
-                              {isVerified ? (
+                              {p.agent ? (
+                                <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                                  <strong>{p.agent.fullName}</strong>
+                                  {p.agent.isVerified && (
+                                    <span style={{ color: "#2e7d32" }} title="Verified Owner">
+                                      <i className="fas fa-check-circle"></i>
+                                    </span>
+                                  )}
+                                </div>
+                              ) : p.student ? (
+                                <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                                  <strong>{p.student.fullName}</strong>
+                                  {p.student.isVerified && (
+                                    <span style={{ color: "#2e7d32" }} title="Verified Owner">
+                                      <i className="fas fa-check-circle"></i>
+                                    </span>
+                                  )}
+                                </div>
+                              ) : (
+                                "CS Official"
+                              )}
+                            </td>
+                            <td>
+                              {isOwnerVerified ? (
                                 <span className="status-badge verified"><i className="fas fa-check-circle"></i> Verified</span>
                               ) : (
-                                <span className="status-badge unverified"><i className="fas fa-hourglass-half"></i> Pending</span>
+                                <span className="status-badge unverified"><i className="fas fa-hourglass-half"></i> Unverified</span>
                               )}
                             </td>
                             <td>

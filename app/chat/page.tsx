@@ -55,13 +55,13 @@ function ChatContent() {
     const initializeChat = async () => {
       setLoadingRooms(true);
       
-      // 1. Fetch conversations list
+      // Fetch conversations list
       const roomsRes = await getChatRooms();
       if (roomsRes.success && roomsRes.chatRooms) {
         setRooms(roomsRes.chatRooms);
         setCurrentUserId(roomsRes.currentUserId || "");
         
-        // 2. If a specific property chat was initiated
+        //If a specific property chat was initiated
         if (initPropertyId) {
           const createRes = await getOrCreateChatRoom(initPropertyId);
           if (createRes.success && createRes.chatRoomId) {
@@ -80,19 +80,19 @@ function ChatContent() {
             alert(createRes.error || "Failed to initialize conversation.");
           }
         } else if (initRoomId) {
-          // 3. If a specific chat room was selected directly
+          //  If a specific chat room was selected directly
           setSelectedRoomId(initRoomId);
           router.replace("/chat");
-        } else if (roomsRes.chatRooms.length > 0) {
-          // Pre-select first conversation if no propertyId passed
-          setSelectedRoomId(roomsRes.chatRooms[0].id);
+        } else {
+          // Clean slate with no inbox opened on load if no roomId/propertyId query parameters are passed
+          setSelectedRoomId(null);
         }
       }
       setLoadingRooms(false);
     };
 
     initializeChat();
-  }, [initPropertyId, router]);
+  }, [initPropertyId, initRoomId, router]);
 
   // Load message history on conversation select
   useEffect(() => {
@@ -110,36 +110,62 @@ function ChatContent() {
     loadMessages();
   }, [selectedRoomId]);
 
-  // Real-Time Listener (WebSockets - Pusher)
+  // Real-Time Listener (WebSockets - Pusher) for ALL rooms
   useEffect(() => {
-    if (!selectedRoomId || !pusherClient || !isPusherClientConfigured) return;
+    if (!pusherClient || !isPusherClientConfigured || rooms.length === 0) return;
 
-    const channelName = `chat-${selectedRoomId}`;
-    const channel = pusherClient!.subscribe(channelName);
+    const subscriptions = rooms.map((room) => {
+      const channelName = `chat-${room.id}`;
+      const channel = pusherClient!.subscribe(channelName);
 
-    channel.bind("new-message", (data: any) => {
-      // Append if not duplicate
-      setMessages((prev) => {
-        if (prev.some((m) => m.id === data.id)) return prev;
-        return [...prev, data];
+      channel.bind("new-message", (data: any) => {
+        // 1. If this message is for the currently selected room, append to messages state
+        if (room.id === selectedRoomId) {
+          setMessages((prev) => {
+            if (prev.some((m) => m.id === data.id)) return prev;
+            return [...prev, data];
+          });
+        }
+        
+        // 2. Refresh the rooms list to update the sidebar last-message preview and sorting order globally
+        getChatRooms().then((roomsRes) => {
+          if (roomsRes.success && roomsRes.chatRooms) {
+            setRooms(roomsRes.chatRooms);
+          }
+        });
       });
-      
-      // Update sidebar preview
-      setRooms((prevRooms) =>
-        prevRooms.map((room) =>
-          room.id === selectedRoomId
-            ? { ...room, lastMessage: data.text, lastMessageAt: data.createdAt }
-            : room
-        )
-      );
+
+      return { roomId: room.id, channel };
     });
 
     return () => {
-      pusherClient!.unsubscribe(channelName);
+      subscriptions.forEach((sub) => {
+        pusherClient!.unsubscribe(`chat-${sub.roomId}`);
+      });
     };
-  }, [selectedRoomId]);
+  }, [rooms, selectedRoomId]);
 
-  // Real-Time Fallback (Polling) if Pusher credentials are not provided
+  // Periodically refresh the entire conversation list to ensure sidebar is updated globally
+  useEffect(() => {
+    const pollRoomsInterval = setInterval(async () => {
+      const res = await getChatRooms();
+      if (res.success && res.chatRooms) {
+        setRooms((prevRooms) => {
+          // Compare to avoid unnecessary re-renders/scroll resets
+          const hasChanges = prevRooms.length !== res.chatRooms.length ||
+            prevRooms.some((r, i) => r.lastMessage !== res.chatRooms[i]?.lastMessage);
+          if (hasChanges) {
+            return res.chatRooms;
+          }
+          return prevRooms;
+        });
+      }
+    }, 5000);
+
+    return () => clearInterval(pollRoomsInterval);
+  }, []);
+
+  // Real-Time Fallback (Polling) for messages if Pusher credentials are not provided
   useEffect(() => {
     if (!selectedRoomId || isPusherClientConfigured) return;
 
@@ -147,11 +173,16 @@ function ChatContent() {
       const res = await getChatMessages(selectedRoomId);
       if (res.success && res.messages) {
         setMessages((prev) => {
-          // Silent compare: only set state if length differs or last message differs to avoid layout jumps
           if (
             prev.length !== res.messages.length ||
             prev[prev.length - 1]?.id !== res.messages[res.messages.length - 1]?.id
           ) {
+            // Also trigger a re-fetch of rooms list to update the sidebar previews
+            getChatRooms().then((roomsRes) => {
+              if (roomsRes.success && roomsRes.chatRooms) {
+                setRooms(roomsRes.chatRooms);
+              }
+            });
             return res.messages;
           }
           return prev;
@@ -209,7 +240,7 @@ function ChatContent() {
       <div className={`chat-container ${selectedRoomId ? "show-chat" : ""}`}>
         {/* Sidebar */}
         <aside className="chat-sidebar">
-          <div className="sidebar-search">
+          <div className="sidebar-search sticky top-0 z-10 bg-white">
             <input type="text" placeholder="Filter conversations..." disabled />
           </div>
 
@@ -252,7 +283,7 @@ function ChatContent() {
           ) : (
             <>
               {/* Chat Header */}
-              <div className="chat-header">
+              <div className="chat-header sticky top-0 z-10 bg-white">
                 {selectedRoom && (
                   <>
                     <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
@@ -261,7 +292,7 @@ function ChatContent() {
                       </button>
                       <div className="header-info">
                         <h3>{selectedRoom.targetName}</h3>
-                        <p>Query about: {selectedRoom.propertyTitle}</p>
+                        <p>Query: {selectedRoom.propertyTitle}</p>
                       </div>
                     </div>
                     <Link href={`/apartment-details?id=${selectedRoom.propertyId}`} className="property-link-btn">

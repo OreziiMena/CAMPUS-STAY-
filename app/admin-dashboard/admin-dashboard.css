@@ -451,3 +451,70 @@
   background-color: rgba(2, 53, 28, 0.08);
   color: rgb(2, 53, 28);
 }
+
+/* Mobile responsive layout overrides for Admin Dashboard */
+@media (max-width: 768px) {
+  .admin-card {
+    padding: 15px !important;
+    border-radius: 8px !important;
+    margin-bottom: 20px !important;
+  }
+  
+  .admin-card h2 {
+    font-size: 16px !important;
+    margin-bottom: 15px !important;
+  }
+  
+  .admin-header {
+    padding: 10px 15px !important;
+  }
+  
+  .admin-profile-info span {
+    display: none !important; /* Hide name to prevent header overflow on mobile */
+  }
+  
+  .header-title h3 {
+    font-size: 14px !important;
+  }
+  
+  .admin-tabs {
+    flex-wrap: wrap !important;
+    gap: 8px !important;
+    margin-bottom: 15px !important;
+    padding-bottom: 5px !important;
+  }
+  
+  .tab-btn {
+    padding: 6px 10px !important;
+    font-size: 12px !important;
+  }
+  
+  .admin-action-btns {
+    flex-direction: column !important;
+    gap: 6px !important;
+    width: 100%;
+  }
+  
+  .admin-action-btns button {
+    width: 100% !important;
+    min-width: unset !important;
+    padding: 8px 12px !important;
+    text-align: center;
+  }
+  
+  .admin-table th,
+  .admin-table td {
+    padding: 10px !important;
+    font-size: 13px !important;
+  }
+  
+  .doc-link {
+    font-size: 12px !important;
+  }
+  
+  .admin-table-wrapper {
+    margin-top: 10px;
+    border: 1px solid #eaeaea;
+    border-radius: 8px;
+  }
+}

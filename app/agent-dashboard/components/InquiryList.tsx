@@ -31,7 +31,12 @@ export default function InquiryList({ inquiries }: InquiryListProps) {
           </p>
         ) : (
           inquiries.map((inq) => (
-            <div key={inq.id} className="inquiry-item">
+            <Link 
+              key={inq.id} 
+              href={`/chat?roomId=${inq.id}`} 
+              className="inquiry-item"
+              style={{ textDecoration: "none", color: "inherit", width: "100%" }}
+            >
               <div className="inquiry-info">
                 <h4>
                   {inq.studentName} <strong>({inq.propertyName})</strong>
@@ -43,14 +48,7 @@ export default function InquiryList({ inquiries }: InquiryListProps) {
               <div className="inquiry-time">
                 {new Date(inq.createdAt).toLocaleDateString()}
               </div>
-              <Link
-                href={`/chat?roomId=${inq.id}`}
-                className={`reply-btn ${styles.replyBtnLink}`}
-                style={{ backgroundColor: "#d35400", border: "1px solid #d35400", color: "white", display: "inline-flex", alignItems: "center", justifyContent: "center" }}
-              >
-                Reply in Chat
-              </Link>
-            </div>
+            </Link>
           ))
         )}
       </div>
