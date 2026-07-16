@@ -48,6 +48,19 @@ function ChatContent() {
   const [inputText, setInputText] = useState("");
   const [isSending, setIsSending] = useState(false);
 
+  // Lock body and html scrolling on mount to make headers sticky
+  useEffect(() => {
+    document.documentElement.style.overflow = "hidden";
+    document.body.style.overflow = "hidden";
+    document.body.style.height = "100%";
+
+    return () => {
+      document.documentElement.style.overflow = "";
+      document.body.style.overflow = "";
+      document.body.style.height = "";
+    };
+  }, []);
+
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
