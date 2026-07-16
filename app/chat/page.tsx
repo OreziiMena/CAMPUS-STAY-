@@ -49,6 +49,7 @@ function ChatContent() {
   const [isSending, setIsSending] = useState(false);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
 
   // Load rooms and handle initial property conversation trigger
   useEffect(() => {
@@ -200,35 +201,59 @@ function ChatContent() {
 
   const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!selectedRoomId || !inputText.trim() || isSending) return;
+    if (!selectedRoomId || !inputText.trim()) return;
 
     const textToSend = inputText.trim();
     setInputText("");
-    setIsSending(true);
 
-    const res = await sendChatMessage(selectedRoomId, textToSend);
-    if (res.success && res.message) {
-      const msg = res.message;
-      setMessages((prev) => [...prev, {
-        id: msg.id,
-        chatRoomId: msg.chatRoomId,
-        senderId: msg.senderId,
-        text: msg.text,
-        createdAt: msg.createdAt.toISOString(),
-      }]);
-      
-      // Update sidebar preview immediately
-      setRooms((prevRooms) =>
-        prevRooms.map((room) =>
-          room.id === selectedRoomId
-            ? { ...room, lastMessage: textToSend, lastMessageAt: new Date().toISOString() }
-            : room
-        )
-      );
-    } else {
-      alert(res.error || "Failed to send message.");
-    }
-    setIsSending(false);
+    // Maintain keyboard focus and clear input box immediately
+    inputRef.current?.focus();
+
+    const tempId = `temp-${Date.now()}`;
+    const optimisticMsg: Message = {
+      id: tempId,
+      chatRoomId: selectedRoomId,
+      senderId: currentUserId,
+      text: textToSend,
+      createdAt: new Date().toISOString(),
+    };
+
+    // Optimistic UI updates
+    setMessages((prev) => [...prev, optimisticMsg]);
+
+    setRooms((prevRooms) =>
+      prevRooms.map((room) =>
+        room.id === selectedRoomId
+          ? { ...room, lastMessage: textToSend, lastMessageAt: new Date().toISOString() }
+          : room
+      )
+    );
+
+    // Send payload asynchronously in background
+    setIsSending(true);
+    sendChatMessage(selectedRoomId, textToSend).then((res) => {
+      if (res.success && res.message) {
+        const msg = res.message;
+        setMessages((prev) =>
+          prev.map((m) =>
+            m.id === tempId
+              ? {
+                  id: msg.id,
+                  chatRoomId: msg.chatRoomId,
+                  senderId: msg.senderId,
+                  text: msg.text,
+                  createdAt: msg.createdAt.toISOString(),
+                }
+              : m
+          )
+        );
+      } else {
+        // Rollback optimistic message on error
+        setMessages((prev) => prev.filter((m) => m.id !== tempId));
+        alert(res.error || "Failed to send message.");
+      }
+      setIsSending(false);
+    });
   };
 
   const selectedRoom = rooms.find((r) => r.id === selectedRoomId);
@@ -331,16 +356,17 @@ function ChatContent() {
               {/* Message Input */}
               <form onSubmit={handleSendMessage} className="chat-input-bar">
                 <input 
+                  ref={inputRef}
                   type="text" 
                   placeholder="Type your message here..."
                   value={inputText}
                   onChange={(e) => setInputText(e.target.value)}
-                  disabled={loadingMessages || isSending}
+                  disabled={loadingMessages}
                 />
                 <button 
                   type="submit" 
                   className="send-message-btn"
-                  disabled={!inputText.trim() || loadingMessages || isSending}
+                  disabled={!inputText.trim() || loadingMessages}
                 >
                   <i className="fas fa-paper-plane"></i>
                 </button>
