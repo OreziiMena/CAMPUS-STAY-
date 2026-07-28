@@ -22,6 +22,7 @@ interface ChatRoom {
   targetRoleLabel: string;
   lastMessage: string;
   lastMessageAt: Date | string;
+  targetVerified?: boolean;
 }
 
 interface Message {
@@ -349,7 +350,12 @@ function ChatContent() {
                 >
                   <img src={room.propertyImage} alt="property thumbnail" className="conversation-img" />
                   <div className="conversation-details">
-                    <h4>{room.targetName}</h4>
+                    <h4 style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                      {room.targetName}
+                      {room.targetVerified && (
+                        <i className="fas fa-check-circle verified-icon" style={{ color: "#2e7d32", fontSize: "0.85rem" }} title="Verified User"></i>
+                      )}
+                    </h4>
                     <p className="listing-title-sub">{room.propertyTitle}</p>
                     <p className="last-msg">{room.lastMessage}</p>
                   </div>
@@ -378,7 +384,12 @@ function ChatContent() {
                         <i className="fas fa-arrow-left"></i>
                       </button>
                       <div className="header-info">
-                        <h3>{selectedRoom.targetName}</h3>
+                        <h3 style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                          {selectedRoom.targetName}
+                          {selectedRoom.targetVerified && (
+                            <i className="fas fa-check-circle verified-icon" style={{ color: "#2e7d32", fontSize: "1rem" }} title="Verified User"></i>
+                          )}
+                        </h3>
                         <p>Query: {selectedRoom.propertyTitle}</p>
                       </div>
                     </div>

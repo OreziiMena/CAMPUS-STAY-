@@ -6,7 +6,6 @@ import { getCurrentUser } from "@/app/actions/auth";
 import { 
   updateStudentProfile, 
   uploadStudentVerification, 
-  instantToggleVerification, 
   saveStudentPreferences 
 } from "@/app/actions/student";
 import Navbar from "@/components/Navbar";
@@ -37,6 +36,10 @@ export default function StudentProfile() {
   // Roommate Preferences state
   const [openToRoommates, setOpenToRoommates] = useState(false);
   const [budgetLimit, setBudgetLimit] = useState("");
+  const [gender, setGender] = useState("Any");
+  const [cleanliness, setCleanliness] = useState("Average");
+  const [sleepSchedule, setSleepSchedule] = useState("Flexible");
+  const [noiseLevel, setNoiseLevel] = useState("Flexible");
 
   // Status/saving helpers
   const [saveLoading, setSaveLoading] = useState(false);
@@ -73,6 +76,10 @@ export default function StudentProfile() {
       if (prefs) {
         setOpenToRoommates(prefs.openToRoommates || false);
         setBudgetLimit(prefs.budgetLimit ? String(prefs.budgetLimit) : "");
+        setGender(prefs.gender || "Any");
+        setCleanliness(prefs.cleanliness || "Average");
+        setSleepSchedule(prefs.sleepSchedule || "Flexible");
+        setNoiseLevel(prefs.noiseLevel || "Flexible");
       }
 
       setLoading(false);
@@ -135,14 +142,7 @@ export default function StudentProfile() {
     setUploadLoading(false);
   };
 
-  const handleInstantToggleVerify = async () => {
-    const res = await instantToggleVerification();
-    if (res.success) {
-      setIsVerified(res.isVerified ?? false);
-    } else {
-      alert("Failed to toggle verification status.");
-    }
-  };
+  // Instant verification toggle has been removed to enforce admin moderation flow
 
   const handleSavePreferences = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -153,6 +153,10 @@ export default function StudentProfile() {
     const res = await saveStudentPreferences({
       openToRoommates,
       budgetLimit: parsedBudget,
+      gender,
+      cleanliness,
+      sleepSchedule,
+      noiseLevel,
     });
 
     if (res.success) {
@@ -272,63 +276,56 @@ export default function StudentProfile() {
                   </div>
                 )}
 
-                <form onSubmit={handleUploadVerification} className="verification-upload-form">
-                  <h3 className="h-header">Document Submission</h3>
-                  <p className="p-header">Please upload at least one of the following methods of verification:</p>
+                {!isVerified && (
+                  <form onSubmit={handleUploadVerification} className="verification-upload-form">
+                    <h3 className="h-header">Document Submission</h3>
+                    <p className="p-header">Please upload at least one of the following methods of verification:</p>
 
-                  <div className="upload-group-row">
-                    <div className="upload-field-card">
-                      <label>1. Valid Student ID Card</label>
-                      <div className="file-upload">
-                        <i className="fas fa-id-card"></i>
-                        <p>{idCardFile ? <span>Selected: {idCardFile.name}</span> : <>Upload ID Card</>}</p>
-                        <input type="file" accept=".pdf, .jpg, .jpeg, .png" onChange={(e) => e.target.files && setIdCardFile(e.target.files[0])} />
+                    <div className="upload-group-row">
+                      <div className="upload-field-card">
+                        <label>1. Valid Student ID Card</label>
+                        <div className="file-upload">
+                          <i className="fas fa-id-card"></i>
+                          <p>{idCardFile ? <span>Selected: {idCardFile.name}</span> : <>Upload ID Card</>}</p>
+                          <input type="file" accept=".pdf, .jpg, .jpeg, .png" onChange={(e) => e.target.files && setIdCardFile(e.target.files[0])} />
+                        </div>
+                        {idCardDoc && <span className="doc-link-label"><i className="fas fa-file-alt"></i> ID Card Uploaded</span>}
                       </div>
-                      {idCardDoc && <span className="doc-link-label"><i className="fas fa-file-alt"></i> ID Card Uploaded</span>}
+
+                      <div className="upload-field-card">
+                        <label>2. School Fees Receipt</label>
+                        <div className="file-upload">
+                          <i className="fas fa-receipt"></i>
+                          <p>{feesReceiptFile ? <span>Selected: {feesReceiptFile.name}</span> : <>Upload Fees Receipt</>}</p>
+                          <input type="file" accept=".pdf, .jpg, .jpeg, .png" onChange={(e) => e.target.files && setFeesReceiptFile(e.target.files[0])} />
+                        </div>
+                        {feesReceiptDoc && <span className="doc-link-label"><i className="fas fa-file-alt"></i> Fees Receipt Uploaded</span>}
+                      </div>
+
+                      <div className="upload-field-card">
+                        <label>3. School Portal Screenshot</label>
+                        <div className="file-upload">
+                          <i className="fas fa-desktop"></i>
+                          <p>{portalScreenshotFile ? <span>Selected: {portalScreenshotFile.name}</span> : <>Upload Portal Screenshot</>}</p>
+                          <input type="file" accept=".pdf, .jpg, .jpeg, .png" onChange={(e) => e.target.files && setPortalScreenshotFile(e.target.files[0])} />
+                        </div>
+                        {portalScreenshotDoc && <span className="doc-link-label"><i className="fas fa-file-alt"></i> Screenshot Uploaded</span>}
+                      </div>
                     </div>
 
-                    <div className="upload-field-card">
-                      <label>2. School Fees Receipt</label>
-                      <div className="file-upload">
-                        <i className="fas fa-receipt"></i>
-                        <p>{feesReceiptFile ? <span>Selected: {feesReceiptFile.name}</span> : <>Upload Fees Receipt</>}</p>
-                        <input type="file" accept=".pdf, .jpg, .jpeg, .png" onChange={(e) => e.target.files && setFeesReceiptFile(e.target.files[0])} />
-                      </div>
-                      {feesReceiptDoc && <span className="doc-link-label"><i className="fas fa-file-alt"></i> Fees Receipt Uploaded</span>}
-                    </div>
+                    {uploadStatus && (
+                      <p className={`status-message-text ${uploadStatus.startsWith("Error") ? "error" : "success"}`}>
+                        {uploadStatus}
+                      </p>
+                    )}
 
-                    <div className="upload-field-card">
-                      <label>3. School Portal Screenshot</label>
-                      <div className="file-upload">
-                        <i className="fas fa-desktop"></i>
-                        <p>{portalScreenshotFile ? <span>Selected: {portalScreenshotFile.name}</span> : <>Upload Portal Screenshot</>}</p>
-                        <input type="file" accept=".pdf, .jpg, .jpeg, .png" onChange={(e) => e.target.files && setPortalScreenshotFile(e.target.files[0])} />
-                      </div>
-                      {portalScreenshotDoc && <span className="doc-link-label"><i className="fas fa-file-alt"></i> Screenshot Uploaded</span>}
-                    </div>
-                  </div>
+                    <button type="submit" className="primary-btn" disabled={(!idCardFile && !feesReceiptFile && !portalScreenshotFile) || uploadLoading}>
+                      {uploadLoading ? "Uploading..." : "Submit Documents"}
+                    </button>
+                  </form>
+                )}
 
-                  {uploadStatus && (
-                    <p className={`status-message-text ${uploadStatus.startsWith("Error") ? "error" : "success"}`}>
-                      {uploadStatus}
-                    </p>
-                  )}
-
-                  <button type="submit" className="primary-btn" disabled={(!idCardFile && !feesReceiptFile && !portalScreenshotFile) || uploadLoading}>
-                    {uploadLoading ? "Uploading..." : "Submit Documents"}
-                  </button>
-                </form>
-
-                {/* Test toggle utility, uncomment before deployment */}
-                <div className="dev-test-verification-card">
-                  <div className="dev-test-info">
-                    <h4><i className="fas fa-flask"></i> Testing Tool (Instant Verification)</h4>
-                    <p>Toggle verification on/off immediately to test the student permissions, masked phone numbers, locked WhatsApp button, and viewing scheduler.</p>
-                  </div>
-                  <button type="button" className="dev-verify-toggle-btn" onClick={handleInstantToggleVerify}>
-                    {isVerified ? "Instant Unverify" : "Instant Verify"}
-                  </button>
-                </div>
+                {/* Admin moderation flow enforced - testing toggle disabled */}
               </section>
             )}
 
@@ -355,14 +352,52 @@ export default function StudentProfile() {
                       </label>
                     </div>
 
-                    <div className="input-group font-bold">
-                      <label>Maximum Yearly Rent Budget (₦)</label>
-                      <input 
-                        type="number" 
-                        placeholder="e.g. 150000" 
-                        value={budgetLimit} 
-                        onChange={(e) => setBudgetLimit(e.target.value)} 
-                      />
+                    <div className="form-grid" style={{ marginTop: "20px" }}>
+                      <div className="input-group font-bold">
+                        <label>Maximum Yearly Rent Budget (₦)</label>
+                        <input 
+                          type="number" 
+                          placeholder="e.g. 150000" 
+                          value={budgetLimit} 
+                          onChange={(e) => setBudgetLimit(e.target.value)} 
+                        />
+                      </div>
+
+                      <div className="input-group font-bold">
+                        <label>Your Gender</label>
+                        <select value={gender} onChange={(e) => setGender(e.target.value)} className="filter-select-input" style={{ width: "100%", padding: "10px", borderRadius: "6px", border: "1px solid #ccc", marginTop: "5px" }}>
+                          <option value="Any">Any / Prefer not to say</option>
+                          <option value="Male">Male</option>
+                          <option value="Female">Female</option>
+                        </select>
+                      </div>
+
+                      <div className="input-group font-bold">
+                        <label>Cleanliness Habit</label>
+                        <select value={cleanliness} onChange={(e) => setCleanliness(e.target.value)} className="filter-select-input" style={{ width: "100%", padding: "10px", borderRadius: "6px", border: "1px solid #ccc", marginTop: "5px" }}>
+                          <option value="Very Clean">Very Clean</option>
+                          <option value="Average">Average</option>
+                          <option value="Relaxed">Relaxed</option>
+                        </select>
+                      </div>
+
+                      <div className="input-group font-bold">
+                        <label>Sleep Schedule</label>
+                        <select value={sleepSchedule} onChange={(e) => setSleepSchedule(e.target.value)} className="filter-select-input" style={{ width: "100%", padding: "10px", borderRadius: "6px", border: "1px solid #ccc", marginTop: "5px" }}>
+                          <option value="Early Bird">Early Bird</option>
+                          <option value="Night Owl">Night Owl</option>
+                          <option value="Flexible">Flexible</option>
+                        </select>
+                      </div>
+
+                      <div className="input-group font-bold">
+                        <label>Study / Noise Preference</label>
+                        <select value={noiseLevel} onChange={(e) => setNoiseLevel(e.target.value)} className="filter-select-input" style={{ width: "100%", padding: "10px", borderRadius: "6px", border: "1px solid #ccc", marginTop: "5px" }}>
+                          <option value="Quiet environment">Quiet environment</option>
+                          <option value="Social/Group study">Social/Group study</option>
+                          <option value="Flexible">Flexible</option>
+                        </select>
+                      </div>
                     </div>
                   </div>
 

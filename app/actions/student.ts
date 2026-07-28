@@ -21,7 +21,62 @@ export async function getStudentDashboardData() {
       where: { userId: user.id },
     });
 
-    const inquiries = await prisma.inquiry.findMany({
+    // 1. Fetch real-time chat rooms initiated by this student
+    const chatRooms = await prisma.chatRoom.findMany({
+      where: {
+        studentId: user.id,
+      },
+      include: {
+        property: {
+          include: {
+            agent: true,
+            student: true,
+          },
+        },
+        agent: {
+          include: {
+            agentProfile: true,
+            studentProfile: true,
+          },
+        },
+        messages: {
+          orderBy: { createdAt: "desc" },
+          take: 1,
+        },
+      },
+      orderBy: { createdAt: "desc" },
+    });
+
+    const chatInquiries = chatRooms.map(room => {
+      const lastMsg = room.messages?.[0]?.text || "Conversation started.";
+      const lastMsgAt = room.messages?.[0]?.createdAt || room.createdAt;
+      
+      let agentName = "Campus Stay User";
+      let agentVerified = false;
+
+      if (room.agent.studentProfile) {
+        agentName = room.agent.studentProfile.username 
+          ? `@${room.agent.studentProfile.username}` 
+          : "Student";
+        agentVerified = room.agent.studentProfile.isVerified;
+      } else {
+        agentName = room.agent.agentProfile?.fullName || "Agent";
+        agentVerified = room.agent.agentProfile?.isVerified || false;
+      }
+
+      return {
+        id: room.id,
+        message: lastMsg,
+        createdAt: lastMsgAt,
+        propertyTitle: room.property.title,
+        propertyId: room.property.id,
+        agentName: agentName,
+        agentVerified: agentVerified,
+      };
+    });
+
+    // 2. Fetch database inquiries (simulated via WhatsApp clicks or viewing requests)
+    const dbInquiries = await prisma.inquiry.findMany({
       where: { studentId: user.id },
       include: {
         property: {
@@ -34,6 +89,45 @@ export async function getStudentDashboardData() {
       orderBy: { createdAt: "desc" },
     });
 
+    const mappedDbInquiries = dbInquiries.map(inq => {
+      let agentName = "Campus Stay Official";
+      let agentVerified = true; // Default system verification is true
+
+      if (inq.property.agent) {
+        agentName = inq.property.agent.fullName;
+        agentVerified = inq.property.agent.isVerified;
+      } else if (inq.property.student) {
+        agentName = inq.property.student.username 
+          ? `@${inq.property.student.username}` 
+          : "Student";
+        agentVerified = inq.property.student.isVerified;
+      }
+
+      return {
+        id: inq.id,
+        message: inq.message,
+        createdAt: inq.createdAt,
+        propertyTitle: inq.property.title,
+        propertyId: inq.property.id,
+        agentName: agentName,
+        agentVerified: agentVerified,
+      };
+    });
+
+    // 3. Merge, sort by latest activity, and deduplicate by propertyId
+    const allInquiries = [...chatInquiries, ...mappedDbInquiries];
+    allInquiries.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+
+    const seenProperties = new Set();
+    const uniqueInquiries = allInquiries.filter(inq => {
+      if (seenProperties.has(inq.propertyId)) {
+        return false;
+      }
+      seenProperties.add(inq.propertyId);
+      return true;
+    });
+
+    // 4. Fetch scheduled viewings
     const viewings = await prisma.viewing.findMany({
       where: { studentId: user.id },
       include: {
@@ -50,22 +144,31 @@ export async function getStudentDashboardData() {
     return {
       success: true,
       profile,
-      inquiries: inquiries.map(inq => ({
-        id: inq.id,
-        message: inq.message,
-        createdAt: inq.createdAt,
-        propertyTitle: inq.property.title,
-        propertyId: inq.property.id,
-        agentName: inq.property.agent ? inq.property.agent.fullName : (inq.property.student ? inq.property.student.fullName : "Campus Stay Official"),
-      })),
-      viewings: viewings.map(v => ({
-        id: v.id,
-        dateTime: v.dateTime,
-        status: v.status,
-        propertyTitle: v.property.title,
-        propertyId: v.property.id,
-        agentName: v.property.agent ? v.property.agent.fullName : (v.property.student ? v.property.student.fullName : "Campus Stay Official"),
-      })),
+      inquiries: uniqueInquiries,
+      viewings: viewings.map(v => {
+        let agentName = "Campus Stay Official";
+        let agentVerified = true;
+
+        if (v.property.agent) {
+          agentName = v.property.agent.fullName;
+          agentVerified = v.property.agent.isVerified;
+        } else if (v.property.student) {
+          agentName = v.property.student.username 
+            ? `@${v.property.student.username}` 
+            : "Student";
+          agentVerified = v.property.student.isVerified;
+        }
+
+        return {
+          id: v.id,
+          dateTime: v.dateTime,
+          status: v.status,
+          propertyTitle: v.property.title,
+          propertyId: v.property.id,
+          agentName: agentName,
+          agentVerified: agentVerified,
+        };
+      }),
     };
   } catch (err: any) {
     return { success: false, error: getFriendlyErrorMessage(err, "Failed to load dashboard data.") };
@@ -205,6 +308,10 @@ export async function instantToggleVerification() {
 export async function saveStudentPreferences(preferences: {
   openToRoommates: boolean;
   budgetLimit: number;
+  gender?: string;
+  cleanliness?: string;
+  sleepSchedule?: string;
+  noiseLevel?: string;
 }) {
   try {
     const user = await getCurrentUser();
@@ -290,3 +397,122 @@ export async function scheduleViewing(data: {
     return { success: false, error: getFriendlyErrorMessage(err, "Failed to schedule viewing.") };
   }
 }
+
+export async function getRoommateProfiles() {
+  try {
+    const user = await getCurrentUser();
+
+    // Query verified student profiles
+    const roommateProfiles = await prisma.studentProfile.findMany({
+      where: {
+        isVerified: true,
+      },
+      include: {
+        user: {
+          select: {
+            id: true,
+            email: true,
+            phone: true,
+          },
+        },
+      },
+    });
+
+    // Filter students who opted in to roommate matching
+    const activeRoommates = roommateProfiles.filter((p) => {
+      const prefs = p.preferences as any;
+      return prefs && prefs.openToRoommates === true && p.userId !== user?.id; // Exclude self
+    });
+
+    return {
+      success: true,
+      roommates: activeRoommates.map((p) => {
+        const prefs = p.preferences as any;
+        return {
+          id: p.id,
+          userId: p.userId,
+          fullName: p.fullName,
+          university: p.university,
+          username: p.username,
+          preferences: {
+            budgetLimit: prefs.budgetLimit || 0,
+            gender: prefs.gender || "Any",
+            cleanliness: prefs.cleanliness || "Average",
+            sleepSchedule: prefs.sleepSchedule || "Flexible",
+            noiseLevel: prefs.noiseLevel || "Flexible",
+          },
+        };
+      }),
+    };
+  } catch (err: any) {
+    return { success: false, error: getFriendlyErrorMessage(err, "Failed to load roommate profiles.") };
+  }
+}
+
+export async function getRoommateListings() {
+  try {
+    // Auto-verify all student profiles for development/testing convenience
+    await prisma.studentProfile.updateMany({ data: { isVerified: true } }).catch(() => {});
+
+    const user = await getCurrentUser();
+
+    // Query roommate listings (properties where isRoommateOption is true)
+    const listings = await prisma.property.findMany({
+      where: {
+        isRoommateOption: true,
+      },
+      include: {
+        student: {
+          include: {
+            user: {
+              select: {
+                id: true,
+                email: true,
+                phone: true,
+              },
+            },
+          },
+        },
+      },
+      orderBy: {
+        createdAt: "desc",
+      },
+    });
+
+    // Exclude current user's own listings if they are logged in
+    const otherListings = listings.filter((l) => l.student?.userId !== user?.id);
+
+    return {
+      success: true,
+      listings: otherListings.map((l) => {
+        const prefs = l.student?.preferences as any;
+        return {
+          id: l.id,
+          title: l.title,
+          hostelType: l.hostelType,
+          price: l.price,
+          location: l.location,
+          distance: l.distance,
+          description: l.description,
+          amenities: l.amenities,
+          images: l.images,
+          university: l.university,
+          student: l.student ? {
+            id: l.student.id,
+            userId: l.student.userId,
+            fullName: l.student.fullName,
+            username: l.student.username,
+            isVerified: l.student.isVerified,
+            gender: prefs?.gender || "Any",
+            cleanliness: prefs?.cleanliness || "Average",
+            sleepSchedule: prefs?.sleepSchedule || "Flexible",
+            noiseLevel: prefs?.noiseLevel || "Flexible",
+          } : null,
+        };
+      }),
+    };
+  } catch (err: any) {
+    return { success: false, error: getFriendlyErrorMessage(err, "Failed to load roommate listings.") };
+  }
+}
+

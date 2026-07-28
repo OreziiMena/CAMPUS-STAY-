@@ -87,20 +87,9 @@ export default function Navbar() {
         <ul>
           <li><Link className={isActive("/")} href="/">Home</Link></li>
           <li><Link className={isActive("/about")} href="/about">About</Link></li>
-          <li><Link className={isActive("/explore")} href="/explore">Explore</Link></li>
+          <li><Link className={isActive("/explore")} href="/explore">Explore Properties</Link></li>
+          <li><Link className={isActive("/roommates")} href="/roommates">Find Roommate</Link></li>
           <li><Link className={isActive("/support")} href="/support">Support</Link></li>
-          {user && (
-            <li>
-              <Link className={isActive("/chat")} href="/chat" style={{ display: "inline-flex", alignItems: "center", gap: "6px" }}>
-                Chat
-                {unreadCount > 0 && (
-                  <span style={{ backgroundColor: "#d32f2f", color: "white", borderRadius: "50%", padding: "2px 6px", fontSize: "10px", fontWeight: "bold", lineHeight: "1" }}>
-                    {unreadCount}
-                  </span>
-                )}
-              </Link>
-            </li>
-          )}
         </ul>
         <div className={styles.userDropdownWrapper}>
           {user ? (
@@ -120,8 +109,13 @@ export default function Navbar() {
                 {unreadCount > 0 && (
                   <span style={{ position: "absolute", top: "-2px", left: "26px", width: "10px", height: "10px", backgroundColor: "#d32f2f", borderRadius: "50%", border: "2px solid white" }}></span>
                 )}
-                <span className={`explore-profile-name ${styles.profileName}`}>
+                <span className={`explore-profile-name ${styles.profileName}`} style={{ display: "inline-flex", alignItems: "center", gap: "4px" }}>
                   {user.name ? user.name.split(" ")[0] : "Student"}
+                  {((user.role === "STUDENT" && user.studentProfile?.isVerified) || 
+                    (user.role === "AGENT" && user.agentProfile?.isVerified) || 
+                    (user.role === "ADMIN")) && (
+                    <i className="fas fa-check-circle verified-icon" style={{ color: "#2e7d32", fontSize: "0.8rem" }} title="Verified User"></i>
+                  )}
                 </span>
                 <i className={`fas fa-chevron-down ${styles.chevronIcon}`}></i>
               </div>

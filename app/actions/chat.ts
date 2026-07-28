@@ -99,21 +99,31 @@ export async function getChatRooms() {
     // Map chat rooms to include target user name and role helper
     const formattedRooms = chatRooms.map((room) => {
       const isInitiator = room.studentId === user.id;
-      const targetUser = isInitiator ? room.agent : room.student;
       
       let targetName = "Campus Stay User";
       let targetRoleLabel = "User";
+      let targetVerified = false;
 
       if (isInitiator) {
-        // Agent side
-        targetName = room.agent.agentProfile?.fullName || room.agent.studentProfile?.fullName || "Agent";
-        targetRoleLabel = room.agent.agentProfile ? "Agent" : "Student Partner";
+        // Recipient is room.agent
+        if (room.agent.studentProfile) {
+          targetName = room.agent.studentProfile.username 
+            ? `@${room.agent.studentProfile.username}` 
+            : "Student";
+          targetRoleLabel = "Student Partner";
+          targetVerified = room.agent.studentProfile.isVerified;
+        } else {
+          targetName = room.agent.agentProfile?.fullName || "Agent";
+          targetRoleLabel = "Agent";
+          targetVerified = room.agent.agentProfile?.isVerified || false;
+        }
       } else {
-        // Student side
+        // Recipient is room.student
         targetName = room.student.studentProfile?.username 
           ? `@${room.student.studentProfile.username}` 
           : "Student";
         targetRoleLabel = "Student";
+        targetVerified = room.student.studentProfile?.isVerified || false;
       }
 
       return {
@@ -123,6 +133,7 @@ export async function getChatRooms() {
         propertyImage: room.property.images?.[0] || "https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?ixlib=rb-4.0.3",
         targetName,
         targetRoleLabel,
+        targetVerified,
         lastMessage: room.messages?.[0]?.text || "No messages yet",
         lastMessageAt: room.messages?.[0]?.createdAt || room.createdAt,
       };
@@ -217,5 +228,98 @@ export async function getUnreadMessagesCount() {
     return { success: true, count };
   } catch {
     return { success: false, count: 0 };
+  }
+}
+
+export async function getOrCreateRoommateChatRoom(recipientUserId: string) {
+  try {
+    const user = await getCurrentUser();
+    if (!user) {
+      return { success: false, error: "Please log in to contact potential roommates." };
+    }
+
+    if (user.role === "STUDENT" && !user.studentProfile?.isVerified) {
+      return { success: false, error: "Verification required. You must verify your student profile to message potential roommates." };
+    }
+
+    if (recipientUserId === user.id) {
+      return { success: false, error: "You cannot message yourself." };
+    }
+
+    // 1. Locate a roommate hostel listing published by the recipient
+    let property = await prisma.property.findFirst({
+      where: {
+        student: { userId: recipientUserId },
+        isRoommateOption: true,
+      },
+    });
+
+    // 2. If the recipient has no listing, check if the initiator has a roommate listing
+    if (!property) {
+      property = await prisma.property.findFirst({
+        where: {
+          student: { userId: user.id },
+          isRoommateOption: true,
+        },
+      });
+    }
+
+    // 3. If neither has a listing, link the chat to a fallback system property
+    if (!property) {
+      property = await prisma.property.findFirst({
+        where: { title: "General Roommate Match" },
+      });
+
+      if (!property) {
+        property = await prisma.property.create({
+          data: {
+            title: "General Roommate Match",
+            hostelType: "Shared Hostel Room",
+            price: 0,
+            location: "Campus Stay Community",
+            distance: "Flexible Proximity",
+            description: "A placeholder listing for student-to-student roommate matching chat rooms.",
+            amenities: ["Roommate Search"],
+            images: ["https://images.unsplash.com/photo-1522708323590-d24dbb6b0267"],
+            isAvailable: true,
+            isVerified: true,
+          },
+        });
+      }
+    }
+
+    // Find or create ChatRoom
+    let chatRoom = await prisma.chatRoom.findFirst({
+      where: {
+        studentId: user.id,
+        agentId: recipientUserId,
+        propertyId: property.id,
+      },
+    });
+
+    if (!chatRoom) {
+      // Try reverse search
+      chatRoom = await prisma.chatRoom.findFirst({
+        where: {
+          studentId: recipientUserId,
+          agentId: user.id,
+          propertyId: property.id,
+        },
+      });
+    }
+
+    if (!chatRoom) {
+      chatRoom = await prisma.chatRoom.create({
+        data: {
+          studentId: user.id,
+          agentId: recipientUserId,
+          propertyId: property.id,
+        },
+      });
+    }
+
+    return { success: true, chatRoomId: chatRoom.id };
+  } catch (err: any) {
+    return { success: false, error: err.message || "Failed to initialize roommate conversation." };
   }
 }

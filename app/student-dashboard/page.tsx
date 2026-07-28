@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { getCurrentUser } from "@/app/actions/auth";
 import { getStudentDashboardData } from "@/app/actions/student";
+import { getOrCreateChatRoom } from "@/app/actions/chat";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import "./student-dashboard.css";
@@ -37,6 +38,15 @@ export default function StudentDashboard() {
     };
     fetchDashboard();
   }, [router]);
+
+  const handleInquiryClick = async (propertyId: string) => {
+    const res = await getOrCreateChatRoom(propertyId);
+    if (res.success && res.chatRoomId) {
+      router.push(`/chat?roomId=${res.chatRoomId}`);
+    } else {
+      alert(res.error || "Failed to open conversation.");
+    }
+  };
 
   return (
     <>
@@ -117,11 +127,23 @@ export default function StudentDashboard() {
                   <div className="viewings-list-wrapper">
                     <div className="dashboard-list">
                       {viewings.map((viewing) => (
-                        <div key={viewing.id} className="dashboard-list-item">
+                        <div 
+                          key={viewing.id} 
+                          className="dashboard-list-item clickable"
+                          onClick={() => handleInquiryClick(viewing.propertyId)}
+                          style={{ cursor: "pointer" }}
+                          title="Click to message listing owner"
+                        >
                           <div className="item-main">
                             <h5>{viewing.propertyTitle}</h5>
                             <p className="item-meta">
-                              <span><i className="fas fa-user-tie"></i> {viewing.agentName}</span>
+                              <span style={{ display: "inline-flex", alignItems: "center", gap: "4px" }}>
+                                <i className="fas fa-user-tie"></i>
+                                {viewing.agentName}
+                                {viewing.agentVerified && (
+                                  <i className="fas fa-check-circle verified-icon" style={{ color: "#2e7d32", fontSize: "0.8rem" }} title="Verified Owner"></i>
+                                )}
+                              </span>
                               <span><i className="far fa-clock"></i> {new Date(viewing.dateTime).toLocaleString()}</span>
                             </p>
                           </div>
@@ -150,13 +172,25 @@ export default function StudentDashboard() {
                 ) : (
                   <div className="inquiries-list-wrapper">
                     <div className="dashboard-list">
-                      {inquiries.map((inquiry) => (
-                        <div key={inquiry.id} className="dashboard-list-item">
+                       {inquiries.map((inquiry) => (
+                        <div 
+                          key={inquiry.id} 
+                          className="dashboard-list-item clickable"
+                          onClick={() => handleInquiryClick(inquiry.propertyId)}
+                          style={{ cursor: "pointer" }}
+                          title="Click to message listing owner"
+                        >
                           <div className="item-main">
                             <h5>{inquiry.propertyTitle}</h5>
                             <p className="inquiry-msg">"{inquiry.message}"</p>
                             <p className="item-meta">
-                              <span><i className="fas fa-user-tie"></i> {inquiry.agentName}</span>
+                              <span style={{ display: "inline-flex", alignItems: "center", gap: "4px" }}>
+                                <i className="fas fa-user-tie"></i>
+                                {inquiry.agentName}
+                                {inquiry.agentVerified && (
+                                  <i className="fas fa-check-circle verified-icon" style={{ color: "#2e7d32", fontSize: "0.8rem" }} title="Verified Owner"></i>
+                                )}
+                              </span>
                               <span><i className="far fa-calendar-alt"></i> {new Date(inquiry.createdAt).toLocaleDateString()}</span>
                             </p>
                           </div>

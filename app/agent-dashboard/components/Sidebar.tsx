@@ -68,7 +68,7 @@ export default function Sidebar({
         </li>
         <li>
           <Link href="/explore">
-            <i className="fas fa-globe"></i> Explore Properties
+            <i className="fas fa-globe"></i> Explore Other Properties
           </Link>
         </li>
       </ul>

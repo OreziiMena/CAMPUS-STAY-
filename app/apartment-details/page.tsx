@@ -149,9 +149,10 @@ function ApartmentDetailsContent() {
           images: prop.images,
           views: prop.views || 0,
           agent: {
-            name: prop.agent ? prop.agent.fullName : (prop.student ? prop.student.fullName : "Campus Stay Official"),
-            role: prop.agent ? (prop.agent.isVerified ? "Verified Agent" : "Agent/Landlord") : "Student (Roommate Option)",
+            name: prop.agent ? prop.agent.fullName : (prop.student ? `@${prop.student.username}` : "Campus Stay Official"),
+            role: prop.agent ? (prop.agent.isVerified ? "Verified Agent" : "Agent/Landlord") : (prop.student ? (prop.student.isVerified ? "Verified Student Roommate" : "Student (Roommate Option)") : "Campus Stay Partner"),
             phone: prop.agent ? (prop.agent.user?.phone || "+2349161863877") : (prop.student?.user?.phone || "+2349161863877"),
+            isVerified: prop.agent ? prop.agent.isVerified : (prop.student ? prop.student.isVerified : true),
           }
         });
       } else {
@@ -320,7 +321,12 @@ function ApartmentDetailsContent() {
             <div className="agent-profile">
               <div className="avatar-circle"><i className="fas fa-user"></i></div>
               <div className="agent-info">
-                <h5>{property.agent.name} <i className="fas fa-check-circle verified-icon"></i></h5>
+                <h5 style={{ display: "flex", alignItems: "center", gap: "5px" }}>
+                  {property.agent.name}
+                  {property.agent.isVerified && (
+                    <i className="fas fa-check-circle verified-icon" style={{ color: "#2e7d32", fontSize: "0.9rem" }}></i>
+                  )}
+                </h5>
                 <p className="agent-role">{property.agent.role}</p>
               </div>
             </div>

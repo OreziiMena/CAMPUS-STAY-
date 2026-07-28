@@ -556,7 +556,7 @@ function AdminDashboardContent() {
                                 {property.agent ? (
                                   <div>
                                     <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-                                      <strong>{property.agent.fullName}</strong>
+                                      <strong>{property.agent.username ? `@${property.agent.username}` : property.agent.fullName}</strong>
                                       {property.agent.isVerified && (
                                         <span style={{ color: "#2e7d32" }} title="Verified Owner">
                                           <i className="fas fa-check-circle"></i>
@@ -568,7 +568,7 @@ function AdminDashboardContent() {
                                 ) : property.student ? (
                                   <div>
                                     <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-                                      <strong>{property.student.fullName}</strong>
+                                      <strong>{property.student.username ? `@${property.student.username}` : property.student.fullName}</strong>
                                       {property.student.isVerified && (
                                         <span style={{ color: "#2e7d32" }} title="Verified Owner">
                                           <i className="fas fa-check-circle"></i>
@@ -636,7 +636,12 @@ function AdminDashboardContent() {
                         const isVerified = u.studentProfile?.isVerified || false;
                         return (
                           <tr key={u.id}>
-                            <td><strong>{u.studentProfile?.fullName || "Student"}</strong></td>
+                            <td style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                              <strong>{u.studentProfile?.fullName || "Student"}</strong>
+                              {isVerified && (
+                                <i className="fas fa-check-circle verified-icon" style={{ color: "#2e7d32", fontSize: "0.85rem" }}></i>
+                              )}
+                            </td>
                             <td>{u.studentProfile?.username ? `@${u.studentProfile.username}` : "N/A"}</td>
                             <td>{u.studentProfile?.university || "N/A"}</td>
                             <td>
@@ -704,7 +709,12 @@ function AdminDashboardContent() {
                         const isVerified = u.agentProfile?.isVerified || false;
                         return (
                           <tr key={u.id}>
-                            <td><strong>{u.agentProfile?.fullName || "Agent"}</strong></td>
+                            <td style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                              <strong>{u.agentProfile?.fullName || "Agent"}</strong>
+                              {isVerified && (
+                                <i className="fas fa-check-circle verified-icon" style={{ color: "#2e7d32", fontSize: "0.85rem" }}></i>
+                              )}
+                            </td>
                             <td>{u.agentProfile?.address || "No office address"}</td>
                             <td>
                               <div>{u.email}</div>
@@ -802,7 +812,7 @@ function AdminDashboardContent() {
                                 </div>
                               ) : p.student ? (
                                 <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-                                  <strong>{p.student.fullName}</strong>
+                                  <strong>{p.student.username ? `@${p.student.username}` : p.student.fullName}</strong>
                                   {p.student.isVerified && (
                                     <span style={{ color: "#2e7d32" }} title="Verified Owner">
                                       <i className="fas fa-check-circle"></i>

@@ -8,6 +8,7 @@ interface Inquiry {
   propertyName: string;
   message: string;
   createdAt: string;
+  studentVerified?: boolean;
 }
 
 interface InquiryListProps {
@@ -38,8 +39,12 @@ export default function InquiryList({ inquiries }: InquiryListProps) {
               style={{ textDecoration: "none", color: "inherit", width: "100%" }}
             >
               <div className="inquiry-info">
-                <h4>
-                  {inq.studentName} <strong>({inq.propertyName})</strong>
+                <h4 style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                  {inq.studentName}
+                  {inq.studentVerified && (
+                    <i className="fas fa-check-circle verified-icon" style={{ color: "#2e7d32", fontSize: "0.85rem" }} title="Verified Student"></i>
+                  )}
+                  {" "}<strong>({inq.propertyName})</strong>
                 </h4>
                 <p className={styles.messageText}>
                   "{inq.message}"
