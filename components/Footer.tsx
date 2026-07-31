@@ -69,7 +69,7 @@ export default function Footer() {
       </div>
 
       <div className="footer-bottom">
-        <p>© 2024 Campus Stay. All rights reserved.</p>
+        <p> &copy; {new Date().getFullYear()} Campus Stay. All rights reserved.</p>
       </div>
     </footer>
   );

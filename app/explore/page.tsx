@@ -19,6 +19,13 @@ export default function Explore() {
   const [minPrice, setMinPrice] = useState("");
   const [maxPrice, setMaxPrice] = useState("");
 
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setShowSafetyTip(false);
+    }, 15000);
+    return () => clearTimeout(timer);
+  }, []);
+
   const fetchProperties = async (query = "") => {
     setLoading(true);
     const parsedMinPrice = minPrice ? parseFloat(minPrice) : undefined;

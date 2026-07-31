@@ -82,10 +82,14 @@ export default function AgentSignup() {
       setIsLoading(false);
 
       if (res.success) {
-        setSuccess(true);
-        setTimeout(() => {
-          router.push("/agent-dashboard");
-        }, 1500);
+        if (res.requireVerification) {
+          router.push(`/auth/verify-email?email=${encodeURIComponent(res.email || email)}`);
+        } else {
+          setSuccess(true);
+          setTimeout(() => {
+            router.push("/agent-dashboard");
+          }, 1500);
+        }
       } else {
         setError(res.error || "Failed to create agent account.");
       }

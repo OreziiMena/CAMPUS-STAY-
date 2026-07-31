@@ -1,0 +1,217 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "../lib/generated-client"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  STUDENT
+  AGENT
+  ADMIN
+}
+
+model User {
+  id              String   @id @default(uuid())
+  email           String   @unique
+  phone           String
+  password        String
+  role            Role     @default(STUDENT)
+  isEmailVerified Boolean  @default(false)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  // Profile associations
+  studentProfile StudentProfile?
+  agentProfile   AgentProfile?
+
+  // Inquiries sent (for students) and received (for agents)
+  inquiries         Inquiry[] @relation(name: "StudentInquiries")
+  receivedInquiries Inquiry[] @relation(name: "AgentReceivedInquiries")
+  viewings          Viewing[]
+
+  // Chat Room Associations
+  studentChatRooms ChatRoom[] @relation(name: "StudentChatRooms")
+  agentChatRooms   ChatRoom[] @relation(name: "AgentChatRooms")
+  messagesSent     Message[]
+  reportsSubmitted Report[]   @relation(name: "UserReports")
+}
+
+model StudentProfile {
+  id                  String     @id @default(uuid())
+  userId              String     @unique
+  user                User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  fullName            String
+  university          String
+  username            String     @unique
+  preferences         Json? // Preferences object (budget, roommate preferences, layout type, etc.)
+  isVerified          Boolean    @default(false)
+  idCardDoc           String?
+  feesReceiptDoc      String?
+  portalScreenshotDoc String?
+  properties          Property[]
+  reports             Report[]
+  createdAt           DateTime   @default(now())
+  updatedAt           DateTime   @updatedAt
+}
+
+model AgentProfile {
+  id          String     @id @default(uuid())
+  userId      String     @unique
+  user        User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  fullName    String
+  address     String? // Office/Business address
+  agencyName  String?
+  bio         String?
+  ninDocument String?
+  isVerified  Boolean    @default(false)
+  properties  Property[]
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+}
+
+model Property {
+  id          String   @id @default(uuid())
+  title       String
+  hostelType  String // e.g., Self-Contain, Single Room, 2-Bedroom Flat
+  price       Float
+  location    String
+  distance    String // e.g., "5 mins walk to campus"
+  description String
+  amenities   String[] // Postgres string array
+  images      String[] // Postgres string array
+  latitude    Float?
+  longitude   Float?
+  isAvailable Boolean  @default(true)
+  isVerified  Boolean  @default(false)
+  views       Int      @default(0)
+  university  String   @default("FUPRE")
+
+  isRoommateOption Boolean @default(false)
+
+  // Owner Agent
+  agentId String?
+  agent   AgentProfile? @relation(fields: [agentId], references: [id], onDelete: Cascade)
+
+  // Owner Student
+  studentId String?
+  student   StudentProfile? @relation(fields: [studentId], references: [id], onDelete: Cascade)
+
+  // Inquiries sent for this property
+  inquiries Inquiry[]
+  viewings  Viewing[]
+  chatRooms ChatRoom[]
+  reports   Report[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Inquiry {
+  id String @id @default(uuid())
+
+  // Student who sent the inquiry
+  studentId String
+  student   User   @relation(name: "StudentInquiries", fields: [studentId], references: [id], onDelete: Cascade)
+
+  // Property queried
+  propertyId String
+  property   Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+
+  // Agent who received the inquiry
+  agentId String
+  agent   User   @relation(name: "AgentReceivedInquiries", fields: [agentId], references: [id], onDelete: Cascade)
+
+  message   String
+  createdAt DateTime @default(now())
+}
+
+model Viewing {
+  id         String   @id @default(uuid())
+  studentId  String
+  student    User     @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  propertyId String
+  property   Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  dateTime   DateTime
+  status     String   @default("PENDING") // PENDING, CONFIRMED, CANCELLED
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+}
+
+model ChatRoom {
+  id         String    @id @default(uuid())
+  studentId  String
+  student    User      @relation(name: "StudentChatRooms", fields: [studentId], references: [id], onDelete: Cascade)
+  agentId    String
+  agent      User      @relation(name: "AgentChatRooms", fields: [agentId], references: [id], onDelete: Cascade)
+  propertyId String
+  property   Property  @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  messages   Message[]
+  createdAt  DateTime  @default(now())
+
+  @@unique([studentId, agentId, propertyId])
+}
+
+model Message {
+  id         String   @id @default(uuid())
+  chatRoomId String
+  chatRoom   ChatRoom @relation(fields: [chatRoomId], references: [id], onDelete: Cascade)
+  senderId   String
+  sender     User     @relation(fields: [senderId], references: [id], onDelete: Cascade)
+  text       String
+  isRead     Boolean  @default(false)
+  createdAt  DateTime @default(now())
+}
+
+model OTP {
+  id        String     @id @default(uuid())
+  email     String
+  code      String // 6-digit number string
+  purpose   OTPPurpose
+  expiresAt DateTime
+  createdAt DateTime   @default(now())
+
+  @@index([email])
+}
+
+enum OTPPurpose {
+  EMAIL_VERIFICATION
+  PASSWORD_RESET
+}
+
+model Report {
+  id           String          @id @default(uuid())
+  reporterId   String
+  reporter     User            @relation("UserReports", fields: [reporterId], references: [id], onDelete: Cascade)
+  propertyId   String? // Flagged property (optional)
+  property     Property?       @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  roommateId   String? // Flagged roommate listing student profile (optional)
+  roommate     StudentProfile? @relation(fields: [roommateId], references: [id], onDelete: Cascade)
+  reason       ReportReason
+  customReason String? // For "OTHER" reason choice
+  description  String
+  status       ReportStatus    @default(PENDING)
+  createdAt    DateTime        @default(now())
+  updatedAt    DateTime        @updatedAt
+
+  @@index([propertyId])
+  @@index([roommateId])
+}
+
+enum ReportReason {
+  FRAUD_SCAM
+  INACCURATE_DETAILS
+  INAPPROPRIATE_CONTENT
+  SPAM
+  OTHER
+}
+
+enum ReportStatus {
+  PENDING
+  INVESTIGATING
+  RESOLVED
+  DISMISSED
+}

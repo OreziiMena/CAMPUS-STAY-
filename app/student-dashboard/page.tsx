@@ -69,8 +69,8 @@ export default function StudentDashboard() {
                 <Link href="/explore" className="student-explore-btn">
                   <i className="fas fa-search"></i> Find Hostels
                 </Link>
-                <Link href="/student-dashboard/add-roommate-listing" className="student-explore-btn roommate-btn">
-                  <i className="fas fa-plus-circle"></i> Upload Roommate Option
+                <Link href="/roommates" className="student-explore-btn roommate-btn">
+                  <i className="fas fa-user-friends"></i> Find Roommates
                 </Link>
               </div>
             </div>

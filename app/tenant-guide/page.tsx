@@ -48,7 +48,7 @@ export default function TenantGuide() {
               <div className="step-content">
                 <h3>Initiate Direct Inquiry</h3>
                 <p>
-                  Click "Chat on WhatsApp" on the property details page. Our platform immediately constructs a pre-filled listing inquiry message for you. Communicate directly with the host to ask questions, check details, and arrange a viewing schedule without broker fee markups.
+                  Click "Message" on the property details page. Our platform immediately constructs a pre-filled listing inquiry message for you. Communicate directly with the host to ask questions, check details, and arrange a viewing schedule without broker fee markups.
                 </p>
               </div>
             </div>

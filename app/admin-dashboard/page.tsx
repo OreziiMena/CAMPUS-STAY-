@@ -9,6 +9,7 @@ import {
   deletePropertyByAdmin,
   deleteUserByAdmin
 } from "@/app/actions/admin";
+import { getPendingReports, moderateReport } from "@/app/actions/reports";
 
 function AdminDashboardContent() {
   const searchParams = useSearchParams();
@@ -25,6 +26,7 @@ function AdminDashboardContent() {
   // Full Directories (All items, verified or not)
   const [users, setUsers] = useState<any[]>([]);
   const [allProperties, setAllProperties] = useState<any[]>([]);
+  const [reports, setReports] = useState<any[]>([]);
   
   // Tab control
   const [activeTab, setActiveTab] = useState("verifications");
@@ -45,7 +47,28 @@ function AdminDashboardContent() {
     } else {
       setError(res.error || "Failed to fetch dashboard queues.");
     }
+
+    const reportsRes = await getPendingReports();
+    if (reportsRes.success) {
+      setReports(reportsRes.reports || []);
+    }
+
     setLoading(false);
+  };
+
+  const handleModerateReport = async (reportId: string, action: "DISMISS" | "RESOLVE", deleteListing: boolean = false) => {
+    setActionLoading(reportId);
+    setError("");
+    const res = await moderateReport(reportId, action, deleteListing);
+    if (res.success) {
+      setReports((prev) => prev.filter((r) => r.id !== reportId));
+      if (deleteListing) {
+        fetchQueues();
+      }
+    } else {
+      setError(res.error || "Failed to moderate report.");
+    }
+    setActionLoading(null);
   };
 
   useEffect(() => {
@@ -291,6 +314,15 @@ function AdminDashboardContent() {
     const studentName = p.student?.fullName?.toLowerCase() || "";
     const query = searchQuery.toLowerCase();
     return title.includes(query) || location.includes(query) || university.includes(query) || agentName.includes(query) || studentName.includes(query);
+  });
+
+  const filteredReports = reports.filter((r) => {
+    const reporterEmail = r.reporter?.email?.toLowerCase() || "";
+    const description = r.description?.toLowerCase() || "";
+    const reason = r.reason?.toLowerCase() || "";
+    const targetName = (r.property?.title || r.roommate?.fullName || "").toLowerCase();
+    const query = searchQuery.toLowerCase();
+    return reporterEmail.includes(query) || description.includes(query) || reason.includes(query) || targetName.includes(query);
   });
 
   return (
@@ -846,6 +878,117 @@ function AdminDashboardContent() {
                                   className="reject-btn"
                                 >
                                   {actionLoading === p.id ? "Deleting..." : "Delete"}
+                                </button>
+                              </div>
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </div>
+          )}
+
+          {activeTab === "reports" && (
+            <div className="admin-card">
+              <div className="card-header" style={{ marginBottom: "20px" }}>
+                <h4 style={{ fontSize: "1.2rem", fontWeight: "700", color: "rgb(2, 53, 28)", display: "flex", alignItems: "center", gap: "8px", margin: 0 }}>
+                  <i className="fas fa-flag" style={{ color: "#d9534f" }}></i> User Flagged Reports Queue
+                </h4>
+                <p style={{ color: "#666", fontSize: "0.85rem", margin: "5px 0 0 0" }}>Review and moderate reports submitted by students against properties or roommate profiles.</p>
+              </div>
+
+              {filteredReports.length === 0 ? (
+                <div className="no-data-text">
+                  <i className="fas fa-check-circle" style={{ color: "#2e7d32", fontSize: "1.5rem", marginRight: "8px" }}></i>
+                  No pending flagged reports found matching your criteria.
+                </div>
+              ) : (
+                <div className="admin-table-container">
+                  <table className="admin-table">
+                    <thead>
+                      <tr>
+                        <th>Date Reported</th>
+                        <th>Reporter</th>
+                        <th>Target Details</th>
+                        <th>Reason for Report</th>
+                        <th>Description Details</th>
+                        <th>Moderation Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {filteredReports.map((r: any) => {
+                        const targetType = r.propertyId ? "Property Listing" : "Roommate Profile";
+                        const targetName = r.property ? r.property.title : (r.roommate ? r.roommate.fullName : "Unknown Target");
+                        const targetId = r.propertyId || r.roommateId;
+                        const targetLink = r.propertyId 
+                          ? `/apartment-details?id=${r.propertyId}` 
+                          : `/roommates`;
+
+                        return (
+                          <tr key={r.id}>
+                            <td style={{ fontSize: "0.85rem", whiteSpace: "nowrap" }}>
+                              {new Date(r.createdAt).toLocaleDateString("en-US", {
+                                month: "short",
+                                day: "numeric",
+                                year: "numeric",
+                              })}
+                            </td>
+                            <td>
+                              <div style={{ fontWeight: "600", fontSize: "0.9rem" }}>{r.reporter?.email}</div>
+                              <span style={{ fontSize: "0.75rem", color: "#888" }}>ID: {r.reporter?.id.substring(0, 8)}</span>
+                            </td>
+                            <td>
+                              <span style={{ fontSize: "0.75rem", padding: "3px 8px", borderRadius: "20px", fontWeight: "700", textTransform: "uppercase", backgroundColor: r.propertyId ? "#e8f0fe" : "#fef7e0", color: r.propertyId ? "#1a73e8" : "#b06000", display: "inline-block", marginBottom: "5px" }}>
+                                {targetType}
+                              </span>
+                              <div style={{ fontWeight: "bold", fontSize: "0.9rem" }}>
+                                <a href={targetLink} target="_blank" rel="noopener noreferrer" style={{ color: "rgb(2, 53, 28)", textDecoration: "underline" }}>
+                                  {targetName}
+                                </a>
+                              </div>
+                              <span style={{ fontSize: "0.75rem", color: "#888" }}>ID: {targetId?.substring(0, 8)}</span>
+                            </td>
+                            <td>
+                              <span className="status-badge" style={{ backgroundColor: "#fce8e6", color: "#c5221f", border: "1px solid #fad2cf", display: "inline-flex", alignItems: "center", gap: "5px", textTransform: "uppercase", fontSize: "0.75rem", fontWeight: "700", padding: "4px 8px", borderRadius: "4px" }}>
+                                <i className="fas fa-exclamation-triangle"></i>
+                                {r.reason === "OTHER" ? (r.customReason || "OTHER") : r.reason.replace("_", " ")}
+                              </span>
+                            </td>
+                            <td style={{ maxWidth: "300px", fontSize: "0.85rem", color: "#444" }}>
+                              <div style={{ maxHeight: "100px", overflowY: "auto", wordBreak: "break-word" }}>
+                                {r.description}
+                              </div>
+                            </td>
+                            <td>
+                              <div className="admin-action-btns" style={{ flexDirection: "column", gap: "6px" }}>
+                                <div style={{ display: "flex", gap: "6px", width: "100%" }}>
+                                  <button
+                                    onClick={() => handleModerateReport(r.id, "DISMISS")}
+                                    disabled={actionLoading !== null}
+                                    className="reject-btn"
+                                    style={{ flex: 1, padding: "8px", fontSize: "0.85rem", whiteSpace: "nowrap" }}
+                                  >
+                                    Dismiss Report
+                                  </button>
+                                  <button
+                                    onClick={() => handleModerateReport(r.id, "RESOLVE", false)}
+                                    disabled={actionLoading !== null}
+                                    className="approve-btn"
+                                    style={{ flex: 1, padding: "8px", fontSize: "0.85rem", whiteSpace: "nowrap" }}
+                                  >
+                                    Resolve (Keep)
+                                  </button>
+                                </div>
+                                <button
+                                  onClick={() => handleModerateReport(r.id, "RESOLVE", true)}
+                                  disabled={actionLoading !== null}
+                                  className="reject-btn"
+                                  style={{ width: "100%", padding: "8px", fontSize: "0.85rem", backgroundColor: "#c5221f", color: "white", whiteSpace: "nowrap" }}
+                                >
+                                  Resolve & Delete Flagged Listing
                                 </button>
                               </div>
                             </td>

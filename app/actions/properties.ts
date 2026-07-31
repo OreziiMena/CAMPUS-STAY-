@@ -14,10 +14,6 @@ export async function getProperties(filterParam?: string | {
   proximity?: string;
 }) {
   try {
-    // Auto-verify all profiles for development/testing convenience
-    await prisma.agentProfile.updateMany({ data: { isVerified: true } }).catch(() => {});
-    await prisma.studentProfile.updateMany({ data: { isVerified: true } }).catch(() => {});
-
     let searchQuery: string | undefined;
     let university: string | undefined;
     let hostelType: string | undefined;
@@ -39,6 +35,7 @@ export async function getProperties(filterParam?: string | {
     const whereClause: any = {
       isAvailable: true,
       isVerified: true,
+      isRoommateOption: false,
     };
 
     const andConditions: any[] = [];
@@ -168,7 +165,7 @@ export async function addProperty(data: any) {
 
     const { title, hostelType, price, location, distance, description, amenities, images, university } = data;
 
-    let createData: any = {
+    const createData: any = {
       title,
       hostelType,
       price: parseFloat(price),

@@ -7,6 +7,7 @@ import Footer from "@/components/Footer";
 import { getPropertyDetails, createInquiry } from "@/app/actions/properties";
 import { getCurrentUser } from "@/app/actions/auth";
 import { scheduleViewing } from "@/app/actions/student";
+import { submitReport } from "@/app/actions/reports";
 import "./styles.css";
 
 interface Property {
@@ -87,6 +88,7 @@ const mockProperties: Record<string, Property> = {
 
 function ApartmentDetailsContent() {
   const searchParams = useSearchParams();
+  const router = useRouter();
   const id = searchParams.get("id") || "1";
 
   const [property, setProperty] = useState<any>(null);
@@ -99,6 +101,61 @@ function ApartmentDetailsContent() {
   const [schedulingStatus, setSchedulingStatus] = useState("");
   const [isScheduling, setIsScheduling] = useState(false);
   const [showToast, setShowToast] = useState(false);
+
+  // Listing Report States
+  const [isReportModalOpen, setIsReportModalOpen] = useState(false);
+  const [reportReason, setReportReason] = useState<any>("FRAUD_SCAM");
+  const [reportCustomReason, setReportCustomReason] = useState("");
+  const [reportDescription, setReportDescription] = useState("");
+  const [isSubmittingReport, setIsSubmittingReport] = useState(false);
+  const [reportSuccess, setReportSuccess] = useState("");
+  const [reportError, setReportError] = useState("");
+
+  const handleReportSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setReportError("");
+    setReportSuccess("");
+
+    if (!currentUser) {
+      alert("Please log in to submit a report.");
+      router.push("/auth/login");
+      return;
+    }
+
+    if (!reportDescription || reportDescription.trim().length < 10) {
+      setReportError("Please provide a detailed description (minimum 10 characters).");
+      return;
+    }
+
+    setIsSubmittingReport(true);
+
+    try {
+      const res = await submitReport({
+        propertyId: property.id,
+        reason: reportReason,
+        customReason: reportReason === "OTHER" ? reportCustomReason : undefined,
+        description: reportDescription,
+      });
+
+      setIsSubmittingReport(false);
+
+      if (res.success) {
+        setReportSuccess("Listing reported successfully. Thank you for keeping Campus Stay safe!");
+        setTimeout(() => {
+          setIsReportModalOpen(false);
+          setReportReason("FRAUD_SCAM");
+          setReportCustomReason("");
+          setReportDescription("");
+          setReportSuccess("");
+        }, 2000);
+      } else {
+        setReportError(res.error || "Failed to submit report.");
+      }
+    } catch (err: any) {
+      setIsSubmittingReport(false);
+      setReportError(err.message || "An unexpected error occurred.");
+    }
+  };
 
   const handleShare = async () => {
     if (!property) return;
@@ -360,7 +417,7 @@ function ApartmentDetailsContent() {
             <h4 className="card-heading">Actions</h4>
             <div className="action-buttons">
               <button className="action-btn" onClick={handleShare}><i className="fas fa-share-alt"></i> Share</button>
-              <button className="action-btn" onClick={() => alert("Listing reported. Thank you.")}><i className="far fa-flag"></i> Report</button>
+              <button className="action-btn" onClick={() => setIsReportModalOpen(true)}><i className="far fa-flag"></i> Report</button>
             </div>
           </div>
 
@@ -396,6 +453,115 @@ function ApartmentDetailsContent() {
           gap: "8px"
         }}>
           <i className="fas fa-check-circle"></i> Link copied!
+        </div>
+      )}
+      {isReportModalOpen && (
+        <div style={{
+          position: "fixed",
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          backgroundColor: "rgba(0, 0, 0, 0.5)",
+          backdropFilter: "blur(4px)",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          zIndex: 1100,
+          padding: "20px",
+          fontFamily: "'Poppins', sans-serif"
+        }} onClick={() => setIsReportModalOpen(false)}>
+          <div style={{
+            background: "white",
+            borderRadius: "20px",
+            width: "100%",
+            maxWidth: "500px",
+            boxShadow: "0 15px 40px rgba(0, 0, 0, 0.15)",
+            border: "1px solid #eaeaea",
+            overflow: "hidden"
+          }} onClick={(e) => e.stopPropagation()}>
+            <div style={{
+              padding: "20px 24px",
+              borderBottom: "1px solid #eaeaea",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+              position: "sticky",
+              top: 0,
+              backgroundColor: "white",
+              zIndex: 10
+            }}>
+              <h2 style={{ fontSize: "1.3rem", fontWeight: "700", color: "#d35400", margin: 0, display: "flex", alignItems: "center", gap: "10px" }}>
+                <i className="fas fa-flag"></i> Report Listing
+              </h2>
+              <button style={{ background: "none", border: "none", fontSize: "1.5rem", color: "#888", cursor: "pointer" }} onClick={() => setIsReportModalOpen(false)}>&times;</button>
+            </div>
+
+            <div style={{ padding: "24px" }}>
+              {reportSuccess ? (
+                <div style={{ textAlign: "center", padding: "20px 0" }}>
+                  <i className="fas fa-check-circle" style={{ color: "#2e7d32", fontSize: "3rem", marginBottom: "15px" }}></i>
+                  <p style={{ margin: 0, color: "#2e7d32", fontWeight: "bold" }}>{reportSuccess}</p>
+                </div>
+              ) : (
+                <form onSubmit={handleReportSubmit} style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
+                  {reportError && (
+                    <div style={{ backgroundColor: "#fde8e8", border: "1px solid #f8b4b4", color: "#9b1c1c", padding: "12px", borderRadius: "8px", fontSize: "0.85rem" }}>
+                      {reportError}
+                    </div>
+                  )}
+
+                  <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+                    <label style={{ fontSize: "0.85rem", fontWeight: "600", color: "#444" }}>Reason for Flagging *</label>
+                    <select
+                      value={reportReason}
+                      onChange={(e) => setReportReason(e.target.value)}
+                      style={{ padding: "12px", borderRadius: "8px", border: "1px solid #ddd", outline: "none", backgroundColor: "#fafafa" }}
+                      required
+                    >
+                      <option value="FRAUD_SCAM">Fraud or Scam Listing</option>
+                      <option value="INACCURATE_DETAILS">Inaccurate details/photos</option>
+                      <option value="INAPPROPRIATE_CONTENT">Inappropriate content/abuse</option>
+                      <option value="SPAM">Spam or Duplicate Listing</option>
+                      <option value="OTHER">Other Reason</option>
+                    </select>
+                  </div>
+
+                  {reportReason === "OTHER" && (
+                    <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+                      <label style={{ fontSize: "0.85rem", fontWeight: "600", color: "#444" }}>Specify Reason *</label>
+                      <input
+                        type="text"
+                        placeholder="Specify the reason..."
+                        value={reportCustomReason}
+                        onChange={(e) => setReportCustomReason(e.target.value)}
+                        style={{ padding: "12px", borderRadius: "8px", border: "1px solid #ddd", outline: "none" }}
+                        required
+                      />
+                    </div>
+                  )}
+
+                  <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+                    <label style={{ fontSize: "0.85rem", fontWeight: "600", color: "#444" }}>Describe the issue *</label>
+                    <textarea
+                      placeholder="Please provide details about what makes this listing suspicious or incorrect..."
+                      value={reportDescription}
+                      onChange={(e) => setReportDescription(e.target.value)}
+                      style={{ padding: "12px", borderRadius: "8px", border: "1px solid #ddd", minHeight: "100px", resize: "vertical", outline: "none" }}
+                      required
+                    />
+                  </div>
+
+                  <div style={{ display: "flex", gap: "12px", marginTop: "12px" }}>
+                    <button type="button" style={{ flex: 1, backgroundColor: "#f1f3f4", color: "#3c4043", border: "none", padding: "12px", borderRadius: "8px", fontWeight: "600", cursor: "pointer" }} onClick={() => setIsReportModalOpen(false)}>Cancel</button>
+                    <button type="submit" disabled={isSubmittingReport} style={{ flex: 2, backgroundColor: "#d35400", color: "white", border: "none", padding: "12px", borderRadius: "8px", fontWeight: "600", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: "8px" }}>
+                      {isSubmittingReport ? <><i className="fas fa-spinner fa-spin"></i> Submitting...</> : "Submit Report"}
+                    </button>
+                  </div>
+                </form>
+              )}
+            </div>
+          </div>
         </div>
       )}
 

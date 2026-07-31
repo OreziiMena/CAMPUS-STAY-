@@ -5,8 +5,43 @@ import bcrypt from "bcryptjs";
 import { cookies } from "next/headers";
 import { writeFile, mkdir } from "fs/promises";
 import path from "path";
+import crypto from "crypto";
+import { generateOTP } from "./otp";
 
 const SESSION_COOKIE_NAME = "campus_stay_session";
+const AUTH_SECRET = process.env.AUTH_SECRET || "fallback-secret-key-at-least-32-chars-long-security-key";
+
+// Cryptographic signing of session JSON payload
+function signSession(payload: any): string {
+  const data = JSON.stringify(payload);
+  const signature = crypto.createHmac("sha256", AUTH_SECRET).update(data).digest("hex");
+  return `${data}.${signature}`;
+}
+
+// Verification of signed session token
+function verifySession(token: string): any | null {
+  try {
+    const parts = token.split(".");
+    if (parts.length !== 2) return null;
+    const [data, signature] = parts;
+    
+    const expectedSignature = crypto.createHmac("sha256", AUTH_SECRET).update(data).digest("hex");
+    
+    const sigBuffer = Buffer.from(signature, "hex");
+    const expectedBuffer = Buffer.from(expectedSignature, "hex");
+    
+   
+    if (sigBuffer.length !== expectedBuffer.length || !crypto.timingSafeEqual(sigBuffer, expectedBuffer)) {
+      console.warn("Session signature verification failed - potential cookie tampering detected.");
+      return null;
+    }
+    
+    return JSON.parse(data);
+  } catch (err) {
+    console.error("Failed to verify/parse session token:", err);
+    return null;
+  }
+}
 
 function getFriendlyErrorMessage(err: any, defaultMsg: string): string {
   console.error("Auth server action error:", err);
@@ -71,15 +106,10 @@ export async function registerStudent(data: any) {
       },
     });
 
-    const cookieStore = await cookies();
-    cookieStore.set(SESSION_COOKIE_NAME, JSON.stringify({ userId: newUser.id, role: "STUDENT" }), {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      path: "/",
-      maxAge: 60 * 60 * 24 * 7, // 7 days
-    });
+    // Generate OTP for email verification
+    await generateOTP(email, "EMAIL_VERIFICATION");
 
-    return { success: true };
+    return { success: true, requireVerification: true, email };
   } catch (err: any) {
     return { success: false, error: getFriendlyErrorMessage(err, "Failed to register student.") };
   }
@@ -111,15 +141,10 @@ export async function registerAgent(data: any) {
       },
     });
 
-    const cookieStore = await cookies();
-    cookieStore.set(SESSION_COOKIE_NAME, JSON.stringify({ userId: newUser.id, role: "AGENT" }), {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      path: "/",
-      maxAge: 60 * 60 * 24 * 7,
-    });
+    // Generate OTP for email verification
+    await generateOTP(email, "EMAIL_VERIFICATION");
 
-    return { success: true };
+    return { success: true, requireVerification: true, email };
   } catch (err: any) {
     return { success: false, error: getFriendlyErrorMessage(err, "Failed to register agent.") };
   }
@@ -146,8 +171,14 @@ export async function loginUser(data: any) {
       return { success: false, error: "Invalid email or password." };
     }
 
+    if (!user.isEmailVerified) {
+      await generateOTP(email, "EMAIL_VERIFICATION");
+      return { success: false, requireVerification: true, email, error: "Please verify your email address to continue." };
+    }
+
     const cookieStore = await cookies();
-    cookieStore.set(SESSION_COOKIE_NAME, JSON.stringify({ userId: user.id, role: user.role }), {
+    const token = signSession({ userId: user.id, role: user.role });
+    cookieStore.set(SESSION_COOKIE_NAME, token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
       path: "/",
@@ -172,7 +203,10 @@ export async function getCurrentUser() {
     const session = cookieStore.get(SESSION_COOKIE_NAME);
     if (!session?.value) return null;
 
-    const { userId } = JSON.parse(session.value);
+    const payload = verifySession(session.value);
+    if (!payload || !payload.userId) return null;
+
+    const { userId } = payload;
     const user = await prisma.user.findUnique({
       where: { id: userId },
       include: {

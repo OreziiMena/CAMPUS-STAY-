@@ -36,7 +36,11 @@ export default function Login() {
           router.push("/explore");
         }
       } else {
-        setError(res.error || "Invalid email or password.");
+        if (res.requireVerification) {
+          router.push(`/auth/verify-email?email=${encodeURIComponent(res.email || email)}`);
+        } else {
+          setError(res.error || "Invalid email or password.");
+        }
       }
     } catch {
       setIsLoading(false);

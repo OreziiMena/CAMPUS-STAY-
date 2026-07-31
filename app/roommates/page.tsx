@@ -6,6 +6,8 @@ import Link from "next/link";
 import { getRoommateListings } from "@/app/actions/student";
 import { getOrCreateRoommateChatRoom } from "@/app/actions/chat";
 import { getCurrentUser } from "@/app/actions/auth";
+import { addProperty, uploadPropertyImages } from "@/app/actions/properties";
+import { submitReport } from "@/app/actions/reports";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import "./roommates.css";
@@ -16,6 +18,14 @@ export default function RoommatesDirectory() {
   const [listings, setListings] = useState<any[]>([]);
   const [currentUser, setCurrentUser] = useState<any>(null);
   const [showSafetyTip, setShowSafetyTip] = useState(true);
+  const [selectedRoommateDetails, setSelectedRoommateDetails] = useState<any | null>(null);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setShowSafetyTip(false);
+    }, 15000);
+    return () => clearTimeout(timer);
+  }, []);
 
   // Filters State
   const [searchQuery, setSearchQuery] = useState("");
@@ -23,20 +33,194 @@ export default function RoommatesDirectory() {
   const [gender, setGender] = useState("All");
   const [maxBudget, setMaxBudget] = useState("");
 
-  useEffect(() => {
-    const fetchData = async () => {
-      setLoading(true);
-      const user = await getCurrentUser();
-      setCurrentUser(user);
+  // Upload Roommate Listing Form State
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [formTitle, setFormTitle] = useState("");
+  const [formHostelType, setFormHostelType] = useState("Shared Room");
+  const [formPrice, setFormPrice] = useState("");
+  const [formLocation, setFormLocation] = useState("");
+  const [formDistance, setFormDistance] = useState("");
+  const [formDescription, setFormDescription] = useState("");
+  const [formAmenities, setFormAmenities] = useState({
+    bed: true,
+    bath: false,
+    prepaid: true,
+    water: true,
+    gated: true,
+    security: false
+  });
+  const [formImages, setFormImages] = useState<string[]>([]);
+  const [formImageFiles, setFormImageFiles] = useState<File[]>([]);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [formSuccess, setFormSuccess] = useState(false);
+  const [formError, setFormError] = useState("");
 
-      const res = await getRoommateListings();
-      if (res.success && res.listings) {
-        setListings(res.listings);
+  // Report States
+  const [isReportModalOpen, setIsReportModalOpen] = useState(false);
+  const [reportReason, setReportReason] = useState<any>("FRAUD_SCAM");
+  const [reportCustomReason, setReportCustomReason] = useState("");
+  const [reportDescription, setReportDescription] = useState("");
+  const [isSubmittingReport, setIsSubmittingReport] = useState(false);
+  const [reportSuccess, setReportSuccess] = useState("");
+  const [reportError, setReportError] = useState("");
+
+  const handleReportSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setReportError("");
+    setReportSuccess("");
+
+    if (!currentUser) {
+      alert("Please log in to submit a report.");
+      router.push("/auth/login");
+      return;
+    }
+
+    if (!selectedRoommateDetails) return;
+
+    if (!reportDescription || reportDescription.trim().length < 10) {
+      setReportError("Please provide a detailed description (minimum 10 characters).");
+      return;
+    }
+
+    setIsSubmittingReport(true);
+
+    try {
+      const res = await submitReport({
+        roommateId: selectedRoommateDetails.student?.id,
+        reason: reportReason,
+        customReason: reportReason === "OTHER" ? reportCustomReason : undefined,
+        description: reportDescription,
+      });
+
+      setIsSubmittingReport(false);
+
+      if (res.success) {
+        setReportSuccess("Roommate listing reported successfully. Thank you!");
+        setTimeout(() => {
+          setIsReportModalOpen(false);
+          setReportReason("FRAUD_SCAM");
+          setReportCustomReason("");
+          setReportDescription("");
+          setReportSuccess("");
+          setSelectedRoommateDetails(null); // Close details modal too
+        }, 2000);
+      } else {
+        setReportError(res.error || "Failed to submit report.");
       }
-      setLoading(false);
-    };
+    } catch (err: any) {
+      setIsSubmittingReport(false);
+      setReportError(err.message || "An unexpected error occurred.");
+    }
+  };
+
+  const fetchData = async () => {
+    setLoading(true);
+    const user = await getCurrentUser();
+    setCurrentUser(user);
+
+    const res = await getRoommateListings();
+    if (res.success && res.listings) {
+      setListings(res.listings);
+    }
+    setLoading(false);
+  };
+
+  useEffect(() => {
     fetchData();
   }, []);
+
+  const handleFormCheckboxChange = (name: keyof typeof formAmenities) => {
+    setFormAmenities((prev) => ({ ...prev, [name]: !prev[name] }));
+  };
+
+  const handleFormUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files.length > 0) {
+      const selectedFiles = Array.from(e.target.files);
+      setFormImageFiles((prev) => [...prev, ...selectedFiles]);
+      const fileUrls = selectedFiles.map((file) => URL.createObjectURL(file));
+      setFormImages((prev) => [...prev, ...fileUrls]);
+    }
+  };
+
+  const removeFormImage = (index: number) => {
+    setFormImages((prev) => prev.filter((_, i) => i !== index));
+    setFormImageFiles((prev) => prev.filter((_, i) => i !== index));
+  };
+
+  const handleFormSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setFormError("");
+
+    if (!formTitle || !formPrice || !formLocation || !formDistance || !formDescription) {
+      setFormError("Please fill in all required fields.");
+      return;
+    }
+
+    setIsSubmitting(true);
+
+    const activeAmenities: string[] = [];
+    if (formAmenities.bed) activeAmenities.push("Shared Bedspace");
+    if (formAmenities.bath) activeAmenities.push("Shared Bathroom");
+    if (formAmenities.prepaid) activeAmenities.push("Prepaid Meter");
+    if (formAmenities.water) activeAmenities.push("Borehole Water");
+    if (formAmenities.gated) activeAmenities.push("Gated Compound");
+    if (formAmenities.security) activeAmenities.push("Security Guard");
+
+    try {
+      let uploadedUrls: string[] = [];
+      if (formImageFiles.length > 0) {
+        const formData = new FormData();
+        formImageFiles.forEach((file) => {
+          formData.append("images", file);
+        });
+        const uploadRes = await uploadPropertyImages(formData);
+        if (!uploadRes.success) {
+          setFormError(uploadRes.error || "Failed to upload images.");
+          setIsSubmitting(false);
+          return;
+        }
+        uploadedUrls = uploadRes.urls || [];
+      }
+
+      const finalImages = uploadedUrls.length > 0 ? uploadedUrls : ["https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?ixlib=rb-4.0.3"];
+
+      const res = await addProperty({
+        title: formTitle,
+        hostelType: formHostelType,
+        price: formPrice,
+        location: formLocation,
+        distance: formDistance,
+        description: formDescription,
+        university: currentUser?.studentProfile?.university || "FUPRE",
+        amenities: activeAmenities,
+        images: finalImages,
+      });
+
+      setIsSubmitting(false);
+
+      if (res.success) {
+        setFormSuccess(true);
+        fetchData();
+        
+        setTimeout(() => {
+          setIsModalOpen(false);
+          setFormSuccess(false);
+          setFormTitle("");
+          setFormPrice("");
+          setFormLocation("");
+          setFormDistance("");
+          setFormDescription("");
+          setFormImages([]);
+          setFormImageFiles([]);
+        }, 1500);
+      } else {
+        setFormError(res.error || "Failed to list roommate option.");
+      }
+    } catch (err: any) {
+      setIsSubmitting(false);
+      setFormError(err.message || "An unexpected error occurred.");
+    }
+  };
 
   const handleMessageRoommate = async (roommateUserId: string, roommateName: string) => {
     if (!currentUser) {
@@ -103,6 +287,23 @@ export default function RoommatesDirectory() {
             Connect with verified students near your campus to share hostel apartments,
             split rent bills, and build great roommate compatibility relationships.
           </p>
+          <div className="hero-actions">
+            <button 
+              onClick={() => {
+                if (!currentUser) {
+                  alert("Please log in to upload roommate listings.");
+                  router.push("/auth/login");
+                } else if (currentUser.role !== "STUDENT") {
+                  alert("Only students can upload roommate requests.");
+                } else {
+                  setIsModalOpen(true);
+                }
+              }} 
+              className="list-roommate-hero-btn"
+            >
+              <i className="fas fa-plus-circle"></i> List Your Roommate Space
+            </button>
+          </div>
         </section>
 
         {/* Filters Box */}
@@ -285,16 +486,23 @@ export default function RoommatesDirectory() {
                       )}
                     </div>
 
-                    <div className="roommate-card-footer">
+                    <div className="roommate-card-footer" style={{ display: "flex", gap: "10px", marginTop: "12px" }}>
+                      <button
+                        onClick={() => setSelectedRoommateDetails(listing)}
+                        className="message-roommate-btn"
+                        style={{ backgroundColor: "#f1f3f4", color: "#333", border: "1px solid #ddd", width: "50%" }}
+                      >
+                        <i className="fas fa-info-circle"></i> View Details
+                      </button>
                       <button
                         onClick={() =>
                           student && handleMessageRoommate(student.userId, student.username)
                         }
                         className="message-roommate-btn"
                         disabled={!student}
-                        style={{ width: "100%" }}
+                        style={{ width: "50%" }}
                       >
-                        <i className="fas fa-comments"></i> Message Roommate
+                        <i className="fas fa-comments"></i> Message
                       </button>
                     </div>
                   </div>
@@ -366,6 +574,458 @@ export default function RoommatesDirectory() {
           >
             &times;
           </button>
+        </div>
+      )}
+
+      {isModalOpen && (
+        <div className="modal-overlay" onClick={() => setIsModalOpen(false)}>
+          <div className="modal-card" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <h2><i className="fas fa-user-friends"></i> List Roommate Space</h2>
+              <button className="modal-close-btn" onClick={() => setIsModalOpen(false)}>&times;</button>
+            </div>
+            
+            <div className="modal-body">
+              {formSuccess ? (
+                <div style={{ textAlign: "center", padding: "40px 20px" }}>
+                  <i className="fas fa-check-circle" style={{ color: "#2e7d32", fontSize: "3.5rem", marginBottom: "15px" }}></i>
+                  <h3 style={{ color: "rgb(2, 53, 28)", margin: "0 0 10px 0" }}>Listing Posted Successfully!</h3>
+                  <p style={{ color: "#666", margin: 0 }}>Your roommate listing is now active in the directory.</p>
+                </div>
+              ) : (
+                <form onSubmit={handleFormSubmit}>
+                  {formError && (
+                    <div style={{ backgroundColor: "#fde8e8", border: "1px solid #f8b4b4", color: "#9b1c1c", padding: "12px", borderRadius: "8px", marginBottom: "20px", fontSize: "0.85rem", display: "flex", alignItems: "center", gap: "8px" }}>
+                      <i className="fas fa-exclamation-circle"></i> {formError}
+                    </div>
+                  )}
+
+                  {currentUser && !currentUser.studentProfile?.isVerified && (
+                    <div style={{ backgroundColor: "#fff8e1", border: "1px solid #ffe082", color: "#b78103", padding: "12px", borderRadius: "8px", marginBottom: "20px", fontSize: "0.85rem", display: "flex", alignItems: "flex-start", gap: "8px" }}>
+                      <i className="fas fa-exclamation-triangle" style={{ marginTop: "3px" }}></i>
+                      <p style={{ margin: 0 }}>
+                        <strong>Note:</strong> Your student profile is currently unverified. While you can post listings, you must verify your profile in settings before other students can message you.
+                      </p>
+                    </div>
+                  )}
+
+                  <div className="form-group-custom">
+                    <label htmlFor="form-title">Listing Title *</label>
+                    <input 
+                      type="text" 
+                      id="form-title" 
+                      placeholder="e.g. Need a neat roommate to split rent at Ugbomro" 
+                      value={formTitle}
+                      onChange={(e) => setFormTitle(e.target.value)}
+                      className="form-input-custom"
+                      required
+                    />
+                  </div>
+
+                  <div className="form-grid-2">
+                    <div className="form-group-custom">
+                      <label htmlFor="form-type">Space Type *</label>
+                      <select 
+                        id="form-type" 
+                        value={formHostelType} 
+                        onChange={(e) => setFormHostelType(e.target.value)}
+                        className="form-select-custom"
+                        required
+                      >
+                        <option value="Shared Room">Shared Room</option>
+                        <option value="Self-Contain">Self-Contain</option>
+                        <option value="1-Bedroom Flat">1-Bedroom Flat</option>
+                        <option value="2-Bedroom Flat">2-Bedroom Flat</option>
+                      </select>
+                    </div>
+
+                    <div className="form-group-custom">
+                      <label htmlFor="form-price">Your Share of Rent (₦/yr) *</label>
+                      <input 
+                        type="number" 
+                        id="form-price" 
+                        placeholder="e.g. 75000" 
+                        value={formPrice}
+                        onChange={(e) => setFormPrice(e.target.value)}
+                        className="form-input-custom"
+                        required
+                      />
+                    </div>
+                  </div>
+
+                  <div className="form-grid-2">
+                    <div className="form-group-custom">
+                      <label htmlFor="form-location">Hostel Location *</label>
+                      <input 
+                        type="text" 
+                        id="form-location" 
+                        placeholder="e.g. FUPRE Road, Effurun" 
+                        value={formLocation}
+                        onChange={(e) => setFormLocation(e.target.value)}
+                        className="form-input-custom"
+                        required
+                      />
+                    </div>
+
+                    <div className="form-group-custom">
+                      <label htmlFor="form-distance">Proximity Walk Time *</label>
+                      <input 
+                        type="text" 
+                        id="form-distance" 
+                        placeholder="e.g. 5 mins walk to campus" 
+                        value={formDistance}
+                        onChange={(e) => setFormDistance(e.target.value)}
+                        className="form-input-custom"
+                        required
+                      />
+                    </div>
+                  </div>
+
+                  <div className="form-group-custom">
+                    <label htmlFor="form-desc">Apartment & Roommate Description *</label>
+                    <textarea 
+                      id="form-desc" 
+                      placeholder="Describe the apartment layout, utility bills, lifestyle, and clean/noise compatibility expectations..." 
+                      value={formDescription}
+                      onChange={(e) => setFormDescription(e.target.value)}
+                      className="form-textarea-custom"
+                      required
+                    />
+                  </div>
+
+                  <div className="form-group-custom">
+                    <label>Included Features & Amenities</label>
+                    <div className="checkbox-grid-custom">
+                      <label className="checkbox-label-custom">
+                        <input type="checkbox" checked={formAmenities.bed} onChange={() => handleFormCheckboxChange("bed")} />
+                        Shared Bedspace
+                      </label>
+                      <label className="checkbox-label-custom">
+                        <input type="checkbox" checked={formAmenities.bath} onChange={() => handleFormCheckboxChange("bath")} />
+                        Shared Bath
+                      </label>
+                      <label className="checkbox-label-custom">
+                        <input type="checkbox" checked={formAmenities.prepaid} onChange={() => handleFormCheckboxChange("prepaid")} />
+                        Prepaid Meter
+                      </label>
+                      <label className="checkbox-label-custom">
+                        <input type="checkbox" checked={formAmenities.water} onChange={() => handleFormCheckboxChange("water")} />
+                        Running Water
+                      </label>
+                      <label className="checkbox-label-custom">
+                        <input type="checkbox" checked={formAmenities.gated} onChange={() => handleFormCheckboxChange("gated")} />
+                        Gated Compound
+                      </label>
+                      <label className="checkbox-label-custom">
+                        <input type="checkbox" checked={formAmenities.security} onChange={() => handleFormCheckboxChange("security")} />
+                        Security Guard
+                      </label>
+                    </div>
+                  </div>
+
+                  <div className="form-group-custom">
+                    <label>Upload Room/Hostel Images</label>
+                    <input 
+                      type="file" 
+                      multiple 
+                      accept="image/*"
+                      onChange={handleFormUpload}
+                      style={{ fontSize: "0.85rem", color: "#666" }}
+                    />
+                    
+                    {formImages.length > 0 && (
+                      <div style={{ display: "flex", gap: "10px", flexWrap: "wrap", marginTop: "12px" }}>
+                        {formImages.map((src, i) => (
+                          <div key={i} style={{ position: "relative", width: "70px", height: "70px", borderRadius: "6px", overflow: "hidden", border: "1px solid #ddd" }}>
+                            <img src={src} alt="Preview" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                            <button 
+                              type="button" 
+                              onClick={() => removeFormImage(i)}
+                              style={{ position: "absolute", top: "2px", right: "2px", backgroundColor: "rgba(0,0,0,0.6)", color: "white", border: "none", borderRadius: "50%", width: "16px", height: "16px", fontSize: "10px", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}
+                            >
+                              &times;
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="form-actions-custom">
+                    <button type="button" className="btn-cancel" onClick={() => setIsModalOpen(false)}>Cancel</button>
+                    <button type="submit" className="btn-submit" disabled={isSubmitting}>
+                      {isSubmitting ? (
+                        <><i className="fas fa-spinner fa-spin"></i> Uploading...</>
+                      ) : (
+                        "Upload Space Listing"
+                      )}
+                    </button>
+                  </div>
+                </form>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {selectedRoommateDetails && (
+        <div className="modal-overlay" onClick={() => setSelectedRoommateDetails(null)}>
+          <div className="modal-card" onClick={(e) => e.stopPropagation()} style={{ maxWidth: "600px" }}>
+            <div className="modal-header">
+              <h2>
+                <i className="fas fa-user-circle"></i> Roommate & Space Details
+              </h2>
+              <div style={{ display: "flex", alignItems: "center", gap: "16px" }}>
+                <button 
+                  title="Report Listing" 
+                  onClick={() => setIsReportModalOpen(true)}
+                  style={{ background: "none", border: "none", color: "#d9534f", cursor: "pointer", fontSize: "1.15rem", display: "flex", alignItems: "center" }}
+                >
+                  <i className="fas fa-flag"></i>
+                </button>
+                <button className="modal-close-btn" onClick={() => setSelectedRoommateDetails(null)}>
+                  &times;
+                </button>
+              </div>
+            </div>
+            <div className="modal-body" style={{ padding: "24px" }}>
+              {/* Profile Card Header */}
+              <div style={{ display: "flex", alignItems: "center", gap: "16px", marginBottom: "20px" }}>
+                <div style={{
+                  width: "50px",
+                  height: "50px",
+                  borderRadius: "50%",
+                  backgroundColor: "#e8f0fe",
+                  color: "#1a73e8",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  fontSize: "1.2rem",
+                  fontWeight: "bold"
+                }}>
+                  {((selectedRoommateDetails.student?.fullName?.split(" ")[0]?.charAt(0) || "") +
+                    (selectedRoommateDetails.student?.fullName?.split(" ")[1]?.charAt(0) || "") || "ST").toUpperCase()}
+                </div>
+                <div>
+                  <h3 style={{ margin: 0, fontSize: "1.1rem", fontWeight: "700", display: "flex", alignItems: "center", gap: "6px" }}>
+                    {selectedRoommateDetails.student?.fullName || "Student"}
+                    {selectedRoommateDetails.student?.isVerified && (
+                      <i className="fas fa-check-circle verified-badge" style={{ color: "#2e7d32", fontSize: "0.95rem" }}></i>
+                    )}
+                  </h3>
+                  <p style={{ margin: "2px 0 0 0", fontSize: "0.8rem", color: "#666" }}>
+                    @{selectedRoommateDetails.student?.username || "student"} &bull; {selectedRoommateDetails.university}
+                  </p>
+                </div>
+              </div>
+
+              {/* Space details */}
+              <div style={{ marginBottom: "20px" }}>
+                {selectedRoommateDetails.images && selectedRoommateDetails.images.length > 0 && (
+                  <div style={{ width: "100%", height: "220px", borderRadius: "12px", overflow: "hidden", marginBottom: "16px" }}>
+                    <img 
+                      src={selectedRoommateDetails.images[0]} 
+                      alt={selectedRoommateDetails.title} 
+                      style={{ width: "100%", height: "100%", objectFit: "cover" }} 
+                    />
+                  </div>
+                )}
+                
+                <span style={{ background: "#e8f7f5", color: "rgb(2, 53, 28)", padding: "4px 8px", borderRadius: "6px", fontSize: "0.75rem", fontWeight: "bold" }}>
+                  {selectedRoommateDetails.hostelType}
+                </span>
+                
+                <h4 style={{ margin: "8px 0 4px 0", fontSize: "1.15rem", fontWeight: "700", color: "#333" }}>
+                  {selectedRoommateDetails.title}
+                </h4>
+                
+                <h3 style={{ margin: "0 0 12px 0", fontSize: "1.4rem", fontWeight: "800", color: "rgb(2, 53, 28)" }}>
+                  ₦{selectedRoommateDetails.price.toLocaleString()} <span style={{ fontSize: "0.85rem", fontWeight: "normal", color: "#666" }}>/ year</span>
+                </h3>
+
+                <div style={{ display: "flex", flexWrap: "wrap", gap: "8px", marginBottom: "16px" }}>
+                  <div style={{ display: "inline-flex", alignItems: "center", gap: "6px", backgroundColor: "#f1f3f4", padding: "6px 12px", borderRadius: "20px", fontSize: "0.8rem", color: "#444" }}>
+                    <i className="fas fa-map-marker-alt" style={{ color: "#7e6b01" }}></i>
+                    <span>{selectedRoommateDetails.location}</span>
+                  </div>
+                  <div style={{ display: "inline-flex", alignItems: "center", gap: "6px", backgroundColor: "#f1f3f4", padding: "6px 12px", borderRadius: "20px", fontSize: "0.8rem", color: "#444" }}>
+                    <i className="far fa-clock" style={{ color: "#1a73e8" }}></i>
+                    <span>{selectedRoommateDetails.distance}</span>
+                  </div>
+                </div>
+
+                <h5 style={{ margin: "0 0 6px 0", fontSize: "0.85rem", textTransform: "uppercase", color: "#888", letterSpacing: "0.5px" }}>Description</h5>
+                <p style={{ margin: "0 0 20px 0", fontSize: "0.9rem", color: "#444", lineHeight: "1.5", whiteSpace: "pre-wrap" }}>
+                  {selectedRoommateDetails.description}
+                </p>
+              </div>
+
+              {/* Roommate compatibility preferences */}
+              {selectedRoommateDetails.student && (
+                <div style={{ backgroundColor: "#fcfcfc", border: "1px solid #f0f0f0", borderRadius: "12px", padding: "16px", marginBottom: "20px" }}>
+                  <h5 style={{ margin: "0 0 10px 0", fontSize: "0.8rem", textTransform: "uppercase", color: "#888", letterSpacing: "0.5px" }}>Roommate Preference</h5>
+                  <div style={{ display: "flex", flexWrap: "wrap", gap: "8px" }}>
+                    <span style={{ backgroundColor: "white", border: "1px solid #e0e0e0", color: "#444", padding: "6px 12px", borderRadius: "8px", fontSize: "0.8rem", display: "inline-flex", alignItems: "center", gap: "6px" }}>
+                      <i className="fas fa-venus-mars" style={{ color: "rgb(2, 53, 28)" }}></i> Gender: {selectedRoommateDetails.student.gender}
+                    </span>
+                    <span style={{ backgroundColor: "white", border: "1px solid #e0e0e0", color: "#444", padding: "6px 12px", borderRadius: "8px", fontSize: "0.8rem", display: "inline-flex", alignItems: "center", gap: "6px" }}>
+                      <i className="fas fa-sparkles" style={{ color: "rgb(2, 53, 28)" }}></i> Cleanliness: {selectedRoommateDetails.student.cleanliness}
+                    </span>
+                    <span style={{ backgroundColor: "white", border: "1px solid #e0e0e0", color: "#444", padding: "6px 12px", borderRadius: "8px", fontSize: "0.8rem", display: "inline-flex", alignItems: "center", gap: "6px" }}>
+                      <i className="fas fa-moon" style={{ color: "rgb(2, 53, 28)" }}></i> Sleep: {selectedRoommateDetails.student.sleepSchedule}
+                    </span>
+                  </div>
+                </div>
+              )}
+
+              {/* Included Amenities */}
+              {selectedRoommateDetails.amenities && selectedRoommateDetails.amenities.length > 0 && (
+                <div style={{ marginBottom: "24px" }}>
+                  <h5 style={{ margin: "0 0 8px 0", fontSize: "0.85rem", textTransform: "uppercase", color: "#888", letterSpacing: "0.5px" }}>Included Amenities</h5>
+                  <div style={{ display: "flex", flexWrap: "wrap", gap: "8px" }}>
+                    {selectedRoommateDetails.amenities.map((amenity: string, idx: number) => (
+                      <span key={idx} style={{ backgroundColor: "#f8f9fa", border: "1px solid #eef0f2", color: "#555", padding: "4px 10px", borderRadius: "6px", fontSize: "0.78rem" }}>
+                        {amenity}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Footer action buttons */}
+              <div style={{ display: "flex", gap: "12px", marginTop: "24px" }}>
+                <button 
+                  type="button" 
+                  onClick={() => setSelectedRoommateDetails(null)} 
+                  style={{ flex: 1, backgroundColor: "#f1f3f4", color: "#3c4043", border: "none", padding: "12px", borderRadius: "8px", fontWeight: "600", cursor: "pointer" }}
+                >
+                  Close Details
+                </button>
+                <button 
+                  type="button" 
+                  onClick={() => {
+                    if (selectedRoommateDetails.student) {
+                      handleMessageRoommate(selectedRoommateDetails.student.userId, selectedRoommateDetails.student.username);
+                      setSelectedRoommateDetails(null);
+                    }
+                  }} 
+                  disabled={!selectedRoommateDetails.student}
+                  style={{ flex: 2, backgroundColor: "rgb(2, 53, 28)", color: "white", border: "none", padding: "12px", borderRadius: "8px", fontWeight: "600", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: "8px" }}
+                >
+                  <i className="fas fa-comments"></i> Message Roommate
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+      {isReportModalOpen && (
+        <div style={{
+          position: "fixed",
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          backgroundColor: "rgba(0, 0, 0, 0.5)",
+          backdropFilter: "blur(4px)",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          zIndex: 1200,
+          padding: "20px",
+          fontFamily: "'Poppins', sans-serif"
+        }} onClick={() => setIsReportModalOpen(false)}>
+          <div style={{
+            background: "white",
+            borderRadius: "20px",
+            width: "100%",
+            maxWidth: "500px",
+            boxShadow: "0 15px 40px rgba(0, 0, 0, 0.15)",
+            border: "1px solid #eaeaea",
+            overflow: "hidden"
+          }} onClick={(e) => e.stopPropagation()}>
+            <div style={{
+              padding: "20px 24px",
+              borderBottom: "1px solid #eaeaea",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+              position: "sticky",
+              top: 0,
+              backgroundColor: "white",
+              zIndex: 10
+            }}>
+              <h2 style={{ fontSize: "1.3rem", fontWeight: "700", color: "#d9534f", margin: 0, display: "flex", alignItems: "center", gap: "10px" }}>
+                <i className="fas fa-flag"></i> Report Roommate
+              </h2>
+              <button style={{ background: "none", border: "none", fontSize: "1.5rem", color: "#888", cursor: "pointer" }} onClick={() => setIsReportModalOpen(false)}>&times;</button>
+            </div>
+
+            <div style={{ padding: "24px" }}>
+              {reportSuccess ? (
+                <div style={{ textAlign: "center", padding: "20px 0" }}>
+                  <i className="fas fa-check-circle" style={{ color: "#2e7d32", fontSize: "3rem", marginBottom: "15px" }}></i>
+                  <p style={{ margin: 0, color: "#2e7d32", fontWeight: "bold" }}>{reportSuccess}</p>
+                </div>
+              ) : (
+                <form onSubmit={handleReportSubmit} style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
+                  {reportError && (
+                    <div style={{ backgroundColor: "#fde8e8", border: "1px solid #f8b4b4", color: "#9b1c1c", padding: "12px", borderRadius: "8px", fontSize: "0.85rem" }}>
+                      {reportError}
+                    </div>
+                  )}
+
+                  <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+                    <label style={{ fontSize: "0.85rem", fontWeight: "600", color: "#444" }}>Reason for Flagging *</label>
+                    <select
+                      value={reportReason}
+                      onChange={(e) => setReportReason(e.target.value)}
+                      style={{ padding: "12px", borderRadius: "8px", border: "1px solid #ddd", outline: "none", backgroundColor: "#fafafa" }}
+                      required
+                    >
+                      <option value="FRAUD_SCAM">Fraud or Scam Profile</option>
+                      <option value="INACCURATE_DETAILS">Inaccurate preferences/information</option>
+                      <option value="INAPPROPRIATE_CONTENT">Inappropriate content/abuse</option>
+                      <option value="SPAM">Spam or Duplicate Profile</option>
+                      <option value="OTHER">Other Reason</option>
+                    </select>
+                  </div>
+
+                  {reportReason === "OTHER" && (
+                    <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+                      <label style={{ fontSize: "0.85rem", fontWeight: "600", color: "#444" }}>Specify Reason *</label>
+                      <input
+                        type="text"
+                        placeholder="Specify the reason..."
+                        value={reportCustomReason}
+                        onChange={(e) => setReportCustomReason(e.target.value)}
+                        style={{ padding: "12px", borderRadius: "8px", border: "1px solid #ddd", outline: "none" }}
+                        required
+                      />
+                    </div>
+                  )}
+
+                  <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+                    <label style={{ fontSize: "0.85rem", fontWeight: "600", color: "#444" }}>Describe the issue *</label>
+                    <textarea
+                      placeholder="Please describe why you are reporting this roommate profile..."
+                      value={reportDescription}
+                      onChange={(e) => setReportDescription(e.target.value)}
+                      style={{ padding: "12px", borderRadius: "8px", border: "1px solid #ddd", minHeight: "100px", resize: "vertical", outline: "none" }}
+                      required
+                    />
+                  </div>
+
+                  <div style={{ display: "flex", gap: "12px", marginTop: "12px" }}>
+                    <button type="button" style={{ flex: 1, backgroundColor: "#f1f3f4", color: "#3c4043", border: "none", padding: "12px", borderRadius: "8px", fontWeight: "600", cursor: "pointer" }} onClick={() => setIsReportModalOpen(false)}>Cancel</button>
+                    <button type="submit" disabled={isSubmittingReport} style={{ flex: 2, backgroundColor: "#d9534f", color: "white", border: "none", padding: "12px", borderRadius: "8px", fontWeight: "600", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: "8px" }}>
+                      {isSubmittingReport ? <><i className="fas fa-spinner fa-spin"></i> Submitting...</> : "Submit Report"}
+                    </button>
+                  </div>
+                </form>
+              )}
+            </div>
+          </div>
         </div>
       )}
 

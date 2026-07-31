@@ -48,6 +48,11 @@ function AdminSidebarWrapper({
               <i className="fas fa-building"></i> Properties
             </Link>
           </li>
+          <li>
+            <Link href="/admin-dashboard?tab=reports" className={activeTab === "reports" ? "active" : ""}>
+              <i className="fas fa-flag"></i> Reports Moderation
+            </Link>
+          </li>
           <li style={{ marginTop: "20px", borderTop: "1px solid rgba(255, 255, 255, 0.1)", paddingTop: "10px" }}>
             <Link href="/explore">
               <i className="fas fa-globe"></i> View Site

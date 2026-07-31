@@ -2,7 +2,7 @@
 
 import prisma from "@/lib/prisma";
 import { getCurrentUser } from "./auth";
-import { Role } from "@prisma/client";
+import { Role } from "@/lib/generated-client";
 
 export async function getAdminDashboardData() {
   try {

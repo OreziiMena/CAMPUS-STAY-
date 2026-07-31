@@ -451,9 +451,6 @@ export async function getRoommateProfiles() {
 
 export async function getRoommateListings() {
   try {
-    // Auto-verify all student profiles for development/testing convenience
-    await prisma.studentProfile.updateMany({ data: { isVerified: true } }).catch(() => {});
-
     const user = await getCurrentUser();
 
     // Query roommate listings (properties where isRoommateOption is true)
