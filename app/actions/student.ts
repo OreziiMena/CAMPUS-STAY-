@@ -245,26 +245,36 @@ export async function uploadStudentVerification(formData: FormData) {
 
     const updateData: any = {};
     const timestamp = Date.now();
+    const ALLOWED_EXTENSIONS = [".pdf", ".png", ".jpg", ".jpeg", ".webp"];
 
     if (hasIdCard) {
+      const ext = (path.extname(idCardFile.name) || "").toLowerCase();
+      if (!ALLOWED_EXTENSIONS.includes(ext)) {
+        return { success: false, error: "Invalid ID Card file type. Only PDF and image files (.jpg, .jpeg, .png, .webp) are allowed." };
+      }
       const buffer = Buffer.from(await idCardFile.arrayBuffer());
-      const ext = path.extname(idCardFile.name) || ".pdf";
       const filename = `${user.studentProfile.id}-idcard-${timestamp}${ext}`;
       await writeFile(path.join(uploadDir, filename), buffer);
       updateData.idCardDoc = `/uploads/student_verification/${filename}`;
     }
 
     if (hasFeesReceipt) {
+      const ext = (path.extname(feesReceiptFile.name) || "").toLowerCase();
+      if (!ALLOWED_EXTENSIONS.includes(ext)) {
+        return { success: false, error: "Invalid Fees Receipt file type. Only PDF and image files (.jpg, .jpeg, .png, .webp) are allowed." };
+      }
       const buffer = Buffer.from(await feesReceiptFile.arrayBuffer());
-      const ext = path.extname(feesReceiptFile.name) || ".pdf";
       const filename = `${user.studentProfile.id}-fees-${timestamp}${ext}`;
       await writeFile(path.join(uploadDir, filename), buffer);
       updateData.feesReceiptDoc = `/uploads/student_verification/${filename}`;
     }
 
     if (hasPortalScreenshot) {
+      const ext = (path.extname(portalScreenshotFile.name) || "").toLowerCase();
+      if (!ALLOWED_EXTENSIONS.includes(ext)) {
+        return { success: false, error: "Invalid Portal Screenshot file type. Only PDF and image files (.jpg, .jpeg, .png, .webp) are allowed." };
+      }
       const buffer = Buffer.from(await portalScreenshotFile.arrayBuffer());
-      const ext = path.extname(portalScreenshotFile.name) || ".pdf";
       const filename = `${user.studentProfile.id}-portal-${timestamp}${ext}`;
       await writeFile(path.join(uploadDir, filename), buffer);
       updateData.portalScreenshotDoc = `/uploads/student_verification/${filename}`;

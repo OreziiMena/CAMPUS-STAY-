@@ -438,13 +438,18 @@ export async function uploadPropertyImages(formData: FormData) {
 
     const urls: string[] = [];
     const timestamp = Date.now();
+    const ALLOWED_IMAGE_EXTENSIONS = [".png", ".jpg", ".jpeg", ".webp"];
 
     for (let i = 0; i < files.length; i++) {
       const file = files[i];
       if (!file || file.size === 0) continue;
 
+      const ext = (path.extname(file.name) || "").toLowerCase();
+      if (!ALLOWED_IMAGE_EXTENSIONS.includes(ext)) {
+        return { success: false, error: "Invalid image file type. Only .jpg, .jpeg, .png, and .webp images are allowed." };
+      }
+
       const buffer = Buffer.from(await file.arrayBuffer());
-      const ext = path.extname(file.name) || ".jpg";
       const filename = `${user.id}-property-${timestamp}-${i}${ext}`;
       await writeFile(path.join(uploadDir, filename), buffer);
       urls.push(`/uploads/properties/${filename}`);

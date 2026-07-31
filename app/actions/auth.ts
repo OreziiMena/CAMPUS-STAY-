@@ -293,7 +293,11 @@ export async function uploadAgentVerification(formData: FormData) {
     const uploadDir = path.join(process.cwd(), "public", "uploads", "verification");
     await mkdir(uploadDir, { recursive: true });
 
-    const ext = path.extname(file.name) || ".pdf";
+    const ALLOWED_EXTENSIONS = [".pdf", ".png", ".jpg", ".jpeg", ".webp"];
+    const ext = (path.extname(file.name) || "").toLowerCase();
+    if (!ALLOWED_EXTENSIONS.includes(ext)) {
+      return { success: false, error: "Invalid document file type. Only PDF and image files (.jpg, .jpeg, .png, .webp) are allowed." };
+    }
     const filename = `${user.agentProfile.id}-${Date.now()}${ext}`;
     const filePath = path.join(uploadDir, filename);
 
