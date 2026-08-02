@@ -1,11 +1,16 @@
 "use client";
-import React, { useState } from "react";
+import React, { useState, Suspense } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
+import { resetPasswordWithToken } from "@/app/actions/auth";
 import "../signup.css";
 
-export default function ResetPassword() {
+function ResetPasswordContent() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const email = searchParams.get("email") || "";
+  const token = searchParams.get("token") || "";
+
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -14,7 +19,7 @@ export default function ResetPassword() {
   const [success, setSuccess] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
 
@@ -33,22 +38,36 @@ export default function ResetPassword() {
       return;
     }
 
+    if (!email || !token) {
+      setError("Invalid reset request. Please request a new link.");
+      return;
+    }
+
     setIsLoading(true);
 
-    setTimeout(() => {
+    try {
+      const res = await resetPasswordWithToken(email, token, newPassword);
       setIsLoading(false);
-      setSuccess(true);
-      setTimeout(() => {
-        router.push("/auth/login");
-      }, 1500);
-    }, 1500);
+
+      if (res.success) {
+        setSuccess(true);
+        setTimeout(() => {
+          router.push("/auth/login");
+        }, 2000);
+      } else {
+        setError(res.error || "Failed to update password.");
+      }
+    } catch {
+      setIsLoading(false);
+      setError("An unexpected error occurred. Please try again.");
+    }
   };
 
   return (
     <>
       <div className="auth-page">
-        <Link href="/auth/rolepick" className="back-link">
-          <i className="fas fa-arrow-left"></i> Go back
+        <Link href="/auth/login" className="back-link">
+          <i className="fas fa-arrow-left"></i> Back to Login
         </Link>
 
         <div className="auth-container">
@@ -132,5 +151,22 @@ export default function ResetPassword() {
         </div>
       </div>
     </>
+  );
+}
+
+export default function ResetPassword() {
+  return (
+    <Suspense fallback={
+      <div className="auth-page">
+        <div className="auth-container">
+          <div className="auth-card auth-card-narrow" style={{ textAlign: "center", padding: "40px" }}>
+            <i className="fas fa-spinner fa-spin" style={{ fontSize: "2rem", color: "rgb(2, 53, 28)" }}></i>
+            <p style={{ marginTop: "15px" }}>Loading password reset...</p>
+          </div>
+        </div>
+      </div>
+    }>
+      <ResetPasswordContent />
+    </Suspense>
   );
 }

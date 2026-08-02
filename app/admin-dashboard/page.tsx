@@ -434,7 +434,7 @@ function AdminDashboardContent() {
                               </td>
                               <td>
                                 <div className="doc-links-cell">
-                                  {!student.idCardDoc && !student.feesReceiptDoc && !student.portalScreenshotDoc && (
+                                  {!student.idCardDoc && !student.feesReceiptDoc && !student.portalScreenshotDoc && !student.jambLetterDoc && (
                                     <span style={{ color: "#888", fontSize: "13px" }}>No documents uploaded</span>
                                   )}
                                   {student.idCardDoc && (
@@ -450,6 +450,11 @@ function AdminDashboardContent() {
                                   {student.portalScreenshotDoc && (
                                     <a href={student.portalScreenshotDoc} target="_blank" rel="noopener noreferrer" className="doc-link">
                                       <i className="fas fa-desktop"></i> Portal Screenshot
+                                    </a>
+                                  )}
+                                  {student.jambLetterDoc && (
+                                    <a href={student.jambLetterDoc} target="_blank" rel="noopener noreferrer" className="doc-link">
+                                      <i className="fas fa-envelope-open-text"></i> JAMB Letter
                                     </a>
                                   )}
                                 </div>

@@ -189,16 +189,22 @@ html{
 }
 .checkbox-group {
     display: flex;
-    align-items: flex-start; 
-    gap: 10px;
+    align-items: center; 
+    gap: 8px;
     margin-top: 10px;
     margin-bottom: 5px;
 }
 .checkbox-group input[type="checkbox"] {
-    width: 18px;
-    height: 18px;
+    width: 16px !important;
+    height: 16px !important;
+    appearance: checkbox !important;
+    -webkit-appearance: checkbox !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    border: none !important;
+    border-radius: 4px !important;
+    background: none !important;
     cursor: pointer;
-    margin-top: 2px; 
     accent-color: rgb(2, 53, 28); 
 }
 .checkbox-group label {
@@ -284,16 +290,6 @@ html{
     .forgot-password-link{
         font-size: 12px;
         margin-left: 0;
-    }
-    .checkbox-group input[type="checkbox"] {
-        width: 12px;
-        height: 12px;
-        cursor: pointer;
-        margin-top: 2px; 
-        accent-color: rgb(2, 53, 28); 
-    }
-    .checkbox-group{
-        gap: 8px;
     }
 }
 .error-message-bar {
@@ -420,4 +416,7 @@ html{
     color: #666 !important;
     margin-top: 5px !important;
     display: block !important;
+}
+.auth-success-title, .auth-success-text{
+    font-family: 'Poppins', sans-serif;
 }

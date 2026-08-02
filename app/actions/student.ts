@@ -4,6 +4,7 @@ import prisma from "@/lib/prisma";
 import { getCurrentUser } from "./auth";
 import { writeFile, mkdir } from "fs/promises";
 import path from "path";
+import { uploadToR2 } from "@/lib/r2";
 
 function getFriendlyErrorMessage(err: any, defaultMsg: string): string {
   console.error("Student server action error:", err);
@@ -230,19 +231,19 @@ export async function uploadStudentVerification(formData: FormData) {
     const idCardFile = formData.get("idCard") as File | null;
     const feesReceiptFile = formData.get("feesReceipt") as File | null;
     const portalScreenshotFile = formData.get("portalScreenshot") as File | null;
+    const jambLetterFile = formData.get("jambLetter") as File | null;
 
     // Check if at least one file was uploaded
     const hasIdCard = idCardFile && idCardFile.size > 0;
     const hasFeesReceipt = feesReceiptFile && feesReceiptFile.size > 0;
     const hasPortalScreenshot = portalScreenshotFile && portalScreenshotFile.size > 0;
+    const hasJambLetter = jambLetterFile && jambLetterFile.size > 0;
 
-    if (!hasIdCard && !hasFeesReceipt && !hasPortalScreenshot) {
+    if (!hasIdCard && !hasFeesReceipt && !hasPortalScreenshot && !hasJambLetter) {
       return { success: false, error: "Please upload at least one verification document." };
     }
 
     const uploadDir = path.join(process.cwd(), "public", "uploads", "student_verification");
-    await mkdir(uploadDir, { recursive: true });
-
     const updateData: any = {};
     const timestamp = Date.now();
     const ALLOWED_EXTENSIONS = [".pdf", ".png", ".jpg", ".jpeg", ".webp"];
@@ -254,8 +255,15 @@ export async function uploadStudentVerification(formData: FormData) {
       }
       const buffer = Buffer.from(await idCardFile.arrayBuffer());
       const filename = `${user.studentProfile.id}-idcard-${timestamp}${ext}`;
-      await writeFile(path.join(uploadDir, filename), buffer);
-      updateData.idCardDoc = `/uploads/student_verification/${filename}`;
+      
+      const r2Result = await uploadToR2(buffer, `student_verification/${filename}`, idCardFile.type || "application/pdf");
+      if (r2Result.success && r2Result.url) {
+        updateData.idCardDoc = r2Result.url;
+      } else {
+        await mkdir(uploadDir, { recursive: true });
+        await writeFile(path.join(uploadDir, filename), buffer);
+        updateData.idCardDoc = `/uploads/student_verification/${filename}`;
+      }
     }
 
     if (hasFeesReceipt) {
@@ -265,8 +273,15 @@ export async function uploadStudentVerification(formData: FormData) {
       }
       const buffer = Buffer.from(await feesReceiptFile.arrayBuffer());
       const filename = `${user.studentProfile.id}-fees-${timestamp}${ext}`;
-      await writeFile(path.join(uploadDir, filename), buffer);
-      updateData.feesReceiptDoc = `/uploads/student_verification/${filename}`;
+      
+      const r2Result = await uploadToR2(buffer, `student_verification/${filename}`, feesReceiptFile.type || "application/pdf");
+      if (r2Result.success && r2Result.url) {
+        updateData.feesReceiptDoc = r2Result.url;
+      } else {
+        await mkdir(uploadDir, { recursive: true });
+        await writeFile(path.join(uploadDir, filename), buffer);
+        updateData.feesReceiptDoc = `/uploads/student_verification/${filename}`;
+      }
     }
 
     if (hasPortalScreenshot) {
@@ -276,8 +291,33 @@ export async function uploadStudentVerification(formData: FormData) {
       }
       const buffer = Buffer.from(await portalScreenshotFile.arrayBuffer());
       const filename = `${user.studentProfile.id}-portal-${timestamp}${ext}`;
-      await writeFile(path.join(uploadDir, filename), buffer);
-      updateData.portalScreenshotDoc = `/uploads/student_verification/${filename}`;
+      
+      const r2Result = await uploadToR2(buffer, `student_verification/${filename}`, portalScreenshotFile.type || "application/pdf");
+      if (r2Result.success && r2Result.url) {
+        updateData.portalScreenshotDoc = r2Result.url;
+      } else {
+        await mkdir(uploadDir, { recursive: true });
+        await writeFile(path.join(uploadDir, filename), buffer);
+        updateData.portalScreenshotDoc = `/uploads/student_verification/${filename}`;
+      }
+    }
+
+    if (hasJambLetter) {
+      const ext = (path.extname(jambLetterFile.name) || "").toLowerCase();
+      if (!ALLOWED_EXTENSIONS.includes(ext)) {
+        return { success: false, error: "Invalid JAMB Admission Letter file type. Only PDF and image files (.jpg, .jpeg, .png, .webp) are allowed." };
+      }
+      const buffer = Buffer.from(await jambLetterFile.arrayBuffer());
+      const filename = `${user.studentProfile.id}-jamb-${timestamp}${ext}`;
+      
+      const r2Result = await uploadToR2(buffer, `student_verification/${filename}`, jambLetterFile.type || "application/pdf");
+      if (r2Result.success && r2Result.url) {
+        updateData.jambLetterDoc = r2Result.url;
+      } else {
+        await mkdir(uploadDir, { recursive: true });
+        await writeFile(path.join(uploadDir, filename), buffer);
+        updateData.jambLetterDoc = `/uploads/student_verification/${filename}`;
+      }
     }
 
     await prisma.studentProfile.update({

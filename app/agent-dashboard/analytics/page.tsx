@@ -1,5 +1,5 @@
 "use client";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { getCurrentUser } from "@/app/actions/auth";
 import { getAgentAnalyticsData } from "@/app/actions/properties";
@@ -17,7 +17,7 @@ export default function Analytics() {
   const [analyticsData, setAnalyticsData] = useState<any>(null);
 
   // Chart instances tracking for cleanup
-  const [chartInstances, setChartInstances] = useState<Chart[]>([]);
+  const chartInstancesRef = useRef<Chart[]>([]);
 
   useEffect(() => {
     const loadAnalytics = async () => {
@@ -57,7 +57,7 @@ export default function Analytics() {
     if (!analyticsData) return;
 
     // Destroy existing charts to prevent canvas re-use conflicts
-    chartInstances.forEach((c) => c.destroy());
+    chartInstancesRef.current.forEach((c) => c.destroy());
     
     const isDark = theme === "dark";
     const textColor = isDark ? "#a0a0a0" : "#666";
@@ -188,15 +188,15 @@ export default function Analytics() {
       );
     }
 
-    setChartInstances(newInstances);
+    chartInstancesRef.current = newInstances;
   }, [theme, analyticsData]);
 
   // Clean up charts on unmount
   useEffect(() => {
     return () => {
-      chartInstances.forEach((c) => c.destroy());
+      chartInstancesRef.current.forEach((c) => c.destroy());
     };
-  }, [chartInstances]);
+  }, []);
 
   return (
     <>

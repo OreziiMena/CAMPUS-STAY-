@@ -4,6 +4,7 @@ import prisma from "@/lib/prisma";
 import { getCurrentUser } from "./auth";
 import { writeFile, mkdir } from "fs/promises";
 import path from "path";
+import { uploadToR2 } from "@/lib/r2";
 
 export async function getProperties(filterParam?: string | {
   searchQuery?: string;
@@ -434,8 +435,6 @@ export async function uploadPropertyImages(formData: FormData) {
     }
 
     const uploadDir = path.join(process.cwd(), "public", "uploads", "properties");
-    await mkdir(uploadDir, { recursive: true });
-
     const urls: string[] = [];
     const timestamp = Date.now();
     const ALLOWED_IMAGE_EXTENSIONS = [".png", ".jpg", ".jpeg", ".webp"];
@@ -451,8 +450,15 @@ export async function uploadPropertyImages(formData: FormData) {
 
       const buffer = Buffer.from(await file.arrayBuffer());
       const filename = `${user.id}-property-${timestamp}-${i}${ext}`;
-      await writeFile(path.join(uploadDir, filename), buffer);
-      urls.push(`/uploads/properties/${filename}`);
+      
+      const r2Result = await uploadToR2(buffer, `properties/${filename}`, file.type || "image/jpeg");
+      if (r2Result.success && r2Result.url) {
+        urls.push(r2Result.url);
+      } else {
+        await mkdir(uploadDir, { recursive: true });
+        await writeFile(path.join(uploadDir, filename), buffer);
+        urls.push(`/uploads/properties/${filename}`);
+      }
     }
 
     return { success: true, urls };

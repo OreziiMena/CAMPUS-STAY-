@@ -8,7 +8,7 @@ const SESSION_COOKIE_NAME = "campus_stay_session";
 const AUTH_SECRET = process.env.AUTH_SECRET || "fallback-secret-key-at-least-32-chars-long-security-key";
 
 function signSession(payload: any): string {
-  const data = JSON.stringify(payload);
+  const data = Buffer.from(JSON.stringify(payload)).toString("base64url");
   const signature = crypto.createHmac("sha256", AUTH_SECRET).update(data).digest("hex");
   return `${data}.${signature}`;
 }

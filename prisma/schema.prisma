@@ -53,6 +53,7 @@ model StudentProfile {
   idCardDoc           String?
   feesReceiptDoc      String?
   portalScreenshotDoc String?
+  jambLetterDoc       String?
   properties          Property[]
   reports             Report[]
   createdAt           DateTime @default(now())

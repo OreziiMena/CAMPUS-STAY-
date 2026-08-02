@@ -4,12 +4,14 @@ import React, { useState, useEffect, useRef, Suspense } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { verifyOTP, generateOTP } from "@/app/actions/otp";
+import { verifyPasswordResetOTP } from "@/app/actions/auth";
 import "../signup.css";
 
 function VerifyEmailContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const emailParam = searchParams.get("email") || "";
+  const purpose = (searchParams.get("purpose") as "EMAIL_VERIFICATION" | "PASSWORD_RESET") || "EMAIL_VERIFICATION";
 
   const [email, setEmail] = useState(emailParam);
   const [otp, setOtp] = useState<string[]>(new Array(6).fill(""));
@@ -103,22 +105,36 @@ function VerifyEmailContent() {
     setIsLoading(true);
 
     try {
-      const res = await verifyOTP(email, enteredCode, "EMAIL_VERIFICATION");
-      setIsLoading(false);
+      if (purpose === "PASSWORD_RESET") {
+        const res = await verifyPasswordResetOTP(email, enteredCode);
+        setIsLoading(false);
 
-      if (res.success) {
-        setSuccess("Email verified successfully! Logging you in...");
-        setTimeout(() => {
-          if (res.role === "ADMIN") {
-            router.push("/admin-dashboard");
-          } else if (res.role === "AGENT") {
-            router.push("/agent-dashboard");
-          } else {
-            router.push("/explore");
-          }
-        }, 1500);
+        if (res.success && res.token) {
+          setSuccess("Code verified! Redirecting to password reset page...");
+          setTimeout(() => {
+            router.push(`/auth/reset-password?email=${encodeURIComponent(email)}&token=${res.token}`);
+          }, 1500);
+        } else {
+          setError(res.error || "Failed to verify code.");
+        }
       } else {
-        setError(res.error || "Failed to verify verification code.");
+        const res = await verifyOTP(email, enteredCode, "EMAIL_VERIFICATION");
+        setIsLoading(false);
+
+        if (res.success) {
+          setSuccess("Email verified successfully! Logging you in...");
+          setTimeout(() => {
+            if (res.role === "ADMIN") {
+              router.push("/admin-dashboard");
+            } else if (res.role === "AGENT") {
+              router.push("/agent-dashboard");
+            } else {
+              router.push("/explore");
+            }
+          }, 1500);
+        } else {
+          setError(res.error || "Failed to verify verification code.");
+        }
       }
     } catch {
       setIsLoading(false);
@@ -133,7 +149,7 @@ function VerifyEmailContent() {
     setIsLoading(true);
 
     try {
-      const res = await generateOTP(email, "EMAIL_VERIFICATION");
+      const res = await generateOTP(email, purpose);
       setIsLoading(false);
 
       if (res.success) {

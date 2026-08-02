@@ -3326,6 +3326,7 @@ export namespace Prisma {
     idCardDoc: string | null
     feesReceiptDoc: string | null
     portalScreenshotDoc: string | null
+    jambLetterDoc: string | null
     createdAt: Date | null
     updatedAt: Date | null
   }
@@ -3340,6 +3341,7 @@ export namespace Prisma {
     idCardDoc: string | null
     feesReceiptDoc: string | null
     portalScreenshotDoc: string | null
+    jambLetterDoc: string | null
     createdAt: Date | null
     updatedAt: Date | null
   }
@@ -3355,6 +3357,7 @@ export namespace Prisma {
     idCardDoc: number
     feesReceiptDoc: number
     portalScreenshotDoc: number
+    jambLetterDoc: number
     createdAt: number
     updatedAt: number
     _all: number
@@ -3371,6 +3374,7 @@ export namespace Prisma {
     idCardDoc?: true
     feesReceiptDoc?: true
     portalScreenshotDoc?: true
+    jambLetterDoc?: true
     createdAt?: true
     updatedAt?: true
   }
@@ -3385,6 +3389,7 @@ export namespace Prisma {
     idCardDoc?: true
     feesReceiptDoc?: true
     portalScreenshotDoc?: true
+    jambLetterDoc?: true
     createdAt?: true
     updatedAt?: true
   }
@@ -3400,6 +3405,7 @@ export namespace Prisma {
     idCardDoc?: true
     feesReceiptDoc?: true
     portalScreenshotDoc?: true
+    jambLetterDoc?: true
     createdAt?: true
     updatedAt?: true
     _all?: true
@@ -3488,6 +3494,7 @@ export namespace Prisma {
     idCardDoc: string | null
     feesReceiptDoc: string | null
     portalScreenshotDoc: string | null
+    jambLetterDoc: string | null
     createdAt: Date
     updatedAt: Date
     _count: StudentProfileCountAggregateOutputType | null
@@ -3520,6 +3527,7 @@ export namespace Prisma {
     idCardDoc?: boolean
     feesReceiptDoc?: boolean
     portalScreenshotDoc?: boolean
+    jambLetterDoc?: boolean
     createdAt?: boolean
     updatedAt?: boolean
     user?: boolean | UserDefaultArgs<ExtArgs>
@@ -3539,6 +3547,7 @@ export namespace Prisma {
     idCardDoc?: boolean
     feesReceiptDoc?: boolean
     portalScreenshotDoc?: boolean
+    jambLetterDoc?: boolean
     createdAt?: boolean
     updatedAt?: boolean
     user?: boolean | UserDefaultArgs<ExtArgs>
@@ -3555,6 +3564,7 @@ export namespace Prisma {
     idCardDoc?: boolean
     feesReceiptDoc?: boolean
     portalScreenshotDoc?: boolean
+    jambLetterDoc?: boolean
     createdAt?: boolean
     updatedAt?: boolean
     user?: boolean | UserDefaultArgs<ExtArgs>
@@ -3571,11 +3581,12 @@ export namespace Prisma {
     idCardDoc?: boolean
     feesReceiptDoc?: boolean
     portalScreenshotDoc?: boolean
+    jambLetterDoc?: boolean
     createdAt?: boolean
     updatedAt?: boolean
   }
 
-  export type StudentProfileOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "userId" | "fullName" | "university" | "username" | "preferences" | "isVerified" | "idCardDoc" | "feesReceiptDoc" | "portalScreenshotDoc" | "createdAt" | "updatedAt", ExtArgs["result"]["studentProfile"]>
+  export type StudentProfileOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "userId" | "fullName" | "university" | "username" | "preferences" | "isVerified" | "idCardDoc" | "feesReceiptDoc" | "portalScreenshotDoc" | "jambLetterDoc" | "createdAt" | "updatedAt", ExtArgs["result"]["studentProfile"]>
   export type StudentProfileInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     user?: boolean | UserDefaultArgs<ExtArgs>
     properties?: boolean | StudentProfile$propertiesArgs<ExtArgs>
@@ -3607,6 +3618,7 @@ export namespace Prisma {
       idCardDoc: string | null
       feesReceiptDoc: string | null
       portalScreenshotDoc: string | null
+      jambLetterDoc: string | null
       createdAt: Date
       updatedAt: Date
     }, ExtArgs["result"]["studentProfile"]>
@@ -4045,6 +4057,7 @@ export namespace Prisma {
     readonly idCardDoc: FieldRef<"StudentProfile", 'String'>
     readonly feesReceiptDoc: FieldRef<"StudentProfile", 'String'>
     readonly portalScreenshotDoc: FieldRef<"StudentProfile", 'String'>
+    readonly jambLetterDoc: FieldRef<"StudentProfile", 'String'>
     readonly createdAt: FieldRef<"StudentProfile", 'DateTime'>
     readonly updatedAt: FieldRef<"StudentProfile", 'DateTime'>
   }
@@ -13699,6 +13712,7 @@ export namespace Prisma {
     idCardDoc: 'idCardDoc',
     feesReceiptDoc: 'feesReceiptDoc',
     portalScreenshotDoc: 'portalScreenshotDoc',
+    jambLetterDoc: 'jambLetterDoc',
     createdAt: 'createdAt',
     updatedAt: 'updatedAt'
   };
@@ -14114,6 +14128,7 @@ export namespace Prisma {
     idCardDoc?: StringNullableFilter<"StudentProfile"> | string | null
     feesReceiptDoc?: StringNullableFilter<"StudentProfile"> | string | null
     portalScreenshotDoc?: StringNullableFilter<"StudentProfile"> | string | null
+    jambLetterDoc?: StringNullableFilter<"StudentProfile"> | string | null
     createdAt?: DateTimeFilter<"StudentProfile"> | Date | string
     updatedAt?: DateTimeFilter<"StudentProfile"> | Date | string
     user?: XOR<UserScalarRelationFilter, UserWhereInput>
@@ -14132,6 +14147,7 @@ export namespace Prisma {
     idCardDoc?: SortOrderInput | SortOrder
     feesReceiptDoc?: SortOrderInput | SortOrder
     portalScreenshotDoc?: SortOrderInput | SortOrder
+    jambLetterDoc?: SortOrderInput | SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
     user?: UserOrderByWithRelationInput
@@ -14153,6 +14169,7 @@ export namespace Prisma {
     idCardDoc?: StringNullableFilter<"StudentProfile"> | string | null
     feesReceiptDoc?: StringNullableFilter<"StudentProfile"> | string | null
     portalScreenshotDoc?: StringNullableFilter<"StudentProfile"> | string | null
+    jambLetterDoc?: StringNullableFilter<"StudentProfile"> | string | null
     createdAt?: DateTimeFilter<"StudentProfile"> | Date | string
     updatedAt?: DateTimeFilter<"StudentProfile"> | Date | string
     user?: XOR<UserScalarRelationFilter, UserWhereInput>
@@ -14171,6 +14188,7 @@ export namespace Prisma {
     idCardDoc?: SortOrderInput | SortOrder
     feesReceiptDoc?: SortOrderInput | SortOrder
     portalScreenshotDoc?: SortOrderInput | SortOrder
+    jambLetterDoc?: SortOrderInput | SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
     _count?: StudentProfileCountOrderByAggregateInput
@@ -14192,6 +14210,7 @@ export namespace Prisma {
     idCardDoc?: StringNullableWithAggregatesFilter<"StudentProfile"> | string | null
     feesReceiptDoc?: StringNullableWithAggregatesFilter<"StudentProfile"> | string | null
     portalScreenshotDoc?: StringNullableWithAggregatesFilter<"StudentProfile"> | string | null
+    jambLetterDoc?: StringNullableWithAggregatesFilter<"StudentProfile"> | string | null
     createdAt?: DateTimeWithAggregatesFilter<"StudentProfile"> | Date | string
     updatedAt?: DateTimeWithAggregatesFilter<"StudentProfile"> | Date | string
   }
@@ -14954,6 +14973,7 @@ export namespace Prisma {
     idCardDoc?: string | null
     feesReceiptDoc?: string | null
     portalScreenshotDoc?: string | null
+    jambLetterDoc?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
     user: UserCreateNestedOneWithoutStudentProfileInput
@@ -14972,6 +14992,7 @@ export namespace Prisma {
     idCardDoc?: string | null
     feesReceiptDoc?: string | null
     portalScreenshotDoc?: string | null
+    jambLetterDoc?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
     properties?: PropertyUncheckedCreateNestedManyWithoutStudentInput
@@ -14988,6 +15009,7 @@ export namespace Prisma {
     idCardDoc?: NullableStringFieldUpdateOperationsInput | string | null
     feesReceiptDoc?: NullableStringFieldUpdateOperationsInput | string | null
     portalScreenshotDoc?: NullableStringFieldUpdateOperationsInput | string | null
+    jambLetterDoc?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     user?: UserUpdateOneRequiredWithoutStudentProfileNestedInput
@@ -15006,6 +15028,7 @@ export namespace Prisma {
     idCardDoc?: NullableStringFieldUpdateOperationsInput | string | null
     feesReceiptDoc?: NullableStringFieldUpdateOperationsInput | string | null
     portalScreenshotDoc?: NullableStringFieldUpdateOperationsInput | string | null
+    jambLetterDoc?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     properties?: PropertyUncheckedUpdateManyWithoutStudentNestedInput
@@ -15023,6 +15046,7 @@ export namespace Prisma {
     idCardDoc?: string | null
     feesReceiptDoc?: string | null
     portalScreenshotDoc?: string | null
+    jambLetterDoc?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
   }
@@ -15037,6 +15061,7 @@ export namespace Prisma {
     idCardDoc?: NullableStringFieldUpdateOperationsInput | string | null
     feesReceiptDoc?: NullableStringFieldUpdateOperationsInput | string | null
     portalScreenshotDoc?: NullableStringFieldUpdateOperationsInput | string | null
+    jambLetterDoc?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
@@ -15052,6 +15077,7 @@ export namespace Prisma {
     idCardDoc?: NullableStringFieldUpdateOperationsInput | string | null
     feesReceiptDoc?: NullableStringFieldUpdateOperationsInput | string | null
     portalScreenshotDoc?: NullableStringFieldUpdateOperationsInput | string | null
+    jambLetterDoc?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
@@ -15972,6 +15998,7 @@ export namespace Prisma {
     idCardDoc?: SortOrder
     feesReceiptDoc?: SortOrder
     portalScreenshotDoc?: SortOrder
+    jambLetterDoc?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
   }
@@ -15986,6 +16013,7 @@ export namespace Prisma {
     idCardDoc?: SortOrder
     feesReceiptDoc?: SortOrder
     portalScreenshotDoc?: SortOrder
+    jambLetterDoc?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
   }
@@ -16000,6 +16028,7 @@ export namespace Prisma {
     idCardDoc?: SortOrder
     feesReceiptDoc?: SortOrder
     portalScreenshotDoc?: SortOrder
+    jambLetterDoc?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
   }
@@ -17808,6 +17837,7 @@ export namespace Prisma {
     idCardDoc?: string | null
     feesReceiptDoc?: string | null
     portalScreenshotDoc?: string | null
+    jambLetterDoc?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
     properties?: PropertyCreateNestedManyWithoutStudentInput
@@ -17824,6 +17854,7 @@ export namespace Prisma {
     idCardDoc?: string | null
     feesReceiptDoc?: string | null
     portalScreenshotDoc?: string | null
+    jambLetterDoc?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
     properties?: PropertyUncheckedCreateNestedManyWithoutStudentInput
@@ -18079,6 +18110,7 @@ export namespace Prisma {
     idCardDoc?: NullableStringFieldUpdateOperationsInput | string | null
     feesReceiptDoc?: NullableStringFieldUpdateOperationsInput | string | null
     portalScreenshotDoc?: NullableStringFieldUpdateOperationsInput | string | null
+    jambLetterDoc?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     properties?: PropertyUpdateManyWithoutStudentNestedInput
@@ -18095,6 +18127,7 @@ export namespace Prisma {
     idCardDoc?: NullableStringFieldUpdateOperationsInput | string | null
     feesReceiptDoc?: NullableStringFieldUpdateOperationsInput | string | null
     portalScreenshotDoc?: NullableStringFieldUpdateOperationsInput | string | null
+    jambLetterDoc?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     properties?: PropertyUncheckedUpdateManyWithoutStudentNestedInput
@@ -18771,6 +18804,7 @@ export namespace Prisma {
     idCardDoc?: string | null
     feesReceiptDoc?: string | null
     portalScreenshotDoc?: string | null
+    jambLetterDoc?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
     user: UserCreateNestedOneWithoutStudentProfileInput
@@ -18788,6 +18822,7 @@ export namespace Prisma {
     idCardDoc?: string | null
     feesReceiptDoc?: string | null
     portalScreenshotDoc?: string | null
+    jambLetterDoc?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
     reports?: ReportUncheckedCreateNestedManyWithoutRoommateInput
@@ -18970,6 +19005,7 @@ export namespace Prisma {
     idCardDoc?: NullableStringFieldUpdateOperationsInput | string | null
     feesReceiptDoc?: NullableStringFieldUpdateOperationsInput | string | null
     portalScreenshotDoc?: NullableStringFieldUpdateOperationsInput | string | null
+    jambLetterDoc?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     user?: UserUpdateOneRequiredWithoutStudentProfileNestedInput
@@ -18987,6 +19023,7 @@ export namespace Prisma {
     idCardDoc?: NullableStringFieldUpdateOperationsInput | string | null
     feesReceiptDoc?: NullableStringFieldUpdateOperationsInput | string | null
     portalScreenshotDoc?: NullableStringFieldUpdateOperationsInput | string | null
+    jambLetterDoc?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     reports?: ReportUncheckedUpdateManyWithoutRoommateNestedInput
@@ -20168,6 +20205,7 @@ export namespace Prisma {
     idCardDoc?: string | null
     feesReceiptDoc?: string | null
     portalScreenshotDoc?: string | null
+    jambLetterDoc?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
     user: UserCreateNestedOneWithoutStudentProfileInput
@@ -20185,6 +20223,7 @@ export namespace Prisma {
     idCardDoc?: string | null
     feesReceiptDoc?: string | null
     portalScreenshotDoc?: string | null
+    jambLetterDoc?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
     properties?: PropertyUncheckedCreateNestedManyWithoutStudentInput
@@ -20328,6 +20367,7 @@ export namespace Prisma {
     idCardDoc?: NullableStringFieldUpdateOperationsInput | string | null
     feesReceiptDoc?: NullableStringFieldUpdateOperationsInput | string | null
     portalScreenshotDoc?: NullableStringFieldUpdateOperationsInput | string | null
+    jambLetterDoc?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     user?: UserUpdateOneRequiredWithoutStudentProfileNestedInput
@@ -20345,6 +20385,7 @@ export namespace Prisma {
     idCardDoc?: NullableStringFieldUpdateOperationsInput | string | null
     feesReceiptDoc?: NullableStringFieldUpdateOperationsInput | string | null
     portalScreenshotDoc?: NullableStringFieldUpdateOperationsInput | string | null
+    jambLetterDoc?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     properties?: PropertyUncheckedUpdateManyWithoutStudentNestedInput

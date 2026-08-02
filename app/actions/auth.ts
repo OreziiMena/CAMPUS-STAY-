@@ -5,6 +5,7 @@ import bcrypt from "bcryptjs";
 import { cookies } from "next/headers";
 import { writeFile, mkdir } from "fs/promises";
 import path from "path";
+import { uploadToR2 } from "@/lib/r2";
 import crypto from "crypto";
 import { generateOTP } from "./otp";
 
@@ -13,7 +14,7 @@ const AUTH_SECRET = process.env.AUTH_SECRET || "fallback-secret-key-at-least-32-
 
 // Cryptographic signing of session JSON payload
 function signSession(payload: any): string {
-  const data = JSON.stringify(payload);
+  const data = Buffer.from(JSON.stringify(payload)).toString("base64url");
   const signature = crypto.createHmac("sha256", AUTH_SECRET).update(data).digest("hex");
   return `${data}.${signature}`;
 }
@@ -30,13 +31,13 @@ function verifySession(token: string): any | null {
     const sigBuffer = Buffer.from(signature, "hex");
     const expectedBuffer = Buffer.from(expectedSignature, "hex");
     
-   
     if (sigBuffer.length !== expectedBuffer.length || !crypto.timingSafeEqual(sigBuffer, expectedBuffer)) {
       console.warn("Session signature verification failed - potential cookie tampering detected.");
       return null;
     }
     
-    return JSON.parse(data);
+    const decoded = Buffer.from(data, "base64url").toString("utf8");
+    return JSON.parse(decoded);
   } catch (err) {
     console.error("Failed to verify/parse session token:", err);
     return null;
@@ -289,21 +290,26 @@ export async function uploadAgentVerification(formData: FormData) {
       return { success: false, error: "No document file uploaded." };
     }
 
-    const buffer = Buffer.from(await file.arrayBuffer());
-    const uploadDir = path.join(process.cwd(), "public", "uploads", "verification");
-    await mkdir(uploadDir, { recursive: true });
-
     const ALLOWED_EXTENSIONS = [".pdf", ".png", ".jpg", ".jpeg", ".webp"];
     const ext = (path.extname(file.name) || "").toLowerCase();
     if (!ALLOWED_EXTENSIONS.includes(ext)) {
       return { success: false, error: "Invalid document file type. Only PDF and image files (.jpg, .jpeg, .png, .webp) are allowed." };
     }
+
+    const buffer = Buffer.from(await file.arrayBuffer());
+    const uploadDir = path.join(process.cwd(), "public", "uploads", "verification");
     const filename = `${user.agentProfile.id}-${Date.now()}${ext}`;
-    const filePath = path.join(uploadDir, filename);
 
-    await writeFile(filePath, buffer);
-
-    const relativePath = `/uploads/verification/${filename}`;
+    let relativePath = "";
+    const r2Result = await uploadToR2(buffer, `verification/${filename}`, file.type || "application/pdf");
+    if (r2Result.success && r2Result.url) {
+      relativePath = r2Result.url;
+    } else {
+      await mkdir(uploadDir, { recursive: true });
+      const filePath = path.join(uploadDir, filename);
+      await writeFile(filePath, buffer);
+      relativePath = `/uploads/verification/${filename}`;
+    }
 
     await prisma.agentProfile.update({
       where: { id: user.agentProfile.id },
@@ -353,5 +359,82 @@ export async function updateAgentPassword(data: any) {
     return { success: true };
   } catch (err: any) {
     return { success: false, error: getFriendlyErrorMessage(err, "Failed to update password.") };
+  }
+}
+
+export async function requestPasswordReset(email: string) {
+  try {
+    const user = await prisma.user.findUnique({
+      where: { email },
+    });
+
+    if (!user) {
+      return { success: false, error: "No account found with this email address." };
+    }
+
+    const otpRes = await generateOTP(email, "PASSWORD_RESET");
+    if (!otpRes.success) {
+      return { success: false, error: otpRes.error || "Failed to generate verification code." };
+    }
+
+    return { success: true };
+  } catch (err: any) {
+    return { success: false, error: err.message || "An unexpected error occurred." };
+  }
+}
+
+export async function verifyPasswordResetOTP(email: string, code: string) {
+  try {
+    const otpRecord = await prisma.oTP.findFirst({
+      where: {
+        email,
+        code,
+        purpose: "PASSWORD_RESET",
+      },
+    });
+
+    if (!otpRecord) {
+      return { success: false, error: "Invalid verification code." };
+    }
+
+    if (new Date() > otpRecord.expiresAt) {
+      await prisma.oTP.delete({ where: { id: otpRecord.id } }).catch(() => {});
+      return { success: false, error: "Verification code has expired." };
+    }
+
+    await prisma.oTP.delete({ where: { id: otpRecord.id } }).catch(() => {});
+
+    const resetToken = signSession({
+      email,
+      expiresAt: Date.now() + 15 * 60 * 1000,
+    });
+
+    return { success: true, token: resetToken };
+  } catch (err: any) {
+    return { success: false, error: err.message || "Failed to verify code." };
+  }
+}
+
+export async function resetPasswordWithToken(email: string, token: string, newPassword: string) {
+  try {
+    const payload = verifySession(token);
+    if (!payload || !payload.email || payload.email !== email) {
+      return { success: false, error: "Invalid or expired reset session. Please start over." };
+    }
+
+    if (Date.now() > payload.expiresAt) {
+      return { success: false, error: "Reset session has expired. Please start over." };
+    }
+
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+
+    await prisma.user.update({
+      where: { email },
+      data: { password: hashedPassword },
+    });
+
+    return { success: true };
+  } catch (err: any) {
+    return { success: false, error: err.message || "Failed to reset password." };
   }
 }

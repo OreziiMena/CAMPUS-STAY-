@@ -1,15 +1,18 @@
 "use client";
 import React, { useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { requestPasswordReset } from "@/app/actions/auth";
 import "../signup.css";
 
 export default function ForgotPassword() {
+  const router = useRouter();
   const [email, setEmail] = useState("");
   const [error, setError] = useState("");
   const [success, setSuccess] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
     setSuccess(false);
@@ -21,15 +24,22 @@ export default function ForgotPassword() {
 
     setIsLoading(true);
 
-    setTimeout(() => {
+    try {
+      const res = await requestPasswordReset(email);
       setIsLoading(false);
-      // Simple simulation: always succeed unless email is empty or invalid
-      if (!email.includes("@")) {
-        setError("Please enter a valid email address.");
-      } else {
+
+      if (res.success) {
         setSuccess(true);
+        setTimeout(() => {
+          router.push(`/auth/verify-email?email=${encodeURIComponent(email)}&purpose=PASSWORD_RESET`);
+        }, 1500);
+      } else {
+        setError(res.error || "Failed to process request.");
       }
-    }, 1200);
+    } catch {
+      setIsLoading(false);
+      setError("An unexpected error occurred.");
+    }
   };
 
   return (
@@ -43,7 +53,7 @@ export default function ForgotPassword() {
           <div className="auth-card auth-card-narrow">
             <div className="auth-header">
               <h2>Reset Your Password</h2>
-              <p>Enter your email address and we will send you a secure link to reset your password.</p>
+              <p>Enter your email address and we will send you an OTP to reset your password.</p>
             </div>
 
             <form id="forgot-password-form" onSubmit={handleSubmit}>

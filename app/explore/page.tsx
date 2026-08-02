@@ -26,28 +26,28 @@ export default function Explore() {
     return () => clearTimeout(timer);
   }, []);
 
-  const fetchProperties = async (query = "") => {
-    setLoading(true);
-    const parsedMinPrice = minPrice ? parseFloat(minPrice) : undefined;
-    const parsedMaxPrice = maxPrice ? parseFloat(maxPrice) : undefined;
-
-    const res = await getProperties({
-      searchQuery: query || undefined,
-      university: university !== "All" ? university : undefined,
-      hostelType: hostelType !== "All" ? hostelType : undefined,
-      minPrice: parsedMinPrice,
-      maxPrice: parsedMaxPrice,
-      proximity: proximity !== "Any" ? proximity : undefined,
-    });
-
-    if (res.success && res.properties) {
-      setProperties(res.properties);
-    }
-    setLoading(false);
-  };
-
   // Dynamic filter watcher with a 300ms debounce
   useEffect(() => {
+    const fetchProperties = async (query = "") => {
+      setLoading(true);
+      const parsedMinPrice = minPrice ? parseFloat(minPrice) : undefined;
+      const parsedMaxPrice = maxPrice ? parseFloat(maxPrice) : undefined;
+
+      const res = await getProperties({
+        searchQuery: query || undefined,
+        university: university !== "All" ? university : undefined,
+        hostelType: hostelType !== "All" ? hostelType : undefined,
+        minPrice: parsedMinPrice,
+        maxPrice: parsedMaxPrice,
+        proximity: proximity !== "Any" ? proximity : undefined,
+      });
+
+      if (res.success && res.properties) {
+        setProperties(res.properties);
+      }
+      setLoading(false);
+    };
+
     const timer = setTimeout(() => {
       fetchProperties(searchQuery);
     }, 300);
@@ -366,67 +366,147 @@ export default function Explore() {
       </section>
 
       {showSafetyTip && (
-        <div style={{
-          position: "fixed",
-          bottom: "24px",
-          right: "24px",
-          width: "calc(100% - 48px)",
-          maxWidth: "380px",
-          backgroundColor: "white",
-          border: "1.5px solid #d4edda",
-          borderRadius: "16px",
-          padding: "20px",
-          boxShadow: "0 8px 30px rgba(0,0,0,0.12)",
-          zIndex: 1000,
-          display: "flex",
-          gap: "16px",
-          fontFamily: "'Poppins', sans-serif"
-        }}>
-          <div style={{ display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-            <div style={{ 
-              position: "relative", 
-              display: "inline-flex", 
-              alignItems: "center", 
-              justifyContent: "center",
-              width: "48px",
-              height: "48px",
-              borderRadius: "50%",
-              backgroundColor: "#e8f7f5"
-            }}>
-              <i className="fas fa-certificate" style={{ color: "rgb(2, 53, 28)", fontSize: "2.2rem" }}></i>
-              <i className="fas fa-check" style={{ position: "absolute", color: "white", fontSize: "0.9rem" }}></i>
+        <>
+          <style>{`
+            .safety-tip-card {
+              position: fixed;
+              bottom: 24px;
+              right: 24px;
+              width: calc(100% - 48px);
+              max-width: 380px;
+              background-color: white;
+              border: 1.5px solid #d4edda;
+              border-radius: 16px;
+              padding: 20px;
+              box-shadow: 0 8px 30px rgba(0,0,0,0.12);
+              z-index: 1000;
+              display: flex;
+              gap: 16px;
+              font-family: 'Poppins', sans-serif;
+            }
+            .safety-tip-icon-container {
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              flex-shrink: 0;
+            }
+            .safety-tip-icon-bg {
+              position: relative;
+              display: inline-flex;
+              align-items: center;
+              justify-content: center;
+              width: 48px;
+              height: 48px;
+              border-radius: 50%;
+              background-color: #e8f7f5;
+            }
+            .safety-tip-icon-cert {
+              color: rgb(2, 53, 28);
+              font-size: 2.2rem;
+            }
+            .safety-tip-icon-check {
+              position: absolute;
+              color: white;
+              font-size: 0.9rem;
+            }
+            .safety-tip-content {
+              display: flex;
+              flex-direction: column;
+              gap: 6px;
+            }
+            .safety-tip-title {
+              margin: 0;
+              font-size: 0.95rem;
+              font-weight: bold;
+              color: #1a1a1a;
+            }
+            .safety-tip-text {
+              margin: 0;
+              font-size: 0.8rem;
+              color: #555;
+              line-height: 1.4;
+            }
+            .safety-tip-link {
+              margin: 4px 0 0 0;
+              font-size: 0.85rem;
+              font-weight: bold;
+              color: rgb(2, 53, 28);
+              text-decoration: none;
+            }
+            
+            @media (max-width: 576px) {
+              .safety-tip-card {
+                bottom: 12px;
+                right: 12px;
+                width: calc(100% - 24px);
+                max-width: 300px;
+                padding: 12px;
+                gap: 10px;
+                border-radius: 12px;
+              }
+              .safety-tip-icon-bg {
+                width: 36px;
+                height: 36px;
+              }
+              .safety-tip-icon-cert {
+                font-size: 1.6rem;
+              }
+              .safety-tip-icon-check {
+                font-size: 0.65rem;
+              }
+              .safety-tip-content {
+                gap: 3px;
+              }
+              .safety-tip-title {
+                font-size: 0.85rem;
+              }
+              .safety-tip-text {
+                font-size: 0.72rem;
+              }
+              .safety-tip-link {
+                font-size: 0.75rem;
+                margin-top: 2px;
+              }
+            }
+          `}</style>
+          <div className="safety-tip-card">
+            <div className="safety-tip-icon-container">
+              <div className="safety-tip-icon-bg">
+                <i className="fas fa-certificate safety-tip-icon-cert"></i>
+                <i className="fas fa-check safety-tip-icon-check"></i>
+              </div>
             </div>
-          </div>
-          
-          <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
-            <h4 style={{ margin: 0, fontSize: "0.95rem", fontWeight: "bold", color: "#1a1a1a" }}>Safety Tip</h4>
-            <p style={{ margin: 0, fontSize: "0.8rem", color: "#555", lineHeight: "1.4" }}>
-              For your safety, always check for the <span style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", position: "relative", verticalAlign: "middle", margin: "0 2px" }}>
-                <i className="fas fa-certificate" style={{ color: "rgb(2, 53, 28)", fontSize: "1.1rem" }}></i>
-                <i className="fas fa-check" style={{ position: "absolute", color: "white", fontSize: "0.45rem" }}></i>
-              </span> verification badge, it means the agent/student has completed ID verification.
-            </p>
-            <Link href="/student-dashboard/profile" style={{ margin: "4px 0 0 0", fontSize: "0.85rem", fontWeight: "bold", color: "rgb(2, 53, 28)", textDecoration: "none" }}>
-              Verify your account now for added trust.
-            </Link>
-          </div>
+            
+            <div className="safety-tip-content">
+              <h4 className="safety-tip-title">Safety Tip</h4>
+              <p className="safety-tip-text">
+                For your safety, always check for the <span style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", position: "relative", verticalAlign: "middle", margin: "0 2px" }}>
+                  <i className="fas fa-certificate" style={{ color: "rgb(2, 53, 28)", fontSize: "1.1rem" }}></i>
+                  <i className="fas fa-check" style={{ position: "absolute", color: "white", fontSize: "0.45rem" }}></i>
+                </span> verification badge, it means the agent/student has completed ID verification.
+              </p>
+              <Link href="/student-dashboard/profile" className="safety-tip-link">
+                Verify your account now for added trust.
+              </Link>
+            </div>
 
-          <button 
-            onClick={() => setShowSafetyTip(false)} 
-            style={{ 
-              position: "absolute", 
-              top: "12px", 
-              right: "12px", 
-              border: "none", 
-              background: "none", 
-              cursor: "pointer", 
-              color: "#888", 
-              fontSize: "1rem" 
-            }}
-          >
-            &times;
-          </button>
-        </div>
+            <button 
+              onClick={() => setShowSafetyTip(false)} 
+              style={{ 
+                position: "absolute", 
+                top: "10px", 
+                right: "10px", 
+                border: "none", 
+                background: "none", 
+                cursor: "pointer", 
+                color: "#888", 
+                fontSize: "1rem" 
+              }}
+            >
+              &times;
+            </button>
+          </div>
+        </>
       )}
 
       <Footer />

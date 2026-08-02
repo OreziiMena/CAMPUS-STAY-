@@ -22,6 +22,8 @@ export default function StudentSettings() {
   // Security password states
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
+  const [showCurrentPassword, setShowCurrentPassword] = useState(false);
+  const [showNewPassword, setShowNewPassword] = useState(false);
   const [passLoading, setPassLoading] = useState(false);
   const [passStatus, setPassStatus] = useState("");
 
@@ -33,6 +35,16 @@ export default function StudentSettings() {
         router.push("/auth/login");
         return;
       }
+
+      // Load local storage preferences if any
+      const emailPref = localStorage.getItem("cs_student_pref_email");
+      const smsPref = localStorage.getItem("cs_student_pref_sms");
+      const marketingPref = localStorage.getItem("cs_student_pref_marketing");
+      
+      if (emailPref !== null) setEmailAlerts(emailPref === "true");
+      if (smsPref !== null) setSmsAlerts(smsPref === "true");
+      if (marketingPref !== null) setMarketingAlerts(marketingPref === "true");
+
       setLoading(false);
     };
     checkUser();
@@ -41,6 +53,10 @@ export default function StudentSettings() {
   const handleSavePreferences = () => {
     setIsSaving(true);
     setSaveStatus("Saving...");
+    localStorage.setItem("cs_student_pref_email", emailAlerts.toString());
+    localStorage.setItem("cs_student_pref_sms", smsAlerts.toString());
+    localStorage.setItem("cs_student_pref_marketing", marketingAlerts.toString());
+
     setTimeout(() => {
       setSaveStatus("Saved!");
       setTimeout(() => {
@@ -179,11 +195,35 @@ export default function StudentSettings() {
                 <form onSubmit={handleUpdatePassword}>
                   <div className="input-group">
                     <label>Current Password</label>
-                    <input type="password" value={currentPassword} onChange={(e) => setCurrentPassword(e.target.value)} required />
+                    <div className="password-wrapper">
+                      <input 
+                        type={showCurrentPassword ? "text" : "password"} 
+                        value={currentPassword} 
+                        onChange={(e) => setCurrentPassword(e.target.value)} 
+                        required 
+                      />
+                      <i 
+                        className={`fas ${showCurrentPassword ? "fa-eye-slash" : "fa-eye"} toggle-password`} 
+                        onClick={() => setShowCurrentPassword(!showCurrentPassword)}
+                        style={{ cursor: "pointer" }}
+                      ></i>
+                    </div>
                   </div>
                   <div className="input-group">
                     <label>New Password</label>
-                    <input type="password" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} required />
+                    <div className="password-wrapper">
+                      <input 
+                        type={showNewPassword ? "text" : "password"} 
+                        value={newPassword} 
+                        onChange={(e) => setNewPassword(e.target.value)} 
+                        required 
+                      />
+                      <i 
+                        className={`fas ${showNewPassword ? "fa-eye-slash" : "fa-eye"} toggle-password`} 
+                        onClick={() => setShowNewPassword(!showNewPassword)}
+                        style={{ cursor: "pointer" }}
+                      ></i>
+                    </div>
                   </div>
 
                   {passStatus && (

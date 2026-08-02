@@ -4,8 +4,9 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
 }
 
 enum Role {
@@ -52,6 +53,7 @@ model StudentProfile {
   idCardDoc           String?
   feesReceiptDoc      String?
   portalScreenshotDoc String?
+  jambLetterDoc       String?
   properties          Property[]
   reports             Report[]
   createdAt           DateTime   @default(now())

@@ -26,12 +26,14 @@ export default function StudentProfile() {
   const [idCardFile, setIdCardFile] = useState<File | null>(null);
   const [feesReceiptFile, setFeesReceiptFile] = useState<File | null>(null);
   const [portalScreenshotFile, setPortalScreenshotFile] = useState<File | null>(null);
+  const [jambLetterFile, setJambLetterFile] = useState<File | null>(null);
 
   // Verification status tracking
   const [isVerified, setIsVerified] = useState(false);
   const [idCardDoc, setIdCardDoc] = useState<string | null>(null);
   const [feesReceiptDoc, setFeesReceiptDoc] = useState<string | null>(null);
   const [portalScreenshotDoc, setPortalScreenshotDoc] = useState<string | null>(null);
+  const [jambLetterDoc, setJambLetterDoc] = useState<string | null>(null);
 
   // Roommate Preferences state
   const [openToRoommates, setOpenToRoommates] = useState(false);
@@ -66,6 +68,7 @@ export default function StudentProfile() {
       setIdCardDoc(profile?.idCardDoc || null);
       setFeesReceiptDoc(profile?.feesReceiptDoc || null);
       setPortalScreenshotDoc(profile?.portalScreenshotDoc || null);
+      setJambLetterDoc(profile?.jambLetterDoc || null);
 
       const names = (profile?.fullName || "").trim().split(/\s+/);
       setFirstName(names[0] || "");
@@ -110,7 +113,7 @@ export default function StudentProfile() {
 
   const handleUploadVerification = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!idCardFile && !feesReceiptFile && !portalScreenshotFile) {
+    if (!idCardFile && !feesReceiptFile && !portalScreenshotFile && !jambLetterFile) {
       setUploadStatus("Error: Please select at least one document to upload.");
       return;
     }
@@ -122,17 +125,20 @@ export default function StudentProfile() {
     if (idCardFile) formData.append("idCard", idCardFile);
     if (feesReceiptFile) formData.append("feesReceipt", feesReceiptFile);
     if (portalScreenshotFile) formData.append("portalScreenshot", portalScreenshotFile);
+    if (jambLetterFile) formData.append("jambLetter", jambLetterFile);
 
     const res = await uploadStudentVerification(formData);
     if (res.success) {
-      setUploadStatus("Verification documents submitted successfully!");
+      setUploadStatus("Verification documents submitted successfully,Please wait at least 12 hrs for verification!(Note: It might not be up to that)");
       if (res.paths?.idCardDoc) setIdCardDoc(res.paths.idCardDoc);
       if (res.paths?.feesReceiptDoc) setFeesReceiptDoc(res.paths.feesReceiptDoc);
       if (res.paths?.portalScreenshotDoc) setPortalScreenshotDoc(res.paths.portalScreenshotDoc);
+      if (res.paths?.jambLetterDoc) setJambLetterDoc(res.paths.jambLetterDoc);
       
       setIdCardFile(null);
       setFeesReceiptFile(null);
       setPortalScreenshotFile(null);
+      setJambLetterFile(null);
       setIsVerified(false); // Reset to pending (not verified yet)
       
       setTimeout(() => setUploadStatus(""), 3000);
@@ -169,7 +175,7 @@ export default function StudentProfile() {
   };
 
   const initials = (firstName.charAt(0) + lastName.charAt(0)).toUpperCase() || "--";
-  const hasUploadedDocs = idCardDoc || feesReceiptDoc || portalScreenshotDoc;
+  const hasUploadedDocs = idCardDoc || feesReceiptDoc || portalScreenshotDoc || jambLetterDoc;
 
   return (
     <>
@@ -271,7 +277,7 @@ export default function StudentProfile() {
                     <i className="fas fa-exclamation-triangle"></i>
                     <div>
                       <h4>Verification Required</h4>
-                      <p>You must upload **at least one** document below (Student ID, current session fees receipt, or portal screenshot) to verify your student status and contact agents.</p>
+                      <p>You must upload **at least one** document below (Student ID, current session fees receipt, portal screenshot, or JAMB admission letter) to verify your student status and contact agents.</p>
                     </div>
                   </div>
                 )}
@@ -311,6 +317,16 @@ export default function StudentProfile() {
                         </div>
                         {portalScreenshotDoc && <span className="doc-link-label"><i className="fas fa-file-alt"></i> Screenshot Uploaded</span>}
                       </div>
+
+                      <div className="upload-field-card">
+                        <label>4. JAMB Admission Letter</label>
+                        <div className="file-upload">
+                          <i className="fas fa-envelope-open-text"></i>
+                          <p>{jambLetterFile ? <span>Selected: {jambLetterFile.name}</span> : <>Upload JAMB Letter</>}</p>
+                          <input type="file" accept=".pdf, .jpg, .jpeg, .png" onChange={(e) => e.target.files && setJambLetterFile(e.target.files[0])} />
+                        </div>
+                        {jambLetterDoc && <span className="doc-link-label"><i className="fas fa-file-alt"></i> JAMB Letter Uploaded</span>}
+                      </div>
                     </div>
 
                     {uploadStatus && (
@@ -319,7 +335,7 @@ export default function StudentProfile() {
                       </p>
                     )}
 
-                    <button type="submit" className="primary-btn" disabled={(!idCardFile && !feesReceiptFile && !portalScreenshotFile) || uploadLoading}>
+                    <button type="submit" className="primary-btn" disabled={(!idCardFile && !feesReceiptFile && !portalScreenshotFile && !jambLetterFile) || uploadLoading}>
                       {uploadLoading ? "Uploading..." : "Submit Documents"}
                     </button>
                   </form>

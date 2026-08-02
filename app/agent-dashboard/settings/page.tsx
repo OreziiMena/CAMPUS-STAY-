@@ -1,7 +1,7 @@
 "use client";
 import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { getCurrentUser } from "@/app/actions/auth";
+import { getCurrentUser, updateAgentPassword } from "@/app/actions/auth";
 import styles from "./settings.module.css";
 import "./styles.css";
 
@@ -21,6 +21,14 @@ export default function Settings() {
   const [smsAlerts, setSmsAlerts] = useState(false);
   const [marketingAlerts, setMarketingAlerts] = useState(true);
 
+  // Security password states
+  const [currentPassword, setCurrentPassword] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [showCurrentPassword, setShowCurrentPassword] = useState(false);
+  const [showNewPassword, setShowNewPassword] = useState(false);
+  const [passLoading, setPassLoading] = useState(false);
+  const [passStatus, setPassStatus] = useState("");
+
   useEffect(() => {
     const checkUser = async () => {
       setLoading(true);
@@ -29,6 +37,20 @@ export default function Settings() {
         router.push("/auth/login");
         return;
       }
+
+      // Load local storage preferences if any
+      const offlinePref = localStorage.getItem("cs_agent_pref_offline");
+      const regionPref = localStorage.getItem("cs_agent_pref_region");
+      const emailPref = localStorage.getItem("cs_agent_pref_email");
+      const smsPref = localStorage.getItem("cs_agent_pref_sms");
+      const marketingPref = localStorage.getItem("cs_agent_pref_marketing");
+
+      if (offlinePref !== null) setOfflineMode(offlinePref === "true");
+      if (regionPref !== null) setRegion(regionPref);
+      if (emailPref !== null) setEmailAlerts(emailPref === "true");
+      if (smsPref !== null) setSmsAlerts(smsPref === "true");
+      if (marketingPref !== null) setMarketingAlerts(marketingPref === "true");
+
       setLoading(false);
     };
     checkUser();
@@ -37,6 +59,12 @@ export default function Settings() {
   const handleSavePreferences = () => {
     setIsSaving(true);
     setSaveStatus("Saving...");
+    localStorage.setItem("cs_agent_pref_offline", offlineMode.toString());
+    localStorage.setItem("cs_agent_pref_region", region);
+    localStorage.setItem("cs_agent_pref_email", emailAlerts.toString());
+    localStorage.setItem("cs_agent_pref_sms", smsAlerts.toString());
+    localStorage.setItem("cs_agent_pref_marketing", marketingAlerts.toString());
+
     setTimeout(() => {
       setSaveStatus("Saved!");
       setTimeout(() => {
@@ -44,6 +72,31 @@ export default function Settings() {
         setIsSaving(false);
       }, 2000);
     }, 1000);
+  };
+
+  const handleUpdatePassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (newPassword.length < 8) {
+      alert("New password must be at least 8 characters long.");
+      return;
+    }
+    setPassLoading(true);
+    setPassStatus("");
+
+    const res = await updateAgentPassword({
+      currentPassword,
+      newPassword,
+    });
+
+    if (res.success) {
+      setPassStatus("Password updated successfully!");
+      setCurrentPassword("");
+      setNewPassword("");
+      setTimeout(() => setPassStatus(""), 3000);
+    } else {
+      setPassStatus(`Error: ${res.error}`);
+    }
+    setPassLoading(false);
   };
 
   return (
@@ -73,6 +126,12 @@ export default function Settings() {
               onClick={() => setActiveTab("notifications-section")}
             >
               Notifications
+            </button>
+            <button 
+              className={`tab-btn ${activeTab === "security-section" ? "active" : ""}`} 
+              onClick={() => setActiveTab("security-section")}
+            >
+              Security & Password
             </button>
             <button 
               className={`tab-btn ${activeTab === "danger-section" ? "active" : ""}`} 
@@ -191,6 +250,56 @@ export default function Settings() {
                   </label>
                 </div>
               </div>
+            </section>
+          )}
+
+          {activeTab === "security-section" && (
+            <section id="security-section" className="tab-content active">
+              <h3 className="prefer">Change Password</h3>
+              <form onSubmit={handleUpdatePassword}>
+                <div className="input-group">
+                  <label>Current Password</label>
+                  <div className="password-wrapper">
+                    <input 
+                      type={showCurrentPassword ? "text" : "password"} 
+                      value={currentPassword} 
+                      onChange={(e) => setCurrentPassword(e.target.value)} 
+                      required 
+                    />
+                    <i 
+                      className={`fas ${showCurrentPassword ? "fa-eye-slash" : "fa-eye"} toggle-password`} 
+                      onClick={() => setShowCurrentPassword(!showCurrentPassword)}
+                      style={{ cursor: "pointer" }}
+                    ></i>
+                  </div>
+                </div>
+                <div className="input-group">
+                  <label>New Password</label>
+                  <div className="password-wrapper">
+                    <input 
+                      type={showNewPassword ? "text" : "password"} 
+                      value={newPassword} 
+                      onChange={(e) => setNewPassword(e.target.value)} 
+                      required 
+                    />
+                    <i 
+                      className={`fas ${showNewPassword ? "fa-eye-slash" : "fa-eye"} toggle-password`} 
+                      onClick={() => setShowNewPassword(!showNewPassword)}
+                      style={{ cursor: "pointer" }}
+                    ></i>
+                  </div>
+                </div>
+
+                {passStatus && (
+                  <p className={`status-message-text ${passStatus.startsWith("Error") ? "error" : "success"}`} style={{ marginTop: "15px" }}>
+                    {passStatus}
+                  </p>
+                )}
+
+                <button type="submit" className="primary-btn" disabled={passLoading} style={{ marginTop: "20px" }}>
+                  {passLoading ? "Updating..." : "Update Password"}
+                </button>
+              </form>
             </section>
           )}
 
