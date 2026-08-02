@@ -69,11 +69,13 @@ export default function RoommatesDirectory() {
     setReportError("");
     setReportSuccess("");
 
-    if (!currentUser) {
+    const activeUser = await getCurrentUser();
+    if (!activeUser) {
       alert("Please log in to submit a report.");
       router.push("/auth/login");
       return;
     }
+    setCurrentUser(activeUser);
 
     if (!selectedRoommateDetails) return;
 
@@ -223,18 +225,20 @@ export default function RoommatesDirectory() {
   };
 
   const handleMessageRoommate = async (roommateUserId: string) => {
-    if (!currentUser) {
+    const activeUser = await getCurrentUser();
+    if (!activeUser) {
       alert("Please log in to contact potential roommates.");
       router.push("/auth/login");
       return;
     }
+    setCurrentUser(activeUser);
 
-    if (currentUser.role !== "STUDENT") {
+    if (activeUser.role !== "STUDENT") {
       alert("Only students can message roommate partners.");
       return;
     }
 
-    if (!currentUser.studentProfile?.isVerified) {
+    if (!activeUser.studentProfile?.isVerified) {
       alert("Verification required. Please verify your student profile to message potential roommates.");
       router.push("/student-dashboard/profile");
       return;
@@ -289,11 +293,16 @@ export default function RoommatesDirectory() {
           </p>
           <div className="hero-actions">
             <button 
-              onClick={() => {
-                if (!currentUser) {
+              onClick={async () => {
+                const activeUser = await getCurrentUser();
+                if (!activeUser) {
                   alert("Please log in to upload roommate listings.");
                   router.push("/auth/login");
-                } else if (currentUser.role !== "STUDENT") {
+                  return;
+                }
+                setCurrentUser(activeUser);
+
+                if (activeUser.role !== "STUDENT") {
                   alert("Only students can upload roommate requests.");
                 } else {
                   setIsModalOpen(true);

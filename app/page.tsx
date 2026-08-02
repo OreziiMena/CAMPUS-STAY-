@@ -72,7 +72,7 @@ export default function CampusStayLanding() {
             <Link href={user ? (user.role === "AGENT" ? "/agent-dashboard" : "/explore") : "/auth/rolepick"}>
               <button className="btn primary-btn">Rent a House <i className="fas fa-arrow-right"></i></button>
             </Link>
-            <Link href={user ? (user.role === "AGENT" ? "/agent-dashboard" : "/explore") : "/auth/rolepick"}>
+            <Link href={user ? (user.role === "AGENT" ? "/agent-dashboard" : "/roommates") : "/auth/rolepick"}>
               <button className="btn secondary-btn">Find a Roommate <i className="fas fa-arrow-right"></i></button>
             </Link>
           </div>
