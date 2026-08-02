@@ -3,6 +3,7 @@
 import prisma from "@/lib/prisma";
 import { getCurrentUser } from "./auth";
 import { Role } from "@/lib/generated-client";
+import { sendEmail } from "@/lib/email";
 
 export async function getAdminDashboardData() {
   try {
@@ -87,18 +88,61 @@ export async function toggleUserVerification(profileId: string, role: "STUDENT" 
       return { success: false, error: "Unauthorized. Admin access required." };
     }
 
+    let targetEmail: string | undefined;
+    let targetName: string | undefined;
+
     if (role === "STUDENT") {
+      const profile = await prisma.studentProfile.findUnique({
+        where: { id: profileId },
+        include: { user: true },
+      });
+      if (profile) {
+        targetEmail = profile.user.email;
+        targetName = profile.fullName || "Student";
+      }
       await prisma.studentProfile.update({
         where: { id: profileId },
         data: { isVerified: status },
       });
     } else if (role === "AGENT") {
+      const profile = await prisma.agentProfile.findUnique({
+        where: { id: profileId },
+        include: { user: true },
+      });
+      if (profile) {
+        targetEmail = profile.user.email;
+        targetName = profile.fullName || "Agent";
+      }
       await prisma.agentProfile.update({
         where: { id: profileId },
         data: { isVerified: status },
       });
     } else {
       return { success: false, error: "Invalid role." };
+    }
+
+    if (status && targetEmail) {
+      await sendEmail({
+        to: targetEmail,
+        subject: role === "STUDENT" ? "✅ Your Student Verification Approved! - Campus Stay" : "✅ Your Agent Profile Approved! - Campus Stay",
+        html: `
+          <div style="font-family: Arial, sans-serif; max-width: 600px; padding: 20px; border: 1px solid #eaeaea; border-radius: 8px;">
+            <h2 style="color: rgb(2, 53, 28);">Congratulations! 🎉</h2>
+            <p>Hi ${targetName},</p>
+            <p>Your identity verification documents have been successfully reviewed and approved by our team.</p>            <p>You now have full access to:
+              <ul>
+                <li>Contacting verified accommodation agents.</li>
+                <li>Scheduling physical room viewings.</li>
+                <li>Posting roommate space listings.</li>
+              </ul>
+            </p>
+                <p>You can now log in to access all verified features on the platform.</p>
+            <p>Find your next campus home today!</p>
+            <a href="https://campus-stay-chi.vercel.app/" style="display: inline-block; background-color: rgb(2, 53, 28); color: white; padding: 10px 20px; text-decoration: none; border-radius: 4px; font-weight: bold; margin-top: 10px;">Check out Properties Now</a>
+          </div>
+        `,
+        text: `Hi ${targetName},\n\nYour identity verification documents have been successfully reviewed and approved by our team.\n\nYou can now log in to access all verified features on the platform: https://campus-stay-chi.vercel.app/`
+      });
     }
 
     return { success: true };

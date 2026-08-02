@@ -5,6 +5,7 @@ import { getCurrentUser } from "./auth";
 import { writeFile, mkdir } from "fs/promises";
 import path from "path";
 import { uploadToR2 } from "@/lib/r2";
+import { sendEmail } from "@/lib/email";
 
 export async function getProperties(filterParam?: string | {
   searchQuery?: string;
@@ -253,6 +254,28 @@ export async function createInquiry(data: { propertyId: string; message: string 
         message,
       },
     });
+
+    const recipientEmail = property.agent?.user.email || property.student?.user.email;
+    const recipientName = property.agent?.fullName || property.student?.fullName || "User";
+    if (recipientEmail) {
+      await sendEmail({
+        to: recipientEmail,
+        subject: "🏠 New Inquiry on Your Listing - Campus Stay",
+        html: `
+          <div style="font-family: Arial, sans-serif; max-width: 600px; padding: 20px; border: 1px solid #eaeaea; border-radius: 8px;">
+            <h2 style="color: rgb(2, 53, 28);">New Inquiry Received!</h2>
+            <p>Hi ${recipientName},</p>
+            <p>A user has sent an inquiry regarding your listing: <strong>"${property.title}"</strong>.</p>
+            <blockquote style="background: #f9f9f9; padding: 12px; border-left: 4px solid rgb(2, 53, 28); margin: 20px 0;">
+              "${message}"
+            </blockquote>
+            <p>Log in to your Campus Stay dashboard to reply in the chat room.</p>
+            <a href="https://campus-stay-chi.vercel.app/chat" style="display: inline-block; background-color: rgb(2, 53, 28); color: white; padding: 10px 20px; text-decoration: none; border-radius: 4px; font-weight: bold; margin-top: 10px;">Go to Chat Inbox</a>
+          </div>
+        `,
+        text: `Hi ${recipientName},\n\nA user has sent an inquiry regarding your listing: "${property.title}".\n\n"${message}"\n\nLog in to your Campus Stay dashboard to reply in the chat inbox: https://campus-stay-chi.vercel.app/chat`
+      });
+    }
 
     return { success: true, inquiryId: inquiry.id };
   } catch (err: any) {

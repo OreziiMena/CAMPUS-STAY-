@@ -69,10 +69,10 @@ export default function CampusStayLanding() {
             Choose your path below.
           </p>
           <div className="cta-buttons">
-            <Link href={user ? (user.role === "AGENT" ? "/agent-dashboard" : "/explore") : "/auth/rolepick"}>
+            <Link href="/explore">
               <button className="btn primary-btn">Rent a House <i className="fas fa-arrow-right"></i></button>
             </Link>
-            <Link href={user ? (user.role === "AGENT" ? "/agent-dashboard" : "/roommates") : "/auth/rolepick"}>
+            <Link href="/roommates">
               <button className="btn secondary-btn">Find a Roommate <i className="fas fa-arrow-right"></i></button>
             </Link>
           </div>
