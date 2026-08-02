@@ -182,6 +182,9 @@ export async function addProperty(data: any) {
       if (!user.studentProfile) {
         return { success: false, error: "Student profile not found." };
       }
+      if (!user.studentProfile.isVerified) {
+        return { success: false, error: "Verification required. Please verify your student profile to upload roommate listings." };
+      }
       createData.studentId = user.studentProfile.id;
       createData.isRoommateOption = true; // Enforce roommate option for students
     } else if (user.role === "AGENT") {
@@ -492,7 +495,7 @@ export async function getAgentProperties() {
 export async function togglePropertyAvailability(propertyId: string) {
   try {
     const user = await getCurrentUser();
-    if (!user || user.role !== "AGENT" || !user.agentProfile) {
+    if (!user) {
       return { success: false, error: "Unauthorized." };
     }
 
@@ -500,8 +503,20 @@ export async function togglePropertyAvailability(propertyId: string) {
       where: { id: propertyId },
     });
 
-    if (!property || property.agentId !== user.agentProfile.id) {
-      return { success: false, error: "Property not found or unauthorized." };
+    if (!property) {
+      return { success: false, error: "Property not found." };
+    }
+
+    if (user.role === "STUDENT") {
+      if (!user.studentProfile || property.studentId !== user.studentProfile.id) {
+        return { success: false, error: "Unauthorized." };
+      }
+    } else if (user.role === "AGENT") {
+      if (!user.agentProfile || property.agentId !== user.agentProfile.id) {
+        return { success: false, error: "Unauthorized." };
+      }
+    } else {
+      return { success: false, error: "Unauthorized." };
     }
 
     const updated = await prisma.property.update({
@@ -518,7 +533,7 @@ export async function togglePropertyAvailability(propertyId: string) {
 export async function updateProperty(propertyId: string, data: any) {
   try {
     const user = await getCurrentUser();
-    if (!user || user.role !== "AGENT" || !user.agentProfile) {
+    if (!user) {
       return { success: false, error: "Unauthorized." };
     }
 
@@ -526,8 +541,20 @@ export async function updateProperty(propertyId: string, data: any) {
       where: { id: propertyId },
     });
 
-    if (!existingProperty || existingProperty.agentId !== user.agentProfile.id) {
-      return { success: false, error: "Property not found or unauthorized." };
+    if (!existingProperty) {
+      return { success: false, error: "Property not found." };
+    }
+
+    if (user.role === "STUDENT") {
+      if (!user.studentProfile || existingProperty.studentId !== user.studentProfile.id) {
+        return { success: false, error: "Unauthorized." };
+      }
+    } else if (user.role === "AGENT") {
+      if (!user.agentProfile || existingProperty.agentId !== user.agentProfile.id) {
+        return { success: false, error: "Unauthorized." };
+      }
+    } else {
+      return { success: false, error: "Unauthorized." };
     }
 
     const { title, hostelType, price, location, distance, description, amenities, images, university } = data;
@@ -556,7 +583,7 @@ export async function updateProperty(propertyId: string, data: any) {
 export async function deleteProperty(propertyId: string) {
   try {
     const user = await getCurrentUser();
-    if (!user || user.role !== "AGENT" || !user.agentProfile) {
+    if (!user) {
       return { success: false, error: "Unauthorized." };
     }
 
@@ -564,8 +591,20 @@ export async function deleteProperty(propertyId: string) {
       where: { id: propertyId },
     });
 
-    if (!property || property.agentId !== user.agentProfile.id) {
-      return { success: false, error: "Property not found or unauthorized." };
+    if (!property) {
+      return { success: false, error: "Property not found." };
+    }
+
+    if (user.role === "STUDENT") {
+      if (!user.studentProfile || property.studentId !== user.studentProfile.id) {
+        return { success: false, error: "Unauthorized." };
+      }
+    } else if (user.role === "AGENT") {
+      if (!user.agentProfile || property.agentId !== user.agentProfile.id) {
+        return { success: false, error: "Unauthorized." };
+      }
+    } else {
+      return { success: false, error: "Unauthorized." };
     }
 
     await prisma.property.delete({
