@@ -29,6 +29,11 @@ function AdminSidebarWrapper({
       <div className="sidebar-menu">
         <ul>
           <li>
+            <Link href="/admin-dashboard?tab=analytics" className={activeTab === "analytics" ? "active" : ""}>
+              <i className="fas fa-chart-line"></i> Analytics Overview
+            </Link>
+          </li>
+          <li>
             <Link href="/admin-dashboard" className={activeTab === "verifications" ? "active" : ""}>
               <i className="fas fa-user-check"></i> Verifications
             </Link>

@@ -12,6 +12,7 @@ import {
 } from "@/app/actions/chat";
 import { pusherClient, isPusherClientConfigured } from "@/lib/pusher-client";
 import "./chat.css";
+import { useToast } from "@/components/ToastProvider";
 
 interface ChatRoom {
   id: string;
@@ -34,6 +35,7 @@ interface Message {
 }
 
 function ChatContent() {
+  const { showToast } = useToast();
   const searchParams = useSearchParams();
   const router = useRouter();
   const initPropertyId = searchParams.get("propertyId");
@@ -48,6 +50,36 @@ function ChatContent() {
   const [loadingMessages, setLoadingMessages] = useState(false);
   const [inputText, setInputText] = useState("");
   const [isSending, setIsSending] = useState(false);
+
+  const [isTabVisible, setIsTabVisible] = useState(true);
+  const [isIdle, setIsIdle] = useState(false);
+
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      setIsTabVisible(document.visibilityState === "visible");
+    };
+
+    let idleTimer: NodeJS.Timeout;
+    const resetIdleTimer = () => {
+      setIsIdle(false);
+      clearTimeout(idleTimer);
+      idleTimer = setTimeout(() => {
+        setIsIdle(true);
+      }, 120000); // 2 minutes
+    };
+
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+    window.addEventListener("mousemove", resetIdleTimer);
+    window.addEventListener("keydown", resetIdleTimer);
+    resetIdleTimer();
+
+    return () => {
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+      window.removeEventListener("mousemove", resetIdleTimer);
+      window.removeEventListener("keydown", resetIdleTimer);
+      clearTimeout(idleTimer);
+    };
+  }, []);
 
   // Lock body and html scrolling on mount to make headers sticky
   useEffect(() => {
@@ -133,7 +165,7 @@ function ChatContent() {
             // Remove propertyId query param from url cleanly
             router.replace("/chat");
           } else {
-            alert(createRes.error || "Failed to initialize conversation.");
+            showToast(createRes.error || "Failed to initialize conversation.", "error");
           }
         } else if (initRoomId) {
           //  If a specific chat room was selected directly
@@ -201,13 +233,15 @@ function ChatContent() {
     };
   }, [rooms, selectedRoomId]);
 
-  // Periodically refresh the entire conversation list to ensure sidebar is updated globally
+  // Periodically refresh the entire conversation list to ensure sidebar is updated globally with adaptive intervals
   useEffect(() => {
+    // Dynamic Polling Rate: 5s if active, 15s if idle, 30s if tab is hidden
+    const intervalTime = !isTabVisible ? 30000 : isIdle ? 15000 : 5000;
+
     const pollRoomsInterval = setInterval(async () => {
       const res = await getChatRooms();
       if (res.success && res.chatRooms) {
         setRooms((prevRooms) => {
-          // Compare to avoid unnecessary re-renders/scroll resets
           const hasChanges = prevRooms.length !== res.chatRooms.length ||
             prevRooms.some((r, i) => r.lastMessage !== res.chatRooms[i]?.lastMessage);
           if (hasChanges) {
@@ -216,14 +250,17 @@ function ChatContent() {
           return prevRooms;
         });
       }
-    }, 5000);
+    }, intervalTime);
 
     return () => clearInterval(pollRoomsInterval);
-  }, []);
+  }, [isTabVisible, isIdle]);
 
-  // Real-Time Fallback (Polling) for messages if Pusher credentials are not provided
+  // Real-Time Fallback (Polling) for messages if Pusher credentials are not provided with adaptive intervals
   useEffect(() => {
     if (!selectedRoomId || isPusherClientConfigured) return;
+
+    // Dynamic Polling Rate: 3s if active, 8s if idle, 15s if tab is hidden
+    const intervalTime = !isTabVisible ? 15000 : isIdle ? 8000 : 3000;
 
     const pollInterval = setInterval(async () => {
       const res = await getChatMessages(selectedRoomId);
@@ -233,7 +270,6 @@ function ChatContent() {
             prev.length !== res.messages.length ||
             prev[prev.length - 1]?.id !== res.messages[res.messages.length - 1]?.id
           ) {
-            // Also trigger a re-fetch of rooms list to update the sidebar previews
             getChatRooms().then((roomsRes) => {
               if (roomsRes.success && roomsRes.chatRooms) {
                 setRooms(roomsRes.chatRooms);
@@ -244,10 +280,10 @@ function ChatContent() {
           return prev;
         });
       }
-    }, 3000);
+    }, intervalTime);
 
     return () => clearInterval(pollInterval);
-  }, [selectedRoomId]);
+  }, [selectedRoomId, isTabVisible, isIdle]);
 
   // Auto scroll to message bottom
   useEffect(() => {
@@ -313,7 +349,7 @@ function ChatContent() {
       } else {
         // Rollback optimistic message on error
         setMessages((prev) => prev.filter((m) => m.id !== tempId));
-        alert(res.error || "Failed to send message.");
+        showToast(res.error || "Failed to send message.", "error");
       }
       setIsSending(false);
     });

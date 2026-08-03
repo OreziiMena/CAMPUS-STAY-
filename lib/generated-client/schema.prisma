@@ -217,3 +217,12 @@ enum ReportStatus {
   RESOLVED
   DISMISSED
 }
+
+model RateLimit {
+  id        String   @id @default(uuid())
+  ip        String
+  action    String
+  createdAt DateTime @default(now())
+
+  @@index([ip, action, createdAt])
+}

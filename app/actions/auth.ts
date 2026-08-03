@@ -8,6 +8,7 @@ import path from "path";
 import { uploadToR2 } from "@/lib/r2";
 import crypto from "crypto";
 import { generateOTP } from "./otp";
+import { checkRateLimit } from "@/lib/rate-limit";
 
 const SESSION_COOKIE_NAME = "campus_stay_session";
 const AUTH_SECRET = process.env.AUTH_SECRET || "fallback-secret-key-at-least-32-chars-long-security-key";
@@ -77,6 +78,11 @@ export async function checkUsernameAvailable(username: string): Promise<boolean>
 
 export async function registerStudent(data: any) {
   try {
+    const rateCheck = await checkRateLimit("register", 5, 10);
+    if (!rateCheck.success) {
+      return { success: false, error: rateCheck.error };
+    }
+
     const { fullname, email, phone, university, username, password } = data;
 
     const existingUser = await prisma.user.findUnique({ where: { email } });
@@ -118,6 +124,11 @@ export async function registerStudent(data: any) {
 
 export async function registerAgent(data: any) {
   try {
+    const rateCheck = await checkRateLimit("register", 5, 10);
+    if (!rateCheck.success) {
+      return { success: false, error: rateCheck.error };
+    }
+
     const { fullname, email, phone, address, username, password } = data;
 
     const existingUser = await prisma.user.findUnique({ where: { email } });
@@ -153,6 +164,11 @@ export async function registerAgent(data: any) {
 
 export async function loginUser(data: any) {
   try {
+    const rateCheck = await checkRateLimit("login", 5, 3);
+    if (!rateCheck.success) {
+      return { success: false, error: rateCheck.error };
+    }
+
     const { email, password } = data;
 
     const user = await prisma.user.findUnique({

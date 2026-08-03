@@ -129,7 +129,8 @@ export async function toggleUserVerification(profileId: string, role: "STUDENT" 
           <div style="font-family: Arial, sans-serif; max-width: 600px; padding: 20px; border: 1px solid #eaeaea; border-radius: 8px;">
             <h2 style="color: rgb(2, 53, 28);">Congratulations! 🎉</h2>
             <p>Hi ${targetName},</p>
-            <p>Your identity verification documents have been successfully reviewed and approved by our team.</p>            <p>You now have full access to:
+            <p>Your identity verification documents have been successfully reviewed and approved by our team.</p>            
+            <p>You now have full access to:
               <ul>
                 <li>Contacting verified accommodation agents.</li>
                 <li>Scheduling physical room viewings.</li>
@@ -214,5 +215,63 @@ export async function deleteUserByAdmin(profileId: string, role: "STUDENT" | "AG
     return { success: true };
   } catch (err: any) {
     return { success: false, error: err.message || "Failed to delete user." };
+  }
+}
+
+export async function getAdminAnalyticsData() {
+  try {
+    const adminUser = await getCurrentUser();
+    if (!adminUser || adminUser.role !== Role.ADMIN) {
+      return { success: false, error: "Unauthorized. Admin access required." };
+    }
+
+    const totalStudents = await prisma.studentProfile.count();
+    const totalAgents = await prisma.agentProfile.count();
+    const verifiedStudents = await prisma.studentProfile.count({
+      where: { isVerified: true },
+    });
+    const verifiedAgents = await prisma.agentProfile.count({
+      where: { isVerified: true },
+    });
+    const totalProperties = await prisma.property.count({
+      where: { isRoommateOption: false },
+    });
+    const totalRoommates = await prisma.property.count({
+      where: { isRoommateOption: true },
+    });
+
+    // Fetch properties to construct a listing growth chart
+    const properties = await prisma.property.findMany({
+      select: { createdAt: true },
+      orderBy: { createdAt: "asc" },
+    });
+
+    const monthlyCounts: { [key: string]: number } = {};
+    properties.forEach((p) => {
+      const date = new Date(p.createdAt);
+      const label = date.toLocaleString("default", { month: "short", year: "2-digit" });
+      monthlyCounts[label] = (monthlyCounts[label] || 0) + 1;
+    });
+
+    const labels = Object.keys(monthlyCounts);
+    const data = Object.values(monthlyCounts);
+
+    return {
+      success: true,
+      stats: {
+        totalStudents,
+        totalAgents,
+        totalProperties,
+        totalRoommates,
+        verifiedStudents,
+        verifiedAgents,
+      },
+      charts: {
+        labels,
+        data,
+      },
+    };
+  } catch (err: any) {
+    return { success: false, error: err.message || "Failed to load analytics metrics." };
   }
 }

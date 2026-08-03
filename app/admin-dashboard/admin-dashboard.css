@@ -518,3 +518,13 @@
     border-radius: 8px;
   }
 }
+
+/* Admin Analytics Styling */
+.analytics-dashboard {
+  font-family: 'Open Sans', var(--font-open-sans), sans-serif;
+}
+
+.analytics-dashboard h3,
+.analytics-dashboard h4 {
+  font-family: 'Poppins', var(--font-poppins), sans-serif;
+}

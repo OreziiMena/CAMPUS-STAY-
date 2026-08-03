@@ -11,8 +11,10 @@ import { submitReport } from "@/app/actions/reports";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import "./roommates.css";
+import { useToast } from "@/components/ToastProvider";
 
 export default function RoommatesDirectory() {
+  const { showToast } = useToast();
   const router = useRouter();
   const [loading, setLoading] = useState(true);
   const [listings, setListings] = useState<any[]>([]);
@@ -71,7 +73,7 @@ export default function RoommatesDirectory() {
 
     const activeUser = await getCurrentUser();
     if (!activeUser) {
-      alert("Please log in to submit a report.");
+      showToast("Please log in to submit a report.", "error");
       router.push("/auth/login");
       return;
     }
@@ -227,19 +229,19 @@ export default function RoommatesDirectory() {
   const handleMessageRoommate = async (roommateUserId: string) => {
     const activeUser = await getCurrentUser();
     if (!activeUser) {
-      alert("Please log in to contact potential roommates.");
+      showToast("Please log in to contact potential roommates.", "error");
       router.push("/auth/login");
       return;
     }
     setCurrentUser(activeUser);
 
     if (activeUser.role !== "STUDENT") {
-      alert("Only students can message roommate partners.");
+      showToast("Only students can message roommate partners.", "error");
       return;
     }
 
     if (!activeUser.studentProfile?.isVerified) {
-      alert("Verification required. Please verify your student profile to message potential roommates.");
+      showToast("Verification required. Please verify your student profile to message potential roommates.", "error");
       router.push("/student-dashboard/profile");
       return;
     }
@@ -248,7 +250,7 @@ export default function RoommatesDirectory() {
     if (res.success && res.chatRoomId) {
       router.push(`/chat?roomId=${res.chatRoomId}`);
     } else {
-      alert(res.error || "Failed to initialize conversation.");
+      showToast(res.error || "Failed to initialize conversation.", "error");
     }
   };
 
@@ -296,14 +298,14 @@ export default function RoommatesDirectory() {
               onClick={async () => {
                 const activeUser = await getCurrentUser();
                 if (!activeUser) {
-                  alert("Please log in to upload roommate listings.");
+                  showToast("Please log in to upload roommate listings.", "error");
                   router.push("/auth/login");
                   return;
                 }
                 setCurrentUser(activeUser);
 
                 if (activeUser.role !== "STUDENT") {
-                  alert("Only students can upload roommate requests.");
+                  showToast("Only students can upload roommate requests.", "error");
                 } else {
                   setIsModalOpen(true);
                 }

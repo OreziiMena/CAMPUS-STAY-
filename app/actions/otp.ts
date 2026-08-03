@@ -3,6 +3,7 @@
 import prisma from "@/lib/prisma";
 import { cookies } from "next/headers";
 import crypto from "crypto";
+import { checkRateLimit } from "@/lib/rate-limit";
 
 const SESSION_COOKIE_NAME = "campus_stay_session";
 const AUTH_SECRET = process.env.AUTH_SECRET || "fallback-secret-key-at-least-32-chars-long-security-key";
@@ -15,6 +16,10 @@ function signSession(payload: any): string {
 
 export async function generateOTP(email: string, purpose: "EMAIL_VERIFICATION" | "PASSWORD_RESET") {
   try {
+    const rateCheck = await checkRateLimit(`otp-${purpose}`, 3, 3);
+    if (!rateCheck.success) {
+      return { success: false, error: rateCheck.error };
+    }
     // 1. Delete any existing OTPs for this email/purpose
     await prisma.oTP.deleteMany({
       where: {
@@ -68,7 +73,7 @@ export async function verifyOTP(email: string, code: string, purpose: "EMAIL_VER
       return { success: false, error: "Verification code has expired." };
     }
 
-    // Code is valid - clean it up from database
+    // Code is valid 
     await prisma.oTP.delete({ where: { id: otpRecord.id } }).catch(() => {});
 
     // Update user's email verification status

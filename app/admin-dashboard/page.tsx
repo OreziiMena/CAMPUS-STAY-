@@ -1,15 +1,17 @@
 "use client";
 
-import React, { useEffect, useState, Suspense } from "react";
+import React, { useEffect, useState, useRef, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import { 
   getAdminDashboardData, 
   toggleUserVerification, 
   togglePropertyVerification,
   deletePropertyByAdmin,
-  deleteUserByAdmin
+  deleteUserByAdmin,
+  getAdminAnalyticsData
 } from "@/app/actions/admin";
 import { getPendingReports, moderateReport } from "@/app/actions/reports";
+import Chart from "chart.js/auto";
 
 function AdminDashboardContent() {
   const searchParams = useSearchParams();
@@ -34,6 +36,11 @@ function AdminDashboardContent() {
   const [actionLoading, setActionLoading] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
 
+  // Analytics states
+  const [analyticsData, setAnalyticsData] = useState<any>(null);
+  const chartInstancesRef = useRef<Chart[]>([]);
+  const [activePreviewDoc, setActivePreviewDoc] = useState<{ url: string; title: string } | null>(null);
+
   const fetchQueues = async () => {
     setLoading(true);
     setError("");
@@ -51,6 +58,11 @@ function AdminDashboardContent() {
     const reportsRes = await getPendingReports();
     if (reportsRes.success) {
       setReports(reportsRes.reports || []);
+    }
+
+    const analyticsRes = await getAdminAnalyticsData();
+    if (analyticsRes.success) {
+      setAnalyticsData(analyticsRes);
     }
 
     setLoading(false);
@@ -79,6 +91,78 @@ function AdminDashboardContent() {
     setActiveTab(tabParam);
     setSearchQuery(""); // Clear search query when changing tabs
   }, [tabParam]);
+
+  useEffect(() => {
+    if (activeTab !== "analytics" || !analyticsData) return;
+
+    // Clean up any existing instances first
+    chartInstancesRef.current.forEach((instance) => instance.destroy());
+    chartInstancesRef.current = [];
+
+    const userDistributionCtx = document.getElementById("userDistributionChart") as HTMLCanvasElement | null;
+    const growthCtx = document.getElementById("growthChart") as HTMLCanvasElement | null;
+
+    if (userDistributionCtx) {
+      const userChart = new Chart(userDistributionCtx, {
+        type: "doughnut",
+        data: {
+          labels: ["Students", "Agents"],
+          datasets: [
+            {
+              data: [analyticsData.stats.totalStudents, analyticsData.stats.totalAgents],
+              backgroundColor: ["#10b981", "#3b82f6"],
+              borderWidth: 1,
+            },
+          ],
+        },
+        options: {
+          responsive: true,
+          plugins: {
+            legend: {
+              position: "bottom",
+            },
+          },
+        },
+      });
+      chartInstancesRef.current.push(userChart);
+    }
+
+    if (growthCtx && analyticsData.charts.labels.length > 0) {
+      const growthChart = new Chart(growthCtx, {
+        type: "line",
+        data: {
+          labels: analyticsData.charts.labels,
+          datasets: [
+            {
+              label: "New Listings Over Time",
+              data: analyticsData.charts.data,
+              borderColor: "rgb(2, 53, 28)",
+              backgroundColor: "rgba(2, 53, 28, 0.1)",
+              fill: true,
+              tension: 0.3,
+            },
+          ],
+        },
+        options: {
+          responsive: true,
+          scales: {
+            y: {
+              beginAtZero: true,
+              ticks: {
+                precision: 0,
+              },
+            },
+          },
+        },
+      });
+      chartInstancesRef.current.push(growthChart);
+    }
+
+    return () => {
+      chartInstancesRef.current.forEach((instance) => instance.destroy());
+      chartInstancesRef.current = [];
+    };
+  }, [activeTab, analyticsData]);
 
   const handleVerifyUser = async (profileId: string, role: "STUDENT" | "AGENT") => {
     setActionLoading(profileId);
@@ -433,31 +517,47 @@ function AdminDashboardContent() {
                                 <div style={{ color: "#666", fontSize: "12px" }}>{student.user.phone}</div>
                               </td>
                               <td>
-                                <div className="doc-links-cell">
-                                  {!student.idCardDoc && !student.feesReceiptDoc && !student.portalScreenshotDoc && !student.jambLetterDoc && (
-                                    <span style={{ color: "#888", fontSize: "13px" }}>No documents uploaded</span>
-                                  )}
-                                  {student.idCardDoc && (
-                                    <a href={student.idCardDoc} target="_blank" rel="noopener noreferrer" className="doc-link">
-                                      <i className="fas fa-id-card"></i> Student ID Card
-                                    </a>
-                                  )}
-                                  {student.feesReceiptDoc && (
-                                    <a href={student.feesReceiptDoc} target="_blank" rel="noopener noreferrer" className="doc-link">
-                                      <i className="fas fa-receipt"></i> School Fees Receipt
-                                    </a>
-                                  )}
-                                  {student.portalScreenshotDoc && (
-                                    <a href={student.portalScreenshotDoc} target="_blank" rel="noopener noreferrer" className="doc-link">
-                                      <i className="fas fa-desktop"></i> Portal Screenshot
-                                    </a>
-                                  )}
-                                  {student.jambLetterDoc && (
-                                    <a href={student.jambLetterDoc} target="_blank" rel="noopener noreferrer" className="doc-link">
-                                      <i className="fas fa-envelope-open-text"></i> JAMB Letter
-                                    </a>
-                                  )}
-                                </div>
+                                  <div className="doc-links-cell">
+                                    {!student.idCardDoc && !student.feesReceiptDoc && !student.portalScreenshotDoc && !student.jambLetterDoc && (
+                                      <span style={{ color: "#888", fontSize: "13px" }}>No documents uploaded</span>
+                                    )}
+                                    {student.idCardDoc && (
+                                      <button 
+                                        onClick={() => setActivePreviewDoc({ url: student.idCardDoc, title: `${student.fullName}'s Student ID Card` })}
+                                        className="doc-link"
+                                        style={{ background: "none", border: "none", cursor: "pointer", display: "flex", alignItems: "center", gap: "5px", padding: "4px 0", color: "#1c64f2", fontStyle: "normal", textAlign: "left", textDecoration: "underline" }}
+                                      >
+                                        <i className="fas fa-id-card"></i> Student ID Card
+                                      </button>
+                                    )}
+                                    {student.feesReceiptDoc && (
+                                      <button 
+                                        onClick={() => setActivePreviewDoc({ url: student.feesReceiptDoc, title: `${student.fullName}'s School Fees Receipt` })}
+                                        className="doc-link"
+                                        style={{ background: "none", border: "none", cursor: "pointer", display: "flex", alignItems: "center", gap: "5px", padding: "4px 0", color: "#1c64f2", fontStyle: "normal", textAlign: "left", textDecoration: "underline" }}
+                                      >
+                                        <i className="fas fa-receipt"></i> School Fees Receipt
+                                      </button>
+                                    )}
+                                    {student.portalScreenshotDoc && (
+                                      <button 
+                                        onClick={() => setActivePreviewDoc({ url: student.portalScreenshotDoc, title: `${student.fullName}'s Portal Screenshot` })}
+                                        className="doc-link"
+                                        style={{ background: "none", border: "none", cursor: "pointer", display: "flex", alignItems: "center", gap: "5px", padding: "4px 0", color: "#1c64f2", fontStyle: "normal", textAlign: "left", textDecoration: "underline" }}
+                                      >
+                                        <i className="fas fa-desktop"></i> Portal Screenshot
+                                      </button>
+                                    )}
+                                    {student.jambLetterDoc && (
+                                      <button 
+                                        onClick={() => setActivePreviewDoc({ url: student.jambLetterDoc, title: `${student.fullName}'s JAMB Letter` })}
+                                        className="doc-link"
+                                        style={{ background: "none", border: "none", cursor: "pointer", display: "flex", alignItems: "center", gap: "5px", padding: "4px 0", color: "#1c64f2", fontStyle: "normal", textAlign: "left", textDecoration: "underline" }}
+                                      >
+                                        <i className="fas fa-envelope-open-text"></i> JAMB Letter
+                                      </button>
+                                    )}
+                                  </div>
                               </td>
                               <td>
                                 <div className="admin-action-btns">
@@ -516,9 +616,13 @@ function AdminDashboardContent() {
                               </td>
                               <td>
                                 {agent.ninDocument ? (
-                                  <a href={agent.ninDocument} target="_blank" rel="noopener noreferrer" className="doc-link">
+                                  <button 
+                                    onClick={() => setActivePreviewDoc({ url: agent.ninDocument, title: `${agent.fullName}'s NIN / Govt ID Document` })}
+                                    className="doc-link"
+                                    style={{ background: "none", border: "none", cursor: "pointer", display: "flex", alignItems: "center", gap: "5px", padding: "4px 0", color: "#1c64f2", fontStyle: "normal", textAlign: "left", textDecoration: "underline" }}
+                                  >
                                     <i className="fas fa-file-alt"></i> NIN / Govt ID Document
-                                  </a>
+                                  </button>
                                 ) : (
                                   <span style={{ color: "#d32f2f", fontSize: "13px", fontWeight: "600" }}>No Document Uploaded</span>
                                 )}
@@ -896,6 +1000,102 @@ function AdminDashboardContent() {
             </div>
           )}
 
+          {activeTab === "analytics" && (
+            <div className="analytics-dashboard">
+              {/* Stat Cards Row */}
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: "20px", marginBottom: "30px" }}>
+                <div style={{ background: "white", padding: "20px", borderRadius: "12px", border: "1px solid #eaeaea", boxShadow: "0 4px 12px rgba(0,0,0,0.02)", display: "flex", alignItems: "center", gap: "15px" }}>
+                  <div style={{ background: "#e8fdf4", color: "#10b981", width: "50px", height: "50px", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "1.5rem" }} className="stat-icon">
+                    <i className="fas fa-user-graduate"></i>
+                  </div>
+                  <div>
+                    <h3 style={{ margin: "0 0 5px 0", color: "rgb(2, 53, 28)", fontSize: "1.6rem", fontWeight: "700" }}>
+                      {analyticsData?.stats.totalStudents || 0}
+                    </h3>
+                    <p style={{ margin: 0, color: "#666", fontSize: "0.85rem" }}>Total Students</p>
+                  </div>
+                </div>
+
+                <div style={{ background: "white", padding: "20px", borderRadius: "12px", border: "1px solid #eaeaea", boxShadow: "0 4px 12px rgba(0,0,0,0.02)", display: "flex", alignItems: "center", gap: "15px" }}>
+                  <div style={{ background: "#d1fae5", color: "#065f46", width: "50px", height: "50px", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "1.5rem" }} className="stat-icon">
+                    <i className="fas fa-user-shield"></i>
+                  </div>
+                  <div>
+                    <h3 style={{ margin: "0 0 5px 0", color: "rgb(2, 53, 28)", fontSize: "1.6rem", fontWeight: "700" }}>
+                      {analyticsData?.stats.verifiedStudents || 0}
+                    </h3>
+                    <p style={{ margin: 0, color: "#666", fontSize: "0.85rem" }}>Verified Students</p>
+                  </div>
+                </div>
+
+                <div style={{ background: "white", padding: "20px", borderRadius: "12px", border: "1px solid #eaeaea", boxShadow: "0 4px 12px rgba(0,0,0,0.02)", display: "flex", alignItems: "center", gap: "15px" }}>
+                  <div style={{ background: "#eef2ff", color: "#3b82f6", width: "50px", height: "50px", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "1.5rem" }} className="stat-icon">
+                    <i className="fas fa-user-tie"></i>
+                  </div>
+                  <div>
+                    <h3 style={{ margin: "0 0 5px 0", color: "rgb(2, 53, 28)", fontSize: "1.6rem", fontWeight: "700" }}>
+                      {analyticsData?.stats.totalAgents || 0}
+                    </h3>
+                    <p style={{ margin: 0, color: "#666", fontSize: "0.85rem" }}>Total Agents</p>
+                  </div>
+                </div>
+
+                <div style={{ background: "white", padding: "20px", borderRadius: "12px", border: "1px solid #eaeaea", boxShadow: "0 4px 12px rgba(0,0,0,0.02)", display: "flex", alignItems: "center", gap: "15px" }}>
+                  <div style={{ background: "#dbeafe", color: "#1e40af", width: "50px", height: "50px", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "1.5rem" }} className="stat-icon">
+                    <i className="fas fa-shield-alt"></i>
+                  </div>
+                  <div>
+                    <h3 style={{ margin: "0 0 5px 0", color: "rgb(2, 53, 28)", fontSize: "1.6rem", fontWeight: "700" }}>
+                      {analyticsData?.stats.verifiedAgents || 0}
+                    </h3>
+                    <p style={{ margin: 0, color: "#666", fontSize: "0.85rem" }}>Verified Agents</p>
+                  </div>
+                </div>
+
+                <div style={{ background: "white", padding: "20px", borderRadius: "12px", border: "1px solid #eaeaea", boxShadow: "0 4px 12px rgba(0,0,0,0.02)", display: "flex", alignItems: "center", gap: "15px" }}>
+                  <div style={{ background: "#fef7e0", color: "#f39c12", width: "50px", height: "50px", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "1.5rem" }} className="stat-icon">
+                    <i className="fas fa-building"></i>
+                  </div>
+                  <div>
+                    <h3 style={{ margin: "0 0 5px 0", color: "rgb(2, 53, 28)", fontSize: "1.6rem", fontWeight: "700" }}>
+                      {analyticsData?.stats.totalProperties || 0}
+                    </h3>
+                    <p style={{ margin: 0, color: "#666", fontSize: "0.85rem" }}>Hostel Listings</p>
+                  </div>
+                </div>
+
+                <div style={{ background: "white", padding: "20px", borderRadius: "12px", border: "1px solid #eaeaea", boxShadow: "0 4px 12px rgba(0,0,0,0.02)", display: "flex", alignItems: "center", gap: "15px" }}>
+                  <div style={{ background: "#fdf2f2", color: "#e74c3c", width: "50px", height: "50px", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "1.5rem" }} className="stat-icon">
+                    <i className="fas fa-user-friends"></i>
+                  </div>
+                  <div>
+                    <h3 style={{ margin: "0 0 5px 0", color: "rgb(2, 53, 28)", fontSize: "1.6rem", fontWeight: "700" }}>
+                      {analyticsData?.stats.totalRoommates || 0}
+                    </h3>
+                    <p style={{ margin: 0, color: "#666", fontSize: "0.85rem" }}>Roommate Listings</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Chart Canvases */}
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(320px, 1fr))", gap: "25px" }}>
+                <div style={{ background: "white", padding: "25px", borderRadius: "12px", border: "1px solid #eaeaea", boxShadow: "0 4px 15px rgba(0,0,0,0.02)" }}>
+                  <h4 style={{ margin: "0 0 20px 0", color: "rgb(2, 53, 28)", fontSize: "1.1rem", fontWeight: "700" }}>User Distribution</h4>
+                  <div style={{ maxHeight: "300px", display: "flex", justifyContent: "center" }}>
+                    <canvas id="userDistributionChart"></canvas>
+                  </div>
+                </div>
+
+                <div style={{ background: "white", padding: "25px", borderRadius: "12px", border: "1px solid #eaeaea", boxShadow: "0 4px 15px rgba(0,0,0,0.02)" }}>
+                  <h4 style={{ margin: "0 0 20px 0", color: "rgb(2, 53, 28)", fontSize: "1.1rem", fontWeight: "700" }}>Listing Growth Rate</h4>
+                  <div style={{ maxHeight: "300px" }}>
+                    <canvas id="growthChart"></canvas>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
           {activeTab === "reports" && (
             <div className="admin-card">
               <div className="card-header" style={{ marginBottom: "20px" }}>
@@ -1007,6 +1207,88 @@ function AdminDashboardContent() {
             </div>
           )}
         </>
+      )}
+
+      {activePreviewDoc && (
+        <div 
+          onClick={() => setActivePreviewDoc(null)}
+          style={{
+            position: "fixed",
+            top: 0,
+            left: 0,
+            width: "100vw",
+            height: "100vh",
+            backgroundColor: "rgba(0, 0, 0, 0.65)",
+            backdropFilter: "blur(4px)",
+            zIndex: 10000,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            padding: "20px"
+          }}
+        >
+          <div 
+            onClick={(e) => e.stopPropagation()}
+            style={{
+              backgroundColor: "white",
+              borderRadius: "16px",
+              width: "100%",
+              maxWidth: "800px",
+              height: "85vh",
+              display: "flex",
+              flexDirection: "column",
+              boxShadow: "0 24px 64px rgba(0,0,0,0.18)",
+              overflow: "hidden"
+            }}
+          >
+            {/* Modal Header */}
+            <div style={{ padding: "16px 24px", borderBottom: "1px solid #eaeaea", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+              <h3 style={{ margin: 0, color: "rgb(2, 53, 28)", fontSize: "1.15rem", fontWeight: "700", fontFamily: "'Poppins', sans-serif" }}>{activePreviewDoc.title}</h3>
+              <button 
+                onClick={() => setActivePreviewDoc(null)}
+                style={{ background: "none", border: "none", fontSize: "1.2rem", cursor: "pointer", color: "#666" }}
+              >
+                <i className="fas fa-times"></i>
+              </button>
+            </div>
+
+            {/* Modal Body */}
+            <div style={{ flexGrow: 1, backgroundColor: "#f9f9f9", padding: "12px", display: "flex", alignItems: "center", justifyContent: "center", overflow: "hidden" }}>
+              {activePreviewDoc.url.toLowerCase().endsWith(".pdf") ? (
+                <iframe 
+                  src={activePreviewDoc.url} 
+                  style={{ width: "100%", height: "100%", border: "none", borderRadius: "8px" }}
+                ></iframe>
+              ) : (
+                <div style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center", overflow: "auto" }}>
+                  <img 
+                    src={activePreviewDoc.url} 
+                    alt={activePreviewDoc.title} 
+                    style={{ maxWidth: "100%", maxHeight: "100%", objectFit: "contain", borderRadius: "8px" }}
+                  />
+                </div>
+              )}
+            </div>
+
+            {/* Modal Footer */}
+            <div style={{ padding: "12px 24px", borderTop: "1px solid #eaeaea", display: "flex", justifyContent: "flex-end", gap: "10px" }}>
+              <a 
+                href={activePreviewDoc.url} 
+                target="_blank" 
+                rel="noopener noreferrer" 
+                style={{ display: "inline-flex", alignItems: "center", gap: "6px", backgroundColor: "#f1f3f4", color: "#333", padding: "8px 16px", borderRadius: "8px", textDecoration: "none", fontSize: "0.9rem", fontWeight: "600", fontFamily: "'Poppins', sans-serif" }}
+              >
+                <i className="fas fa-external-link-alt"></i> Open In New Tab
+              </a>
+              <button 
+                onClick={() => setActivePreviewDoc(null)}
+                style={{ backgroundColor: "rgb(2, 53, 28)", color: "white", padding: "8px 18px", borderRadius: "8px", border: "none", cursor: "pointer", fontSize: "0.9rem", fontWeight: "600", fontFamily: "'Poppins', sans-serif" }}
+              >
+                Close Preview
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

@@ -21,6 +21,8 @@ export const metadata: Metadata = {
   description: "Find your perfect off-campus housing.",
 };
 
+import { ToastProvider } from "@/components/ToastProvider";
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -30,7 +32,9 @@ export default function RootLayout({
     <html lang="en" data-scroll-behavior="smooth">
       {/* 3. Add the font variables to the body tag */}
       <body className={`${openSans.variable} ${poppins.variable}`}>
-        {children}
+        <ToastProvider>
+          {children}
+        </ToastProvider>
       </body>
       
     </html>
