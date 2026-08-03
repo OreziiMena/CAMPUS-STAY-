@@ -3,6 +3,7 @@
 import prisma from "@/lib/prisma";
 import { getCurrentUser } from "./auth";
 import { triggerPusherEvent } from "@/lib/pusher";
+import { sendEmail } from "@/lib/email";
 
 export async function getOrCreateChatRoom(propertyId: string) {
   try {
@@ -184,6 +185,10 @@ export async function sendChatMessage(chatRoomId: string, text: string) {
       return { success: false, error: "Message cannot be empty." };
     }
 
+    const isFirstMessage = (await prisma.message.count({
+      where: { chatRoomId }
+    })) === 0;
+
     const message = await prisma.message.create({
       data: {
         chatRoomId,
@@ -200,6 +205,60 @@ export async function sendChatMessage(chatRoomId: string, text: string) {
       text: message.text,
       createdAt: message.createdAt.toISOString(),
     });
+
+    // If first message in a roommate matching conversation, notify the recipient via email
+    if (isFirstMessage) {
+      (async () => {
+        try {
+          const chatRoom = await prisma.chatRoom.findUnique({
+            where: { id: chatRoomId },
+            include: {
+              property: true,
+            }
+          });
+
+          if (chatRoom && chatRoom.property.isRoommateOption) {
+            const recipientId = chatRoom.studentId === user.id ? chatRoom.agentId : chatRoom.studentId;
+            const recipientUser = await prisma.user.findUnique({
+              where: { id: recipientId },
+              include: { studentProfile: true }
+            });
+
+            if (recipientUser) {
+              const senderName = user.studentProfile?.fullName || user.email;
+              const recipientName = recipientUser.studentProfile?.fullName || "Student";
+              const listingTitle = chatRoom.property.title;
+
+              await sendEmail({
+                to: recipientUser.email,
+                subject: `New Roommate Inquiry on Campus Stay!`,
+                html: `
+                  <div style="font-family: 'Poppins', sans-serif; max-width: 600px; margin: 0 auto; padding: 25px; border: 1px solid #eaeaea; border-radius: 16px;">
+                    <h2 style="color: rgb(2, 53, 28); font-weight: 700;">New Roommate Interest!</h2>
+                    <p>Hello ${recipientName},</p>
+                    <p><strong>${senderName}</strong> has sent you a message regarding your roommate listing: <strong>"${listingTitle}"</strong> on Campus Stay.</p>
+                    
+                    <div style="background-color: #f9f9f9; padding: 15px; border-left: 4px solid rgb(2, 53, 28); border-radius: 4px; margin: 20px 0; font-style: italic;">
+                      "${text}"
+                    </div>
+                    
+                    <p>Please log in to your dashboard to reply and coordinate details:</p>
+                    <div style="text-align: center; margin: 25px 0;">
+                      <a href="${process.env.NEXT_PUBLIC_APP_URL || 'https://campus-stay.vercel.app'}/chat?roomId=${chatRoomId}" style="background-color: rgb(2, 53, 28); color: white; padding: 12px 24px; text-decoration: none; border-radius: 8px; font-weight: bold; display: inline-block;">
+                        Open Chat Room
+                      </a>
+                    </div>
+                    <p style="color: #666; font-size: 0.85rem;">Best regards,<br/>The Campus Stay Team</p>
+                  </div>
+                `
+              });
+            }
+          }
+        } catch (emailErr) {
+          console.error("Failed to send roommate notification email:", emailErr);
+        }
+      })();
+    }
 
     return { success: true, message };
   } catch (err: any) {

@@ -4,6 +4,7 @@ import prisma from "@/lib/prisma";
 import { cookies } from "next/headers";
 import crypto from "crypto";
 import { checkRateLimit } from "@/lib/rate-limit";
+import { sendEmail } from "@/lib/email";
 
 const SESSION_COOKIE_NAME = "campus_stay_session";
 const AUTH_SECRET = process.env.AUTH_SECRET || "fallback-secret-key-at-least-32-chars-long-security-key";
@@ -111,33 +112,24 @@ async function sendOTPEmail(email: string, code: string) {
   }
 
   try {
-    const response = await fetch("https://api.resend.com/emails", {
-      method: "POST",
-      headers: {
-        "Authorization": `Bearer ${apiKey}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        from: "Campus Stay <onboarding@resend.dev>",
-        to: [email],
-        subject: "Your Campus Stay OTP Code",
-        html: `
-          <div style="font-family: 'Poppins', sans-serif; max-width: 500px; margin: 0 auto; padding: 20px; border: 1px solid #eaeaea; borderRadius: 16px;">
-            <h2 style="color: rgb(2, 53, 28); font-weight: 700;">Campus Stay OTP Verification</h2>
-            <p>Welcome to Campus Stay! Please use the 6-digit OTP code below to verify your email address. This code is valid for 10 minutes.</p>
-            <div style="background-color: #f1f5f3; padding: 16px; text-align: center; border-radius: 8px; font-size: 2rem; font-weight: 800; letter-spacing: 4px; color: rgb(2, 53, 28); margin: 24px 0;">
-              ${code}
-            </div>
-            <p style="color: #666; font-size: 0.85rem;">If you did not request this code, you can safely ignore this email.</p>
+    const res = await sendEmail({
+      to: email,
+      subject: "Your Campus Stay OTP Code",
+      html: `
+        <div style="font-family: 'Poppins', sans-serif; max-width: 500px; margin: 0 auto; padding: 20px; border: 1px solid #eaeaea; borderRadius: 16px;">
+          <h2 style="color: rgb(2, 53, 28); font-weight: 700;">Campus Stay OTP Verification</h2>
+          <p>Welcome to Campus Stay! Please use the 6-digit OTP code below to verify your email address. This code is valid for 10 minutes.</p>
+          <div style="background-color: #f1f5f3; padding: 16px; text-align: center; border-radius: 8px; font-size: 2rem; font-weight: 800; letter-spacing: 4px; color: rgb(2, 53, 28); margin: 24px 0;">
+            ${code}
           </div>
-        `,
-      }),
+          <p style="color: #666; font-size: 0.85rem;">If you did not request this code, you can safely ignore this email.</p>
+        </div>
+      `
     });
 
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error(`Resend API error: ${errorText}`);
-      throw new Error("Failed to deliver OTP email via Resend API.");
+    if (!res.success) {
+      console.error(`Resend API error: ${res.error}`);
+      throw new Error("Failed to deliver OTP email.");
     }
 
     return { success: true, debug: false };

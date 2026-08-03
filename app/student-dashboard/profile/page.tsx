@@ -11,6 +11,31 @@ import {
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import "./styles.css";
+import SearchableSelect from "@/components/SearchableSelect";
+
+const GENDER_OPTIONS = [
+  { code: "Any", name: "Any / Prefer not to say" },
+  { code: "Male", name: "Male" },
+  { code: "Female", name: "Female" }
+];
+
+const CLEANLINESS_OPTIONS = [
+  { code: "Very Clean", name: "Very Clean" },
+  { code: "Average", name: "Average" },
+  { code: "Relaxed", name: "Relaxed" }
+];
+
+const SLEEP_OPTIONS = [
+  { code: "Early Bird", name: "Early Bird" },
+  { code: "Night Owl", name: "Night Owl" },
+  { code: "Flexible", name: "Flexible" }
+];
+
+const NOISE_OPTIONS = [
+  { code: "Quiet environment", name: "Quiet environment" },
+  { code: "Social/Group study", name: "Social/Group study" },
+  { code: "Flexible", name: "Flexible" }
+];
 
 export default function StudentProfile() {
   const router = useRouter();
@@ -379,40 +404,40 @@ export default function StudentProfile() {
                         />
                       </div>
 
-                      <div className="input-group font-bold">
+                      <div className="input-group font-bold" style={{ display: "flex", flexDirection: "column", gap: "5px" }}>
                         <label>Your Gender</label>
-                        <select value={gender} onChange={(e) => setGender(e.target.value)} className="filter-select-input" style={{ width: "100%", padding: "10px", borderRadius: "6px", border: "1px solid #ccc", marginTop: "5px" }}>
-                          <option value="Any">Any / Prefer not to say</option>
-                          <option value="Male">Male</option>
-                          <option value="Female">Female</option>
-                        </select>
+                        <SearchableSelect
+                          options={GENDER_OPTIONS}
+                          value={gender}
+                          onChange={(val) => setGender(val)}
+                        />
                       </div>
 
-                      <div className="input-group font-bold">
+                      <div className="input-group font-bold" style={{ display: "flex", flexDirection: "column", gap: "5px" }}>
                         <label>Cleanliness Habit</label>
-                        <select value={cleanliness} onChange={(e) => setCleanliness(e.target.value)} className="filter-select-input" style={{ width: "100%", padding: "10px", borderRadius: "6px", border: "1px solid #ccc", marginTop: "5px" }}>
-                          <option value="Very Clean">Very Clean</option>
-                          <option value="Average">Average</option>
-                          <option value="Relaxed">Relaxed</option>
-                        </select>
+                        <SearchableSelect
+                          options={CLEANLINESS_OPTIONS}
+                          value={cleanliness}
+                          onChange={(val) => setCleanliness(val)}
+                        />
                       </div>
 
-                      <div className="input-group font-bold">
+                      <div className="input-group font-bold" style={{ display: "flex", flexDirection: "column", gap: "5px" }}>
                         <label>Sleep Schedule</label>
-                        <select value={sleepSchedule} onChange={(e) => setSleepSchedule(e.target.value)} className="filter-select-input" style={{ width: "100%", padding: "10px", borderRadius: "6px", border: "1px solid #ccc", marginTop: "5px" }}>
-                          <option value="Early Bird">Early Bird</option>
-                          <option value="Night Owl">Night Owl</option>
-                          <option value="Flexible">Flexible</option>
-                        </select>
+                        <SearchableSelect
+                          options={SLEEP_OPTIONS}
+                          value={sleepSchedule}
+                          onChange={(val) => setSleepSchedule(val)}
+                        />
                       </div>
 
-                      <div className="input-group font-bold">
+                      <div className="input-group font-bold" style={{ display: "flex", flexDirection: "column", gap: "5px" }}>
                         <label>Study / Noise Preference</label>
-                        <select value={noiseLevel} onChange={(e) => setNoiseLevel(e.target.value)} className="filter-select-input" style={{ width: "100%", padding: "10px", borderRadius: "6px", border: "1px solid #ccc", marginTop: "5px" }}>
-                          <option value="Quiet environment">Quiet environment</option>
-                          <option value="Social/Group study">Social/Group study</option>
-                          <option value="Flexible">Flexible</option>
-                        </select>
+                        <SearchableSelect
+                          options={NOISE_OPTIONS}
+                          value={noiseLevel}
+                          onChange={(val) => setNoiseLevel(val)}
+                        />
                       </div>
                     </div>
                   </div>

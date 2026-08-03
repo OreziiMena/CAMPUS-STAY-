@@ -14,6 +14,8 @@ export async function getProperties(filterParam?: string | {
   minPrice?: number;
   maxPrice?: number;
   proximity?: string;
+  page?: number;
+  limit?: number;
 }) {
   try {
     let searchQuery: string | undefined;
@@ -22,6 +24,9 @@ export async function getProperties(filterParam?: string | {
     let minPrice: number | undefined;
     let maxPrice: number | undefined;
     let proximity: string | undefined;
+
+    let page = 1;
+    let limit = 10;
 
     if (typeof filterParam === "string") {
       searchQuery = filterParam;
@@ -32,7 +37,12 @@ export async function getProperties(filterParam?: string | {
       minPrice = filterParam.minPrice;
       maxPrice = filterParam.maxPrice;
       proximity = filterParam.proximity;
+      page = filterParam.page || 1;
+      limit = filterParam.limit || 10;
     }
+
+    const skip = (page - 1) * limit;
+    const isProximityFiltered = proximity && proximity !== "Any";
 
     const whereClause: any = {
       isAvailable: true,
@@ -98,10 +108,12 @@ export async function getProperties(filterParam?: string | {
       orderBy: {
         createdAt: "desc",
       },
+      // If we are filtering by proximity in-memory, we can't limit in DB
+      ...(!isProximityFiltered ? { skip, take: limit } : {}),
     });
 
     // 5. Proximity filter (in-memory walk time minutes comparison)
-    if (proximity && proximity !== "Any") {
+    if (isProximityFiltered) {
       properties = properties.filter((property) => {
         const distStr = property.distance || "";
         const minsMatch = distStr.match(/(\d+)\s*mins?/i);
@@ -117,6 +129,9 @@ export async function getProperties(filterParam?: string | {
         }
         return true;
       });
+
+      // Slice post-filtering
+      properties = properties.slice(skip, skip + limit);
     }
 
     return { success: true, properties };
@@ -165,7 +180,7 @@ export async function addProperty(data: any) {
       return { success: false, error: "Unauthorized. Please log in." };
     }
 
-    const { title, hostelType, price, location, distance, description, amenities, images, university } = data;
+    const { title, hostelType, price, location, distance, description, amenities, images, university, genderPreference } = data;
 
     const createData: any = {
       title,
@@ -177,6 +192,7 @@ export async function addProperty(data: any) {
       university: university || "FUPRE",
       amenities: amenities || [],
       images: images || [],
+      genderPreference: genderPreference || "Any",
     };
 
     if (user.role === "STUDENT") {

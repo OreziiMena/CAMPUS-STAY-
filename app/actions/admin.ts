@@ -263,8 +263,6 @@ export async function getAdminAnalyticsData() {
         totalAgents,
         totalProperties,
         totalRoommates,
-        verifiedStudents,
-        verifiedAgents,
       },
       charts: {
         labels,

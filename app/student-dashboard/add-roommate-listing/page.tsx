@@ -7,6 +7,7 @@ import { addProperty } from "@/app/actions/properties";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import "./styles.css";
+import SearchableSelect from "@/components/SearchableSelect";
 
 export default function AddRoommateListing() {
   const router = useRouter();
@@ -17,6 +18,7 @@ export default function AddRoommateListing() {
   const [location, setLocation] = useState("");
   const [distance, setDistance] = useState("");
   const [description, setDescription] = useState("");
+  const [genderPreference, setGenderPreference] = useState("Any");
 
   const [amenities, setAmenities] = useState({
     bed: true,
@@ -84,6 +86,7 @@ export default function AddRoommateListing() {
         description,
         amenities: activeAmenities,
         images: images.length > 0 ? images : ["https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?ixlib=rb-4.0.3"],
+        genderPreference,
       });
 
       setIsLoading(false);
@@ -165,18 +168,19 @@ export default function AddRoommateListing() {
 
               <div className="input-group">
                 <label htmlFor="hostel-type">Roommate Space Type *</label>
-                <select
-                  id="hostel-type"
+                <SearchableSelect
+                  options={[
+                    { code: "Shared Room", name: "Shared Room (Single Room)" },
+                    { code: "Roommate Sharing (Self-Contain)", name: "Roommate Sharing (Self-Contain)" },
+                    { code: "Roommate Sharing (1-Bedroom Flat)", name: "Roommate Sharing (1-Bedroom Flat)" },
+                    { code: "Roommate Sharing (2-Bedroom Flat)", name: "Roommate Sharing (2-Bedroom Flat)" },
+                    { code: "Shared Hostel Room", name: "Shared Hostel Room" }
+                  ]}
                   value={hostelType}
-                  onChange={(e) => setHostelType(e.target.value)}
+                  onChange={(val) => setHostelType(val)}
+                  placeholder="Select roommate space type..."
                   required
-                >
-                  <option value="Shared Room">Shared Room (Single Room)</option>
-                  <option value="Roommate Sharing (Self-Contain)">Roommate Sharing (Self-Contain)</option>
-                  <option value="Roommate Sharing (1-Bedroom Flat)">Roommate Sharing (1-Bedroom Flat)</option>
-                  <option value="Roommate Sharing (2-Bedroom Flat)">Roommate Sharing (2-Bedroom Flat)</option>
-                  <option value="Shared Hostel Room">Shared Hostel Room</option>
-                </select>
+                />
               </div>
 
               <div className="input-group">
@@ -199,6 +203,21 @@ export default function AddRoommateListing() {
                   placeholder="e.g. South Gate Area, Effurun"
                   value={location}
                   onChange={(e) => setLocation(e.target.value)}
+                  required
+                />
+              </div>
+
+              <div className="input-group full-width-group">
+                <label htmlFor="genderPreference">Preferred Roommate Gender *</label>
+                <SearchableSelect
+                  options={[
+                    { code: "Any", name: "Any Gender" },
+                    { code: "Male", name: "Male Only" },
+                    { code: "Female", name: "Female Only" }
+                  ]}
+                  value={genderPreference}
+                  onChange={(val) => setGenderPreference(val)}
+                  placeholder="Select preferred gender..."
                   required
                 />
               </div>

@@ -93,6 +93,7 @@ model Property {
   university   String       @default("FUPRE")
   
   isRoommateOption    Boolean         @default(false)
+  genderPreference    String?         @default("Any")
   
   // Owner Agent
   agentId             String?

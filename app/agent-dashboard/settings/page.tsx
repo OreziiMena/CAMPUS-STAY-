@@ -4,6 +4,13 @@ import { useRouter } from "next/navigation";
 import { getCurrentUser, updateAgentPassword } from "@/app/actions/auth";
 import styles from "./settings.module.css";
 import "./styles.css";
+import SearchableSelect from "@/components/SearchableSelect";
+
+const REGION_OPTIONS = [
+  { code: "ngn", name: "Nigeria (NGN ₦)" },
+  { code: "usd", name: "International (USD $)" },
+  { code: "gbp", name: "United Kingdom (GBP £)" }
+];
 
 export default function Settings() {
   const router = useRouter();
@@ -169,16 +176,13 @@ export default function Settings() {
                     <h4>Default Region & Currency</h4>
                     <p>Set the default display for your property listings.</p>
                   </div>
-                  <select 
-                    className="settings-dropdown" 
-                    id="region-select" 
-                    value={region} 
-                    onChange={(e) => setRegion(e.target.value)}
-                  >
-                    <option value="ngn">Nigeria (NGN ₦)</option>
-                    <option value="usd">International (USD $)</option>
-                    <option value="gbp">United Kingdom (GBP £)</option>
-                  </select>
+                  <div style={{ width: "200px" }}>
+                    <SearchableSelect
+                      options={REGION_OPTIONS}
+                      value={region}
+                      onChange={(val) => setRegion(val)}
+                    />
+                  </div>
                 </div>
               </div>
 

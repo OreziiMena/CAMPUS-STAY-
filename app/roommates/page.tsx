@@ -12,6 +12,34 @@ import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import "./roommates.css";
 import { useToast } from "@/components/ToastProvider";
+import { NIGERIAN_UNIVERSITIES } from "@/lib/universities";
+import SearchableSelect from "@/components/SearchableSelect";
+
+const GENDER_OPTIONS = [
+  { code: "All", name: "All Genders" },
+  { code: "Male", name: "Male" },
+  { code: "Female", name: "Female" }
+];
+
+const CAMPUS_OPTIONS = [
+  { code: "All", name: "All Universities" },
+  ...NIGERIAN_UNIVERSITIES
+];
+
+const SPACE_TYPES = [
+  { code: "Shared Room", name: "Shared Room" },
+  { code: "Self-Contain", name: "Self-Contain" },
+  { code: "1-Bedroom Flat", name: "1-Bedroom Flat" },
+  { code: "2-Bedroom Flat", name: "2-Bedroom Flat" }
+];
+
+const REPORT_REASONS = [
+  { code: "FRAUD_SCAM", name: "Fraud or Scam Profile" },
+  { code: "INACCURATE_DETAILS", name: "Inaccurate preferences/information" },
+  { code: "INAPPROPRIATE_CONTENT", name: "Inappropriate content/abuse" },
+  { code: "SPAM", name: "Spam or Duplicate Profile" },
+  { code: "OTHER", name: "Other Reason" }
+];
 
 export default function RoommatesDirectory() {
   const { showToast } = useToast();
@@ -35,6 +63,14 @@ export default function RoommatesDirectory() {
   const [gender, setGender] = useState("All");
   const [maxBudget, setMaxBudget] = useState("");
 
+  // Pagination state
+  const [visibleCount, setVisibleCount] = useState(10);
+
+  // Reset pagination when filters change
+  useEffect(() => {
+    setVisibleCount(10);
+  }, [searchQuery, university, gender, maxBudget]);
+
   // Upload Roommate Listing Form State
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [formTitle, setFormTitle] = useState("");
@@ -53,6 +89,7 @@ export default function RoommatesDirectory() {
   });
   const [formImages, setFormImages] = useState<string[]>([]);
   const [formImageFiles, setFormImageFiles] = useState<File[]>([]);
+  const [formGenderPreference, setFormGenderPreference] = useState("Any");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [formSuccess, setFormSuccess] = useState(false);
   const [formError, setFormError] = useState("");
@@ -198,6 +235,7 @@ export default function RoommatesDirectory() {
         university: currentUser?.studentProfile?.university || "FUPRE",
         amenities: activeAmenities,
         images: finalImages,
+        genderPreference: formGenderPreference,
       });
 
       setIsSubmitting(false);
@@ -216,6 +254,7 @@ export default function RoommatesDirectory() {
           setFormDescription("");
           setFormImages([]);
           setFormImageFiles([]);
+          setFormGenderPreference("Any");
         }, 1500);
       } else {
         setFormError(res.error || "Failed to list roommate option.");
@@ -336,39 +375,21 @@ export default function RoommatesDirectory() {
               {/* University Selector */}
               <div className="filter-item">
                 <label>Campus</label>
-                <select
+                <SearchableSelect
+                  options={CAMPUS_OPTIONS}
                   value={university}
-                  onChange={(e) => setUniversity(e.target.value)}
-                  className="filter-select"
-                >
-                  <option value="All">All Universities</option>
-                  <option value="FUPRE">FUPRE</option>
-                  <option value="DSUST">DSUST</option>
-                  <option value="DOU">DOU</option>
-                  <option value="UNIDEL">UNIDEL</option>
-                  <option value="WDU">WDU</option>
-                  <option value="NOVENA">NOVENA</option>
-                  <option value="PTI">PTI</option>
-                  <option value="FEPO">FEPO</option>
-                  <option value="DSPG">DSPG</option>
-                  <option value="DESPO">DESPO</option>
-                  <option value="COE_WARRI">COE WARRI</option>
-                  <option value="COE_MOSOGAR">COE MOSOGAR</option>
-                </select>
+                  onChange={(val) => setUniversity(val)}
+                />
               </div>
 
               {/* Gender Selector */}
               <div className="filter-item">
                 <label>Roommate Gender</label>
-                <select
+                <SearchableSelect
+                  options={GENDER_OPTIONS}
                   value={gender}
-                  onChange={(e) => setGender(e.target.value)}
-                  className="filter-select"
-                >
-                  <option value="All">All Genders</option>
-                  <option value="Male">Male</option>
-                  <option value="Female">Female</option>
-                </select>
+                  onChange={(val) => setGender(val)}
+                />
               </div>
 
               {/* Budget Limit input */}
@@ -403,7 +424,7 @@ export default function RoommatesDirectory() {
             </div>
           ) : (
             <div className="roommates-grid">
-              {filteredListings.map((listing) => {
+              {filteredListings.slice(0, visibleCount).map((listing) => {
                 const student = listing.student;
                 const initials = student?.fullName
                   ? (student.fullName.split(" ")[0]?.charAt(0) || "") +
@@ -484,7 +505,10 @@ export default function RoommatesDirectory() {
                          <div className="roommate-compatibility-section" style={{ padding: "5px 0", margin: "0 0 15px 0" }}>
                            <div className="compatibility-tags" style={{ display: "flex", flexWrap: "wrap", gap: "4px" }}>
                              <span className="comp-tag" style={{ fontSize: "0.7rem", padding: "2px 6px" }}>
-                               <i className="fas fa-venus-mars"></i> {student.gender}
+                               <i className="fas fa-venus-mars"></i> Gender: {student.gender}
+                             </span>
+                             <span className="comp-tag" style={{ fontSize: "0.7rem", padding: "2px 6px", backgroundColor: "#fdf2f2", color: "#9b1c1c", borderColor: "#f8b4b4" }}>
+                               <i className="fas fa-heart"></i> Prefers: {listing.genderPreference}
                              </span>
                              <span className="comp-tag" style={{ fontSize: "0.7rem", padding: "2px 6px" }}>
                                <i className="fas fa-sparkles"></i> {student.cleanliness}
@@ -521,6 +545,36 @@ export default function RoommatesDirectory() {
               })}
             </div>
           )}
+
+            {filteredListings.length > visibleCount && (
+              <div style={{ display: "flex", justifyContent: "center", margin: "40px 0" }}>
+                <button
+                  type="button"
+                  onClick={() => setVisibleCount((prev) => prev + 10)}
+                  style={{
+                    padding: "12px 30px",
+                    borderRadius: "30px",
+                    backgroundColor: "white",
+                    border: "2px solid rgb(2, 53, 28)",
+                    color: "rgb(2, 53, 28)",
+                    fontWeight: "700",
+                    fontFamily: "'Poppins', sans-serif",
+                    cursor: "pointer",
+                    transition: "all 0.2s ease",
+                  }}
+                  onMouseOver={(e) => {
+                    e.currentTarget.style.backgroundColor = "rgb(2, 53, 28)";
+                    e.currentTarget.style.color = "white";
+                  }}
+                  onMouseOut={(e) => {
+                    e.currentTarget.style.backgroundColor = "white";
+                    e.currentTarget.style.color = "rgb(2, 53, 28)";
+                  }}
+                >
+                  Load More Listings
+                </button>
+              </div>
+            )}
         </section>
       </main>
 
@@ -642,7 +696,7 @@ export default function RoommatesDirectory() {
                 For your safety, always check for the <span style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", position: "relative", verticalAlign: "middle", margin: "0 2px" }}>
                   <i className="fas fa-certificate" style={{ color: "rgb(2, 53, 28)", fontSize: "1.1rem" }}></i>
                   <i className="fas fa-check" style={{ position: "absolute", color: "white", fontSize: "0.45rem" }}></i>
-                </span> verification badge, it means the user has completed ID verification.
+                </span> verification badge, it means the student has completed ID verification.
               </p>
               <Link href="/student-dashboard/profile" className="safety-tip-link">
                 Verify your account now for added trust.
@@ -716,18 +770,13 @@ export default function RoommatesDirectory() {
                   <div className="form-grid-2">
                     <div className="form-group-custom">
                       <label htmlFor="form-type">Space Type *</label>
-                      <select 
-                        id="form-type" 
-                        value={formHostelType} 
-                        onChange={(e) => setFormHostelType(e.target.value)}
-                        className="form-select-custom"
+                      <SearchableSelect
+                        options={SPACE_TYPES}
+                        value={formHostelType}
+                        onChange={(val) => setFormHostelType(val)}
+                        placeholder="Select space type..."
                         required
-                      >
-                        <option value="Shared Room">Shared Room</option>
-                        <option value="Self-Contain">Self-Contain</option>
-                        <option value="1-Bedroom Flat">1-Bedroom Flat</option>
-                        <option value="2-Bedroom Flat">2-Bedroom Flat</option>
-                      </select>
+                      />
                     </div>
 
                     <div className="form-group-custom">
@@ -767,6 +816,23 @@ export default function RoommatesDirectory() {
                         value={formDistance}
                         onChange={(e) => setFormDistance(e.target.value)}
                         className="form-input-custom"
+                        required
+                      />
+                    </div>
+                  </div>
+
+                  <div className="form-grid-2">
+                    <div className="form-group-custom">
+                      <label htmlFor="form-gender-pref">Preferred Roommate Gender *</label>
+                      <SearchableSelect
+                        options={[
+                          { code: "Any", name: "Any Gender" },
+                          { code: "Male", name: "Male Only" },
+                          { code: "Female", name: "Female Only" }
+                        ]}
+                        value={formGenderPreference}
+                        onChange={(val) => setFormGenderPreference(val)}
+                        placeholder="Select preferred gender..."
                         required
                       />
                     </div>
@@ -1068,18 +1134,13 @@ export default function RoommatesDirectory() {
 
                   <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
                     <label style={{ fontSize: "0.85rem", fontWeight: "600", color: "#444" }}>Reason for Flagging *</label>
-                    <select
+                    <SearchableSelect
+                      options={REPORT_REASONS}
                       value={reportReason}
-                      onChange={(e) => setReportReason(e.target.value)}
-                      style={{ padding: "12px", borderRadius: "8px", border: "1px solid #ddd", outline: "none", backgroundColor: "#fafafa" }}
+                      onChange={(val) => setReportReason(val)}
+                      placeholder="Select reason for flagging..."
                       required
-                    >
-                      <option value="FRAUD_SCAM">Fraud or Scam Profile</option>
-                      <option value="INACCURATE_DETAILS">Inaccurate preferences/information</option>
-                      <option value="INAPPROPRIATE_CONTENT">Inappropriate content/abuse</option>
-                      <option value="SPAM">Spam or Duplicate Profile</option>
-                      <option value="OTHER">Other Reason</option>
-                    </select>
+                    />
                   </div>
 
                   {reportReason === "OTHER" && (

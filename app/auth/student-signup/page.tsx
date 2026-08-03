@@ -4,6 +4,8 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { registerStudent, checkUsernameAvailable } from "@/app/actions/auth";
 import "../signup.css";
+import { NIGERIAN_UNIVERSITIES } from "@/lib/universities";
+import SearchableSelect from "@/components/SearchableSelect";
 
 export default function StudentSignup() {
   const router = useRouter();
@@ -166,30 +168,14 @@ export default function StudentSignup() {
 
                 <div className="input-group">
                   <label htmlFor="university">University</label>
-                  <div className="select-wrapper">
-                    <select
-                      id="university"
-                      value={university}
-                      onChange={(e) => setUniversity(e.target.value)}
-                      disabled={isLoading}
-                      required
-                    >
-                      <option value="" disabled>Select your institution...</option>
-                      <option value="FUPRE">Federal University of Petroleum Resources (FUPRE)</option>
-                      <option value="DSUST">Delta State University of Science and Technology, Ozoro (DSUST)</option>
-                      <option value="DOU">Dennis Osadebay University, Asaba (DOU)</option>
-                      <option value="UNIDEL">University of Delta, Agbor (UNIDEL)</option>
-                      <option value="WDU">Western Delta University, Oghara (WDU)</option>
-                      <option value="NOVENA">Novena University, Ogume-Amai</option>
-                      <option value="PTI">Petroleum Training Institute, Effurun (PTI)</option>
-                      <option value="FEPO">Federal Polytechnic, Orogun</option>
-                      <option value="DSPG">Delta State Polytechnic, Ogwashi-Uku (DSPG)</option>
-                      <option value="DESPO">Delta State Polytechnic, Otefe-Oghara (DESPO)</option>
-                      <option value="COE_WARRI">College of Education, Warri</option>
-                      <option value="COE_MOSOGAR">Delta State College of Physical Education, Mosogar</option>
-                    </select>
-                    <i className="fas fa-chevron-down select-icon"></i>
-                  </div>
+                  <SearchableSelect
+                    options={NIGERIAN_UNIVERSITIES}
+                    value={university}
+                    onChange={(val) => setUniversity(val)}
+                    placeholder="Select your institution..."
+                    disabled={isLoading}
+                    required
+                  />
                 </div>
 
                 <div className="input-group">

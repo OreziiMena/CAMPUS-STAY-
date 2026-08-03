@@ -6,6 +6,8 @@ import { useRouter, useParams } from "next/navigation";
 import { getCurrentUser } from "@/app/actions/auth";
 import { getPropertyDetails, updateProperty, uploadPropertyImages } from "@/app/actions/properties";
 import "./styles.css";
+import { NIGERIAN_UNIVERSITIES } from "@/lib/universities";
+import SearchableSelect from "@/components/SearchableSelect";
 
 export default function EditProperty() {
   const router = useRouter();
@@ -232,41 +234,30 @@ export default function EditProperty() {
 
             <div className="input-group">
               <label htmlFor="hostel-type">Property Type *</label>
-              <select
-                id="hostel-type"
+              <SearchableSelect
+                options={[
+                  { code: "Self-Contain", name: "Self-Contain" },
+                  { code: "Single Room", name: "Single Room" },
+                  { code: "1-Bedroom Flat", name: "1-Bedroom Flat" },
+                  { code: "2-Bedroom Flat", name: "2-Bedroom Flat" },
+                  { code: "Shared Hostel Room", name: "Shared Hostel Room" }
+                ]}
                 value={hostelType}
-                onChange={(e) => setHostelType(e.target.value)}
+                onChange={(val) => setHostelType(val)}
+                placeholder="Select property type..."
                 required
-              >
-                <option value="Self-Contain">Self-Contain</option>
-                <option value="Single Room">Single Room</option>
-                <option value="1-Bedroom Flat">1-Bedroom Flat</option>
-                <option value="2-Bedroom Flat">2-Bedroom Flat</option>
-                <option value="Shared Hostel Room">Shared Hostel Room</option>
-              </select>
+              />
             </div>
 
             <div className="input-group">
               <label htmlFor="university">Nearest University *</label>
-              <select
-                id="university"
+              <SearchableSelect
+                options={NIGERIAN_UNIVERSITIES}
                 value={university}
-                onChange={(e) => setUniversity(e.target.value)}
+                onChange={(val) => setUniversity(val)}
+                placeholder="Select nearest university..."
                 required
-              >
-                <option value="FUPRE">Federal University of Petroleum Resources (FUPRE)</option>
-                <option value="DSUST">Delta State University of Science and Technology, Ozoro (DSUST)</option>
-                <option value="DOU">Dennis Osadebay University, Asaba (DOU)</option>
-                <option value="UNIDEL">University of Delta, Agbor (UNIDEL)</option>
-                <option value="WDU">Western Delta University, Oghara (WDU)</option>
-                <option value="NOVENA">Novena University, Ogume-Amai</option>
-                <option value="PTI">Petroleum Training Institute, Effurun (PTI)</option>
-                <option value="FEPO">Federal Polytechnic, Orogun</option>
-                <option value="DSPG">Delta State Polytechnic, Ogwashi-Uku (DSPG)</option>
-                <option value="DESPO">Delta State Polytechnic, Otefe-Oghara (DESPO)</option>
-                <option value="COE_WARRI">College of Education, Warri</option>
-                <option value="COE_MOSOGAR">Delta State College of Physical Education, Mosogar</option>
-              </select>
+              />
             </div>
 
             <div className="input-group">

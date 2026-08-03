@@ -5807,6 +5807,7 @@ export namespace Prisma {
     views: number | null
     university: string | null
     isRoommateOption: boolean | null
+    genderPreference: string | null
     agentId: string | null
     studentId: string | null
     createdAt: Date | null
@@ -5828,6 +5829,7 @@ export namespace Prisma {
     views: number | null
     university: string | null
     isRoommateOption: boolean | null
+    genderPreference: string | null
     agentId: string | null
     studentId: string | null
     createdAt: Date | null
@@ -5851,6 +5853,7 @@ export namespace Prisma {
     views: number
     university: number
     isRoommateOption: number
+    genderPreference: number
     agentId: number
     studentId: number
     createdAt: number
@@ -5888,6 +5891,7 @@ export namespace Prisma {
     views?: true
     university?: true
     isRoommateOption?: true
+    genderPreference?: true
     agentId?: true
     studentId?: true
     createdAt?: true
@@ -5909,6 +5913,7 @@ export namespace Prisma {
     views?: true
     university?: true
     isRoommateOption?: true
+    genderPreference?: true
     agentId?: true
     studentId?: true
     createdAt?: true
@@ -5932,6 +5937,7 @@ export namespace Prisma {
     views?: true
     university?: true
     isRoommateOption?: true
+    genderPreference?: true
     agentId?: true
     studentId?: true
     createdAt?: true
@@ -6042,6 +6048,7 @@ export namespace Prisma {
     views: number
     university: string
     isRoommateOption: boolean
+    genderPreference: string | null
     agentId: string | null
     studentId: string | null
     createdAt: Date
@@ -6084,6 +6091,7 @@ export namespace Prisma {
     views?: boolean
     university?: boolean
     isRoommateOption?: boolean
+    genderPreference?: boolean
     agentId?: boolean
     studentId?: boolean
     createdAt?: boolean
@@ -6114,6 +6122,7 @@ export namespace Prisma {
     views?: boolean
     university?: boolean
     isRoommateOption?: boolean
+    genderPreference?: boolean
     agentId?: boolean
     studentId?: boolean
     createdAt?: boolean
@@ -6139,6 +6148,7 @@ export namespace Prisma {
     views?: boolean
     university?: boolean
     isRoommateOption?: boolean
+    genderPreference?: boolean
     agentId?: boolean
     studentId?: boolean
     createdAt?: boolean
@@ -6164,13 +6174,14 @@ export namespace Prisma {
     views?: boolean
     university?: boolean
     isRoommateOption?: boolean
+    genderPreference?: boolean
     agentId?: boolean
     studentId?: boolean
     createdAt?: boolean
     updatedAt?: boolean
   }
 
-  export type PropertyOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "title" | "hostelType" | "price" | "location" | "distance" | "description" | "amenities" | "images" | "latitude" | "longitude" | "isAvailable" | "isVerified" | "views" | "university" | "isRoommateOption" | "agentId" | "studentId" | "createdAt" | "updatedAt", ExtArgs["result"]["property"]>
+  export type PropertyOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "title" | "hostelType" | "price" | "location" | "distance" | "description" | "amenities" | "images" | "latitude" | "longitude" | "isAvailable" | "isVerified" | "views" | "university" | "isRoommateOption" | "genderPreference" | "agentId" | "studentId" | "createdAt" | "updatedAt", ExtArgs["result"]["property"]>
   export type PropertyInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     agent?: boolean | Property$agentArgs<ExtArgs>
     student?: boolean | Property$studentArgs<ExtArgs>
@@ -6216,6 +6227,7 @@ export namespace Prisma {
       views: number
       university: string
       isRoommateOption: boolean
+      genderPreference: string | null
       agentId: string | null
       studentId: string | null
       createdAt: Date
@@ -6665,6 +6677,7 @@ export namespace Prisma {
     readonly views: FieldRef<"Property", 'Int'>
     readonly university: FieldRef<"Property", 'String'>
     readonly isRoommateOption: FieldRef<"Property", 'Boolean'>
+    readonly genderPreference: FieldRef<"Property", 'String'>
     readonly agentId: FieldRef<"Property", 'String'>
     readonly studentId: FieldRef<"Property", 'String'>
     readonly createdAt: FieldRef<"Property", 'DateTime'>
@@ -14826,6 +14839,7 @@ export namespace Prisma {
     views: 'views',
     university: 'university',
     isRoommateOption: 'isRoommateOption',
+    genderPreference: 'genderPreference',
     agentId: 'agentId',
     studentId: 'studentId',
     createdAt: 'createdAt',
@@ -15401,6 +15415,7 @@ export namespace Prisma {
     views?: IntFilter<"Property"> | number
     university?: StringFilter<"Property"> | string
     isRoommateOption?: BoolFilter<"Property"> | boolean
+    genderPreference?: StringNullableFilter<"Property"> | string | null
     agentId?: StringNullableFilter<"Property"> | string | null
     studentId?: StringNullableFilter<"Property"> | string | null
     createdAt?: DateTimeFilter<"Property"> | Date | string
@@ -15430,6 +15445,7 @@ export namespace Prisma {
     views?: SortOrder
     university?: SortOrder
     isRoommateOption?: SortOrder
+    genderPreference?: SortOrderInput | SortOrder
     agentId?: SortOrderInput | SortOrder
     studentId?: SortOrderInput | SortOrder
     createdAt?: SortOrder
@@ -15462,6 +15478,7 @@ export namespace Prisma {
     views?: IntFilter<"Property"> | number
     university?: StringFilter<"Property"> | string
     isRoommateOption?: BoolFilter<"Property"> | boolean
+    genderPreference?: StringNullableFilter<"Property"> | string | null
     agentId?: StringNullableFilter<"Property"> | string | null
     studentId?: StringNullableFilter<"Property"> | string | null
     createdAt?: DateTimeFilter<"Property"> | Date | string
@@ -15491,6 +15508,7 @@ export namespace Prisma {
     views?: SortOrder
     university?: SortOrder
     isRoommateOption?: SortOrder
+    genderPreference?: SortOrderInput | SortOrder
     agentId?: SortOrderInput | SortOrder
     studentId?: SortOrderInput | SortOrder
     createdAt?: SortOrder
@@ -15522,6 +15540,7 @@ export namespace Prisma {
     views?: IntWithAggregatesFilter<"Property"> | number
     university?: StringWithAggregatesFilter<"Property"> | string
     isRoommateOption?: BoolWithAggregatesFilter<"Property"> | boolean
+    genderPreference?: StringNullableWithAggregatesFilter<"Property"> | string | null
     agentId?: StringNullableWithAggregatesFilter<"Property"> | string | null
     studentId?: StringNullableWithAggregatesFilter<"Property"> | string | null
     createdAt?: DateTimeWithAggregatesFilter<"Property"> | Date | string
@@ -16323,6 +16342,7 @@ export namespace Prisma {
     views?: number
     university?: string
     isRoommateOption?: boolean
+    genderPreference?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
     agent?: AgentProfileCreateNestedOneWithoutPropertiesInput
@@ -16350,6 +16370,7 @@ export namespace Prisma {
     views?: number
     university?: string
     isRoommateOption?: boolean
+    genderPreference?: string | null
     agentId?: string | null
     studentId?: string | null
     createdAt?: Date | string
@@ -16377,6 +16398,7 @@ export namespace Prisma {
     views?: IntFieldUpdateOperationsInput | number
     university?: StringFieldUpdateOperationsInput | string
     isRoommateOption?: BoolFieldUpdateOperationsInput | boolean
+    genderPreference?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     agent?: AgentProfileUpdateOneWithoutPropertiesNestedInput
@@ -16404,6 +16426,7 @@ export namespace Prisma {
     views?: IntFieldUpdateOperationsInput | number
     university?: StringFieldUpdateOperationsInput | string
     isRoommateOption?: BoolFieldUpdateOperationsInput | boolean
+    genderPreference?: NullableStringFieldUpdateOperationsInput | string | null
     agentId?: NullableStringFieldUpdateOperationsInput | string | null
     studentId?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -16431,6 +16454,7 @@ export namespace Prisma {
     views?: number
     university?: string
     isRoommateOption?: boolean
+    genderPreference?: string | null
     agentId?: string | null
     studentId?: string | null
     createdAt?: Date | string
@@ -16454,6 +16478,7 @@ export namespace Prisma {
     views?: IntFieldUpdateOperationsInput | number
     university?: StringFieldUpdateOperationsInput | string
     isRoommateOption?: BoolFieldUpdateOperationsInput | boolean
+    genderPreference?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
@@ -16475,6 +16500,7 @@ export namespace Prisma {
     views?: IntFieldUpdateOperationsInput | number
     university?: StringFieldUpdateOperationsInput | string
     isRoommateOption?: BoolFieldUpdateOperationsInput | boolean
+    genderPreference?: NullableStringFieldUpdateOperationsInput | string | null
     agentId?: NullableStringFieldUpdateOperationsInput | string | null
     studentId?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -17353,6 +17379,7 @@ export namespace Prisma {
     views?: SortOrder
     university?: SortOrder
     isRoommateOption?: SortOrder
+    genderPreference?: SortOrder
     agentId?: SortOrder
     studentId?: SortOrder
     createdAt?: SortOrder
@@ -17381,6 +17408,7 @@ export namespace Prisma {
     views?: SortOrder
     university?: SortOrder
     isRoommateOption?: SortOrder
+    genderPreference?: SortOrder
     agentId?: SortOrder
     studentId?: SortOrder
     createdAt?: SortOrder
@@ -17402,6 +17430,7 @@ export namespace Prisma {
     views?: SortOrder
     university?: SortOrder
     isRoommateOption?: SortOrder
+    genderPreference?: SortOrder
     agentId?: SortOrder
     studentId?: SortOrder
     createdAt?: SortOrder
@@ -19607,6 +19636,7 @@ export namespace Prisma {
     views?: number
     university?: string
     isRoommateOption?: boolean
+    genderPreference?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
     agent?: AgentProfileCreateNestedOneWithoutPropertiesInput
@@ -19633,6 +19663,7 @@ export namespace Prisma {
     views?: number
     university?: string
     isRoommateOption?: boolean
+    genderPreference?: string | null
     agentId?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
@@ -19771,6 +19802,7 @@ export namespace Prisma {
     views?: IntFilter<"Property"> | number
     university?: StringFilter<"Property"> | string
     isRoommateOption?: BoolFilter<"Property"> | boolean
+    genderPreference?: StringNullableFilter<"Property"> | string | null
     agentId?: StringNullableFilter<"Property"> | string | null
     studentId?: StringNullableFilter<"Property"> | string | null
     createdAt?: DateTimeFilter<"Property"> | Date | string
@@ -19853,6 +19885,7 @@ export namespace Prisma {
     views?: number
     university?: string
     isRoommateOption?: boolean
+    genderPreference?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
     student?: StudentProfileCreateNestedOneWithoutPropertiesInput
@@ -19879,6 +19912,7 @@ export namespace Prisma {
     views?: number
     university?: string
     isRoommateOption?: boolean
+    genderPreference?: string | null
     studentId?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
@@ -20353,6 +20387,7 @@ export namespace Prisma {
     views?: number
     university?: string
     isRoommateOption?: boolean
+    genderPreference?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
     agent?: AgentProfileCreateNestedOneWithoutPropertiesInput
@@ -20379,6 +20414,7 @@ export namespace Prisma {
     views?: number
     university?: string
     isRoommateOption?: boolean
+    genderPreference?: string | null
     agentId?: string | null
     studentId?: string | null
     createdAt?: Date | string
@@ -20513,6 +20549,7 @@ export namespace Prisma {
     views?: IntFieldUpdateOperationsInput | number
     university?: StringFieldUpdateOperationsInput | string
     isRoommateOption?: BoolFieldUpdateOperationsInput | boolean
+    genderPreference?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     agent?: AgentProfileUpdateOneWithoutPropertiesNestedInput
@@ -20539,6 +20576,7 @@ export namespace Prisma {
     views?: IntFieldUpdateOperationsInput | number
     university?: StringFieldUpdateOperationsInput | string
     isRoommateOption?: BoolFieldUpdateOperationsInput | boolean
+    genderPreference?: NullableStringFieldUpdateOperationsInput | string | null
     agentId?: NullableStringFieldUpdateOperationsInput | string | null
     studentId?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -20657,6 +20695,7 @@ export namespace Prisma {
     views?: number
     university?: string
     isRoommateOption?: boolean
+    genderPreference?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
     agent?: AgentProfileCreateNestedOneWithoutPropertiesInput
@@ -20683,6 +20722,7 @@ export namespace Prisma {
     views?: number
     university?: string
     isRoommateOption?: boolean
+    genderPreference?: string | null
     agentId?: string | null
     studentId?: string | null
     createdAt?: Date | string
@@ -20774,6 +20814,7 @@ export namespace Prisma {
     views?: IntFieldUpdateOperationsInput | number
     university?: StringFieldUpdateOperationsInput | string
     isRoommateOption?: BoolFieldUpdateOperationsInput | boolean
+    genderPreference?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     agent?: AgentProfileUpdateOneWithoutPropertiesNestedInput
@@ -20800,6 +20841,7 @@ export namespace Prisma {
     views?: IntFieldUpdateOperationsInput | number
     university?: StringFieldUpdateOperationsInput | string
     isRoommateOption?: BoolFieldUpdateOperationsInput | boolean
+    genderPreference?: NullableStringFieldUpdateOperationsInput | string | null
     agentId?: NullableStringFieldUpdateOperationsInput | string | null
     studentId?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -20912,6 +20954,7 @@ export namespace Prisma {
     views?: number
     university?: string
     isRoommateOption?: boolean
+    genderPreference?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
     agent?: AgentProfileCreateNestedOneWithoutPropertiesInput
@@ -20938,6 +20981,7 @@ export namespace Prisma {
     views?: number
     university?: string
     isRoommateOption?: boolean
+    genderPreference?: string | null
     agentId?: string | null
     studentId?: string | null
     createdAt?: Date | string
@@ -21104,6 +21148,7 @@ export namespace Prisma {
     views?: IntFieldUpdateOperationsInput | number
     university?: StringFieldUpdateOperationsInput | string
     isRoommateOption?: BoolFieldUpdateOperationsInput | boolean
+    genderPreference?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     agent?: AgentProfileUpdateOneWithoutPropertiesNestedInput
@@ -21130,6 +21175,7 @@ export namespace Prisma {
     views?: IntFieldUpdateOperationsInput | number
     university?: StringFieldUpdateOperationsInput | string
     isRoommateOption?: BoolFieldUpdateOperationsInput | boolean
+    genderPreference?: NullableStringFieldUpdateOperationsInput | string | null
     agentId?: NullableStringFieldUpdateOperationsInput | string | null
     studentId?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -21355,6 +21401,7 @@ export namespace Prisma {
     views?: number
     university?: string
     isRoommateOption?: boolean
+    genderPreference?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
     agent?: AgentProfileCreateNestedOneWithoutPropertiesInput
@@ -21381,6 +21428,7 @@ export namespace Prisma {
     views?: number
     university?: string
     isRoommateOption?: boolean
+    genderPreference?: string | null
     agentId?: string | null
     studentId?: string | null
     createdAt?: Date | string
@@ -21511,6 +21559,7 @@ export namespace Prisma {
     views?: IntFieldUpdateOperationsInput | number
     university?: StringFieldUpdateOperationsInput | string
     isRoommateOption?: BoolFieldUpdateOperationsInput | boolean
+    genderPreference?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     agent?: AgentProfileUpdateOneWithoutPropertiesNestedInput
@@ -21537,6 +21586,7 @@ export namespace Prisma {
     views?: IntFieldUpdateOperationsInput | number
     university?: StringFieldUpdateOperationsInput | string
     isRoommateOption?: BoolFieldUpdateOperationsInput | boolean
+    genderPreference?: NullableStringFieldUpdateOperationsInput | string | null
     agentId?: NullableStringFieldUpdateOperationsInput | string | null
     studentId?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -21848,6 +21898,7 @@ export namespace Prisma {
     views?: number
     university?: string
     isRoommateOption?: boolean
+    genderPreference?: string | null
     agentId?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
@@ -21882,6 +21933,7 @@ export namespace Prisma {
     views?: IntFieldUpdateOperationsInput | number
     university?: StringFieldUpdateOperationsInput | string
     isRoommateOption?: BoolFieldUpdateOperationsInput | boolean
+    genderPreference?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     agent?: AgentProfileUpdateOneWithoutPropertiesNestedInput
@@ -21908,6 +21960,7 @@ export namespace Prisma {
     views?: IntFieldUpdateOperationsInput | number
     university?: StringFieldUpdateOperationsInput | string
     isRoommateOption?: BoolFieldUpdateOperationsInput | boolean
+    genderPreference?: NullableStringFieldUpdateOperationsInput | string | null
     agentId?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -21934,6 +21987,7 @@ export namespace Prisma {
     views?: IntFieldUpdateOperationsInput | number
     university?: StringFieldUpdateOperationsInput | string
     isRoommateOption?: BoolFieldUpdateOperationsInput | boolean
+    genderPreference?: NullableStringFieldUpdateOperationsInput | string | null
     agentId?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -21992,6 +22046,7 @@ export namespace Prisma {
     views?: number
     university?: string
     isRoommateOption?: boolean
+    genderPreference?: string | null
     studentId?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
@@ -22014,6 +22069,7 @@ export namespace Prisma {
     views?: IntFieldUpdateOperationsInput | number
     university?: StringFieldUpdateOperationsInput | string
     isRoommateOption?: BoolFieldUpdateOperationsInput | boolean
+    genderPreference?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     student?: StudentProfileUpdateOneWithoutPropertiesNestedInput
@@ -22040,6 +22096,7 @@ export namespace Prisma {
     views?: IntFieldUpdateOperationsInput | number
     university?: StringFieldUpdateOperationsInput | string
     isRoommateOption?: BoolFieldUpdateOperationsInput | boolean
+    genderPreference?: NullableStringFieldUpdateOperationsInput | string | null
     studentId?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -22066,6 +22123,7 @@ export namespace Prisma {
     views?: IntFieldUpdateOperationsInput | number
     university?: StringFieldUpdateOperationsInput | string
     isRoommateOption?: BoolFieldUpdateOperationsInput | boolean
+    genderPreference?: NullableStringFieldUpdateOperationsInput | string | null
     studentId?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string

@@ -9,6 +9,7 @@ import { getCurrentUser } from "@/app/actions/auth";
 import { scheduleViewing } from "@/app/actions/student";
 import { submitReport } from "@/app/actions/reports";
 import "./styles.css";
+import SearchableSelect from "@/components/SearchableSelect";
 
 interface Property {
   id: string;
@@ -513,18 +514,19 @@ function ApartmentDetailsContent() {
 
                   <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
                     <label style={{ fontSize: "0.85rem", fontWeight: "600", color: "#444" }}>Reason for Flagging *</label>
-                    <select
+                    <SearchableSelect
+                      options={[
+                        { code: "FRAUD_SCAM", name: "Fraud or Scam Listing" },
+                        { code: "INACCURATE_DETAILS", name: "Inaccurate details/photos" },
+                        { code: "INAPPROPRIATE_CONTENT", name: "Inappropriate content/abuse" },
+                        { code: "SPAM", name: "Spam or Duplicate Listing" },
+                        { code: "OTHER", name: "Other Reason" }
+                      ]}
                       value={reportReason}
-                      onChange={(e) => setReportReason(e.target.value)}
-                      style={{ padding: "12px", borderRadius: "8px", border: "1px solid #ddd", outline: "none", backgroundColor: "#fafafa" }}
+                      onChange={(val) => setReportReason(val)}
+                      placeholder="Select reason for flagging..."
                       required
-                    >
-                      <option value="FRAUD_SCAM">Fraud or Scam Listing</option>
-                      <option value="INACCURATE_DETAILS">Inaccurate details/photos</option>
-                      <option value="INAPPROPRIATE_CONTENT">Inappropriate content/abuse</option>
-                      <option value="SPAM">Spam or Duplicate Listing</option>
-                      <option value="OTHER">Other Reason</option>
-                    </select>
+                    />
                   </div>
 
                   {reportReason === "OTHER" && (

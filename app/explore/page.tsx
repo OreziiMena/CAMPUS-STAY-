@@ -5,6 +5,29 @@ import { getProperties } from "@/app/actions/properties";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import "./styles.css";
+import { NIGERIAN_UNIVERSITIES } from "@/lib/universities";
+import SearchableSelect from "@/components/SearchableSelect";
+
+const HOSTEL_TYPES = [
+  { code: "All", name: "All Types" },
+  { code: "Self-Contain", name: "Self-Contain" },
+  { code: "Single Room", name: "Single Room" },
+  { code: "1-Bedroom Flat", name: "1-Bedroom Flat" },
+  { code: "2-Bedroom Flat", name: "2-Bedroom Flat" },
+  { code: "Shared Hostel Room", name: "Shared Hostel Room" }
+];
+
+const PROXIMITIES = [
+  { code: "Any", name: "Any distance" },
+  { code: "under_5", name: "< 5 mins walk" },
+  { code: "5_10", name: "5–10 mins walk" },
+  { code: "over_10", name: "> 10 mins walk" }
+];
+
+const CAMPUS_OPTIONS = [
+  { code: "All", name: "All Universities" },
+  ...NIGERIAN_UNIVERSITIES
+];
 
 export default function Explore() {
   const [searchQuery, setSearchQuery] = useState("");
@@ -19,6 +42,12 @@ export default function Explore() {
   const [minPrice, setMinPrice] = useState("");
   const [maxPrice, setMaxPrice] = useState("");
 
+  // Pagination states
+  const [page, setPage] = useState(1);
+  const [hasMore, setHasMore] = useState(true);
+  const [lastFilters, setLastFilters] = useState("");
+  const LIMIT = 10;
+
   useEffect(() => {
     const timer = setTimeout(() => {
       setShowSafetyTip(false);
@@ -28,6 +57,13 @@ export default function Explore() {
 
   // Dynamic filter watcher with a 300ms debounce
   useEffect(() => {
+    const currentFiltersKey = JSON.stringify({ university, hostelType, proximity, minPrice, maxPrice, searchQuery });
+    if (lastFilters !== currentFiltersKey) {
+      setLastFilters(currentFiltersKey);
+      setPage(1);
+      return;
+    }
+
     const fetchProperties = async (query = "") => {
       setLoading(true);
       const parsedMinPrice = minPrice ? parseFloat(minPrice) : undefined;
@@ -40,10 +76,17 @@ export default function Explore() {
         minPrice: parsedMinPrice,
         maxPrice: parsedMaxPrice,
         proximity: proximity !== "Any" ? proximity : undefined,
+        page: page,
+        limit: LIMIT,
       });
 
       if (res.success && res.properties) {
-        setProperties(res.properties);
+        if (page === 1) {
+          setProperties(res.properties);
+        } else {
+          setProperties((prev) => [...prev, ...res.properties]);
+        }
+        setHasMore(res.properties.length === LIMIT);
       }
       setLoading(false);
     };
@@ -53,7 +96,7 @@ export default function Explore() {
     }, 300);
 
     return () => clearTimeout(timer);
-  }, [university, hostelType, proximity, minPrice, maxPrice, searchQuery]);
+  }, [university, hostelType, proximity, minPrice, maxPrice, searchQuery, page, lastFilters]);
 
   const handleClearFilters = () => {
     setUniversity("All");
@@ -138,45 +181,31 @@ export default function Explore() {
                 {/* Campus Selection */}
                 <div className="filter-select-col">
                   <label htmlFor="filter-uni" className="filter-select-label">Campus</label>
-                  <select id="filter-uni" value={university} onChange={(e) => setUniversity(e.target.value)} className="filter-select-input">
-                    <option value="All">All Universities</option>
-                    <option value="FUPRE">Federal University of Petroleum Resources (FUPRE)</option>
-                    <option value="DSUST">Delta State University of Science and Technology, Ozoro (DSUST)</option>
-                    <option value="DOU">Dennis Osadebay University, Asaba (DOU)</option>
-                    <option value="UNIDEL">University of Delta, Agbor (UNIDEL)</option>
-                    <option value="WDU">Western Delta University, Oghara (WDU)</option>
-                    <option value="NOVENA">Novena University, Ogume-Amai</option>
-                    <option value="PTI">Petroleum Training Institute, Effurun (PTI)</option>
-                    <option value="FEPO">Federal Polytechnic, Orogun</option>
-                    <option value="DSPG">Delta State Polytechnic, Ogwashi-Uku (DSPG)</option>
-                    <option value="DESPO">Delta State Polytechnic, Otefe-Oghara (DESPO)</option>
-                    <option value="COE_WARRI">College of Education, Warri</option>
-                    <option value="COE_MOSOGAR">Delta State College of Physical Education, Mosogar</option>
-                  </select>
+                  <SearchableSelect
+                    options={CAMPUS_OPTIONS}
+                    value={university}
+                    onChange={(val) => setUniversity(val)}
+                  />
                 </div>
 
                 {/* Hostel Type Selection */}
                 <div className="filter-select-col">
                   <label htmlFor="filter-type" className="filter-select-label">Type</label>
-                  <select id="filter-type" value={hostelType} onChange={(e) => setHostelType(e.target.value)} className="filter-select-input">
-                    <option value="All">All Types</option>
-                    <option value="Self-Contain">Self-Contain</option>
-                    <option value="Single Room">Single Room</option>
-                    <option value="1-Bedroom Flat">1-Bedroom Flat</option>
-                    <option value="2-Bedroom Flat">2-Bedroom Flat</option>
-                    <option value="Shared Hostel Room">Shared Hostel Room</option>
-                  </select>
+                  <SearchableSelect
+                    options={HOSTEL_TYPES}
+                    value={hostelType}
+                    onChange={(val) => setHostelType(val)}
+                  />
                 </div>
 
                 {/* Walk Proximity Selection */}
                 <div className="filter-select-col">
                   <label htmlFor="filter-proximity" className="filter-select-label">Proximity</label>
-                  <select id="filter-proximity" value={proximity} onChange={(e) => setProximity(e.target.value)} className="filter-select-input">
-                    <option value="Any">Any distance</option>
-                    <option value="under_5">&lt; 5 mins walk</option>
-                    <option value="5_10">5–10 mins walk</option>
-                    <option value="over_10">&gt; 10 mins walk</option>
-                  </select>
+                  <SearchableSelect
+                    options={PROXIMITIES}
+                    value={proximity}
+                    onChange={(val) => setProximity(val)}
+                  />
                 </div>
 
                 {/* Price Range */}
@@ -361,6 +390,36 @@ export default function Explore() {
                 })}
               </div>
             )}
+
+            {hasMore && properties.length > 0 && (
+              <div style={{ display: "flex", justifyContent: "center", margin: "40px 0" }}>
+                <button
+                  type="button"
+                  onClick={() => setPage((prev) => prev + 1)}
+                  style={{
+                    padding: "12px 30px",
+                    borderRadius: "30px",
+                    backgroundColor: "white",
+                    border: "2px solid rgb(2, 53, 28)",
+                    color: "rgb(2, 53, 28)",
+                    fontWeight: "700",
+                    fontFamily: "'Poppins', sans-serif",
+                    cursor: "pointer",
+                    transition: "all 0.2s ease",
+                  }}
+                  onMouseOver={(e) => {
+                    e.currentTarget.style.backgroundColor = "rgb(2, 53, 28)";
+                    e.currentTarget.style.color = "white";
+                  }}
+                  onMouseOut={(e) => {
+                    e.currentTarget.style.backgroundColor = "white";
+                    e.currentTarget.style.color = "rgb(2, 53, 28)";
+                  }}
+                >
+                  Load More Listings
+                </button>
+              </div>
+            )}
           </>
         )}
       </section>
@@ -483,7 +542,7 @@ export default function Explore() {
                 For your safety, always check for the <span style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", position: "relative", verticalAlign: "middle", margin: "0 2px" }}>
                   <i className="fas fa-certificate" style={{ color: "rgb(2, 53, 28)", fontSize: "1.1rem" }}></i>
                   <i className="fas fa-check" style={{ position: "absolute", color: "white", fontSize: "0.45rem" }}></i>
-                </span> verification badge, it means the agent/student has completed ID verification.
+                </span> verification badge, it means the agent has completed ID verification.
               </p>
               <Link href="/student-dashboard/profile" className="safety-tip-link">
                 Verify your account now for added trust.

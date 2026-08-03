@@ -544,6 +544,7 @@ export async function getRoommateListings() {
           amenities: l.amenities,
           images: l.images,
           university: l.university,
+          genderPreference: l.genderPreference || "Any",
           student: l.student ? {
             id: l.student.id,
             userId: l.student.userId,
