@@ -1,4 +1,6 @@
-import PusherClient from "pusher-js";
+import Pusher from "pusher-js";
+
+const PusherClient = (Pusher as any).default || Pusher;
 
 export const isPusherClientConfigured = !!(
   process.env.NEXT_PUBLIC_PUSHER_KEY &&
