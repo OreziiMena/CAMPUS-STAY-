@@ -1160,5 +1160,20 @@ body.dark-mode .filters-horizontal-row input::placeholder {
     color: #64748b !important;
 }
 
+/* Prevent iOS Safari auto-zoom on inputs/selects with font-size < 16px */
+@media screen and (max-width: 768px) {
+  input,
+  textarea,
+  select,
+  .search-box-input,
+  .filter-input,
+  .form-input-custom,
+  .form-textarea-custom,
+  .searchable-select-trigger,
+  .searchable-select-trigger span {
+    font-size: 16px !important;
+  }
+}
+
 
 

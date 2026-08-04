@@ -114,6 +114,9 @@ export default function SearchableSelect({
       />
 
       <style jsx>{`
+        *, *:before, *:after {
+          box-sizing: border-box;
+        }
         .searchable-select-container {
           position: relative;
           width: 100%;

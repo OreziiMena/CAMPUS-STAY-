@@ -1,5 +1,9 @@
 /* Add Property Form Styles */
 
+* {
+    box-sizing: border-box;
+}
+
 :root {
     --primary-green: rgb(2, 53, 28);
     --primary-green-hover: rgb(1, 38, 20);

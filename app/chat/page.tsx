@@ -211,6 +211,15 @@ function ChatContent() {
         if (room.id === selectedRoomId) {
           setMessages((prev) => {
             if (prev.some((m) => m.id === data.id)) return prev;
+            
+            // Deduplicate optimistic messages (match by text and sender)
+            const tempIndex = prev.findIndex(
+              (m) => m.id.startsWith("temp-") && m.text === data.text && m.senderId === data.senderId
+            );
+            if (tempIndex !== -1) {
+              return prev.map((m, idx) => (idx === tempIndex ? data : m));
+            }
+            
             return [...prev, data];
           });
         }
