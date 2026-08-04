@@ -258,8 +258,12 @@
 }
 
 @media (max-width: 768px) {
+    .property-form-card {
+        padding: 20px 15px;
+    }
     .form-grid {
         grid-template-columns: 1fr;
+        gap: 15px;
     }
     .submit-btn {
         max-width: 100%;

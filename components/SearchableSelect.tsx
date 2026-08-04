@@ -69,7 +69,6 @@ export default function SearchableSelect({
                 onChange={(e) => setSearch(e.target.value)}
                 onClick={(e) => e.stopPropagation()}
                 className="search-box-input"
-                autoFocus
               />
               {search && (
                 <button 

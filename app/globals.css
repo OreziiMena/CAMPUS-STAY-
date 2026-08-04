@@ -7,9 +7,13 @@
 }
 html{
     scroll-behavior: smooth;
+    max-width: 100vw;
+    overflow-x: hidden;
 }
 body{
     min-height: 100vh;
+    max-width: 100vw;
+    overflow-x: hidden;
 }
 .brand{
     display: flex;

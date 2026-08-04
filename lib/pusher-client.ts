@@ -5,7 +5,7 @@ export const isPusherClientConfigured = !!(
   process.env.NEXT_PUBLIC_PUSHER_CLUSTER
 );
 
-export const pusherClient = isPusherClientConfigured
+export const pusherClient = (typeof window !== "undefined" && isPusherClientConfigured)
   ? new PusherClient(process.env.NEXT_PUBLIC_PUSHER_KEY || "", {
       cluster: process.env.NEXT_PUBLIC_PUSHER_CLUSTER || "",
       forceTLS: true,
