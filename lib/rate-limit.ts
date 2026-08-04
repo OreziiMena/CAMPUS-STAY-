@@ -1,56 +1,49 @@
 import { headers } from "next/headers";
-import prisma from "@/lib/prisma";
+import { Redis } from "@upstash/redis";
+import { Ratelimit } from "@upstash/ratelimit";
+
+// Initialize Upstash Redis client
+// Automatically pick up UPSTASH_REDIS_REST_URL and UPSTASH_REDIS_REST_TOKEN from env
+const redis = typeof window === "undefined" && process.env.UPSTASH_REDIS_REST_URL
+  ? Redis.fromEnv()
+  : null;
 
 /**
  * Checks if an IP has exceeded the allowed rate limit for a specific action.
- * Automatically cleans up expired logs in the database.
+ * Fails open if credentials are not configured.
  */
 export async function checkRateLimit(action: string, maxRequests: number, windowMinutes: number) {
   try {
+    if (!redis || !process.env.UPSTASH_REDIS_REST_URL || !process.env.UPSTASH_REDIS_REST_TOKEN) {
+      // Fail open if Upstash is not yet loaded / configured
+      return { success: true };
+    }
+
     const headerList = await headers();
-    // Vercel forwards client IP in x-forwarded-for header
     const forwardedFor = headerList.get("x-forwarded-for");
     const ip = forwardedFor ? forwardedFor.split(",")[0].trim() : "127.0.0.1";
 
-    const now = new Date();
-    const windowStart = new Date(now.getTime() - windowMinutes * 60 * 1000);
-
-    // 1. Clean up old entries for this action
-    await prisma.rateLimit.deleteMany({
-      where: {
-        action,
-        createdAt: { lt: windowStart },
-      },
+    // Initialize Ratelimit instance dynamically based on function parameters
+    const ratelimit = new Ratelimit({
+      redis,
+      limiter: Ratelimit.slidingWindow(maxRequests, `${windowMinutes} m`),
+      analytics: true,
+      prefix: `@climit:${action}`,
     });
 
-    // 2. Count requests in the current window
-    const requestCount = await prisma.rateLimit.count({
-      where: {
-        ip,
-        action,
-        createdAt: { gte: windowStart },
-      },
-    });
+    const { success } = await ratelimit.limit(ip);
 
-    if (requestCount >= maxRequests) {
+    if (!success) {
       return {
         success: false,
         error: `Too many requests. Please try again in ${windowMinutes} minute(s).`,
       };
     }
 
-    // 3. Log the current request
-    await prisma.rateLimit.create({
-      data: {
-        ip,
-        action,
-      },
-    });
-
     return { success: true };
   } catch (error: any) {
-    console.error("Rate limiting failed:", error.message);
-    // Fail open in case of database exceptions to avoid blocking users
+    console.error("Upstash rate limiting failed:", error.message);
+    // Fail open in case of network or API issues to avoid blocking users
     return { success: true };
   }
 }
