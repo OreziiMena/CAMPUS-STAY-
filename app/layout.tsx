@@ -19,9 +19,15 @@ const poppins = Poppins({
 export const metadata: Metadata = {
   title: "Campus-Stay",
   description: "Find your perfect off-campus housing.",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "default",
+    title: "Campus Stay",
+  },
 };
 
 import { ToastProvider } from "@/components/ToastProvider";
+import InstallPrompt from "@/components/InstallPrompt";
 
 export default function RootLayout({
   children,
@@ -34,9 +40,9 @@ export default function RootLayout({
       <body className={`${openSans.variable} ${poppins.variable}`}>
         <ToastProvider>
           {children}
+          <InstallPrompt />
         </ToastProvider>
       </body>
-      
     </html>
   );
 }
