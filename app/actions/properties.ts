@@ -480,20 +480,42 @@ export async function uploadPropertyImages(formData: FormData) {
     const urls: string[] = [];
     const timestamp = Date.now();
     const ALLOWED_IMAGE_EXTENSIONS = [".png", ".jpg", ".jpeg", ".webp"];
+    const ALLOWED_VIDEO_EXTENSIONS = [".mp4", ".mov", ".avi", ".webm", ".mkv"];
 
     for (let i = 0; i < files.length; i++) {
       const file = files[i];
       if (!file || file.size === 0) continue;
 
-      const ext = (path.extname(file.name) || "").toLowerCase();
-      if (!ALLOWED_IMAGE_EXTENSIONS.includes(ext)) {
-        return { success: false, error: "Invalid image file type. Only .jpg, .jpeg, .png, and .webp images are allowed." };
+      let ext = (path.extname(file.name) || "").toLowerCase();
+      // Sanitize extension to prevent path traversal attempts
+      ext = ext.replace(/[^a-z0-9.]/g, "");
+
+      const isImage = ALLOWED_IMAGE_EXTENSIONS.includes(ext);
+      const isVideo = ALLOWED_VIDEO_EXTENSIONS.includes(ext);
+
+      if (!isImage && !isVideo) {
+        return { success: false, error: `Invalid file type for "${file.name}". Only standard images (.jpg, .png, .webp) and videos (.mp4, .mov, .webm) are allowed.` };
+      }
+
+      if (isImage) {
+        const MAX_IMAGE_SIZE = 2 * 1024 * 1024; // 2MB
+        if (file.size > MAX_IMAGE_SIZE) {
+          return { success: false, error: `Picture "${file.name}" exceeds the 2MB limit.` };
+        }
+      }
+
+      if (isVideo) {
+        const MAX_VIDEO_SIZE = 10 * 1024 * 1024; // 10MB
+        if (file.size > MAX_VIDEO_SIZE) {
+          return { success: false, error: `Video "${file.name}" exceeds the 10MB limit.` };
+        }
       }
 
       const buffer = Buffer.from(await file.arrayBuffer());
       const filename = `${user.id}-property-${timestamp}-${i}${ext}`;
+      const contentType = file.type || (isImage ? "image/jpeg" : "video/mp4");
       
-      const r2Result = await uploadToR2(buffer, `properties/${filename}`, file.type || "image/jpeg");
+      const r2Result = await uploadToR2(buffer, `properties/${filename}`, contentType);
       if (r2Result.success && r2Result.url) {
         urls.push(r2Result.url);
       } else {

@@ -447,3 +447,317 @@ body {
     }
 }
 
+/* ==========================================================================
+   AGENT ONBOARDING / NAVIGATION GUIDE STYLES
+   ========================================================================== */
+.guide-modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.5);
+    backdrop-filter: blur(8px);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 99999;
+    padding: 20px;
+    animation: guideFadeIn 0.3s ease;
+}
+
+.guide-modal-card {
+    background: #ffffff;
+    border-radius: 20px;
+    width: 100%;
+    max-width: 550px;
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    animation: guideScaleUp 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.guide-modal-header {
+    padding: 20px 25px 10px 25px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.guide-modal-badge {
+    background: rgba(211, 84, 0, 0.1);
+    color: #d35400;
+    padding: 4px 12px;
+    border-radius: 30px;
+    font-size: 13px;
+    font-weight: 700;
+    font-family: 'Poppins', sans-serif;
+    text-transform: uppercase;
+}
+
+.guide-modal-close-btn {
+    background: none;
+    border: none;
+    font-size: 18px;
+    color: #666;
+    cursor: pointer;
+    transition: color 0.2s ease;
+}
+
+.guide-modal-close-btn:hover {
+    color: #000;
+}
+
+.guide-modal-body {
+    padding: 10px 25px 25px 25px;
+    text-align: center;
+    flex: 1;
+}
+
+.guide-icon-wrapper {
+    width: 70px;
+    height: 70px;
+    background: rgba(2, 53, 28, 0.05);
+    color: rgb(2, 53, 28);
+    font-size: 30px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    border-radius: 50%;
+    margin: 0 auto 20px auto;
+}
+
+.guide-modal-body h2 {
+    font-family: 'Poppins', sans-serif;
+    font-size: 22px;
+    color: rgb(2, 53, 28);
+    margin-bottom: 15px;
+    font-weight: 700;
+}
+
+.guide-modal-content-inner {
+    text-align: left;
+    color: #4a5568;
+    font-family: 'Open Sans', sans-serif;
+    font-size: 15px;
+    line-height: 1.6;
+}
+
+.guide-alert-info {
+    background: #ebf8ff;
+    border-left: 4px solid #3182ce;
+    border-radius: 8px;
+    padding: 15px;
+    margin-top: 15px;
+    display: flex;
+    gap: 12px;
+    align-items: flex-start;
+}
+
+.guide-alert-info i {
+    color: #3182ce;
+    font-size: 18px;
+    margin-top: 2px;
+}
+
+.guide-alert-info span {
+    font-size: 14px;
+    color: #2b6cb0;
+}
+
+.guide-steps-list {
+    list-style: none;
+    padding: 0;
+    margin: 15px 0 0 0;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.guide-steps-list li {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+}
+
+.guide-steps-list li i {
+    color: rgb(2, 53, 28);
+    font-size: 16px;
+    margin-top: 4px;
+}
+
+.guide-file-rules {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin-top: 15px;
+}
+
+.file-rule-item {
+    display: flex;
+    gap: 15px;
+    padding: 15px;
+    border-radius: 12px;
+    align-items: flex-start;
+}
+
+.picture-rule {
+    background: rgba(211, 84, 0, 0.05);
+    border: 1px solid rgba(211, 84, 0, 0.15);
+}
+
+.picture-rule i {
+    color: #d35400;
+    font-size: 20px;
+}
+
+.video-rule {
+    background: rgba(2, 53, 28, 0.05);
+    border: 1px solid rgba(2, 53, 28, 0.15);
+}
+
+.video-rule i {
+    color: rgb(2, 53, 28);
+    font-size: 20px;
+}
+
+.file-rule-item strong {
+    display: block;
+    font-size: 14px;
+    color: #2d3748;
+    margin-bottom: 3px;
+}
+
+.file-rule-item p {
+    font-size: 13px;
+    color: #718096;
+    margin: 0;
+}
+
+.guide-modal-footer {
+    padding: 20px 25px;
+    border-top: 1px solid #eaeaea;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: #f7fafc;
+}
+
+.guide-indicators {
+    display: flex;
+    gap: 8px;
+}
+
+.guide-dot {
+    width: 8px;
+    height: 8px;
+    background: #cbd5e0;
+    border-radius: 50%;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.guide-dot.active {
+    background: #d35400;
+    width: 20px;
+    border-radius: 10px;
+}
+
+.guide-buttons {
+    display: flex;
+    gap: 10px;
+}
+
+.guide-btn-primary {
+    background: #d35400;
+    color: #fff;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 10px;
+    font-weight: 700;
+    font-family: 'Poppins', sans-serif;
+    font-size: 14px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    transition: background 0.2s ease;
+}
+
+.guide-btn-primary:hover {
+    background: #b24500;
+}
+
+.guide-btn-secondary {
+    background: none;
+    border: 1px solid #cbd5e0;
+    color: #4a5568;
+    padding: 10px 20px;
+    border-radius: 10px;
+    font-weight: 600;
+    font-family: 'Poppins', sans-serif;
+    font-size: 14px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    transition: all 0.2s ease;
+}
+
+.guide-btn-secondary:hover {
+    background: #edf2f7;
+}
+
+.guide-btn-text {
+    background: none;
+    border: none;
+    color: #718096;
+    padding: 10px 15px;
+    font-weight: 600;
+    font-family: 'Poppins', sans-serif;
+    font-size: 14px;
+    cursor: pointer;
+    transition: color 0.2s ease;
+}
+
+.guide-btn-text:hover {
+    color: #4a5568;
+}
+
+.floating-help-trigger {
+    position: fixed;
+    bottom: 30px;
+    right: 30px;
+    background: rgb(2, 53, 28);
+    color: #fff;
+    border: none;
+    width: 54px;
+    height: 54px;
+    border-radius: 50%;
+    box-shadow: 0 10px 25px rgba(2, 53, 28, 0.3);
+    cursor: pointer;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 20px;
+    z-index: 9999;
+    transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.floating-help-trigger:hover {
+    transform: scale(1.1) rotate(5deg);
+    background: #d35400;
+    box-shadow: 0 10px 25px rgba(211, 84, 0, 0.3);
+}
+
+@keyframes guideFadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+@keyframes guideScaleUp {
+    from { transform: scale(0.9); opacity: 0; }
+    to { transform: scale(1); opacity: 1; }
+}
+

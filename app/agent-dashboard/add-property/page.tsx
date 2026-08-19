@@ -25,7 +25,9 @@ export default function AddProperty() {
     prepaid: false,
     water: true,
     gated: false,
-    security: false
+    security: false,
+    wardrobe: false,
+    kitchen: false
   });
 
   const [images, setImages] = useState<string[]>([]);
@@ -81,6 +83,8 @@ export default function AddProperty() {
     if (amenities.water) activeAmenities.push("Borehole Water");
     if (amenities.gated) activeAmenities.push("Gated Compound");
     if (amenities.security) activeAmenities.push("Security Guard");
+    if (amenities.wardrobe) activeAmenities.push("Wardrobe");
+    if (amenities.kitchen) activeAmenities.push("Kitchen");
 
     try {
       let uploadedUrls: string[] = [];
@@ -279,7 +283,7 @@ export default function AddProperty() {
                 checked={amenities.water}
                 onChange={() => handleCheckboxChange("water")}
               />
-              <span>Borehole Water</span>
+              <span>Borehole/Running Water</span>
             </label>
             <label className="checkbox-item">
               <input
@@ -297,26 +301,49 @@ export default function AddProperty() {
               />
               <span>Security Guard</span>
             </label>
+            <label className="checkbox-item">
+              <input
+                type="checkbox"
+                checked={amenities.wardrobe}
+                onChange={() => handleCheckboxChange("wardrobe")}
+              />
+              <span>Wardrobe</span>
+            </label>
+            <label className="checkbox-item">
+              <input
+                type="checkbox"
+                checked={amenities.kitchen}
+                onChange={() => handleCheckboxChange("kitchen")}
+              />
+              <span>Kitchen</span>
+            </label>
           </div>
 
           <div className="form-section-title">Property Media</div>
           <div className="upload-container">
             <div className="file-upload-zone">
               <i className="fas fa-cloud-upload-alt"></i>
-              <p>Drag and drop property images or <span>Browse files</span></p>
-              <input type="file" multiple accept="image/*" onChange={handleMockUpload} />
+              <p>Drag and drop property media or <span>Browse files</span></p>
+              <input type="file" multiple accept="image/*,video/*" onChange={handleMockUpload} />
             </div>
 
             {images.length > 0 && (
               <div className="uploaded-previews">
-                {images.map((url, i) => (
-                  <div key={i} className="preview-img-wrapper">
-                    <img src={url} alt="preview" />
-                    <button type="button" onClick={() => removeImage(i)}>
-                      <i className="fas fa-times"></i>
-                    </button>
-                  </div>
-                ))}
+                {images.map((url, i) => {
+                  const isVideo = url.match(/\.(mp4|webm|ogg|mov|mkv)(\?.*)?$/i) || (imageFiles[i] && imageFiles[i].type.startsWith("video/"));
+                  return (
+                    <div key={i} className="preview-img-wrapper">
+                      {isVideo ? (
+                        <video src={url} className="w-full h-full object-cover" controls style={{ width: "100%", height: "100%", objectFit: "cover", borderRadius: "8px" }} />
+                      ) : (
+                        <img src={url} alt="preview" />
+                      )}
+                      <button type="button" onClick={() => removeImage(i)}>
+                        <i className="fas fa-times"></i>
+                      </button>
+                    </div>
+                  );
+                })}
               </div>
             )}
           </div>

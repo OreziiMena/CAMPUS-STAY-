@@ -57,7 +57,7 @@ export default function Navbar() {
   const handleLogout = async () => {
     await logoutUser();
     setUser(null);
-    router.push("/explore");
+    router.push("/");
   };
 
   const isActive = (path: string) => {
@@ -79,15 +79,15 @@ export default function Navbar() {
             unoptimized
             className={`logo ${styles.logoImg}`}
           />
-          <h2 className={`logo-text ${styles.logoH2}`}>Campus Stay</h2>
+          <h2 className={`logo-text ${styles.logoH2}`}>Campus Unit</h2>
         </Link>
       </div>
       
       <div className={`navlinks ${isMobileMenuOpen ? "active" : ""}`}>
         <ul>
-          <li><Link className={isActive("/")} href="/">Home</Link></li>
+          <li><Link className={isActive("/landing")} href="/landing">Home</Link></li>
           <li><Link className={isActive("/about")} href="/about">About</Link></li>
-          <li><Link className={isActive("/explore")} href="/explore">Find Apartment</Link></li>
+          <li><Link className={isActive("/")} href="/">Find Apartment</Link></li>
           <li><Link className={isActive("/roommates")} href="/roommates">Find Roommate</Link></li>
           <li><Link className={isActive("/support")} href="/support">Support</Link></li>
         </ul>

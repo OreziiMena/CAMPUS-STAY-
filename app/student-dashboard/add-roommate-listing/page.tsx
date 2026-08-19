@@ -26,7 +26,9 @@ export default function AddRoommateListing() {
     prepaid: true,
     water: true,
     gated: true,
-    security: false
+    security: false,
+    wardrobe: false,
+    kitchen: false
   });
 
   const [images, setImages] = useState<string[]>([]);
@@ -75,6 +77,8 @@ export default function AddRoommateListing() {
     if (amenities.water) activeAmenities.push("Borehole Water");
     if (amenities.gated) activeAmenities.push("Gated Compound");
     if (amenities.security) activeAmenities.push("Security Guard");
+    if (amenities.wardrobe) activeAmenities.push("Wardrobe");
+    if (amenities.kitchen) activeAmenities.push("Kitchen");
 
     try {
       const res = await addProperty({
@@ -297,35 +301,58 @@ export default function AddRoommateListing() {
                 />
                 <span>Security Guard</span>
               </label>
+              <label className="checkbox-item">
+                <input
+                  type="checkbox"
+                  checked={amenities.wardrobe}
+                  onChange={() => handleCheckboxChange("wardrobe")}
+                />
+                <span>Wardrobe</span>
+              </label>
+              <label className="checkbox-item">
+                <input
+                  type="checkbox"
+                  checked={amenities.kitchen}
+                  onChange={() => handleCheckboxChange("kitchen")}
+                />
+                <span>Kitchen</span>
+              </label>
             </div>
 
-            <div className="form-section-title">Apartment Images</div>
+            <div className="form-section-title">Apartment Media</div>
             <div className="image-upload-section">
               <div className="upload-box-wrapper">
                 <i className="fas fa-images"></i>
-                <p>Drag and drop images or click to select files</p>
+                <p>Drag and drop media or click to select files</p>
                 <input
                   type="file"
                   multiple
-                  accept="image/*"
+                  accept="image/*,video/*"
                   onChange={handleMockUpload}
                 />
               </div>
 
               {images.length > 0 && (
                 <div className="uploaded-previews-grid">
-                  {images.map((img, index) => (
-                    <div key={index} className="preview-image-card">
-                      <img src={img} alt={`Preview ${index + 1}`} />
-                      <button
-                        type="button"
-                        onClick={() => setImages((prev) => prev.filter((_, i) => i !== index))}
-                        className="delete-preview-btn"
-                      >
-                        <i className="fas fa-trash-alt"></i>
-                      </button>
-                    </div>
-                  ))}
+                  {images.map((img, index) => {
+                    const isVideo = img.match(/\.(mp4|webm|ogg|mov|mkv)(\?.*)?$/i);
+                    return (
+                      <div key={index} className="preview-image-card">
+                        {isVideo ? (
+                          <video src={img} className="w-full h-full object-cover" controls style={{ width: "100%", height: "100%", objectFit: "cover", borderRadius: "8px" }} />
+                        ) : (
+                          <img src={img} alt={`Preview ${index + 1}`} />
+                        )}
+                        <button
+                          type="button"
+                          onClick={() => setImages((prev) => prev.filter((_, i) => i !== index))}
+                          className="delete-preview-btn"
+                        >
+                          <i className="fas fa-trash-alt"></i>
+                        </button>
+                      </div>
+                    );
+                  })}
                 </div>
               )}
             </div>

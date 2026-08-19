@@ -153,6 +153,18 @@ export async function getChatMessages(chatRoomId: string) {
       return { success: false, error: "Unauthorized." };
     }
 
+    const chatRoom = await prisma.chatRoom.findUnique({
+      where: { id: chatRoomId },
+    });
+
+    if (!chatRoom) {
+      return { success: false, error: "Conversation not found." };
+    }
+
+    if (chatRoom.studentId !== user.id && chatRoom.agentId !== user.id) {
+      return { success: false, error: "Unauthorized access to this conversation." };
+    }
+
     // Mark messages sent by others in this room as read
     await prisma.message.updateMany({
       where: {
@@ -185,6 +197,21 @@ export async function sendChatMessage(chatRoomId: string, text: string) {
       return { success: false, error: "Message cannot be empty." };
     }
 
+    const chatRoom = await prisma.chatRoom.findUnique({
+      where: { id: chatRoomId },
+      include: {
+        property: true,
+      },
+    });
+
+    if (!chatRoom) {
+      return { success: false, error: "Conversation not found." };
+    }
+
+    if (chatRoom.studentId !== user.id && chatRoom.agentId !== user.id) {
+      return { success: false, error: "Unauthorized to send messages in this conversation." };
+    }
+
     const isFirstMessage = (await prisma.message.count({
       where: { chatRoomId }
     })) === 0;
@@ -210,14 +237,7 @@ export async function sendChatMessage(chatRoomId: string, text: string) {
     if (isFirstMessage) {
       (async () => {
         try {
-          const chatRoom = await prisma.chatRoom.findUnique({
-            where: { id: chatRoomId },
-            include: {
-              property: true,
-            }
-          });
-
-          if (chatRoom && chatRoom.property.isRoommateOption) {
+          if (chatRoom.property.isRoommateOption) {
             const recipientId = chatRoom.studentId === user.id ? chatRoom.agentId : chatRoom.studentId;
             const recipientUser = await prisma.user.findUnique({
               where: { id: recipientId },
@@ -239,7 +259,7 @@ export async function sendChatMessage(chatRoomId: string, text: string) {
                     <p><strong>${senderName}</strong> has sent you a message regarding your roommate listing: <strong>"${listingTitle}"</strong> on Campus Stay.</p>
                     
                     <div style="background-color: #f9f9f9; padding: 15px; border-left: 4px solid rgb(2, 53, 28); border-radius: 4px; margin: 20px 0; font-style: italic;">
-                      "${text}"
+                       "${text}"
                     </div>
                     
                     <p>Please log in to your dashboard to reply and coordinate details:</p>

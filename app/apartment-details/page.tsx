@@ -280,11 +280,24 @@ function ApartmentDetailsContent() {
       <main className="property-details-layout details-layout-margin">
         <div className="main-info">
           <div className="property-image-container">
-            <img 
-              src={property.images[currentImageIndex] || "https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?ixlib=rb-4.0.3&auto=format&fit=crop&w=1200&q=80"} 
-              className="property-main-image" 
-              alt={property.title} 
-            />
+            {(() => {
+              const activeMediaUrl = property.images[currentImageIndex] || "https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?ixlib=rb-4.0.3&auto=format&fit=crop&w=1200&q=80";
+              const isVideo = activeMediaUrl.match(/\.(mp4|webm|ogg|mov|mkv)(\?.*)?$/i);
+              return isVideo ? (
+                <video 
+                  src={activeMediaUrl} 
+                  className="property-main-image" 
+                  controls 
+                  style={{ width: "100%", height: "100%", objectFit: "cover" }}
+                />
+              ) : (
+                <img 
+                  src={activeMediaUrl} 
+                  className="property-main-image" 
+                  alt={property.title} 
+                />
+              );
+            })()}
             {property.images.length > 1 && (
               <>
                 <div className="image-counter">
@@ -414,6 +427,17 @@ function ApartmentDetailsContent() {
             <Link href="/explore" className="view-listings-link">View all listings &rarr;</Link>
           </div>
 
+          <div className="sidebar-card safety-card">
+            <h4 className="safety-heading"><i className="fas fa-shield-alt"></i> Safety Tips</h4>
+            <ul className="safety-list">
+              <li><span>To protect yourself, ensure all negotiations and final agreements remain on this platform. Avoid taking the conversation off-site.</span></li>
+              <li><span>Never pay before inspecting the apartment.</span></li>
+              <li><span>Always verify the agent's identity in person.</span></li>
+              <li><span>Report suspicious listings immediately.</span></li>
+              <li><span>Get a proper tenancy agreement.</span></li>
+            </ul>
+          </div>
+
           <div className="sidebar-card">
             <h4 className="card-heading">Actions</h4>
             <div className="action-buttons">
@@ -422,15 +446,7 @@ function ApartmentDetailsContent() {
             </div>
           </div>
 
-          <div className="sidebar-card safety-card">
-            <h4 className="safety-heading"><i className="fas fa-shield-alt"></i> Safety Tips</h4>
-            <ul className="safety-list">
-              <li><span>Never pay before inspecting the apartment.</span></li>
-              <li><span>Always verify the agent's identity in person.</span></li>
-              <li><span>Report suspicious listings immediately.</span></li>
-              <li><span>Get a proper tenancy agreement.</span></li>
-            </ul>
-          </div>
+          
         </aside>
       </main>
 

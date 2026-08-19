@@ -9,6 +9,7 @@ import styles from "./page.module.css";
 // Child Components
 import StatsGrid from "./components/StatsGrid";
 import InquiryList from "./components/InquiryList";
+import GuideModal from "./components/GuideModal";
 
 export default function AgentDashboard() {
   const router = useRouter();
@@ -16,6 +17,7 @@ export default function AgentDashboard() {
   const [stats, setStats] = useState({ totalProperties: 0, activeListings: 0, newInquiries: 0 });
   const [inquiries, setInquiries] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [isGuideOpen, setIsGuideOpen] = useState(false);
 
   useEffect(() => {
     const loadDashboard = async () => {
@@ -34,6 +36,12 @@ export default function AgentDashboard() {
         setInquiries(dashData.recentInquiries || []);
       }
       setLoading(false);
+
+      // Auto-open onboarding guide for first-time agents
+      const onboardingDone = localStorage.getItem("cs_agent_onboarding_completed");
+      if (!onboardingDone) {
+        setIsGuideOpen(true);
+      }
     };
     loadDashboard();
   }, [router]);
@@ -69,6 +77,18 @@ export default function AgentDashboard() {
           <InquiryList inquiries={inquiries} />
         </>
       )}
+
+      {/* Onboarding Interactive Guide Modal */}
+      <GuideModal isOpen={isGuideOpen} onClose={() => setIsGuideOpen(false)} />
+
+      {/* Floating Onboarding Help Button */}
+      <button 
+        className="floating-help-trigger" 
+        onClick={() => setIsGuideOpen(true)}
+        title="View Dashboard Guide"
+      >
+        <i className="fas fa-question-circle"></i>
+      </button>
     </>
   );
 }

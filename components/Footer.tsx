@@ -33,11 +33,11 @@ export default function Footer() {
         <div className="footer-links">
           <h4>PLATFORM</h4>
           <ul>
-            <li><Link href="/">Home</Link></li>
+            <li><Link href="/landing">Home</Link></li>
             <li><Link href="/about">About Us</Link></li>
-            <li><Link href="/explore">Explore Properties</Link></li>
+            <li><Link href="/">Explore Properties</Link></li>
             <li>
-              <Link href={user ? (user.role === "AGENT" ? "/agent-dashboard" : "/explore") : "/auth/rolepick"}>
+              <Link href={user ? (user.role === "AGENT" ? "/agent-dashboard" : "/") : "/auth/rolepick"}>
                 Find a Roommate
               </Link>
             </li>
@@ -56,9 +56,9 @@ export default function Footer() {
         <div className="footer-contact">
           <h4>CONNECT</h4>
           <ul>
-            <li><a href="mailto:support@campusstay.com"><i className="fa-solid fa-envelope"></i> support@campusstay.com</a></li>
+            <li><a href="mailto:support@campusunit.com"><i className="fa-solid fa-envelope"></i> support@campusunit.com</a></li>
             <li>
-              <a href="https://wa.me/2349161863877?text=Hi%20Campus%20Stay%20Support,%20I%20need%20help" target="_blank" rel="noopener noreferrer">
+              <a href="https://wa.me/2349161863877?text=Hi%20Campus%20Unit%20Support,%20I%20need%20help" target="_blank" rel="noopener noreferrer">
                 <i className="fa-brands fa-whatsapp"></i> Chat with Us
               </a>
             </li>
@@ -69,7 +69,7 @@ export default function Footer() {
       </div>
 
       <div className="footer-bottom">
-        <p> &copy; {new Date().getFullYear()} Campus Stay. All rights reserved.</p>
+        <p> &copy; {new Date().getFullYear()} Campus Unit. All rights reserved.</p>
       </div>
     </footer>
   );

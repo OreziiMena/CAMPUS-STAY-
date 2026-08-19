@@ -338,13 +338,28 @@ export default function Explore() {
                           </div>
                         </div>
 
-                        {/* Property Image in middle */}
+                        {/* Property Media in middle */}
                         <div style={{ position: "relative", width: "100%", height: "160px", borderRadius: "12px", overflow: "hidden", marginBottom: "12px" }}>
-                          <img 
-                            src={property.images?.[0] || "https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80"} 
-                            alt={property.title} 
-                            style={{ width: "100%", height: "100%", objectFit: "cover" }} 
-                          />
+                          {(() => {
+                            const mediaUrl = property.images?.[0] || "https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80";
+                            const isVideo = mediaUrl.match(/\.(mp4|webm|ogg|mov|mkv)(\?.*)?$/i);
+                            return isVideo ? (
+                              <video 
+                                src={mediaUrl} 
+                                style={{ width: "100%", height: "100%", objectFit: "cover" }} 
+                                muted 
+                                loop 
+                                playsInline 
+                                autoPlay
+                              />
+                            ) : (
+                              <img 
+                                src={mediaUrl} 
+                                alt={property.title} 
+                                style={{ width: "100%", height: "100%", objectFit: "cover" }} 
+                              />
+                            );
+                          })()}
                         </div>
 
                         {/* Price large and bold */}

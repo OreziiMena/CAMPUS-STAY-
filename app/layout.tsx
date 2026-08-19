@@ -17,12 +17,12 @@ const poppins = Poppins({
 });
 
 export const metadata: Metadata = {
-  title: "Campus-Stay",
+  title: "Campus-Unit",
   description: "Find your perfect off-campus housing.",
   appleWebApp: {
     capable: true,
     statusBarStyle: "default",
-    title: "Campus Stay",
+    title: "Campus Unit",
   },
 };
 

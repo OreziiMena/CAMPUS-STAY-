@@ -20,7 +20,7 @@ export default function Sidebar({
   return (
     <aside className={`sidebar ${isMobileOpen ? "active" : ""}`} id="sidebar">
       <div className="sidebar-header">
-        <h2 className="logo">Campus Stay</h2>
+        <h2 className="logo">Campus Unit</h2>
         <button className="close-sidebar-btn" id="close-sidebar" onClick={onClose}>
           <i className="fas fa-times"></i>
         </button>
@@ -67,10 +67,11 @@ export default function Sidebar({
           </Link>
         </li>
         <li>
-          <Link href="/explore">
-            <i className="fas fa-globe"></i> Explore Other Properties
+          <Link href="/" className={activePath === "/" ? "active" : ""}>
+            <i className="fas fa-search"></i> Explore Hostels
           </Link>
         </li>
+        
       </ul>
 
       <div className="sidebar-footer">

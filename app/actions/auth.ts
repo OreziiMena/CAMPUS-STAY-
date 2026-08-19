@@ -38,7 +38,15 @@ function verifySession(token: string): any | null {
     }
     
     const decoded = Buffer.from(data, "base64url").toString("utf8");
-    return JSON.parse(decoded);
+    const payload = JSON.parse(decoded);
+
+    // Validate expiration to prevent replay of old session strings
+    if (payload.expiresAt && Date.now() > payload.expiresAt) {
+      console.warn("Session expired.");
+      return null;
+    }
+
+    return payload;
   } catch (err) {
     console.error("Failed to verify/parse session token:", err);
     return null;
@@ -194,11 +202,17 @@ export async function loginUser(data: any) {
     }
 
     const cookieStore = await cookies();
-    const token = signSession({ userId: user.id, role: user.role });
+    const token = signSession({
+      userId: user.id,
+      role: user.role,
+      passwordVersion: user.password.substring(0, 10),
+      expiresAt: Date.now() + 60 * 60 * 24 * 7 * 1000, // 7 days in milliseconds
+    });
     cookieStore.set(SESSION_COOKIE_NAME, token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
       path: "/",
+      sameSite: "lax",
       maxAge: 60 * 60 * 24 * 7,
     });
 
@@ -223,7 +237,7 @@ export async function getCurrentUser() {
     const payload = verifySession(session.value);
     if (!payload || !payload.userId) return null;
 
-    const { userId } = payload;
+    const { userId, passwordVersion } = payload;
     const user = await prisma.user.findUnique({
       where: { id: userId },
       include: {
@@ -233,6 +247,11 @@ export async function getCurrentUser() {
     });
 
     if (!user) return null;
+
+    // Validate password version to support instant session invalidation on password changes
+    if (passwordVersion && user.password.substring(0, 10) !== passwordVersion) {
+      return null;
+    }
 
     return {
       id: user.id,
@@ -306,8 +325,17 @@ export async function uploadAgentVerification(formData: FormData) {
       return { success: false, error: "No document file uploaded." };
     }
 
+    const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
+    if (file.size > MAX_FILE_SIZE) {
+      return { success: false, error: "File size exceeds the 5MB limit." };
+    }
+
     const ALLOWED_EXTENSIONS = [".pdf", ".png", ".jpg", ".jpeg", ".webp"];
-    const ext = (path.extname(file.name) || "").toLowerCase();
+    let ext = (path.extname(file.name) || "").toLowerCase();
+    
+    // Sanitize extension to prevent path traversal attempts
+    ext = ext.replace(/[^a-z0-9.]/g, "");
+    
     if (!ALLOWED_EXTENSIONS.includes(ext)) {
       return { success: false, error: "Invalid document file type. Only PDF and image files (.jpg, .jpeg, .png, .webp) are allowed." };
     }
@@ -367,9 +395,25 @@ export async function updateAgentPassword(data: any) {
     }
 
     const hashedPassword = await bcrypt.hash(newPassword, 10);
-    await prisma.user.update({
+    const updatedUser = await prisma.user.update({
       where: { id: user.id },
       data: { password: hashedPassword },
+    });
+
+    // Re-issue cookie for the current device so they remain logged in
+    const cookieStore = await cookies();
+    const token = signSession({
+      userId: updatedUser.id,
+      role: updatedUser.role,
+      passwordVersion: hashedPassword.substring(0, 10),
+      expiresAt: Date.now() + 60 * 60 * 24 * 7 * 1000,
+    });
+    cookieStore.set(SESSION_COOKIE_NAME, token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      path: "/",
+      sameSite: "lax",
+      maxAge: 60 * 60 * 24 * 7,
     });
 
     return { success: true };

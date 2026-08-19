@@ -11,7 +11,7 @@ export default function Rolepick() {
 
             <nav className="sticky-top">
                 <div className="brand">
-                    <img src="/Assets/CAMPUS STAY LOGO.png" alt="logo" className="logo" /><h2 className="logo-text">Campus Stay</h2>
+                    <img src="/Assets/CAMPUS STAY LOGO.png" alt="logo" className="logo" /><h2 className="logo-text">Campus Unit</h2>
                 </div>
                 <div className="btn-btn">
                     <Link href="/"><button className="start-btn">Back to Home</button></Link>
@@ -21,7 +21,7 @@ export default function Rolepick() {
             <section className="role-selection-section">
                 <div className="role-container">
 
-                    <h2 className="role-header">Welcome To Campus Stay </h2>
+                    <h2 className="role-header">Welcome To Campus Unit </h2>
                     <p className="role-subheader">Choose Your Role To Get Started With Your Journey</p>
 
                     <div className="role-cards-wrapper">

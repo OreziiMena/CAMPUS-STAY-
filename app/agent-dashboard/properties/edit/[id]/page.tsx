@@ -28,7 +28,9 @@ export default function EditProperty() {
     prepaid: false,
     water: false,
     gated: false,
-    security: false
+    security: false,
+    wardrobe: false,
+    kitchen: false
   });
 
   // Stored URL strings in DB
@@ -79,7 +81,9 @@ export default function EditProperty() {
           prepaid: prop.amenities.includes("Prepaid Meter"),
           water: prop.amenities.includes("Borehole Water"),
           gated: prop.amenities.includes("Gated Compound"),
-          security: prop.amenities.includes("Security Guard")
+          security: prop.amenities.includes("Security Guard"),
+          wardrobe: prop.amenities.includes("Wardrobe"),
+          kitchen: prop.amenities.includes("Kitchen")
         };
         setAmenities(parsedAmenities);
       } else {
@@ -131,6 +135,8 @@ export default function EditProperty() {
     if (amenities.water) activeAmenities.push("Borehole Water");
     if (amenities.gated) activeAmenities.push("Gated Compound");
     if (amenities.security) activeAmenities.push("Security Guard");
+    if (amenities.wardrobe) activeAmenities.push("Wardrobe");
+    if (amenities.kitchen) activeAmenities.push("Kitchen");
 
     try {
       let newlyUploadedUrls: string[] = [];
@@ -359,46 +365,76 @@ export default function EditProperty() {
               />
               <span>Security Guard</span>
             </label>
+            <label className="checkbox-item">
+              <input
+                type="checkbox"
+                checked={amenities.wardrobe}
+                onChange={() => handleCheckboxChange("wardrobe")}
+              />
+              <span>Wardrobe</span>
+            </label>
+            <label className="checkbox-item">
+              <input
+                type="checkbox"
+                checked={amenities.kitchen}
+                onChange={() => handleCheckboxChange("kitchen")}
+              />
+              <span>Kitchen</span>
+            </label>
           </div>
 
           <div className="form-section-title">Property Media</div>
           <div className="upload-container">
-            {/* Existing Images */}
+            {/* Existing Media */}
             {existingImages.length > 0 && (
               <div style={{ marginBottom: "20px" }}>
-                <p style={{ fontFamily: "Open Sans", fontSize: "14px", fontWeight: "600", color: "rgb(2,53,28)", marginBottom: "10px" }}>Existing Images</p>
+                <p style={{ fontFamily: "Open Sans", fontSize: "14px", fontWeight: "600", color: "rgb(2,53,28)", marginBottom: "10px" }}>Existing Media</p>
                 <div className="uploaded-previews">
-                  {existingImages.map((url, i) => (
-                    <div key={i} className="preview-img-wrapper">
-                      <img src={url} alt="existing preview" />
-                      <button type="button" onClick={() => removeExistingImage(i)}>
-                        <i className="fas fa-trash-alt"></i>
-                      </button>
-                    </div>
-                  ))}
+                  {existingImages.map((url, i) => {
+                    const isVideo = url.match(/\.(mp4|webm|ogg|mov|mkv)(\?.*)?$/i);
+                    return (
+                      <div key={i} className="preview-img-wrapper">
+                        {isVideo ? (
+                          <video src={url} className="w-full h-full object-cover" controls style={{ width: "100%", height: "100%", objectFit: "cover", borderRadius: "8px" }} />
+                        ) : (
+                          <img src={url} alt="existing preview" />
+                        )}
+                        <button type="button" onClick={() => removeExistingImage(i)}>
+                          <i className="fas fa-trash-alt"></i>
+                        </button>
+                      </div>
+                    );
+                  })}
                 </div>
               </div>
             )}
 
-            {/* Upload Zone for New Images */}
+            {/* Upload Zone for New Media */}
             <div>
-              <p style={{ fontFamily: "Open Sans", fontSize: "14px", fontWeight: "600", color: "rgb(2,53,28)", marginBottom: "10px" }}>Upload New Images</p>
+              <p style={{ fontFamily: "Open Sans", fontSize: "14px", fontWeight: "600", color: "rgb(2,53,28)", marginBottom: "10px" }}>Upload New Media</p>
               <div className="file-upload-zone">
                 <i className="fas fa-cloud-upload-alt"></i>
-                <p>Drag and drop property images or <span>Browse files</span></p>
-                <input type="file" multiple accept="image/*" onChange={handleNewImageUpload} />
+                <p>Drag and drop property media or <span>Browse files</span></p>
+                <input type="file" multiple accept="image/*,video/*" onChange={handleNewImageUpload} />
               </div>
 
               {newImagePreviews.length > 0 && (
                 <div className="uploaded-previews">
-                  {newImagePreviews.map((url, i) => (
-                    <div key={i} className="preview-img-wrapper">
-                      <img src={url} alt="new preview" />
-                      <button type="button" onClick={() => removeNewImage(i)}>
-                        <i className="fas fa-times"></i>
-                      </button>
-                    </div>
-                  ))}
+                  {newImagePreviews.map((url, i) => {
+                    const isVideo = url.match(/\.(mp4|webm|ogg|mov|mkv)(\?.*)?$/i) || (newImageFiles[i] && newImageFiles[i].type.startsWith("video/"));
+                    return (
+                      <div key={i} className="preview-img-wrapper">
+                        {isVideo ? (
+                          <video src={url} className="w-full h-full object-cover" controls style={{ width: "100%", height: "100%", objectFit: "cover", borderRadius: "8px" }} />
+                        ) : (
+                          <img src={url} alt="new preview" />
+                        )}
+                        <button type="button" onClick={() => removeNewImage(i)}>
+                          <i className="fas fa-times"></i>
+                        </button>
+                      </div>
+                    );
+                  })}
                 </div>
               )}
             </div>

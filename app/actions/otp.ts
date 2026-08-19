@@ -85,11 +85,16 @@ export async function verifyOTP(email: string, code: string, purpose: "EMAIL_VER
 
     // Automatically sign session cookie
     const cookieStore = await cookies();
-    const token = signSession({ userId: user.id, role: user.role });
+    const token = signSession({
+      userId: user.id,
+      role: user.role,
+      expiresAt: Date.now() + 60 * 60 * 24 * 7 * 1000, // 7 days in milliseconds
+    });
     cookieStore.set(SESSION_COOKIE_NAME, token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
       path: "/",
+      sameSite: "lax",
       maxAge: 60 * 60 * 24 * 7,
     });
 

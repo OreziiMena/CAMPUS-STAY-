@@ -59,8 +59,13 @@ function AdminSidebarWrapper({
             </Link>
           </li>
           <li style={{ marginTop: "20px", borderTop: "1px solid rgba(255, 255, 255, 0.1)", paddingTop: "10px" }}>
-            <Link href="/explore">
-              <i className="fas fa-globe"></i> View Site
+            <Link href="/">
+              <i className="fas fa-globe"></i> View Explore Site
+            </Link>
+          </li>
+          <li>
+            <Link href="/landing">
+              <i className="fas fa-home"></i> View Landing Page
             </Link>
           </li>
         </ul>
