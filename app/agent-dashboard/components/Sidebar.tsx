@@ -20,7 +20,7 @@ export default function Sidebar({
   return (
     <aside className={`sidebar ${isMobileOpen ? "active" : ""}`} id="sidebar">
       <div className="sidebar-header">
-        <h2 className="logo">Campus Unit</h2>
+        <h2 className="logo">Campus Tent</h2>
         <button className="close-sidebar-btn" id="close-sidebar" onClick={onClose}>
           <i className="fas fa-times"></i>
         </button>

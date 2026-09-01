@@ -21,7 +21,7 @@ export default function TenantGuide() {
       <main className="guide-container">
         <div className="guide-grid">
           <div className="guide-main">
-            <h2>The Campus Stay Tenant Journey</h2>
+            <h2>The Campus Tent Tenant Journey</h2>
             
             <div className="guide-step-card">
               <div className="step-num">1</div>

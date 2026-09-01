@@ -2,8 +2,8 @@ import { MetadataRoute } from "next";
 
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: "Campus Unit",
-    short_name: "Campus Unit",
+    name: "Campus Tent",
+    short_name: "Campus Tent",
     description: "Find your perfect off-campus housing and roommates.",
     start_url: "/",
     display: "standalone",

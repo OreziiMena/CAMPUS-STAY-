@@ -6,6 +6,7 @@ import { writeFile, mkdir } from "fs/promises";
 import path from "path";
 import { uploadToR2 } from "@/lib/r2";
 import { sendEmail } from "@/lib/email";
+import { logAgentActivity } from "@/lib/activity";
 
 export async function getProperties(filterParam?: string | {
   searchQuery?: string;
@@ -180,12 +181,36 @@ export async function addProperty(data: any) {
       return { success: false, error: "Unauthorized. Please log in." };
     }
 
-    const { title, hostelType, price, location, distance, description, amenities, images, university, genderPreference } = data;
+    const { 
+      title, 
+      hostelType, 
+      price, 
+      rentAmount, 
+      agentFee, 
+      cautionFee, 
+      isNegotiable, 
+      location, 
+      distance, 
+      description, 
+      amenities, 
+      images, 
+      university, 
+      genderPreference 
+    } = data;
+
+    const parsedRent = rentAmount !== undefined && rentAmount !== "" ? parseFloat(rentAmount) : (price ? parseFloat(price) : 0);
+    const parsedAgentFee = agentFee !== undefined && agentFee !== "" ? parseFloat(agentFee) : 0;
+    const parsedCautionFee = cautionFee !== undefined && cautionFee !== "" ? parseFloat(cautionFee) : 0;
+    const computedTotalPrice = parsedRent + parsedAgentFee + parsedCautionFee;
 
     const createData: any = {
       title,
       hostelType,
-      price: parseFloat(price),
+      price: computedTotalPrice,
+      rentAmount: parsedRent,
+      agentFee: parsedAgentFee,
+      cautionFee: parsedCautionFee,
+      isNegotiable: Boolean(isNegotiable),
       location,
       distance,
       description,
@@ -216,6 +241,28 @@ export async function addProperty(data: any) {
 
     const property = await prisma.property.create({
       data: createData,
+    });
+
+    // Record audit activity log
+    const agentName = user.agentProfile?.fullName || user.studentProfile?.fullName || user.name || user.email;
+    await logAgentActivity({
+      userId: user.id,
+      userName: `${agentName} (${user.role === "AGENT" ? "Agent" : "Student"})`,
+      userEmail: user.email,
+      userRole: user.role,
+      action: "PROPERTY_CREATED",
+      description: `Created new listing "${property.title}" in ${property.location} (Rent: ₦${parsedRent.toLocaleString()}, Agent Fee: ₦${parsedAgentFee.toLocaleString()}, Caution: ₦${parsedCautionFee.toLocaleString()}, Total: ₦${computedTotalPrice.toLocaleString()}/yr).`,
+      propertyId: property.id,
+      propertyTitle: property.title,
+      metadata: {
+        rentAmount: parsedRent,
+        agentFee: parsedAgentFee,
+        cautionFee: parsedCautionFee,
+        totalPrice: computedTotalPrice,
+        isNegotiable: Boolean(isNegotiable),
+        location: property.location,
+        hostelType: property.hostelType,
+      },
     });
 
     return { success: true, propertyId: property.id };
@@ -276,7 +323,7 @@ export async function createInquiry(data: { propertyId: string; message: string 
     if (recipientEmail) {
       await sendEmail({
         to: recipientEmail,
-        subject: "🏠 New Inquiry on Your Listing - Campus Stay",
+        subject: "🏠 New Inquiry on Your Listing - Campus Tent",
         html: `
           <div style="font-family: Arial, sans-serif; max-width: 600px; padding: 20px; border: 1px solid #eaeaea; border-radius: 8px;">
             <h2 style="color: rgb(2, 53, 28);">New Inquiry Received!</h2>
@@ -285,11 +332,11 @@ export async function createInquiry(data: { propertyId: string; message: string 
             <blockquote style="background: #f9f9f9; padding: 12px; border-left: 4px solid rgb(2, 53, 28); margin: 20px 0;">
               "${message}"
             </blockquote>
-            <p>Log in to your Campus Stay dashboard to reply in the chat room.</p>
-            <a href="https://campus-stay-chi.vercel.app/chat" style="display: inline-block; background-color: rgb(2, 53, 28); color: white; padding: 10px 20px; text-decoration: none; border-radius: 4px; font-weight: bold; margin-top: 10px;">Go to Chat Inbox</a>
+            <p>Log in to your Campus Tent dashboard to reply in the chat room.</p>
+            <a href="https://campustent.com/chat" style="display: inline-block; background-color: rgb(2, 53, 28); color: white; padding: 10px 20px; text-decoration: none; border-radius: 4px; font-weight: bold; margin-top: 10px;">Go to Chat Inbox</a>
           </div>
         `,
-        text: `Hi ${recipientName},\n\nA user has sent an inquiry regarding your listing: "${property.title}".\n\n"${message}"\n\nLog in to your Campus Stay dashboard to reply in the chat inbox: https://campus-stay-chi.vercel.app/chat`
+        text: `Hi ${recipientName},\n\nA user has sent an inquiry regarding your listing: "${property.title}".\n\n"${message}"\n\nLog in to your Campus Tent dashboard to reply in the chat inbox: https://campustent.com/chat`
       });
     }
 
@@ -585,6 +632,22 @@ export async function togglePropertyAvailability(propertyId: string) {
       data: { isAvailable: !property.isAvailable },
     });
 
+    // Record audit activity log
+    const agentName = user.agentProfile?.fullName || user.studentProfile?.fullName || user.name || user.email;
+    await logAgentActivity({
+      userId: user.id,
+      userName: `${agentName} (${user.role === "AGENT" ? "Agent" : "Student"})`,
+      userEmail: user.email,
+      userRole: user.role,
+      action: "PROPERTY_AVAILABILITY_TOGGLED",
+      description: `Marked listing "${property.title}" as ${updated.isAvailable ? "AVAILABLE" : "TAKEN (Rented)"}.`,
+      propertyId: property.id,
+      propertyTitle: property.title,
+      metadata: {
+        isAvailable: updated.isAvailable,
+      },
+    });
+
     return { success: true, isAvailable: updated.isAvailable };
   } catch (err: any) {
     return { success: false, error: err.message || "Failed to toggle availability." };
@@ -618,20 +681,71 @@ export async function updateProperty(propertyId: string, data: any) {
       return { success: false, error: "Unauthorized." };
     }
 
-    const { title, hostelType, price, location, distance, description, amenities, images, university } = data;
+    const { 
+      title, 
+      hostelType, 
+      price, 
+      rentAmount, 
+      agentFee, 
+      cautionFee, 
+      isNegotiable, 
+      location, 
+      distance, 
+      description, 
+      amenities, 
+      images, 
+      university 
+    } = data;
+
+    const parsedRent = rentAmount !== undefined && rentAmount !== "" 
+      ? parseFloat(rentAmount) 
+      : (price !== undefined && price !== "" ? parseFloat(price) : (existingProperty.rentAmount ?? existingProperty.price));
+    const parsedAgentFee = agentFee !== undefined && agentFee !== "" 
+      ? parseFloat(agentFee) 
+      : (existingProperty.agentFee ?? 0);
+    const parsedCautionFee = cautionFee !== undefined && cautionFee !== "" 
+      ? parseFloat(cautionFee) 
+      : (existingProperty.cautionFee ?? 0);
+    const computedTotalPrice = parsedRent + parsedAgentFee + parsedCautionFee;
 
     const updated = await prisma.property.update({
       where: { id: propertyId },
       data: {
         title,
         hostelType,
-        price: parseFloat(price),
+        price: computedTotalPrice,
+        rentAmount: parsedRent,
+        agentFee: parsedAgentFee,
+        cautionFee: parsedCautionFee,
+        isNegotiable: isNegotiable !== undefined ? Boolean(isNegotiable) : existingProperty.isNegotiable,
         location,
         distance,
         description,
         university: university || existingProperty.university || "FUPRE",
         amenities: amenities || [],
         images: images || [],
+      },
+    });
+
+    // Record audit activity log
+    const agentName = user.agentProfile?.fullName || user.studentProfile?.fullName || user.name || user.email;
+    await logAgentActivity({
+      userId: user.id,
+      userName: `${agentName} (${user.role === "AGENT" ? "Agent" : "Student"})`,
+      userEmail: user.email,
+      userRole: user.role,
+      action: "PROPERTY_UPDATED",
+      description: `Updated listing "${updated.title}" in ${updated.location} (Rent: ₦${parsedRent.toLocaleString()}, Agent Fee: ₦${parsedAgentFee.toLocaleString()}, Caution: ₦${parsedCautionFee.toLocaleString()}, Total: ₦${computedTotalPrice.toLocaleString()}/yr).`,
+      propertyId: updated.id,
+      propertyTitle: updated.title,
+      metadata: {
+        rentAmount: parsedRent,
+        agentFee: parsedAgentFee,
+        cautionFee: parsedCautionFee,
+        totalPrice: computedTotalPrice,
+        isNegotiable: Boolean(isNegotiable),
+        location: updated.location,
+        hostelType: updated.hostelType,
       },
     });
 
@@ -670,6 +784,23 @@ export async function deleteProperty(propertyId: string) {
 
     await prisma.property.delete({
       where: { id: propertyId },
+    });
+
+    // Record audit activity log
+    const agentName = user.agentProfile?.fullName || user.studentProfile?.fullName || user.name || user.email;
+    await logAgentActivity({
+      userId: user.id,
+      userName: `${agentName} (${user.role === "AGENT" ? "Agent" : "Student"})`,
+      userEmail: user.email,
+      userRole: user.role,
+      action: "PROPERTY_DELETED",
+      description: `Deleted listing "${property.title}" (Location: ${property.location}, Total Price: ₦${property.price.toLocaleString()}/yr).`,
+      propertyId: property.id,
+      propertyTitle: property.title,
+      metadata: {
+        location: property.location,
+        price: property.price,
+      },
     });
 
     return { success: true };

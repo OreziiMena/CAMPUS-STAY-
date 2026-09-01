@@ -165,7 +165,7 @@ export default function StudentSettings() {
                   <div className="settings-item">
                     <div className="settings-info">
                       <h4>Marketing & News</h4>
-                      <p>Receive newsletter updates and housing guidelines from Campus Stay.</p>
+                      <p>Receive newsletter updates and housing guidelines from Campus Tent.</p>
                     </div>
                     <label className="checkbox-toggle">
                       <input 

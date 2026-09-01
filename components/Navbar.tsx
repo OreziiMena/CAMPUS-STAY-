@@ -79,7 +79,7 @@ export default function Navbar() {
             unoptimized
             className={`logo ${styles.logoImg}`}
           />
-          <h2 className={`logo-text ${styles.logoH2}`}>Campus Unit</h2>
+          <h2 className={`logo-text ${styles.logoH2}`}>Campus Tent</h2>
         </Link>
       </div>
       

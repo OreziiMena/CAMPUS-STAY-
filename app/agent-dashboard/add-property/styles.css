@@ -44,18 +44,31 @@
     box-shadow: 0 4px 15px rgba(0, 0, 0, 0.02);
     border: 1px solid var(--border-light);
     margin-bottom: 40px;
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+    box-sizing: border-box;
+    overflow: hidden;
 }
 
 .form-grid {
     display: grid;
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
     gap: 20px;
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+    box-sizing: border-box;
 }
 
 .input-group {
     display: flex;
     flex-direction: column;
     margin-bottom: 15px;
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+    box-sizing: border-box;
 }
 
 .input-group label {
@@ -64,12 +77,16 @@
     font-weight: 600;
     color: var(--primary-green);
     margin-bottom: 8px;
+    display: block;
 }
 
 .input-group input,
 .input-group textarea,
 .input-group select {
     width: 100%;
+    max-width: 100%;
+    min-width: 0;
+    box-sizing: border-box;
     padding: 12px 15px;
     border: 1px solid #ccc;
     border-radius: var(--radius-sm);
@@ -261,16 +278,71 @@
     gap: 10px;
 }
 
+.pricing-breakdown-card {
+    background: #f9fafb;
+    padding: 18px 20px;
+    border-radius: 12px;
+    border: 1px solid #e5e7eb;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    grid-column: 1 / -1;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.pricing-inputs-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 14px;
+    width: 100%;
+}
+
 @media (max-width: 768px) {
     .property-form-card {
-        padding: 20px 15px;
+        padding: 16px 12px;
+        width: 100%;
+        max-width: 100%;
+        min-width: 0;
+        box-sizing: border-box;
     }
     .form-grid {
-        grid-template-columns: 1fr;
-        gap: 15px;
+        display: flex;
+        flex-direction: column;
+        gap: 14px;
+        width: 100%;
+        max-width: 100%;
+        min-width: 0;
+        box-sizing: border-box;
+    }
+    .pricing-breakdown-card {
+        padding: 14px 10px;
+        width: 100%;
+        max-width: 100%;
+        min-width: 0;
+        box-sizing: border-box;
+    }
+    .pricing-inputs-grid {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+        width: 100%;
+        max-width: 100%;
+        min-width: 0;
+        box-sizing: border-box;
     }
     .submit-btn {
         max-width: 100%;
+        width: 100%;
+    }
+    .input-group input,
+    .input-group textarea,
+    .input-group select {
+        font-size: 16px; /* Prevents iOS auto-zoom */
+        width: 100%;
+        max-width: 100%;
+        min-width: 0;
+        box-sizing: border-box;
     }
 }
 

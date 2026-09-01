@@ -52,7 +52,7 @@ export async function getStudentDashboardData() {
       const lastMsg = room.messages?.[0]?.text || "Conversation started.";
       const lastMsgAt = room.messages?.[0]?.createdAt || room.createdAt;
       
-      let agentName = "Campus Stay User";
+      let agentName = "Campus Tent User";
       let agentVerified = false;
 
       if (room.agent.studentProfile) {
@@ -91,7 +91,7 @@ export async function getStudentDashboardData() {
     });
 
     const mappedDbInquiries = dbInquiries.map(inq => {
-      let agentName = "Campus Stay Official";
+      let agentName = "Campus Tent Official";
       let agentVerified = true; // Default system verification is true
 
       if (inq.property.agent) {
@@ -147,7 +147,7 @@ export async function getStudentDashboardData() {
       profile,
       inquiries: uniqueInquiries,
       viewings: viewings.map(v => {
-        let agentName = "Campus Stay Official";
+        let agentName = "Campus Tent Official";
         let agentVerified = true;
 
         if (v.property.agent) {

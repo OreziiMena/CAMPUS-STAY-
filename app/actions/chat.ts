@@ -101,7 +101,7 @@ export async function getChatRooms() {
     const formattedRooms = chatRooms.map((room) => {
       const isInitiator = room.studentId === user.id;
       
-      let targetName = "Campus Stay User";
+      let targetName = "Campus Tent User";
       let targetRoleLabel = "User";
       let targetVerified = false;
 
@@ -251,12 +251,12 @@ export async function sendChatMessage(chatRoomId: string, text: string) {
 
               await sendEmail({
                 to: recipientUser.email,
-                subject: `New Roommate Inquiry on Campus Stay!`,
+                subject: `New Roommate Inquiry on Campus Tent!`,
                 html: `
                   <div style="font-family: 'Poppins', sans-serif; max-width: 600px; margin: 0 auto; padding: 25px; border: 1px solid #eaeaea; border-radius: 16px;">
                     <h2 style="color: rgb(2, 53, 28); font-weight: 700;">New Roommate Interest!</h2>
                     <p>Hello ${recipientName},</p>
-                    <p><strong>${senderName}</strong> has sent you a message regarding your roommate listing: <strong>"${listingTitle}"</strong> on Campus Stay.</p>
+                    <p><strong>${senderName}</strong> has sent you a message regarding your roommate listing: <strong>"${listingTitle}"</strong> on Campus Tent.</p>
                     
                     <div style="background-color: #f9f9f9; padding: 15px; border-left: 4px solid rgb(2, 53, 28); border-radius: 4px; margin: 20px 0; font-style: italic;">
                        "${text}"
@@ -264,11 +264,11 @@ export async function sendChatMessage(chatRoomId: string, text: string) {
                     
                     <p>Please log in to your dashboard to reply and coordinate details:</p>
                     <div style="text-align: center; margin: 25px 0;">
-                      <a href="${process.env.NEXT_PUBLIC_APP_URL || 'https://campus-stay.vercel.app'}/chat?roomId=${chatRoomId}" style="background-color: rgb(2, 53, 28); color: white; padding: 12px 24px; text-decoration: none; border-radius: 8px; font-weight: bold; display: inline-block;">
+                      <a href="${process.env.NEXT_PUBLIC_APP_URL || 'https://campustent.com'}/chat?roomId=${chatRoomId}" style="background-color: rgb(2, 53, 28); color: white; padding: 12px 24px; text-decoration: none; border-radius: 8px; font-weight: bold; display: inline-block;">
                         Open Chat Room
                       </a>
                     </div>
-                    <p style="color: #666; font-size: 0.85rem;">Best regards,<br/>The Campus Stay Team</p>
+                    <p style="color: #666; font-size: 0.85rem;">Best regards,<br/>The Campus Tent Team</p>
                   </div>
                 `
               });
@@ -355,7 +355,7 @@ export async function getOrCreateRoommateChatRoom(recipientUserId: string) {
             title: "General Roommate Match",
             hostelType: "Shared Hostel Room",
             price: 0,
-            location: "Campus Stay Community",
+            location: "Campus Tent Community",
             distance: "Flexible Proximity",
             description: "A placeholder listing for student-to-student roommate matching chat rooms.",
             amenities: ["Roommate Search"],

@@ -124,7 +124,7 @@ export async function toggleUserVerification(profileId: string, role: "STUDENT" 
     if (status && targetEmail) {
       await sendEmail({
         to: targetEmail,
-        subject: role === "STUDENT" ? "✅ Your Student Verification Approved! - Campus Stay" : "✅ Your Agent Profile Approved! - Campus Stay",
+        subject: role === "STUDENT" ? "✅ Your Student Verification Approved! - Campus Tent" : "✅ Your Agent Profile Approved! - Campus Tent",
         html: `
           <div style="font-family: Arial, sans-serif; max-width: 600px; padding: 20px; border: 1px solid #eaeaea; border-radius: 8px;">
             <h2 style="color: rgb(2, 53, 28);">Congratulations! 🎉</h2>
@@ -139,10 +139,10 @@ export async function toggleUserVerification(profileId: string, role: "STUDENT" 
             </p>
                 <p>You can now log in to access all verified features on the platform.</p>
             <p>Find your next campus home today!</p>
-            <a href="https://campus-stay-chi.vercel.app/" style="display: inline-block; background-color: rgb(2, 53, 28); color: white; padding: 10px 20px; text-decoration: none; border-radius: 4px; font-weight: bold; margin-top: 10px;">Check out Properties Now</a>
+            <a href="https://campustent.com/" style="display: inline-block; background-color: rgb(2, 53, 28); color: white; padding: 10px 20px; text-decoration: none; border-radius: 4px; font-weight: bold; margin-top: 10px;">Check out Properties Now</a>
           </div>
         `,
-        text: `Hi ${targetName},\n\nYour identity verification documents have been successfully reviewed and approved by our team.\n\nYou can now log in to access all verified features on the platform: https://campus-stay-chi.vercel.app/`
+        text: `Hi ${targetName},\n\nYour identity verification documents have been successfully reviewed and approved by our team.\n\nYou can now log in to access all verified features on the platform: https://campustent.com/`
       });
     }
 
@@ -273,3 +273,55 @@ export async function getAdminAnalyticsData() {
     return { success: false, error: err.message || "Failed to load analytics metrics." };
   }
 }
+
+export async function getAgentActivityLogs(params?: {
+  searchQuery?: string;
+  actionFilter?: string;
+  limit?: number;
+}) {
+  try {
+    const adminUser = await getCurrentUser();
+    if (!adminUser || adminUser.role !== Role.ADMIN) {
+      return { success: false, error: "Unauthorized. Admin access required." };
+    }
+
+    const { searchQuery, actionFilter, limit = 100 } = params || {};
+
+    const whereClause: any = {};
+
+    if (actionFilter && actionFilter !== "ALL") {
+      whereClause.action = actionFilter;
+    }
+
+    if (searchQuery && searchQuery.trim() !== "") {
+      const q = searchQuery.trim();
+      whereClause.OR = [
+        { userName: { contains: q, mode: "insensitive" } },
+        { userEmail: { contains: q, mode: "insensitive" } },
+        { description: { contains: q, mode: "insensitive" } },
+        { propertyTitle: { contains: q, mode: "insensitive" } },
+      ];
+    }
+
+    const logs = await prisma.activityLog.findMany({
+      where: whereClause,
+      orderBy: { createdAt: "desc" },
+      take: limit,
+      include: {
+        user: {
+          select: {
+            id: true,
+            email: true,
+            phone: true,
+            role: true,
+          },
+        },
+      },
+    });
+
+    return { success: true, logs };
+  } catch (err: any) {
+    return { success: false, error: err.message || "Failed to load activity logs." };
+  }
+}
+

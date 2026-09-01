@@ -241,7 +241,7 @@ export default function Settings() {
                 <div className="settings-item">
                   <div className="settings-info">
                     <h4>Marketing Updates</h4>
-                    <p>Receive tips, feature updates, and Campus Stay news.</p>
+                    <p>Receive tips, feature updates, and Campus Tent news.</p>
                   </div>
                   <label className="custom-toggle">
                     <input 

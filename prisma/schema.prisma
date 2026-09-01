@@ -39,6 +39,7 @@ model User {
   agentChatRooms    ChatRoom[]      @relation(name: "AgentChatRooms")
   messagesSent      Message[]
   reportsSubmitted  Report[]        @relation(name: "UserReports")
+  activityLogs      ActivityLog[]
 }
 
 model StudentProfile {
@@ -79,7 +80,11 @@ model Property {
   id           String       @id @default(uuid())
   title        String
   hostelType   String       // e.g., Self-Contain, Single Room, 2-Bedroom Flat
-  price        Float
+  price               Float
+  rentAmount          Float?
+  agentFee            Float?          @default(0)
+  cautionFee          Float?          @default(0)
+  isNegotiable        Boolean         @default(false)
   location     String
   distance     String       // e.g., "5 mins walk to campus"
   description  String
@@ -226,5 +231,24 @@ model RateLimit {
   createdAt DateTime @default(now())
 
   @@index([ip, action, createdAt])
+}
+
+model ActivityLog {
+  id            String   @id @default(uuid())
+  userId        String?
+  user          User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+  userName      String
+  userEmail     String
+  userRole      String   @default("AGENT")
+  action        String   // PROPERTY_CREATED, PROPERTY_UPDATED, PROPERTY_DELETED, PROPERTY_AVAILABILITY_TOGGLED
+  description   String
+  propertyId    String?
+  propertyTitle String?
+  metadata      Json?
+  createdAt     DateTime @default(now())
+
+  @@index([userId])
+  @@index([action])
+  @@index([createdAt])
 }
 

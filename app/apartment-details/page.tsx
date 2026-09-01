@@ -15,6 +15,10 @@ interface Property {
   id: string;
   title: string;
   price: string;
+  rentAmount?: number;
+  agentFee?: number;
+  cautionFee?: number;
+  isNegotiable?: boolean;
   location: string;
   distance: string;
   description: string;
@@ -62,7 +66,7 @@ const mockProperties: Record<string, Property> = {
       "https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?ixlib=rb-4.0.3&auto=format&fit=crop&w=1200&q=80"
     ],
     agent: {
-      name: "Campus Stay Official",
+      name: "Campus Tent Official",
       role: "Premium Partner",
       phone: "+2349161863877"
     }
@@ -141,7 +145,7 @@ function ApartmentDetailsContent() {
       setIsSubmittingReport(false);
 
       if (res.success) {
-        setReportSuccess("Listing reported successfully. Thank you for keeping Campus Stay safe!");
+        setReportSuccess("Listing reported successfully. Thank you for keeping Campus Tent safe!");
         setTimeout(() => {
           setIsReportModalOpen(false);
           setReportReason("FRAUD_SCAM");
@@ -163,7 +167,7 @@ function ApartmentDetailsContent() {
     const shareUrl = window.location.href;
     const shareData = {
       title: property.title,
-      text: `Check out this listing on Campus Stay: ${property.title}`,
+      text: `Check out this listing on Campus Tent: ${property.title}`,
       url: shareUrl,
     };
 
@@ -196,10 +200,19 @@ function ApartmentDetailsContent() {
       const res = await getPropertyDetails(id);
       if (res.success && res.property) {
         const prop = res.property;
+        const rawRent = prop.rentAmount !== null && prop.rentAmount !== undefined ? prop.rentAmount : prop.price;
+        const rawAgentFee = prop.agentFee !== null && prop.agentFee !== undefined ? prop.agentFee : 0;
+        const rawCautionFee = prop.cautionFee !== null && prop.cautionFee !== undefined ? prop.cautionFee : 0;
+        const rawTotal = prop.price;
+
         setProperty({
           id: prop.id,
           title: prop.title,
-          price: `₦${prop.price.toLocaleString()}`,
+          price: `₦${rawTotal.toLocaleString()}`,
+          rentAmount: rawRent,
+          agentFee: rawAgentFee,
+          cautionFee: rawCautionFee,
+          isNegotiable: Boolean(prop.isNegotiable),
           location: prop.location,
           distance: prop.distance,
           description: prop.description,
@@ -207,8 +220,8 @@ function ApartmentDetailsContent() {
           images: prop.images,
           views: prop.views || 0,
           agent: {
-            name: prop.agent ? prop.agent.fullName : (prop.student ? `@${prop.student.username}` : "Campus Stay Official"),
-            role: prop.agent ? (prop.agent.isVerified ? "Verified Agent" : "Agent/Landlord") : (prop.student ? (prop.student.isVerified ? "Verified Student Roommate" : "Student (Roommate Option)") : "Campus Stay Partner"),
+            name: prop.agent ? prop.agent.fullName : (prop.student ? `@${prop.student.username}` : "Campus Tent Official"),
+            role: prop.agent ? (prop.agent.isVerified ? "Verified Agent" : "Agent/Landlord") : (prop.student ? (prop.student.isVerified ? "Verified Student Roommate" : "Student (Roommate Option)") : "Campus Tent Partner"),
             phone: prop.agent ? (prop.agent.user?.phone || "+2349161863877") : (prop.student?.user?.phone || "+2349161863877"),
             isVerified: prop.agent ? prop.agent.isVerified : (prop.student ? prop.student.isVerified : true),
           }
@@ -226,7 +239,7 @@ function ApartmentDetailsContent() {
     if (!property) return;
     await createInquiry({
       propertyId: property.id,
-      message: `Hi, I am interested in your listing "${property.title}" on Campus Stay.`,
+      message: `Hi, I am interested in your listing "${property.title}" on Campus Tent.`,
     });
   };
 
@@ -327,7 +340,70 @@ function ApartmentDetailsContent() {
               <p><i className="fas fa-walking"></i> {property.distance}</p>
             </div>
 
-            <h2 className="listing-price">{property.price} <span>/ year</span></h2>
+            <div style={{ display: "flex", alignItems: "center", gap: "10px", flexWrap: "wrap", marginTop: "12px", marginBottom: "8px" }}>
+              <h2 className="listing-price" style={{ margin: 0 }}>{property.price} <span>/ year</span></h2>
+              {property.isNegotiable !== undefined && (
+                <span style={{
+                  fontSize: "0.8rem",
+                  fontWeight: "700",
+                  fontFamily: "'Poppins', sans-serif",
+                  padding: "4px 12px",
+                  borderRadius: "20px",
+                  background: property.isNegotiable ? "rgba(16, 185, 129, 0.12)" : "rgba(107, 114, 128, 0.12)",
+                  color: property.isNegotiable ? "#047857" : "#4b5563",
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: "5px"
+                }}>
+                  <i className={property.isNegotiable ? "fas fa-handshake" : "fas fa-lock"}></i>
+                  {property.isNegotiable ? "Agent Fee Negotiable" : "Fixed Agent Fee"}
+                </span>
+              )}
+            </div>
+
+            {/* Pricing Breakdown Bar */}
+            {(property.rentAmount !== undefined || property.agentFee !== undefined || property.cautionFee !== undefined) && (
+              <div className="pricing-breakdown-bar">
+                <div className="pricing-breakdown-item">
+                  <span className="label">House Rent</span>
+                  <div>
+                    <strong style={{ color: "rgb(2, 53, 28)" }}>
+                      ₦{(property.rentAmount ?? 0).toLocaleString()}
+                    </strong>
+                    <span className="unit"> / yr</span>
+                  </div>
+                </div>
+
+                <div className="pricing-breakdown-item">
+                  <span className="label">
+                    Agent Fee {property.isNegotiable && <span style={{ color: "#059669", fontWeight: "700" }}>(Negotiable)</span>}
+                  </span>
+                  <div>
+                    <strong style={{ color: (property.agentFee && property.agentFee > 0) ? "#b45309" : "#059669" }}>
+                      ₦{(property.agentFee ?? 0).toLocaleString()}
+                    </strong>
+                  </div>
+                </div>
+
+                <div className="pricing-breakdown-item">
+                  <span className="label">Caution Fee</span>
+                  <div>
+                    <strong style={{ color: (property.cautionFee && property.cautionFee > 0) ? "#374151" : "#6b7280" }}>
+                      {(property.cautionFee && property.cautionFee > 0) ? `₦${property.cautionFee.toLocaleString()}` : "₦0 (Included/None)"}
+                    </strong>
+                  </div>
+                </div>
+
+                <div className="pricing-breakdown-item">
+                  <span className="label">Total Initial Package</span>
+                  <div>
+                    <strong style={{ color: "rgb(2, 53, 28)", fontWeight: "800" }}>
+                      {property.price}
+                    </strong>
+                  </div>
+                </div>
+              </div>
+            )}
 
             <p className="desc-text">{property.description}</p>
           </div>

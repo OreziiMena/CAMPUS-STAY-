@@ -28,7 +28,7 @@ export async function sendEmail({
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        from: "Campus Stay <onboarding@resend.dev>",
+        from: "Campus Tent <onboarding@resend.dev>",
         to: [to],
         subject,
         html,

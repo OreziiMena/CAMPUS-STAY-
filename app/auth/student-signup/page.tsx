@@ -111,8 +111,8 @@ export default function StudentSignup() {
         <section className="auth-container">
           <div className="auth-card">
             <div className="auth-header">
-              <h2>Sign Up for Campus Stay</h2>
-              <p>Join Campus Stay to find your perfect off-campus home.</p>
+              <h2>Sign Up for Campus Tent</h2>
+              <p>Join Campus Tent to find your perfect off-campus home.</p>
             </div>
 
             {success ? (

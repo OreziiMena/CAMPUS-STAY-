@@ -278,7 +278,7 @@ export default function Explore() {
                 {displayProperties.map((property: any) => {
                   const ownerName = property.agent 
                     ? property.agent.fullName 
-                    : (property.student ? `@${property.student.username}` : "Campus Stay Official");
+                    : (property.student ? `@${property.student.username}` : "Campus Tent Official");
                   const isVerified = property.agent 
                     ? property.agent.isVerified 
                     : (property.student ? property.student.isVerified : true);
@@ -362,10 +362,27 @@ export default function Explore() {
                           })()}
                         </div>
 
-                        {/* Price large and bold */}
-                        <h3 style={{ fontSize: "1.3rem", fontWeight: "800", color: "#000", margin: "0 0 6px 0", fontFamily: "'Poppins', sans-serif" }}>
-                          ₦{property.price.toLocaleString()} <span style={{ fontSize: "0.8rem", color: "#666", fontWeight: "normal", fontFamily: "'Poppins', sans-serif" }}>/ year</span>
-                        </h3>
+                        {/* Price large and bold + Negotiable badge */}
+                        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: "6px", margin: "0 0 6px 0" }}>
+                          <h3 style={{ fontSize: "1.3rem", fontWeight: "800", color: "#000", margin: 0, fontFamily: "'Poppins', sans-serif" }}>
+                            ₦{property.price.toLocaleString()} <span style={{ fontSize: "0.8rem", color: "#666", fontWeight: "normal", fontFamily: "'Poppins', sans-serif" }}>/ year</span>
+                          </h3>
+                          {property.isNegotiable && (
+                            <span style={{
+                              background: "rgba(16, 185, 129, 0.12)",
+                              color: "#047857",
+                              padding: "2px 8px",
+                              borderRadius: "12px",
+                              fontSize: "0.68rem",
+                              fontWeight: "700",
+                              display: "inline-flex",
+                              alignItems: "center",
+                              gap: "3px"
+                            }}>
+                              <i className="fas fa-handshake"></i> Fee Negotiable
+                            </span>
+                          )}
+                        </div>
 
                         {/* Title */}
                         <p style={{ fontSize: "0.85rem", color: "#333", fontWeight: "600", margin: "0 0 8px 0", fontFamily: "'Poppins', sans-serif" }}>

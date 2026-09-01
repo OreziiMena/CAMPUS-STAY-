@@ -429,7 +429,7 @@ body {
         font-size: 14px;
     }
     .dashboard-content { 
-        padding: 20px;
+        padding: 16px 14px;
     }
     .section-header h2{
         font-size: 16px;
@@ -444,6 +444,18 @@ body {
     }
     .inquiry-time { 
         margin-right: 0; 
+    }
+}
+
+@media (max-width: 480px) {
+    .dashboard-header {
+        padding: 12px 15px;
+    }
+    .dashboard-content {
+        padding: 12px 10px;
+    }
+    .welcome-banner {
+        padding: 14px 12px;
     }
 }
 

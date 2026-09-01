@@ -108,7 +108,7 @@ export default function CampusStayLanding() {
 
       {/* Fourth Section */}
       <section className="features-section">
-        <h2 className="section-title">Why Students Love Campus Stay</h2>
+        <h2 className="section-title">Why Students Love Campus Tent</h2>
         <div className="features-grid">
           <div className="feature-card">
             <div className="icon-box">
@@ -148,17 +148,17 @@ export default function CampusStayLanding() {
       <section className="faq-section">
         <div className="faq-left">
           <h2>General FAQs</h2>
-          <p>Everything you need to know about Campus Stay and how it works. Can't find an answer? <Link href="/support">Chat to our team.</Link></p>
+          <p>Everything you need to know about Campus Tent and how it works. Can't find an answer? <Link href="/support">Chat to our team.</Link></p>
         </div>
 
         <div className="faq-right">
           <details className="faq-item" open>
             <summary>
-              Is Campus Stay free for students?
+              Is Campus Tent free for students?
               <span className="icon-box"><i className="fa-solid fa-chevron-down arrow-icon"></i></span>
             </summary>
             <div className="faq-content">
-              <p>Yes, browsing apartments and contacting landlords on Campus Stay is completely free. You only pay the rent and any associated agency fees directly to the verified landlord or agent.</p>
+              <p>Yes, browsing apartments and contacting landlords on Campus Tent is completely free. You only pay the rent and any associated agency fees directly to the verified landlord or agent.</p>
             </div>
           </details>
 
@@ -200,7 +200,7 @@ export default function CampusStayLanding() {
           <div className="cta-info">
             <span className="highlight-label">LANDLORDS & AGENTS</span>
             <h2 className="cta-header">Got a property <br />near campus?</h2>
-            <p className="cta-description">List your student apartment for free on Campus Stay and connect directly with thousands of verified student tenants actively searching for housing.</p>
+            <p className="cta-description">List your student apartment for free on Campus Tent and connect directly with thousands of verified student tenants actively searching for housing.</p>
             <ul className="feature-list">
               <li><i className="fa-solid fa-check feature-icon"></i> Free limited property listings</li>
               <li><i className="fa-solid fa-check feature-icon"></i> Feature and highlight your property highlights</li>

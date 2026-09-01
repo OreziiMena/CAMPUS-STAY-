@@ -142,8 +142,24 @@ export default function AgentPropertiesListing() {
                 </div>
               </div>
 
-              <div className="property-price">
-                ₦{property.price.toLocaleString()} <span>/ year</span>
+              <div className="property-price" style={{ minWidth: "160px" }}>
+                <div style={{ fontSize: "1.15rem", fontWeight: "800", color: "rgb(2, 53, 28)" }}>
+                  ₦{property.price.toLocaleString()} <span style={{ fontSize: "0.75rem", color: "#666", fontWeight: "normal" }}>/ yr</span>
+                </div>
+                <div style={{ fontSize: "0.75rem", color: "#4b5563", lineHeight: "1.35", marginTop: "4px", backgroundColor: "#f9fafb", padding: "4px 8px", borderRadius: "6px", border: "1px solid #e5e7eb" }}>
+                  <div><span style={{ color: "#6b7280" }}>Rent:</span> ₦{(property.rentAmount ?? property.price).toLocaleString()}</div>
+                  <div>
+                    <span style={{ color: "#6b7280" }}>Fee:</span> ₦{(property.agentFee ?? 0).toLocaleString()}{" "}
+                    {property.isNegotiable ? (
+                      <span style={{ color: "#047857", fontWeight: "700", fontSize: "0.68rem" }}>(Negotiable)</span>
+                    ) : (
+                      <span style={{ color: "#6b7280", fontSize: "0.68rem" }}>(Fixed)</span>
+                    )}
+                  </div>
+                  {property.cautionFee !== null && property.cautionFee !== undefined && property.cautionFee > 0 && (
+                    <div><span style={{ color: "#6b7280" }}>Caution:</span> ₦{property.cautionFee.toLocaleString()}</div>
+                  )}
+                </div>
               </div>
 
               <div className="property-row-controls">

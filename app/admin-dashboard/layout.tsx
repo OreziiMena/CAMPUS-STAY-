@@ -58,6 +58,11 @@ function AdminSidebarWrapper({
               <i className="fas fa-flag"></i> Reports Moderation
             </Link>
           </li>
+          <li>
+            <Link href="/admin-dashboard?tab=activity-logs" className={activeTab === "activity-logs" ? "active" : ""}>
+              <i className="fas fa-history"></i> Agent Activity Logs
+            </Link>
+          </li>
           <li style={{ marginTop: "20px", borderTop: "1px solid rgba(255, 255, 255, 0.1)", paddingTop: "10px" }}>
             <Link href="/">
               <i className="fas fa-globe"></i> View Explore Site
@@ -138,7 +143,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
               <i className="fas fa-bars"></i>
             </button>
             <div className="header-title">
-              <h3>Campus Stay Admin Portal</h3>
+              <h3>Campus Tent Admin Portal</h3>
             </div>
           </div>
           <div className="admin-profile-info">

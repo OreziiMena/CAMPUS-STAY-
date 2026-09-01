@@ -222,7 +222,7 @@ export default function StudentProfile() {
                 <h2>
                   <span>{firstName} {lastName}</span>
                   {isVerified && (
-                    <span className="verified-badge" title="Verified Campus Stay Student">
+                    <span className="verified-badge" title="Verified Campus Tent Student">
                       <i className="fas fa-check-circle"></i>
                     </span>
                   )}
@@ -381,7 +381,7 @@ export default function StudentProfile() {
                     <div className="settings-item-checkbox">
                       <div className="settings-info">
                         <h4>Open to Roommate Matching</h4>
-                        <p>Allow other students on Campus Stay to find you when looking for sharing roommates.</p>
+                        <p>Allow other students on Campus Tent to find you when looking for sharing roommates.</p>
                       </div>
                       <label className="checkbox-toggle">
                         <input 

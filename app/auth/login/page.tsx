@@ -60,7 +60,7 @@ export default function Login() {
           <div className="auth-card auth-card-narrow">
             <div className="auth-header">
               <h2>Welcome Back</h2>
-              <p>Log in to your Campus Stay account.</p>
+              <p>Log in to your Campus Tent account.</p>
             </div>
 
             <form id="login-form" className="auth-form" onSubmit={handleSubmit}>

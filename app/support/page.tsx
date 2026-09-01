@@ -56,7 +56,7 @@ export default function SupportPage() {
     },
     {
       q: "Are the listed hostels vetted and verified?",
-      a: "Yes. Campus Stay requires NIN uploads and identity verification from all registered agents. Verified landlords and listings display green verification badges to protect you against scams."
+      a: "Yes. Campus Tent requires NIN uploads and identity verification from all registered agents. Verified landlords and listings display green verification badges to protect you against scams."
     },
     {
       q: "How do I list my property as an Agent?",
@@ -76,7 +76,7 @@ export default function SupportPage() {
       {/* Hero Header */}
       <section className="support-hero">
         <h1>Help & <span>Support</span> Center</h1>
-        <p>Frequently asked questions and direct contact support. We are here to help you secure comfortable campus stays.</p>
+        <p>Frequently asked questions and direct contact support. We are here to help you secure comfortable campus student accommodations.</p>
       </section>
 
       {/* Main Support Grid */}
@@ -137,10 +137,10 @@ export default function SupportPage() {
 
             <div className="quick-contact-card">
               <h4>Direct Channels</h4>
-              <a href="mailto:support@campusstay.com" className="quick-contact-item">
-                <i className="fas fa-envelope"></i> support@campusstay.com
+              <a href="mailto:support@campustent.com" className="quick-contact-item">
+                <i className="fas fa-envelope"></i> support@campustent.com
               </a>
-              <a href="https://wa.me/2349161863877?text=Hi%20Campus%20Stay%20Support,%20I%20need%20help" target="_blank" rel="noopener noreferrer" className="quick-contact-item">
+              <a href="https://wa.me/2349161863877?text=Hi%20Campus%20Tent%20Support,%20I%20need%20help" target="_blank" rel="noopener noreferrer" className="quick-contact-item">
                 <i className="fab fa-whatsapp"></i> Chat on WhatsApp
               </a>
             </div>

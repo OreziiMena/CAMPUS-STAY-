@@ -23,7 +23,7 @@ export default function AboutPage() {
           <div className="story-content">
             <h2>Our Story</h2>
             <p>
-              Campus Stay was born out of a common student struggle: the exhausting, stressful process of searching for off-campus hostels. We realized that students spent days walking around university towns, dealing with untrustworthy middle-men, and paying hidden fees.
+              Campus Tent was born out of a common student struggle: the exhausting, stressful process of searching for off-campus hostels. We realized that students spent days walking around university towns, dealing with untrustworthy middle-men, and paying hidden fees.
             </p>
             <p>
               We envisioned a central platform where properties are verified, walking distances are computed honestly, and students can chat directly with vetted landlords without agents standing in the way.
@@ -32,7 +32,7 @@ export default function AboutPage() {
           <div className="story-image-placeholder">
             <i className="fas fa-university"></i>
             <h4>Founded on Campuses</h4>
-            <p>Built by students, for students, to bring convenience and transparency to off-campus stay search.</p>
+            <p>Built by students, for students, to bring convenience and transparency to off-campus tent and hostel search.</p>
           </div>
         </div>
 

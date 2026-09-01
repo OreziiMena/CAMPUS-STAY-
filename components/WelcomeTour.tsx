@@ -27,7 +27,7 @@ export default function WelcomeTour({ isOpen, onClose }: WelcomeTourProps) {
     {
       badge: "Welcome",
       icon: "fa-solid fa-house-chimney",
-      title: "Welcome to Campus Unit! 🏠",
+      title: "Welcome to Campus Tent! 🏠",
       text: "Finding secure, close-to-campus student housing and vetted roommates has never been this simple. Let us take you on a quick tour of our features!"
     },
     {

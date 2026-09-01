@@ -17,7 +17,10 @@ export default function EditProperty() {
   const [title, setTitle] = useState("");
   const [hostelType, setHostelType] = useState("Self-Contain");
   const [university, setUniversity] = useState("FUPRE");
-  const [price, setPrice] = useState("");
+  const [rentAmount, setRentAmount] = useState("");
+  const [agentFee, setAgentFee] = useState("");
+  const [cautionFee, setCautionFee] = useState("");
+  const [isNegotiable, setIsNegotiable] = useState(false);
   const [location, setLocation] = useState("");
   const [distance, setDistance] = useState("");
   const [description, setDescription] = useState("");
@@ -68,7 +71,10 @@ export default function EditProperty() {
         setTitle(prop.title);
         setHostelType(prop.hostelType);
         setUniversity(prop.university || "FUPRE");
-        setPrice(String(prop.price));
+        setRentAmount(prop.rentAmount !== null && prop.rentAmount !== undefined ? String(prop.rentAmount) : String(prop.price));
+        setAgentFee(prop.agentFee !== null && prop.agentFee !== undefined ? String(prop.agentFee) : "0");
+        setCautionFee(prop.cautionFee !== null && prop.cautionFee !== undefined ? String(prop.cautionFee) : "0");
+        setIsNegotiable(Boolean(prop.isNegotiable));
         setLocation(prop.location);
         setDistance(prop.distance);
         setDescription(prop.description);
@@ -121,8 +127,8 @@ export default function EditProperty() {
     e.preventDefault();
     setError("");
 
-    if (!title || !price || !location || !distance || !description) {
-      setError("Please fill in all required fields.");
+    if (!title || !rentAmount || !agentFee || !location || !distance || !description) {
+      setError("Please fill in all required fields (including house rent and agent fee).");
       return;
     }
 
@@ -164,7 +170,10 @@ export default function EditProperty() {
       const res = await updateProperty(id, {
         title,
         hostelType,
-        price,
+        rentAmount,
+        agentFee: agentFee || "0",
+        cautionFee: cautionFee || "0",
+        isNegotiable,
         location,
         distance,
         description,
@@ -266,16 +275,84 @@ export default function EditProperty() {
               />
             </div>
 
-            <div className="input-group">
-              <label htmlFor="price">Rent Price (₦ per year) *</label>
-              <input
-                type="number"
-                id="price"
-                placeholder="e.g. 150000"
-                value={price}
-                onChange={(e) => setPrice(e.target.value)}
-                required
-              />
+            {/* Pricing Breakdown Section */}
+            <div className="input-group pricing-breakdown-card">
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "8px" }}>
+                <label style={{ fontWeight: "700", color: "rgb(2, 53, 28)", margin: 0, display: "flex", alignItems: "center", gap: "6px" }}>
+                  <i className="fas fa-tag"></i> Pricing & Fee Breakdown
+                </label>
+                {((parseFloat(rentAmount) || 0) + (parseFloat(agentFee) || 0) + (parseFloat(cautionFee) || 0)) > 0 && (
+                  <span style={{
+                    fontSize: "0.88rem",
+                    fontWeight: "700",
+                    color: "rgb(2, 53, 28)",
+                    background: "rgba(2, 53, 28, 0.08)",
+                    padding: "4px 12px",
+                    borderRadius: "20px"
+                  }}>
+                    Total Tenant Cost: ₦{((parseFloat(rentAmount) || 0) + (parseFloat(agentFee) || 0) + (parseFloat(cautionFee) || 0)).toLocaleString()} / yr
+                  </span>
+                )}
+              </div>
+
+              <div className="pricing-inputs-grid">
+                <div>
+                  <label htmlFor="rentAmount" style={{ fontSize: "0.85rem", fontWeight: "600", marginBottom: "6px", display: "block" }}>
+                    House Rent (₦ per year) *
+                  </label>
+                  <input
+                    type="number"
+                    id="rentAmount"
+                    placeholder="e.g. 150000"
+                    value={rentAmount}
+                    onChange={(e) => setRentAmount(e.target.value)}
+                    required
+                    style={{ width: "100%", padding: "10px 14px", borderRadius: "8px", border: "1px solid #d1d5db" }}
+                  />
+                </div>
+
+                <div>
+                  <label htmlFor="agentFee" style={{ fontSize: "0.85rem", fontWeight: "600", marginBottom: "6px", display: "block" }}>
+                    Agent Fee (₦) *
+                  </label>
+                  <input
+                    type="number"
+                    id="agentFee"
+                    placeholder="e.g. 15000"
+                    value={agentFee}
+                    onChange={(e) => setAgentFee(e.target.value)}
+                    required
+                    style={{ width: "100%", padding: "10px 14px", borderRadius: "8px", border: "1px solid #d1d5db" }}
+                  />
+                </div>
+
+                <div>
+                  <label htmlFor="cautionFee" style={{ fontSize: "0.85rem", fontWeight: "600", marginBottom: "6px", display: "block" }}>
+                    Caution Fee (₦) <span style={{ color: "#6b7280", fontWeight: "normal" }}>(Optional)</span>
+                  </label>
+                  <input
+                    type="number"
+                    id="cautionFee"
+                    placeholder="e.g. 10000 (0 if none)"
+                    value={cautionFee}
+                    onChange={(e) => setCautionFee(e.target.value)}
+                    style={{ width: "100%", padding: "10px 14px", borderRadius: "8px", border: "1px solid #d1d5db" }}
+                  />
+                </div>
+              </div>
+
+              <div style={{ display: "flex", alignItems: "center", gap: "10px", marginTop: "4px" }}>
+                <input
+                  type="checkbox"
+                  id="isNegotiable"
+                  checked={isNegotiable}
+                  onChange={(e) => setIsNegotiable(e.target.checked)}
+                  style={{ width: "18px", height: "18px", accentColor: "rgb(2, 53, 28)", cursor: "pointer" }}
+                />
+                <label htmlFor="isNegotiable" style={{ fontSize: "0.9rem", fontWeight: "600", color: "#374151", cursor: "pointer", margin: 0 }}>
+                  Agent fee is negotiable with student tenants
+                </label>
+              </div>
             </div>
 
             <div className="input-group">

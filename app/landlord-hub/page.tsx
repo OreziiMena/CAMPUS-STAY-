@@ -67,7 +67,7 @@ export default function LandlordHub() {
           <div className="guide-sidebar">
             <div className="sidebar-box safety-box">
               <h4><i className="fas fa-check-circle"></i> Verification Benefits</h4>
-              <p>Why verify your host credentials with Campus Stay?</p>
+              <p>Why verify your host credentials with Campus Tent?</p>
               <ul>
                 <li><i className="fas fa-check"></i> Displays a green trust badge on listings.</li>
                 <li><i className="fas fa-check"></i> Listings rank higher in search filters.</li>

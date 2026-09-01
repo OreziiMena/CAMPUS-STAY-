@@ -166,7 +166,7 @@ export default function AgentProfilePage() {
               <h2>
                 <span id="display-name">{agentName}</span>
                 {isVerified && (
-                  <span className="verified-badge" id="agent-badge" title="Verified Campus Stay Agent">
+                  <span className="verified-badge" id="agent-badge" title="Verified Campus Tent Agent">
                     <i className={`fas fa-check-circle ${styles.successGreen}`}></i>
                   </span>
                 )}

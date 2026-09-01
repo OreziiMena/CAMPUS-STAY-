@@ -109,7 +109,7 @@ export default function AgentSignup() {
         <section className="auth-container">
           <div className="auth-card">
             <div className="auth-header">
-              <h2>Become a Campus Stay Agent</h2>
+              <h2>Become a Campus Tent Agent</h2>
               <p>List your properties and connect with thousands of students.</p>
             </div>
 

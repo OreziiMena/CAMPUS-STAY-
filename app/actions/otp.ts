@@ -119,11 +119,11 @@ async function sendOTPEmail(email: string, code: string) {
   try {
     const res = await sendEmail({
       to: email,
-      subject: "Your Campus Stay OTP Code",
+      subject: "Your Campus Tent OTP Code",
       html: `
         <div style="font-family: 'Poppins', sans-serif; max-width: 500px; margin: 0 auto; padding: 20px; border: 1px solid #eaeaea; borderRadius: 16px;">
-          <h2 style="color: rgb(2, 53, 28); font-weight: 700;">Campus Stay OTP Verification</h2>
-          <p>Welcome to Campus Stay! Please use the 6-digit OTP code below to verify your email address. This code is valid for 10 minutes.</p>
+          <h2 style="color: rgb(2, 53, 28); font-weight: 700;">Campus Tent OTP Verification</h2>
+          <p>Welcome to Campus Tent! Please use the 6-digit OTP code below to verify your email address. This code is valid for 10 minutes.</p>
           <div style="background-color: #f1f5f3; padding: 16px; text-align: center; border-radius: 8px; font-size: 2rem; font-weight: 800; letter-spacing: 4px; color: rgb(2, 53, 28); margin: 24px 0;">
             ${code}
           </div>

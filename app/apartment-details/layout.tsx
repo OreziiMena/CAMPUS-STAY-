@@ -12,17 +12,17 @@ export async function generateMetadata(props: {
   try {
     const searchParams = props.searchParams ? await props.searchParams : null;
     const id = searchParams?.id;
-    if (!id) return { title: "Apartment Details | Campus Stay" };
+    if (!id) return { title: "Apartment Details | Campus Tent" };
 
     const property = await prisma.property.findUnique({
       where: { id },
       select: { title: true, description: true, images: true, price: true },
     });
 
-    if (!property) return { title: "Apartment Details | Campus Stay" };
+    if (!property) return { title: "Apartment Details | Campus Tent" };
 
     return {
-      title: `${property.title} - ₦${property.price.toLocaleString()} | Campus Stay`,
+      title: `${property.title} - ₦${property.price.toLocaleString()} | Campus Tent`,
       description: property.description.substring(0, 155),
       openGraph: {
         title: property.title,
@@ -31,7 +31,7 @@ export async function generateMetadata(props: {
       },
     };
   } catch (e) {
-    return { title: "Apartment Details | Campus Stay" };
+    return { title: "Apartment Details | Campus Tent" };
   }
 }
 

@@ -120,6 +120,9 @@ export default function SearchableSelect({
         .searchable-select-container {
           position: relative;
           width: 100%;
+          max-width: 100%;
+          min-width: 0;
+          box-sizing: border-box;
           font-family: 'Open Sans', sans-serif;
         }
 
@@ -128,6 +131,9 @@ export default function SearchableSelect({
           justify-content: space-between;
           align-items: center;
           width: 100%;
+          max-width: 100%;
+          min-width: 0;
+          box-sizing: border-box;
           padding: 12px 16px;
           background-color: white;
           border: 1px solid #eaeaea;
@@ -138,13 +144,17 @@ export default function SearchableSelect({
           transition: all 0.2s ease;
           user-select: none;
           min-height: 48px;
+          overflow: hidden;
         }
 
         .trigger-text {
+          flex: 1 1 0%;
+          min-width: 0;
           white-space: nowrap;
           overflow: hidden;
           text-overflow: ellipsis;
           margin-right: 10px;
+          display: block;
         }
 
         .searchable-select-trigger:hover:not(.disabled) {

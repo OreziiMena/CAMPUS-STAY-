@@ -11,7 +11,7 @@ export default function GuideModal({ isOpen, onClose }: GuideModalProps) {
 
   const steps = [
     {
-      title: "Welcome to Campus Unit Onboarding! 🏠",
+      title: "Welcome to Campus Tent Onboarding! 🏠",
       icon: "fas fa-home",
       badge: "Welcome",
       content: (

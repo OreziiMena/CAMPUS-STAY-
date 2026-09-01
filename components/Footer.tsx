@@ -56,9 +56,9 @@ export default function Footer() {
         <div className="footer-contact">
           <h4>CONNECT</h4>
           <ul>
-            <li><a href="mailto:support@campusunit.com"><i className="fa-solid fa-envelope"></i> support@campusunit.com</a></li>
+            <li><a href="mailto:support@campustent.com"><i className="fa-solid fa-envelope"></i> support@campustent.com</a></li>
             <li>
-              <a href="https://wa.me/2349161863877?text=Hi%20Campus%20Unit%20Support,%20I%20need%20help" target="_blank" rel="noopener noreferrer">
+              <a href="https://wa.me/2349161863877?text=Hi%20Campus%20Tent%20Support,%20I%20need%20help" target="_blank" rel="noopener noreferrer">
                 <i className="fa-brands fa-whatsapp"></i> Chat with Us
               </a>
             </li>
@@ -69,7 +69,7 @@ export default function Footer() {
       </div>
 
       <div className="footer-bottom">
-        <p> &copy; {new Date().getFullYear()} Campus Unit. All rights reserved.</p>
+        <p> &copy; {new Date().getFullYear()} Campus Tent. All rights reserved.</p>
       </div>
     </footer>
   );

@@ -43,10 +43,10 @@ export default function InstallPrompt() {
     <div className="pwa-prompt-banner">
       <div className="pwa-prompt-content">
         <div className="pwa-prompt-icon">
-          <img src="/icon.png" alt="Campus Stay Logo" />
+          <img src="/icon.png" alt="Campus Tent Logo" />
         </div>
         <div className="pwa-prompt-text">
-          <h4>Install Campus Stay</h4>
+          <h4>Install Campus Tent</h4>
           {platform === "ios" ? (
             <p>
               Tap the share icon <i className="fa-solid fa-arrow-up-from-bracket" style={{ color: "#d35400" }}></i> and select <strong>"Add to Home Screen"</strong> for a native app experience.

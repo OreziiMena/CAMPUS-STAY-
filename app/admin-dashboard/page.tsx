@@ -8,7 +8,8 @@ import {
   togglePropertyVerification,
   deletePropertyByAdmin,
   deleteUserByAdmin,
-  getAdminAnalyticsData
+  getAdminAnalyticsData,
+  getAgentActivityLogs
 } from "@/app/actions/admin";
 import { getPendingReports, moderateReport } from "@/app/actions/reports";
 import Chart from "chart.js/auto";
@@ -29,6 +30,8 @@ function AdminDashboardContent() {
   const [users, setUsers] = useState<any[]>([]);
   const [allProperties, setAllProperties] = useState<any[]>([]);
   const [reports, setReports] = useState<any[]>([]);
+  const [activityLogs, setActivityLogs] = useState<any[]>([]);
+  const [activityFilter, setActivityFilter] = useState<string>("ALL");
   
   // Tab control
   const [activeTab, setActiveTab] = useState("verifications");
@@ -63,6 +66,11 @@ function AdminDashboardContent() {
     const analyticsRes = await getAdminAnalyticsData();
     if (analyticsRes.success) {
       setAnalyticsData(analyticsRes);
+    }
+
+    const activityRes = await getAgentActivityLogs();
+    if (activityRes.success) {
+      setActivityLogs(activityRes.logs || []);
     }
 
     setLoading(false);
@@ -409,6 +417,20 @@ function AdminDashboardContent() {
     return reporterEmail.includes(query) || description.includes(query) || reason.includes(query) || targetName.includes(query);
   });
 
+  const filteredActivityLogs = activityLogs.filter((log) => {
+    if (activityFilter !== "ALL" && log.action !== activityFilter) {
+      return false;
+    }
+    if (!searchQuery.trim()) return true;
+    const query = searchQuery.toLowerCase();
+    const name = log.userName?.toLowerCase() || "";
+    const email = log.userEmail?.toLowerCase() || "";
+    const desc = log.description?.toLowerCase() || "";
+    const title = log.propertyTitle?.toLowerCase() || "";
+    const action = log.action?.toLowerCase() || "";
+    return name.includes(query) || email.includes(query) || desc.includes(query) || title.includes(query) || action.includes(query);
+  });
+
   return (
     <div>
       {error && (
@@ -430,7 +452,9 @@ function AdminDashboardContent() {
                   ? "Search agents by name, email, or phone..." 
                   : activeTab === "properties" 
                     ? "Search properties by title, location, school, or owner..."
-                    : "Search verification queues..."
+                    : activeTab === "activity-logs"
+                      ? "Search activity logs by agent name, email, property title..."
+                      : "Search verification queues..."
             }
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
@@ -668,7 +692,7 @@ function AdminDashboardContent() {
                           <tr>
                             <th>Property details</th>
                             <th>Type</th>
-                            <th>Yearly Cost</th>
+                            <th>Price & Fee Breakdown</th>
                             <th>Location & Distance</th>
                             <th>Listed By</th>
                             <th>Actions</th>
@@ -688,7 +712,30 @@ function AdminDashboardContent() {
                                 </div>
                               </td>
                               <td>{property.hostelType}</td>
-                              <td>₦{property.price.toLocaleString()}</td>
+                              <td>
+                                <div style={{ display: "flex", flexDirection: "column", gap: "2px", minWidth: "140px" }}>
+                                  <strong style={{ fontSize: "0.95rem", color: "rgb(2, 53, 28)" }}>
+                                    ₦{property.price.toLocaleString()}
+                                    <span style={{ fontSize: "0.75rem", color: "#666", fontWeight: "normal" }}> / yr</span>
+                                  </strong>
+                                  <div style={{ fontSize: "0.78rem", color: "#374151", lineHeight: "1.35", backgroundColor: "#f9fafb", padding: "4px 8px", borderRadius: "6px", border: "1px solid #e5e7eb", marginTop: "3px" }}>
+                                    <div><span style={{ color: "#6b7280" }}>Rent:</span> ₦{(property.rentAmount ?? property.price).toLocaleString()}</div>
+                                    <div>
+                                      <span style={{ color: "#6b7280" }}>Agent Fee:</span> ₦{(property.agentFee ?? 0).toLocaleString()}{" "}
+                                      {property.isNegotiable ? (
+                                        <span style={{ color: "#047857", fontWeight: "700", fontSize: "0.7rem", backgroundColor: "rgba(16, 185, 129, 0.12)", padding: "1px 5px", borderRadius: "4px" }}>
+                                          Negotiable
+                                        </span>
+                                      ) : (
+                                        <span style={{ color: "#6b7280", fontSize: "0.7rem" }}>(Fixed)</span>
+                                      )}
+                                    </div>
+                                    {property.cautionFee !== null && property.cautionFee !== undefined && property.cautionFee > 0 && (
+                                      <div><span style={{ color: "#6b7280" }}>Caution Fee:</span> ₦{property.cautionFee.toLocaleString()}</div>
+                                    )}
+                                  </div>
+                                </div>
+                              </td>
                               <td>
                                 <div>{property.location}</div>
                                 <div style={{ color: "#666", fontSize: "12px" }}>{property.distance}</div>
@@ -912,7 +959,7 @@ function AdminDashboardContent() {
                       <tr>
                         <th>Property Details</th>
                         <th>Type</th>
-                        <th>Yearly Cost</th>
+                        <th>Price & Fee Breakdown</th>
                         <th>Location & School</th>
                         <th>Listed By</th>
                         <th>Verification Status</th>
@@ -936,7 +983,30 @@ function AdminDashboardContent() {
                               </div>
                             </td>
                             <td>{p.hostelType}</td>
-                            <td>₦{p.price.toLocaleString()}</td>
+                            <td>
+                              <div style={{ display: "flex", flexDirection: "column", gap: "2px", minWidth: "140px" }}>
+                                <strong style={{ fontSize: "0.95rem", color: "rgb(2, 53, 28)" }}>
+                                  ₦{p.price.toLocaleString()}
+                                  <span style={{ fontSize: "0.75rem", color: "#666", fontWeight: "normal" }}> / yr</span>
+                                </strong>
+                                <div style={{ fontSize: "0.78rem", color: "#374151", lineHeight: "1.35", backgroundColor: "#f9fafb", padding: "4px 8px", borderRadius: "6px", border: "1px solid #e5e7eb", marginTop: "3px" }}>
+                                  <div><span style={{ color: "#6b7280" }}>Rent:</span> ₦{(p.rentAmount ?? p.price).toLocaleString()}</div>
+                                  <div>
+                                    <span style={{ color: "#6b7280" }}>Agent Fee:</span> ₦{(p.agentFee ?? 0).toLocaleString()}{" "}
+                                    {p.isNegotiable ? (
+                                      <span style={{ color: "#047857", fontWeight: "700", fontSize: "0.7rem", backgroundColor: "rgba(16, 185, 129, 0.12)", padding: "1px 5px", borderRadius: "4px" }}>
+                                        Negotiable
+                                      </span>
+                                    ) : (
+                                      <span style={{ color: "#6b7280", fontSize: "0.7rem" }}>(Fixed)</span>
+                                    )}
+                                  </div>
+                                  {p.cautionFee !== null && p.cautionFee !== undefined && p.cautionFee > 0 && (
+                                    <div><span style={{ color: "#6b7280" }}>Caution Fee:</span> ₦{p.cautionFee.toLocaleString()}</div>
+                                  )}
+                                </div>
+                              </div>
+                            </td>
                             <td>
                               <div>{p.location}</div>
                               <div style={{ color: "#666", fontSize: "12px" }}>Near {p.university} ({p.distance})</div>
@@ -1195,6 +1265,165 @@ function AdminDashboardContent() {
                                 >
                                   Resolve & Delete Flagged Listing
                                 </button>
+                              </div>
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </div>
+          )}
+
+          {activeTab === "activity-logs" && (
+            <div className="admin-card">
+              <div className="card-header" style={{ marginBottom: "20px", display: "flex", justifyContent: "space-between", alignItems: "flex-start", flexWrap: "wrap", gap: "15px" }}>
+                <div>
+                  <h4 style={{ fontSize: "1.2rem", fontWeight: "700", color: "rgb(2, 53, 28)", display: "flex", alignItems: "center", gap: "8px", margin: 0 }}>
+                    <i className="fas fa-history" style={{ color: "#d35400" }}></i> Agent Activity & Audit Logs
+                  </h4>
+                  <p style={{ color: "#666", fontSize: "0.85rem", margin: "5px 0 0 0" }}>
+                    Real-time timeline and audit history of every action taken by agents (creating, updating, pricing edits, status changes, and deletions).
+                  </p>
+                </div>
+
+                {/* Filter Pills */}
+                <div style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}>
+                  {[
+                    { id: "ALL", label: "All Activities" },
+                    { id: "PROPERTY_CREATED", label: "Created" },
+                    { id: "PROPERTY_UPDATED", label: "Updated" },
+                    { id: "PROPERTY_AVAILABILITY_TOGGLED", label: "Status Toggled" },
+                    { id: "PROPERTY_DELETED", label: "Deleted" },
+                  ].map((filter) => (
+                    <button
+                      key={filter.id}
+                      onClick={() => setActivityFilter(filter.id)}
+                      style={{
+                        padding: "6px 14px",
+                        borderRadius: "20px",
+                        fontSize: "0.78rem",
+                        fontWeight: "600",
+                        border: activityFilter === filter.id ? "1px solid rgb(2, 53, 28)" : "1px solid #d1d5db",
+                        backgroundColor: activityFilter === filter.id ? "rgb(2, 53, 28)" : "#fff",
+                        color: activityFilter === filter.id ? "#fff" : "#4b5563",
+                        cursor: "pointer",
+                        transition: "all 0.2s ease"
+                      }}
+                    >
+                      {filter.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {filteredActivityLogs.length === 0 ? (
+                <div className="no-data-text">
+                  <i className="fas fa-clipboard-list" style={{ color: "#6b7280", fontSize: "1.5rem", marginRight: "8px" }}></i>
+                  No activity logs found matching your criteria.
+                </div>
+              ) : (
+                <div className="admin-table-container">
+                  <table className="admin-table">
+                    <thead>
+                      <tr>
+                        <th>Date & Time</th>
+                        <th>User / Agent</th>
+                        <th>Action Type</th>
+                        <th>Property Target</th>
+                        <th>Activity Details & Changes</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {filteredActivityLogs.map((log: any) => {
+                        let actionBadgeStyle = { background: "#e0f2fe", color: "#0369a1", border: "1px solid #bae6fd" };
+                        let actionIcon = "fas fa-info-circle";
+                        let actionLabel = "Updated";
+
+                        if (log.action === "PROPERTY_CREATED") {
+                          actionBadgeStyle = { background: "#dcfce7", color: "#15803d", border: "1px solid #bbf7d0" };
+                          actionIcon = "fas fa-plus-circle";
+                          actionLabel = "Listing Created";
+                        } else if (log.action === "PROPERTY_UPDATED") {
+                          actionBadgeStyle = { background: "#e0e7ff", color: "#4338ca", border: "1px solid #c7d2fe" };
+                          actionIcon = "fas fa-edit";
+                          actionLabel = "Listing Edited";
+                        } else if (log.action === "PROPERTY_AVAILABILITY_TOGGLED") {
+                          actionBadgeStyle = { background: "#fef3c7", color: "#b45309", border: "1px solid #fde68a" };
+                          actionIcon = "fas fa-toggle-on";
+                          actionLabel = "Status Changed";
+                        } else if (log.action === "PROPERTY_DELETED") {
+                          actionBadgeStyle = { background: "#fee2e2", color: "#b91c1c", border: "1px solid #fecaca" };
+                          actionIcon = "fas fa-trash-alt";
+                          actionLabel = "Listing Deleted";
+                        }
+
+                        return (
+                          <tr key={log.id}>
+                            <td style={{ fontSize: "0.85rem", whiteSpace: "nowrap" }}>
+                              <div style={{ fontWeight: "600" }}>
+                                {new Date(log.createdAt).toLocaleDateString("en-US", {
+                                  month: "short",
+                                  day: "numeric",
+                                  year: "numeric",
+                                })}
+                              </div>
+                              <span style={{ fontSize: "0.75rem", color: "#6b7280" }}>
+                                {new Date(log.createdAt).toLocaleTimeString("en-US", {
+                                  hour: "2-digit",
+                                  minute: "2-digit",
+                                })}
+                              </span>
+                            </td>
+                            <td>
+                              <div style={{ fontWeight: "600", fontSize: "0.9rem", color: "rgb(2, 53, 28)" }}>{log.userName}</div>
+                              <div style={{ fontSize: "0.8rem", color: "#6b7280" }}>{log.userEmail}</div>
+                              <span style={{ fontSize: "0.7rem", backgroundColor: "#f3f4f6", padding: "2px 6px", borderRadius: "4px", color: "#374151", fontWeight: "600", marginTop: "3px", display: "inline-block" }}>
+                                {log.userRole || "AGENT"}
+                              </span>
+                            </td>
+                            <td>
+                              <span style={{
+                                display: "inline-flex",
+                                alignItems: "center",
+                                gap: "5px",
+                                padding: "4px 10px",
+                                borderRadius: "20px",
+                                fontSize: "0.75rem",
+                                fontWeight: "700",
+                                textTransform: "uppercase",
+                                ...actionBadgeStyle
+                              }}>
+                                <i className={actionIcon}></i>
+                                {actionLabel}
+                              </span>
+                            </td>
+                            <td>
+                              {log.propertyTitle ? (
+                                <div>
+                                  <strong style={{ fontSize: "0.88rem", color: "#111827", display: "block" }}>
+                                    {log.propertyTitle}
+                                  </strong>
+                                  {log.propertyId && log.action !== "PROPERTY_DELETED" && (
+                                    <a
+                                      href={`/apartment-details?id=${log.propertyId}`}
+                                      target="_blank"
+                                      rel="noopener noreferrer"
+                                      style={{ fontSize: "0.78rem", color: "#047857", textDecoration: "underline", display: "inline-flex", alignItems: "center", gap: "3px" }}
+                                    >
+                                      View Details <i className="fas fa-external-link-alt" style={{ fontSize: "0.65rem" }}></i>
+                                    </a>
+                                  )}
+                                </div>
+                              ) : (
+                                <span style={{ color: "#9ca3af", fontSize: "0.85rem" }}>-</span>
+                              )}
+                            </td>
+                            <td style={{ maxWidth: "340px", fontSize: "0.85rem", color: "#374151" }}>
+                              <div style={{ lineHeight: "1.5" }}>
+                                {log.description}
                               </div>
                             </td>
                           </tr>

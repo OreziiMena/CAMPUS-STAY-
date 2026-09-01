@@ -120,6 +120,11 @@
     border: 1px solid var(--border-light);
     margin-bottom: 40px;
     font-family: 'Open Sans', sans-serif;
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+    box-sizing: border-box;
+    overflow: hidden;
 }
 
 .error-message-bar {
@@ -162,13 +167,21 @@
 
 .form-grid {
     display: grid;
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
     gap: 25px;
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+    box-sizing: border-box;
 }
 
 .input-group {
     display: flex;
     flex-direction: column;
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+    box-sizing: border-box;
 }
 
 .input-group label {
@@ -177,12 +190,15 @@
     font-weight: 700;
     color: var(--primary-green);
     margin-bottom: 8px;
+    display: block;
 }
 
 .input-group input,
 .input-group textarea,
 .input-group select {
     width: 100%;
+    max-width: 100%;
+    min-width: 0;
     padding: 12px 15px;
     border: 1px solid #cbd5e0;
     border-radius: var(--radius-sm);
