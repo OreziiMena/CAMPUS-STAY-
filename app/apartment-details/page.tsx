@@ -329,17 +329,7 @@ function ApartmentDetailsContent() {
           <div className="info-card">
             <h1 className="listing-title">{property.title}</h1>
 
-            <div className="meta-row">
-              <span><i className="far fa-eye"></i> {property.views || 0} views</span>
-              <span><i className="fas fa-home"></i> Student Hostel</span>
-              <span><i className="far fa-calendar-alt"></i> Listed recently</span>
-            </div>
-
-            <div className="location-row">
-              <p><i className="fas fa-map-marker-alt"></i> <span>{property.location}</span></p>
-              <p><i className="fas fa-walking"></i> {property.distance}</p>
-            </div>
-
+            
             <div style={{ display: "flex", alignItems: "center", gap: "10px", flexWrap: "wrap", marginTop: "12px", marginBottom: "8px" }}>
               <h2 className="listing-price" style={{ margin: 0 }}>{property.price} <span>/ year</span></h2>
               {property.isNegotiable !== undefined && (
@@ -406,6 +396,18 @@ function ApartmentDetailsContent() {
             )}
 
             <p className="desc-text">{property.description}</p>
+
+            <div className="meta-row">
+              <span><i className="far fa-eye"></i> {property.views || 0} views</span>
+              <span><i className="fas fa-home"></i> Student Hostel</span>
+              <span><i className="far fa-calendar-alt"></i> Listed recently</span>
+            </div>
+
+            <div className="location-row">
+              <p><i className="fas fa-map-marker-alt"></i> <span>{property.location}</span></p>
+              <p><i className="fas fa-walking"></i> {property.distance}</p>
+            </div>
+
           </div>
 
           <div className="info-card">
