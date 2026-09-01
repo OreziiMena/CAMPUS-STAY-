@@ -8,11 +8,12 @@ export async function sendEmail({
   subject: string;
   html: string;
   text?: string;
-}) {
+}): Promise<{ success: boolean; error?: string; debug?: boolean; data?: any }> {
   const apiKey = process.env.RESEND_API_KEY;
-  if (!apiKey || apiKey === "re_test_key" || apiKey.includes("your_resend_api_key")) {
+
+  if (!apiKey || apiKey === "re_test_key" || apiKey === "placeholder" || apiKey.includes("your_resend_api_key")) {
     console.log("\n==============================================");
-    console.log(`[DEV EMAIL DELIVERY FALLBACK]`);
+    console.log(`[DEV / LOCAL EMAIL FALLBACK]`);
     console.log(`To: ${to}`);
     console.log(`Subject: ${subject}`);
     console.log(`Content:\n${html.replace(/<[^>]*>/g, " ").trim()}`);
@@ -20,29 +21,45 @@ export async function sendEmail({
     return { success: true, debug: true };
   }
 
+  // Priority: 1. EMAIL_FROM in env -> 2. RESEND_FROM in env -> 3. onboarding@resend.dev sandbox
+  const fromAddress = process.env.EMAIL_FROM || process.env.RESEND_FROM || "Campus Tent <onboarding@resend.dev>";
+
   try {
     const response = await fetch("https://api.resend.com/emails", {
       method: "POST",
       headers: {
-        "Authorization": `Bearer ${apiKey}`,
+        "Authorization": `Bearer ${apiKey.trim()}`,
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        from: "Campus Tent <onboarding@resend.dev>",
-        to: [to],
+        from: fromAddress,
+        to: [to.trim()],
         subject,
         html,
-        text,
+        text: text || html.replace(/<[^>]*>/g, " ").trim(),
       }),
     });
 
+    const responseBody = await response.text();
+
     if (!response.ok) {
-      const errText = await response.text();
-      return { success: false, error: errText };
+      console.error(`Resend API Error (HTTP ${response.status}):`, responseBody);
+      return { 
+        success: false, 
+        error: responseBody 
+      };
     }
 
-    return { success: true };
+    let parsedData = {};
+    try {
+      parsedData = JSON.parse(responseBody);
+    } catch {
+      // response is plain text
+    }
+
+    return { success: true, data: parsedData };
   } catch (err: any) {
-    return { success: false, error: err.message };
+    console.error("sendEmail Network Exception:", err);
+    return { success: false, error: err.message || "Network error while sending email." };
   }
 }
