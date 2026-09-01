@@ -176,7 +176,7 @@ function VerifyEmailContent() {
       </Link>
 
       <section className="auth-container" style={{ width: "100%", maxWidth: "450px" }}>
-        <div className="auth-card" style={{ padding: "40px 30px", borderRadius: "20px", boxShadow: "0 10px 35px rgba(0,0,0,0.06)", border: "1px solid #eaeaea", background: "white" }}>
+        <div className="auth-card" style={{ padding: "35px 20px", borderRadius: "20px", boxShadow: "0 10px 35px rgba(0,0,0,0.06)", border: "1px solid #eaeaea", background: "white", width: "100%", boxSizing: "border-box" }}>
           <div className="auth-header" style={{ textAlign: "center", marginBottom: "30px" }}>
             <h2 style={{ fontSize: "1.6rem", fontWeight: "800", color: "rgb(2, 53, 28)", margin: "0 0 10px 0" }}>Verify Email</h2>
             <p style={{ fontSize: "0.9rem", color: "#666", margin: 0 }}>
@@ -185,7 +185,7 @@ function VerifyEmailContent() {
             </p>
           </div>
 
-          <form onSubmit={handleSubmit} className="auth-form">
+          <form onSubmit={handleSubmit} className="auth-form" style={{ width: "100%" }}>
             {error && (
               <div style={{ backgroundColor: "#fde8e8", border: "1px solid #f8b4b4", color: "#9b1c1c", padding: "12px", borderRadius: "8px", marginBottom: "20px", fontSize: "0.85rem", display: "flex", alignItems: "center", gap: "8px" }}>
                 <i className="fas fa-exclamation-circle"></i> {error}
@@ -204,11 +204,13 @@ function VerifyEmailContent() {
               </div>
             )}
 
-            <div style={{ display: "flex", justifyContent: "space-between", gap: "10px", margin: "24px 0" }}>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(6, 1fr)", gap: "8px", margin: "24px 0", width: "100%" }}>
               {otp.map((digit, index) => (
                 <input
                   key={index}
                   type="text"
+                  inputMode="numeric"
+                  pattern="[0-9]*"
                   maxLength={1}
                   value={digit}
                   ref={(el) => {
@@ -218,17 +220,19 @@ function VerifyEmailContent() {
                   onKeyDown={(e) => handleKeyDown(e, index)}
                   onPaste={handlePaste}
                   style={{
-                    width: "48px",
-                    height: "56px",
+                    width: "100%",
+                    minWidth: "0",
+                    height: "52px",
                     borderRadius: "10px",
                     border: "1.5px solid #ddd",
                     textAlign: "center",
-                    fontSize: "1.5rem",
+                    fontSize: "1.3rem",
                     fontWeight: "800",
                     backgroundColor: "#fafafa",
                     outline: "none",
                     transition: "all 0.2s",
                     color: "rgb(2, 53, 28)",
+                    boxSizing: "border-box",
                   }}
                   onFocus={(e) => {
                     e.target.style.borderColor = "rgb(2, 53, 28)";
