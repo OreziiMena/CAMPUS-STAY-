@@ -21,8 +21,8 @@ export async function sendEmail({
     return { success: true, debug: true };
   }
 
-  // Priority: 1. EMAIL_FROM in env -> 2. RESEND_FROM in env -> 3. onboarding@resend.dev sandbox
-  const fromAddress = process.env.EMAIL_FROM || process.env.RESEND_FROM || "Campus Tent <onboarding@resend.dev>";
+  // Priority: 1. EMAIL_FROM in env -> 2. RESEND_FROM in env -> 3. noreply@campustent.com (matches Resend domain restriction)
+  const fromAddress = process.env.EMAIL_FROM || process.env.RESEND_FROM || "Campus Tent <noreply@campustent.com>";
 
   try {
     const response = await fetch("https://api.resend.com/emails", {
