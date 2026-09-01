@@ -1281,10 +1281,10 @@ function AdminDashboardContent() {
             <div className="admin-card">
               <div className="card-header" style={{ marginBottom: "20px", display: "flex", justifyContent: "space-between", alignItems: "flex-start", flexWrap: "wrap", gap: "15px" }}>
                 <div>
-                  <h4 style={{ fontSize: "1.2rem", fontWeight: "700", color: "rgb(2, 53, 28)", display: "flex", alignItems: "center", gap: "8px", margin: 0 }}>
+                  <h4 style={{ fontSize: "1.2rem", fontWeight: "700", color: "rgb(2, 53, 28)", display: "flex", alignItems: "center", gap: "8px", margin: 0, fontFamily: "'Poppins', sans-serif" }}>
                     <i className="fas fa-history" style={{ color: "#d35400" }}></i> Agent Activity & Audit Logs
                   </h4>
-                  <p style={{ color: "#666", fontSize: "0.85rem", margin: "5px 0 0 0" }}>
+                  <p style={{ color: "#666", fontSize: "0.85rem", margin: "5px 0 0 0", fontFamily: "'Open Sans', sans-serif" }}>
                     Real-time timeline and audit history of every action taken by agents (creating, updating, pricing edits, status changes, and deletions).
                   </p>
                 </div>
@@ -1306,6 +1306,7 @@ function AdminDashboardContent() {
                         borderRadius: "20px",
                         fontSize: "0.78rem",
                         fontWeight: "600",
+                        fontFamily: "'Poppins', sans-serif",
                         border: activityFilter === filter.id ? "1px solid rgb(2, 53, 28)" : "1px solid #d1d5db",
                         backgroundColor: activityFilter === filter.id ? "rgb(2, 53, 28)" : "#fff",
                         color: activityFilter === filter.id ? "#fff" : "#4b5563",

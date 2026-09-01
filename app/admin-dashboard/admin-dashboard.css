@@ -197,17 +197,30 @@
   box-shadow: 0 4px 15px rgba(0, 0, 0, 0.02);
   border: 1px solid #eaeaea;
   margin-bottom: 30px;
+  font-family: 'Open Sans', sans-serif;
+}
+
+.admin-card h1,
+.admin-card h2,
+.admin-card h3,
+.admin-card h4,
+.admin-card h5,
+.admin-card h6 {
+  font-family: 'Poppins', sans-serif;
+  color: rgb(2, 53, 28);
 }
 
 .admin-card h2 {
-  font-family: 'Poppins', sans-serif;
   font-size: 20px;
-  color: rgb(2, 53, 28);
   margin-top: 0;
   margin-bottom: 20px;
   display: flex;
   align-items: center;
   gap: 10px;
+}
+
+.admin-card p {
+  font-family: 'Open Sans', sans-serif;
 }
 
 /* Table styles */
