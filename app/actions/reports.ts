@@ -2,7 +2,7 @@
 
 import prisma from "@/lib/prisma";
 import { getCurrentUser } from "./auth";
-import { ReportReason, ReportStatus } from "@/lib/generated-client";
+import { ReportReason, ReportStatus } from "@prisma/client";
 
 export async function submitReport(data: {
   propertyId?: string;
