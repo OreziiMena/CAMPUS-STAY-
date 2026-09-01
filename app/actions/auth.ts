@@ -9,6 +9,7 @@ import { uploadToR2 } from "@/lib/r2";
 import crypto from "crypto";
 import { generateOTP } from "./otp";
 import { checkRateLimit } from "@/lib/rate-limit";
+import { validateFileBuffer, generateSecureFilename } from "@/lib/upload-validator";
 
 const SESSION_COOKIE_NAME = "campus_stay_session";
 const AUTH_SECRET = process.env.AUTH_SECRET || "fallback-secret-key-at-least-32-chars-long-security-key";
@@ -325,27 +326,21 @@ export async function uploadAgentVerification(formData: FormData) {
       return { success: false, error: "No document file uploaded." };
     }
 
-    const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
-    if (file.size > MAX_FILE_SIZE) {
-      return { success: false, error: "File size exceeds the 5MB limit." };
-    }
-
-    const ALLOWED_EXTENSIONS = [".pdf", ".png", ".jpg", ".jpeg", ".webp"];
-    let ext = (path.extname(file.name) || "").toLowerCase();
-    
-    // Sanitize extension to prevent path traversal attempts
-    ext = ext.replace(/[^a-z0-9.]/g, "");
-    
-    if (!ALLOWED_EXTENSIONS.includes(ext)) {
-      return { success: false, error: "Invalid document file type. Only PDF and image files (.jpg, .jpeg, .png, .webp) are allowed." };
-    }
-
     const buffer = Buffer.from(await file.arrayBuffer());
+
+    // Strict magic-byte signature check for documents (PDF/images)
+    const validation = validateFileBuffer(buffer, "document", 5 * 1024 * 1024);
+    if (!validation.valid) {
+      return { success: false, error: validation.error || "Invalid file." };
+    }
+
     const uploadDir = path.join(process.cwd(), "public", "uploads", "verification");
-    const filename = `${user.agentProfile.id}-${Date.now()}${ext}`;
+    const safeExt = validation.sanitizedExtension || ".pdf";
+    const filename = generateSecureFilename(`${user.agentProfile.id}-nin`, safeExt);
+    const contentType = validation.canonicalMime || "application/pdf";
 
     let relativePath = "";
-    const r2Result = await uploadToR2(buffer, `verification/${filename}`, file.type || "application/pdf");
+    const r2Result = await uploadToR2(buffer, `verification/${filename}`, contentType);
     if (r2Result.success && r2Result.url) {
       relativePath = r2Result.url;
     } else {

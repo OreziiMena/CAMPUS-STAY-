@@ -7,6 +7,7 @@ import path from "path";
 import { uploadToR2 } from "@/lib/r2";
 import { sendEmail } from "@/lib/email";
 import { logAgentActivity } from "@/lib/activity";
+import { validateFileBuffer, generateSecureFilename } from "@/lib/upload-validator";
 
 export async function getProperties(filterParam?: string | {
   searchQuery?: string;
@@ -525,42 +526,22 @@ export async function uploadPropertyImages(formData: FormData) {
 
     const uploadDir = path.join(process.cwd(), "public", "uploads", "properties");
     const urls: string[] = [];
-    const timestamp = Date.now();
-    const ALLOWED_IMAGE_EXTENSIONS = [".png", ".jpg", ".jpeg", ".webp"];
-    const ALLOWED_VIDEO_EXTENSIONS = [".mp4", ".mov", ".avi", ".webm", ".mkv"];
 
     for (let i = 0; i < files.length; i++) {
       const file = files[i];
       if (!file || file.size === 0) continue;
 
-      let ext = (path.extname(file.name) || "").toLowerCase();
-      // Sanitize extension to prevent path traversal attempts
-      ext = ext.replace(/[^a-z0-9.]/g, "");
-
-      const isImage = ALLOWED_IMAGE_EXTENSIONS.includes(ext);
-      const isVideo = ALLOWED_VIDEO_EXTENSIONS.includes(ext);
-
-      if (!isImage && !isVideo) {
-        return { success: false, error: `Invalid file type for "${file.name}". Only standard images (.jpg, .png, .webp) and videos (.mp4, .mov, .webm) are allowed.` };
-      }
-
-      if (isImage) {
-        const MAX_IMAGE_SIZE = 2 * 1024 * 1024; // 2MB
-        if (file.size > MAX_IMAGE_SIZE) {
-          return { success: false, error: `Picture "${file.name}" exceeds the 2MB limit.` };
-        }
-      }
-
-      if (isVideo) {
-        const MAX_VIDEO_SIZE = 10 * 1024 * 1024; // 10MB
-        if (file.size > MAX_VIDEO_SIZE) {
-          return { success: false, error: `Video "${file.name}" exceeds the 10MB limit.` };
-        }
-      }
-
       const buffer = Buffer.from(await file.arrayBuffer());
-      const filename = `${user.id}-property-${timestamp}-${i}${ext}`;
-      const contentType = file.type || (isImage ? "image/jpeg" : "video/mp4");
+
+      // Validate actual file magic bytes and size
+      const validation = validateFileBuffer(buffer, ["image", "video"]);
+      if (!validation.valid) {
+        return { success: false, error: `File "${file.name}": ${validation.error}` };
+      }
+
+      const safeExt = validation.sanitizedExtension || ".jpg";
+      const filename = generateSecureFilename(`${user.id}-property`, safeExt);
+      const contentType = validation.canonicalMime || "image/jpeg";
       
       const r2Result = await uploadToR2(buffer, `properties/${filename}`, contentType);
       if (r2Result.success && r2Result.url) {

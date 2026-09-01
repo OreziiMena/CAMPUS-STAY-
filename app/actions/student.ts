@@ -5,6 +5,7 @@ import { getCurrentUser } from "./auth";
 import { writeFile, mkdir } from "fs/promises";
 import path from "path";
 import { uploadToR2 } from "@/lib/r2";
+import { validateFileBuffer, generateSecureFilename } from "@/lib/upload-validator";
 
 function getFriendlyErrorMessage(err: any, defaultMsg: string): string {
   console.error("Student server action error:", err);
@@ -245,79 +246,42 @@ export async function uploadStudentVerification(formData: FormData) {
 
     const uploadDir = path.join(process.cwd(), "public", "uploads", "student_verification");
     const updateData: any = {};
-    const timestamp = Date.now();
-    const ALLOWED_EXTENSIONS = [".pdf", ".png", ".jpg", ".jpeg", ".webp"];
 
-    if (hasIdCard) {
-      const ext = (path.extname(idCardFile.name) || "").toLowerCase();
-      if (!ALLOWED_EXTENSIONS.includes(ext)) {
-        return { success: false, error: "Invalid ID Card file type. Only PDF and image files (.jpg, .jpeg, .png, .webp) are allowed." };
+    const uploadDoc = async (file: File, prefix: string): Promise<string> => {
+      const buffer = Buffer.from(await file.arrayBuffer());
+      const validation = validateFileBuffer(buffer, "document", 5 * 1024 * 1024);
+      if (!validation.valid) {
+        throw new Error(`${file.name}: ${validation.error}`);
       }
-      const buffer = Buffer.from(await idCardFile.arrayBuffer());
-      const filename = `${user.studentProfile.id}-idcard-${timestamp}${ext}`;
-      
-      const r2Result = await uploadToR2(buffer, `student_verification/${filename}`, idCardFile.type || "application/pdf");
+
+      const safeExt = validation.sanitizedExtension || ".pdf";
+      const filename = generateSecureFilename(`${user.studentProfile!.id}-${prefix}`, safeExt);
+      const contentType = validation.canonicalMime || "application/pdf";
+
+      const r2Result = await uploadToR2(buffer, `student_verification/${filename}`, contentType);
       if (r2Result.success && r2Result.url) {
-        updateData.idCardDoc = r2Result.url;
+        return r2Result.url;
       } else {
         await mkdir(uploadDir, { recursive: true });
         await writeFile(path.join(uploadDir, filename), buffer);
-        updateData.idCardDoc = `/uploads/student_verification/${filename}`;
+        return `/uploads/student_verification/${filename}`;
       }
+    };
+
+    if (hasIdCard) {
+      updateData.idCardDoc = await uploadDoc(idCardFile!, "idcard");
     }
 
     if (hasFeesReceipt) {
-      const ext = (path.extname(feesReceiptFile.name) || "").toLowerCase();
-      if (!ALLOWED_EXTENSIONS.includes(ext)) {
-        return { success: false, error: "Invalid Fees Receipt file type. Only PDF and image files (.jpg, .jpeg, .png, .webp) are allowed." };
-      }
-      const buffer = Buffer.from(await feesReceiptFile.arrayBuffer());
-      const filename = `${user.studentProfile.id}-fees-${timestamp}${ext}`;
-      
-      const r2Result = await uploadToR2(buffer, `student_verification/${filename}`, feesReceiptFile.type || "application/pdf");
-      if (r2Result.success && r2Result.url) {
-        updateData.feesReceiptDoc = r2Result.url;
-      } else {
-        await mkdir(uploadDir, { recursive: true });
-        await writeFile(path.join(uploadDir, filename), buffer);
-        updateData.feesReceiptDoc = `/uploads/student_verification/${filename}`;
-      }
+      updateData.feesReceiptDoc = await uploadDoc(feesReceiptFile!, "fees");
     }
 
     if (hasPortalScreenshot) {
-      const ext = (path.extname(portalScreenshotFile.name) || "").toLowerCase();
-      if (!ALLOWED_EXTENSIONS.includes(ext)) {
-        return { success: false, error: "Invalid Portal Screenshot file type. Only PDF and image files (.jpg, .jpeg, .png, .webp) are allowed." };
-      }
-      const buffer = Buffer.from(await portalScreenshotFile.arrayBuffer());
-      const filename = `${user.studentProfile.id}-portal-${timestamp}${ext}`;
-      
-      const r2Result = await uploadToR2(buffer, `student_verification/${filename}`, portalScreenshotFile.type || "application/pdf");
-      if (r2Result.success && r2Result.url) {
-        updateData.portalScreenshotDoc = r2Result.url;
-      } else {
-        await mkdir(uploadDir, { recursive: true });
-        await writeFile(path.join(uploadDir, filename), buffer);
-        updateData.portalScreenshotDoc = `/uploads/student_verification/${filename}`;
-      }
+      updateData.portalScreenshotDoc = await uploadDoc(portalScreenshotFile!, "portal");
     }
 
     if (hasJambLetter) {
-      const ext = (path.extname(jambLetterFile.name) || "").toLowerCase();
-      if (!ALLOWED_EXTENSIONS.includes(ext)) {
-        return { success: false, error: "Invalid JAMB Admission Letter file type. Only PDF and image files (.jpg, .jpeg, .png, .webp) are allowed." };
-      }
-      const buffer = Buffer.from(await jambLetterFile.arrayBuffer());
-      const filename = `${user.studentProfile.id}-jamb-${timestamp}${ext}`;
-      
-      const r2Result = await uploadToR2(buffer, `student_verification/${filename}`, jambLetterFile.type || "application/pdf");
-      if (r2Result.success && r2Result.url) {
-        updateData.jambLetterDoc = r2Result.url;
-      } else {
-        await mkdir(uploadDir, { recursive: true });
-        await writeFile(path.join(uploadDir, filename), buffer);
-        updateData.jambLetterDoc = `/uploads/student_verification/${filename}`;
-      }
+      updateData.jambLetterDoc = await uploadDoc(jambLetterFile!, "jamb");
     }
 
     await prisma.studentProfile.update({
