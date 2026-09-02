@@ -54,18 +54,41 @@ export default function AddProperty() {
     setAmenities((prev) => ({ ...prev, [name]: !prev[name] }));
   };
 
+  const MAX_IMAGE_SIZE_MB = 5;
+  const MAX_VIDEO_SIZE_MB = 15;
+
   const handleMockUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setError("");
     if (e.target.files && e.target.files.length > 0) {
       const selectedFiles = Array.from(e.target.files);
-      setImageFiles((prev) => [...prev, ...selectedFiles]);
-      const fileNames = selectedFiles.map(file => URL.createObjectURL(file));
-      setImages((prev) => [...prev, ...fileNames]);
+      const validFiles: File[] = [];
+      const validUrls: string[] = [];
+
+      for (const file of selectedFiles) {
+        const isVideo = file.type.startsWith("video/") || file.name.match(/\.(mp4|mov|webm|mkv|avi)$/i);
+        const limitMb = isVideo ? MAX_VIDEO_SIZE_MB : MAX_IMAGE_SIZE_MB;
+        const sizeMb = file.size / (1024 * 1024);
+
+        if (sizeMb > limitMb) {
+          setError(`File "${file.name}" (${sizeMb.toFixed(1)} MB) has exceeded the ${limitMb} MB limit. Please choose a smaller or compressed file.`);
+          continue;
+        }
+
+        validFiles.push(file);
+        validUrls.push(URL.createObjectURL(file));
+      }
+
+      if (validFiles.length > 0) {
+        setImageFiles((prev) => [...prev, ...validFiles]);
+        setImages((prev) => [...prev, ...validUrls]);
+      }
     }
   };
 
   const removeImage = (index: number) => {
     setImages((prev) => prev.filter((_, i) => i !== index));
     setImageFiles((prev) => prev.filter((_, i) => i !== index));
+    setError("");
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -93,16 +116,40 @@ export default function AddProperty() {
       let uploadedUrls: string[] = [];
       if (imageFiles.length > 0) {
         for (let i = 0; i < imageFiles.length; i++) {
-          const formData = new FormData();
-          formData.append("images", imageFiles[i]);
-          const uploadRes = await uploadPropertyImages(formData);
-          if (!uploadRes.success) {
-            setError(uploadRes.error || `Failed to upload "${imageFiles[i].name}".`);
+          const file = imageFiles[i];
+          const isVideo = file.type.startsWith("video/") || file.name.match(/\.(mp4|mov|webm|mkv|avi)$/i);
+          const limitMb = isVideo ? MAX_VIDEO_SIZE_MB : MAX_IMAGE_SIZE_MB;
+          const sizeMb = file.size / (1024 * 1024);
+
+          if (sizeMb > limitMb) {
+            setError(`File "${file.name}" (${sizeMb.toFixed(1)} MB) has exceeded the ${limitMb} MB limit. Please choose a smaller or compressed file.`);
             setIsLoading(false);
             return;
           }
-          if (uploadRes.urls) {
-            uploadedUrls.push(...uploadRes.urls);
+
+          const formData = new FormData();
+          formData.append("images", file);
+
+          try {
+            const uploadRes = await uploadPropertyImages(formData);
+            if (!uploadRes || !uploadRes.success) {
+              setError(uploadRes?.error || `Failed to upload "${file.name}".`);
+              setIsLoading(false);
+              return;
+            }
+            if (uploadRes.urls) {
+              uploadedUrls.push(...uploadRes.urls);
+            }
+          } catch (uploadErr: any) {
+            console.error("Individual upload error:", uploadErr);
+            const msg = uploadErr?.message || "";
+            if (msg.includes("unexpected response") || msg.includes("Failed to fetch") || msg.includes("413") || msg.includes("body")) {
+              setError(`File "${file.name}" (${sizeMb.toFixed(1)} MB) has exceeded the upload size limit for server processing. Please compress the video or choose a shorter video under 15 MB.`);
+            } else {
+              setError(msg || `Failed to upload "${file.name}".`);
+            }
+            setIsLoading(false);
+            return;
           }
         }
       }
@@ -137,7 +184,12 @@ export default function AddProperty() {
       }
     } catch (err: any) {
       setIsLoading(false);
-      setError(err.message || "An unexpected error occurred.");
+      const msg = err?.message || "";
+      if (msg.includes("unexpected response") || msg.includes("Failed to fetch") || msg.includes("413")) {
+        setError("Upload failed: One or more media files exceeded the allowed server size. Please ensure photos are under 5MB and videos under 15MB.");
+      } else {
+        setError(msg || "An unexpected error occurred while listing the property.");
+      }
     }
   };
 
@@ -400,6 +452,9 @@ export default function AddProperty() {
             <div className="file-upload-zone">
               <i className="fas fa-cloud-upload-alt"></i>
               <p>Drag and drop property media or <span>Browse files</span></p>
+              <p style={{ fontSize: "0.78rem", color: "#666", marginTop: "5px" }}>
+                Supports JPG, PNG, WEBP (Max 5MB each) & MP4, MOV, WebM videos (Max 15MB)
+              </p>
               <input type="file" multiple accept="image/*,video/*" onChange={handleMockUpload} />
             </div>
 
@@ -427,6 +482,30 @@ export default function AddProperty() {
           <button type="submit" className="submit-btn" disabled={isLoading}>
             {isLoading ? "Listing Property..." : "List Property"}
           </button>
+
+          {error && (
+            <div style={{
+              marginTop: "16px",
+              backgroundColor: "#fef2f2",
+              border: "1.5px solid #f87171",
+              borderRadius: "10px",
+              padding: "14px 18px",
+              color: "#991b1b",
+              display: "flex",
+              alignItems: "flex-start",
+              gap: "12px",
+              fontSize: "0.9rem",
+              fontWeight: "600",
+              lineHeight: "1.5",
+              boxShadow: "0 4px 12px rgba(239, 68, 68, 0.08)"
+            }}>
+              <i className="fas fa-exclamation-triangle" style={{ fontSize: "1.2rem", marginTop: "2px", color: "#dc2626", flexShrink: 0 }}></i>
+              <div>
+                <strong style={{ display: "block", marginBottom: "2px", color: "#7f1d1d" }}>Upload / Listing Error:</strong>
+                <span>{error}</span>
+              </div>
+            </div>
+          )}
         </form>
       )}
     </>
