@@ -147,17 +147,19 @@ export default function EditProperty() {
     try {
       let newlyUploadedUrls: string[] = [];
       if (newImageFiles.length > 0) {
-        const formData = new FormData();
-        newImageFiles.forEach((file) => {
-          formData.append("images", file);
-        });
-        const uploadRes = await uploadPropertyImages(formData);
-        if (!uploadRes.success) {
-          setError(uploadRes.error || "Failed to upload new images.");
-          setIsLoading(false);
-          return;
+        for (let i = 0; i < newImageFiles.length; i++) {
+          const formData = new FormData();
+          formData.append("images", newImageFiles[i]);
+          const uploadRes = await uploadPropertyImages(formData);
+          if (!uploadRes.success) {
+            setError(uploadRes.error || `Failed to upload "${newImageFiles[i].name}".`);
+            setIsLoading(false);
+            return;
+          }
+          if (uploadRes.urls) {
+            newlyUploadedUrls.push(...uploadRes.urls);
+          }
         }
-        newlyUploadedUrls = uploadRes.urls || [];
       }
 
       // Combined images: remaining existing ones + newly uploaded ones

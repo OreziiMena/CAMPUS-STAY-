@@ -92,17 +92,19 @@ export default function AddProperty() {
     try {
       let uploadedUrls: string[] = [];
       if (imageFiles.length > 0) {
-        const formData = new FormData();
-        imageFiles.forEach((file) => {
-          formData.append("images", file);
-        });
-        const uploadRes = await uploadPropertyImages(formData);
-        if (!uploadRes.success) {
-          setError(uploadRes.error || "Failed to upload images.");
-          setIsLoading(false);
-          return;
+        for (let i = 0; i < imageFiles.length; i++) {
+          const formData = new FormData();
+          formData.append("images", imageFiles[i]);
+          const uploadRes = await uploadPropertyImages(formData);
+          if (!uploadRes.success) {
+            setError(uploadRes.error || `Failed to upload "${imageFiles[i].name}".`);
+            setIsLoading(false);
+            return;
+          }
+          if (uploadRes.urls) {
+            uploadedUrls.push(...uploadRes.urls);
+          }
         }
-        uploadedUrls = uploadRes.urls || [];
       }
 
       // Fallback if no images uploaded

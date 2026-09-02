@@ -25,11 +25,11 @@ export function validateFileBuffer(
 
   const categories = Array.isArray(category) ? category : [category];
 
-  // Default size limits
+  // Default size limits: 10MB for images/docs, 50MB for videos
   const DEFAULT_MAX_SIZES: Record<AllowedCategory, number> = {
-    image: 5 * 1024 * 1024,      // 5MB
-    document: 5 * 1024 * 1024,   // 5MB
-    video: 15 * 1024 * 1024,     // 15MB
+    image: 10 * 1024 * 1024,     // 10MB
+    document: 10 * 1024 * 1024,  // 10MB
+    video: 50 * 1024 * 1024,     // 50MB
   };
 
   const effectiveMaxSize = maxSizeInBytes || Math.max(...categories.map((c) => DEFAULT_MAX_SIZES[c]));
@@ -41,13 +41,13 @@ export function validateFileBuffer(
   // Detect true file type by inspecting magic header bytes
   const magic = detectMagicType(buffer);
   if (!magic) {
-    return { valid: false, error: "Corrupt or unrecognized file format. Upload valid images or PDFs only." };
+    return { valid: false, error: "Corrupt or unrecognized file format. Please upload standard images, PDFs, or videos." };
   }
 
   // Check if detected type matches allowed categories
   const isImageMatch = categories.includes("image") && ["image/jpeg", "image/png", "image/webp"].includes(magic.mime);
   const isDocMatch = categories.includes("document") && ["application/pdf", "image/jpeg", "image/png", "image/webp"].includes(magic.mime);
-  const isVideoMatch = categories.includes("video") && ["video/mp4", "video/webm", "video/quicktime"].includes(magic.mime);
+  const isVideoMatch = categories.includes("video") && ["video/mp4", "video/webm", "video/quicktime", "video/x-msvideo"].includes(magic.mime);
 
   if (!isImageMatch && !isDocMatch && !isVideoMatch) {
     return {
@@ -109,14 +109,38 @@ function detectMagicType(buf: Buffer): { type: string; ext: string; mime: string
     return { type: "PDF", ext: ".pdf", mime: "application/pdf" };
   }
 
-  // 5. MP4 / MOV: Offset 4: 66 74 79 70 ("ftyp")
-  if (buf[4] === 0x66 && buf[5] === 0x74 && buf[6] === 0x79 && buf[7] === 0x70) {
+  // 5. MP4 / MOV / QuickTime container detection:
+  // Inspect first 64 bytes for "ftyp", "moov", "mdat", "wide", "free", or "skip"
+  const headerSlice = buf.subarray(0, Math.min(buf.length, 64)).toString("binary");
+  if (
+    headerSlice.includes("ftyp") ||
+    headerSlice.includes("moov") ||
+    headerSlice.includes("mdat") ||
+    headerSlice.includes("wide")
+  ) {
+    // Determine if QuickTime or standard MP4
+    if (headerSlice.includes("ftypqt") || headerSlice.includes("qt  ")) {
+      return { type: "MOV", ext: ".mov", mime: "video/quicktime" };
+    }
     return { type: "MP4", ext: ".mp4", mime: "video/mp4" };
   }
 
-  // 6. WebM: 1A 45 DF A3 (EBML)
+  // 6. WebM / MKV: 1A 45 DF A3 (EBML)
   if (buf[0] === 0x1a && buf[1] === 0x45 && buf[2] === 0xdf && buf[3] === 0xa3) {
     return { type: "WEBM", ext: ".webm", mime: "video/webm" };
+  }
+
+  // 7. AVI: RIFF ... AVI
+  if (
+    buf[0] === 0x52 &&
+    buf[1] === 0x49 &&
+    buf[2] === 0x46 &&
+    buf[3] === 0x46 &&
+    buf[8] === 0x41 &&
+    buf[9] === 0x56 &&
+    buf[10] === 0x49
+  ) {
+    return { type: "AVI", ext: ".avi", mime: "video/x-msvideo" };
   }
 
   return null;
