@@ -56,8 +56,84 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const jsonLd = {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "WebSite",
+        "@id": "https://campustent.com/#website",
+        "url": "https://campustent.com",
+        "name": "Campus Tent",
+        "description": "Connecting students with verified off-campus hostels, apartments, and compatible roommates.",
+        "potentialAction": [
+          {
+            "@type": "SearchAction",
+            "target": {
+              "@type": "EntryPoint",
+              "urlTemplate": "https://campustent.com/explore?search={search_term_string}",
+            },
+            "query-input": "required name=search_term_string",
+          },
+        ],
+      },
+      {
+        "@type": "Organization",
+        "@id": "https://campustent.com/#organization",
+        "name": "Campus Tent",
+        "url": "https://campustent.com",
+        "logo": "https://campustent.com/icon.png",
+      },
+      {
+        "@type": "ItemList",
+        "itemListElement": [
+          {
+            "@type": "SiteNavigationElement",
+            "position": 1,
+            "name": "Explore Hostels & Apartments",
+            "description": "Discover verified student hostels, single rooms, and self-contain apartments near campus.",
+            "url": "https://campustent.com/explore",
+          },
+          {
+            "@type": "SiteNavigationElement",
+            "position": 2,
+            "name": "Find Roommates",
+            "description": "Find compatible, verified student roommates to share accommodation and split rent costs.",
+            "url": "https://campustent.com/roommates",
+          },
+          {
+            "@type": "SiteNavigationElement",
+            "position": 3,
+            "name": "Student & Agent Login",
+            "description": "Log in to your Campus Tent account to manage listings or contact landlords.",
+            "url": "https://campustent.com/auth/login",
+          },
+          {
+            "@type": "SiteNavigationElement",
+            "position": 4,
+            "name": "Sign Up / Get Started",
+            "description": "Create a free student or agent account on Campus Tent.",
+            "url": "https://campustent.com/auth/rolepick",
+          },
+          {
+            "@type": "SiteNavigationElement",
+            "position": 5,
+            "name": "Landlord & Agent Hub",
+            "description": "List your hostels and apartments to reach thousands of university students.",
+            "url": "https://campustent.com/landlord-hub",
+          },
+        ],
+      },
+    ],
+  };
+
   return (
     <html lang="en" data-scroll-behavior="smooth">
+      <head>
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+        />
+      </head>
       <body>
         <ToastProvider>
           {children}
