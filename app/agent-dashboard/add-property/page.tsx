@@ -3,7 +3,7 @@ import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { getCurrentUser } from "@/app/actions/auth";
-import { addProperty, uploadPropertyImages } from "@/app/actions/properties";
+import { addProperty, uploadPropertyImages, getMediaUploadPresignedUrl } from "@/app/actions/properties";
 import styles from "./add-property.module.css";
 import "./styles.css";
 import { NIGERIAN_UNIVERSITIES } from "@/lib/universities";
@@ -127,29 +127,59 @@ export default function AddProperty() {
             return;
           }
 
-          const formData = new FormData();
-          formData.append("images", file);
-
+          // Step 1: Direct browser-to-R2 upload (bypasses Vercel serverless payload limits)
+          let uploaded = false;
           try {
-            const uploadRes = await uploadPropertyImages(formData);
-            if (!uploadRes || !uploadRes.success) {
-              setError(uploadRes?.error || `Failed to upload "${file.name}".`);
+            const presignedRes = await getMediaUploadPresignedUrl(
+              file.name,
+              file.type || (isVideo ? "video/mp4" : "image/jpeg"),
+              file.size
+            );
+
+            if (presignedRes.success && presignedRes.uploadUrl && presignedRes.publicUrl) {
+              const uploadPutRes = await fetch(presignedRes.uploadUrl, {
+                method: "PUT",
+                body: file,
+                headers: {
+                  "Content-Type": file.type || (isVideo ? "video/mp4" : "image/jpeg"),
+                },
+              });
+
+              if (uploadPutRes.ok) {
+                uploadedUrls.push(presignedRes.publicUrl);
+                uploaded = true;
+              }
+            }
+          } catch (presignedErr) {
+            console.warn("Direct upload fallback trigger:", presignedErr);
+          }
+
+          // Step 2: Fallback to Server Action if direct upload didn't succeed
+          if (!uploaded) {
+            const formData = new FormData();
+            formData.append("images", file);
+
+            try {
+              const uploadRes = await uploadPropertyImages(formData);
+              if (!uploadRes || !uploadRes.success) {
+                setError(uploadRes?.error || `Failed to upload "${file.name}".`);
+                setIsLoading(false);
+                return;
+              }
+              if (uploadRes.urls) {
+                uploadedUrls.push(...uploadRes.urls);
+              }
+            } catch (uploadErr: any) {
+              console.error("Individual upload error:", uploadErr);
+              const msg = uploadErr?.message || "";
+              if (msg.includes("unexpected response") || msg.includes("Failed to fetch") || msg.includes("413") || msg.includes("body")) {
+                setError(`File "${file.name}" (${sizeMb.toFixed(1)} MB) could not be processed by the server. Please ensure the video is under 20 MB.`);
+              } else {
+                setError(msg || `Failed to upload "${file.name}".`);
+              }
               setIsLoading(false);
               return;
             }
-            if (uploadRes.urls) {
-              uploadedUrls.push(...uploadRes.urls);
-            }
-          } catch (uploadErr: any) {
-            console.error("Individual upload error:", uploadErr);
-            const msg = uploadErr?.message || "";
-            if (msg.includes("unexpected response") || msg.includes("Failed to fetch") || msg.includes("413") || msg.includes("body")) {
-              setError(`File "${file.name}" (${sizeMb.toFixed(1)} MB) has exceeded the upload size limit for server processing. Please compress the video or choose a shorter video under 20 MB.`);
-            } else {
-              setError(msg || `Failed to upload "${file.name}".`);
-            }
-            setIsLoading(false);
-            return;
           }
         }
       }

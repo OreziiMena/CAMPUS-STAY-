@@ -4,7 +4,7 @@ import prisma from "@/lib/prisma";
 import { getCurrentUser } from "./auth";
 import { writeFile, mkdir } from "fs/promises";
 import path from "path";
-import { uploadToR2 } from "@/lib/r2";
+import { uploadToR2, getR2PresignedUploadUrl } from "@/lib/r2";
 import { sendEmail } from "@/lib/email";
 import { logAgentActivity } from "@/lib/activity";
 import { validateFileBuffer, generateSecureFilename } from "@/lib/upload-validator";
@@ -509,6 +509,40 @@ export async function getAgentAnalyticsData() {
     };
   } catch (err: any) {
     return { success: false, error: err.message || "Failed to load analytics data." };
+  }
+}
+
+export async function getMediaUploadPresignedUrl(fileName: string, contentType: string, fileSize: number) {
+  try {
+    const user = await getCurrentUser();
+    if (!user) {
+      return { success: false, error: "Unauthorized. Please log in." };
+    }
+
+    const isVideo = contentType.startsWith("video/") || fileName.match(/\.(mp4|mov|webm|mkv|avi)$/i);
+    const maxLimit = isVideo ? 25 * 1024 * 1024 : 10 * 1024 * 1024;
+
+    if (fileSize > maxLimit) {
+      const mbLimit = (maxLimit / (1024 * 1024)).toFixed(0);
+      return { success: false, error: `File "${fileName}" exceeds the ${mbLimit}MB maximum limit.` };
+    }
+
+    const extMatch = fileName.match(/\.([a-zA-Z0-9]+)$/);
+    const ext = extMatch ? `.${extMatch[1].toLowerCase()}` : (isVideo ? ".mp4" : ".jpg");
+    const safeFilename = generateSecureFilename(`${user.id}-property`, ext);
+
+    const presigned = await getR2PresignedUploadUrl(`properties/${safeFilename}`, contentType || (isVideo ? "video/mp4" : "image/jpeg"));
+    if (!presigned.success || !presigned.uploadUrl) {
+      return { success: false, error: presigned.error || "Could not generate direct upload URL." };
+    }
+
+    return {
+      success: true,
+      uploadUrl: presigned.uploadUrl,
+      publicUrl: presigned.publicUrl,
+    };
+  } catch (err: any) {
+    return { success: false, error: err.message || "Failed to initialize direct upload." };
   }
 }
 
