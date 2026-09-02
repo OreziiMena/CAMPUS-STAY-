@@ -140,22 +140,27 @@ export default function AddProperty() {
               const uploadPutRes = await fetch(presignedRes.uploadUrl, {
                 method: "PUT",
                 body: file,
-                headers: {
-                  "Content-Type": file.type || (isVideo ? "video/mp4" : "image/jpeg"),
-                },
               });
 
               if (uploadPutRes.ok) {
                 uploadedUrls.push(presignedRes.publicUrl);
                 uploaded = true;
+              } else {
+                console.error("Direct R2 upload response error:", uploadPutRes.status);
               }
             }
           } catch (presignedErr) {
-            console.warn("Direct upload fallback trigger:", presignedErr);
+            console.warn("Direct upload error:", presignedErr);
           }
 
-          // Step 2: Fallback to Server Action if direct upload didn't succeed
+          // Step 2: Fallback to Server Action only for small files (<= 4MB) if direct upload didn't succeed
           if (!uploaded) {
+            if (file.size > 4 * 1024 * 1024) {
+              setError(`Cloud direct upload failed for "${file.name}" (${sizeMb.toFixed(1)} MB). Please check your internet connection or try again.`);
+              setIsLoading(false);
+              return;
+            }
+
             const formData = new FormData();
             formData.append("images", file);
 
@@ -172,11 +177,7 @@ export default function AddProperty() {
             } catch (uploadErr: any) {
               console.error("Individual upload error:", uploadErr);
               const msg = uploadErr?.message || "";
-              if (msg.includes("unexpected response") || msg.includes("Failed to fetch") || msg.includes("413") || msg.includes("body")) {
-                setError(`File "${file.name}" (${sizeMb.toFixed(1)} MB) could not be processed by the server. Please ensure the video is under 20 MB.`);
-              } else {
-                setError(msg || `Failed to upload "${file.name}".`);
-              }
+              setError(msg || `Failed to upload "${file.name}".`);
               setIsLoading(false);
               return;
             }

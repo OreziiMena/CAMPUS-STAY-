@@ -531,7 +531,7 @@ export async function getMediaUploadPresignedUrl(fileName: string, contentType: 
     const ext = extMatch ? `.${extMatch[1].toLowerCase()}` : (isVideo ? ".mp4" : ".jpg");
     const safeFilename = generateSecureFilename(`${user.id}-property`, ext);
 
-    const presigned = await getR2PresignedUploadUrl(`properties/${safeFilename}`, contentType || (isVideo ? "video/mp4" : "image/jpeg"));
+    const presigned = await getR2PresignedUploadUrl(`properties/${safeFilename}`);
     if (!presigned.success || !presigned.uploadUrl) {
       return { success: false, error: presigned.error || "Could not generate direct upload URL." };
     }

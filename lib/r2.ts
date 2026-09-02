@@ -56,18 +56,16 @@ export async function uploadToR2(
 }
 
 export async function getR2PresignedUploadUrl(
-  key: string,
-  contentType: string
+  key: string
 ): Promise<{ success: boolean; uploadUrl?: string; publicUrl?: string; error?: string }> {
   if (!s3 || !isR2Configured) {
-    return { success: false, error: "Cloudflare R2 is not configured." };
+    return { success: false, error: "Cloudflare R2 is not configured in environment variables." };
   }
 
   try {
     const command = new PutObjectCommand({
       Bucket: bucketName,
       Key: key,
-      ContentType: contentType,
     });
 
     const uploadUrl = await getSignedUrl(s3, command, { expiresIn: 3600 });
