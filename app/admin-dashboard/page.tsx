@@ -350,6 +350,15 @@ function AdminDashboardContent() {
   const studentUsers = users.filter((u) => u.role === "STUDENT");
   const agentUsers = users.filter((u) => u.role === "AGENT");
 
+  const verifiedStudentsCount = studentUsers.filter((u) => u.studentProfile?.isVerified).length;
+  const unverifiedStudentsCount = studentUsers.filter((u) => !u.studentProfile?.isVerified).length;
+
+  const verifiedAgentsCount = agentUsers.filter((u) => u.agentProfile?.isVerified).length;
+  const unverifiedAgentsCount = agentUsers.filter((u) => !u.agentProfile?.isVerified).length;
+
+  const verifiedPropertiesCount = allProperties.filter((p) => p.isVerified).length;
+  const unverifiedPropertiesCount = allProperties.filter((p) => !p.isVerified).length;
+
   // Search filter logic
   const filteredStudents = studentUsers.filter((u) => {
     const name = u.studentProfile?.fullName?.toLowerCase() || "";
@@ -438,6 +447,192 @@ function AdminDashboardContent() {
           <i className="fas fa-exclamation-circle"></i> {error}
         </div>
       )}
+
+      {/* Global Admin Metrics Overview */}
+      <div style={{
+        display: "grid",
+        gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
+        gap: "16px",
+        marginBottom: "24px"
+      }}>
+        {/* Verified Students Card */}
+        <div style={{
+          background: "white",
+          padding: "18px 20px",
+          borderRadius: "12px",
+          border: "1px solid #eaeaea",
+          boxShadow: "0 2px 8px rgba(0,0,0,0.02)",
+          display: "flex",
+          alignItems: "center",
+          gap: "14px"
+        }}>
+          <div style={{
+            background: "#ecfdf5",
+            color: "#059669",
+            width: "48px",
+            height: "48px",
+            borderRadius: "10px",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            fontSize: "1.4rem",
+            flexShrink: 0
+          }}>
+            <i className="fas fa-user-graduate"></i>
+          </div>
+          <div>
+            <div style={{ display: "flex", alignItems: "baseline", gap: "6px" }}>
+              <span style={{ fontSize: "1.5rem", fontWeight: "800", color: "#065f46" }}>
+                {verifiedStudentsCount}
+              </span>
+              <span style={{ fontSize: "0.82rem", color: "#6b7280", fontWeight: "600" }}>
+                / {studentUsers.length} total
+              </span>
+            </div>
+            <div style={{ fontSize: "0.82rem", color: "#374151", fontWeight: "600" }}>
+              Verified Students
+            </div>
+            {unverifiedStudentsCount > 0 && (
+              <span style={{ fontSize: "0.75rem", color: "#d97706", fontWeight: "600" }}>
+                {unverifiedStudentsCount} unverified
+              </span>
+            )}
+          </div>
+        </div>
+
+        {/* Verified Agents Card */}
+        <div style={{
+          background: "white",
+          padding: "18px 20px",
+          borderRadius: "12px",
+          border: "1px solid #eaeaea",
+          boxShadow: "0 2px 8px rgba(0,0,0,0.02)",
+          display: "flex",
+          alignItems: "center",
+          gap: "14px"
+        }}>
+          <div style={{
+            background: "#eff6ff",
+            color: "#2563eb",
+            width: "48px",
+            height: "48px",
+            borderRadius: "10px",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            fontSize: "1.4rem",
+            flexShrink: 0
+          }}>
+            <i className="fas fa-user-tie"></i>
+          </div>
+          <div>
+            <div style={{ display: "flex", alignItems: "baseline", gap: "6px" }}>
+              <span style={{ fontSize: "1.5rem", fontWeight: "800", color: "#1e40af" }}>
+                {verifiedAgentsCount}
+              </span>
+              <span style={{ fontSize: "0.82rem", color: "#6b7280", fontWeight: "600" }}>
+                / {agentUsers.length} total
+              </span>
+            </div>
+            <div style={{ fontSize: "0.82rem", color: "#374151", fontWeight: "600" }}>
+              Verified Agents
+            </div>
+            {unverifiedAgentsCount > 0 && (
+              <span style={{ fontSize: "0.75rem", color: "#d97706", fontWeight: "600" }}>
+                {unverifiedAgentsCount} unverified
+              </span>
+            )}
+          </div>
+        </div>
+
+        {/* Verified Properties Card */}
+        <div style={{
+          background: "white",
+          padding: "18px 20px",
+          borderRadius: "12px",
+          border: "1px solid #eaeaea",
+          boxShadow: "0 2px 8px rgba(0,0,0,0.02)",
+          display: "flex",
+          alignItems: "center",
+          gap: "14px"
+        }}>
+          <div style={{
+            background: "#fef3c7",
+            color: "#d97706",
+            width: "48px",
+            height: "48px",
+            borderRadius: "10px",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            fontSize: "1.4rem",
+            flexShrink: 0
+          }}>
+            <i className="fas fa-building"></i>
+          </div>
+          <div>
+            <div style={{ display: "flex", alignItems: "baseline", gap: "6px" }}>
+              <span style={{ fontSize: "1.5rem", fontWeight: "800", color: "#92400e" }}>
+                {verifiedPropertiesCount}
+              </span>
+              <span style={{ fontSize: "0.82rem", color: "#6b7280", fontWeight: "600" }}>
+                / {allProperties.length} total
+              </span>
+            </div>
+            <div style={{ fontSize: "0.82rem", color: "#374151", fontWeight: "600" }}>
+              Verified Listings
+            </div>
+            {unverifiedPropertiesCount > 0 && (
+              <span style={{ fontSize: "0.75rem", color: "#d97706", fontWeight: "600" }}>
+                {unverifiedPropertiesCount} pending review
+              </span>
+            )}
+          </div>
+        </div>
+
+        {/* Pending Action Queue Card */}
+        <div style={{
+          background: "white",
+          padding: "18px 20px",
+          borderRadius: "12px",
+          border: "1px solid #eaeaea",
+          boxShadow: "0 2px 8px rgba(0,0,0,0.02)",
+          display: "flex",
+          alignItems: "center",
+          gap: "14px"
+        }}>
+          <div style={{
+            background: "#fef2f2",
+            color: "#dc2626",
+            width: "48px",
+            height: "48px",
+            borderRadius: "10px",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            fontSize: "1.4rem",
+            flexShrink: 0
+          }}>
+            <i className="fas fa-tasks"></i>
+          </div>
+          <div>
+            <div style={{ display: "flex", alignItems: "baseline", gap: "6px" }}>
+              <span style={{ fontSize: "1.5rem", fontWeight: "800", color: "#991b1b" }}>
+                {students.length + agents.length + properties.length}
+              </span>
+              <span style={{ fontSize: "0.82rem", color: "#6b7280", fontWeight: "600" }}>
+                pending
+              </span>
+            </div>
+            <div style={{ fontSize: "0.82rem", color: "#374151", fontWeight: "600" }}>
+              Approvals Queue
+            </div>
+            <span style={{ fontSize: "0.75rem", color: "#6b7280" }}>
+              {students.length} students, {agents.length} agents
+            </span>
+          </div>
+        </div>
+      </div>
 
       {/* Dynamic Directory Search Bar */}
       <div style={{ marginBottom: "25px", display: "flex", gap: "10px" }}>
@@ -801,7 +996,12 @@ function AdminDashboardContent() {
           {/* 2. STUDENT USERS TAB */}
           {activeTab === "students" && (
             <div className="admin-card">
-              <h2><i className="fas fa-user-graduate"></i> Student Users Directory</h2>
+              <h2>
+                <i className="fas fa-user-graduate"></i> Student Users Directory{" "}
+                <span style={{ fontSize: "0.85rem", fontWeight: "600", color: "#065f46", background: "#ecfdf5", padding: "4px 10px", borderRadius: "12px", marginLeft: "8px" }}>
+                  {verifiedStudentsCount} Verified / {studentUsers.length} Total
+                </span>
+              </h2>
               {studentUsers.length === 0 ? (
                 <div className="no-data-text">No student accounts found.</div>
               ) : filteredStudents.length === 0 ? (
@@ -875,7 +1075,12 @@ function AdminDashboardContent() {
           {/* 3. AGENT USERS TAB */}
           {activeTab === "agents" && (
             <div className="admin-card">
-              <h2><i className="fas fa-user-tie"></i> Agent / Landlord Directory</h2>
+              <h2>
+                <i className="fas fa-user-tie"></i> Agent / Landlord Directory{" "}
+                <span style={{ fontSize: "0.85rem", fontWeight: "600", color: "#1e40af", background: "#eff6ff", padding: "4px 10px", borderRadius: "12px", marginLeft: "8px" }}>
+                  {verifiedAgentsCount} Verified / {agentUsers.length} Total
+                </span>
+              </h2>
               {agentUsers.length === 0 ? (
                 <div className="no-data-text">No agent accounts found.</div>
               ) : filteredAgents.length === 0 ? (
@@ -947,7 +1152,12 @@ function AdminDashboardContent() {
           {/* 4. PROPERTIES DIRECTORY TAB */}
           {activeTab === "properties" && (
             <div className="admin-card">
-              <h2><i className="fas fa-building"></i> Properties Directory</h2>
+              <h2>
+                <i className="fas fa-building"></i> Properties Directory{" "}
+                <span style={{ fontSize: "0.85rem", fontWeight: "600", color: "#92400e", background: "#fef3c7", padding: "4px 10px", borderRadius: "12px", marginLeft: "8px" }}>
+                  {verifiedPropertiesCount} Verified / {allProperties.length} Total
+                </span>
+              </h2>
               {allProperties.length === 0 ? (
                 <div className="no-data-text">No listed properties found.</div>
               ) : filteredAllProperties.length === 0 ? (

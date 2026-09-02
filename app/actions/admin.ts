@@ -261,6 +261,8 @@ export async function getAdminAnalyticsData() {
       stats: {
         totalStudents,
         totalAgents,
+        verifiedStudents,
+        verifiedAgents,
         totalProperties,
         totalRoommates,
       },

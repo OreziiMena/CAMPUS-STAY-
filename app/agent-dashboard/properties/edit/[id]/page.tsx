@@ -106,7 +106,7 @@ export default function EditProperty() {
   };
 
   const MAX_IMAGE_SIZE_MB = 5;
-  const MAX_VIDEO_SIZE_MB = 15;
+  const MAX_VIDEO_SIZE_MB = 20;
 
   const handleNewImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     setError("");
@@ -200,7 +200,7 @@ export default function EditProperty() {
             console.error("Individual edit upload error:", uploadErr);
             const msg = uploadErr?.message || "";
             if (msg.includes("unexpected response") || msg.includes("Failed to fetch") || msg.includes("413") || msg.includes("body")) {
-              setError(`File "${file.name}" (${sizeMb.toFixed(1)} MB) has exceeded the upload size limit for server processing. Please compress the video or choose a shorter video under 15 MB.`);
+              setError(`File "${file.name}" (${sizeMb.toFixed(1)} MB) has exceeded the upload size limit for server processing. Please compress the video or choose a shorter video under 20 MB.`);
             } else {
               setError(msg || `Failed to upload "${file.name}".`);
             }
@@ -548,7 +548,7 @@ export default function EditProperty() {
                 <i className="fas fa-cloud-upload-alt"></i>
                 <p>Drag and drop property media or <span>Browse files</span></p>
                 <p style={{ fontSize: "0.78rem", color: "#666", marginTop: "5px" }}>
-                  Supports JPG, PNG, WEBP (Max 5MB each) & MP4, MOV, WebM videos (Max 15MB)
+                  Supports JPG, PNG, WEBP (Max 5MB each) & MP4, MOV, WebM videos (Max 20MB)
                 </p>
                 <input type="file" multiple accept="image/*,video/*" onChange={handleNewImageUpload} />
               </div>
