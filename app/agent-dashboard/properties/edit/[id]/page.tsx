@@ -172,8 +172,25 @@ export default function EditProperty() {
     try {
       let newlyUploadedUrls: string[] = [];
       if (newImageFiles.length > 0) {
-        for (let i = 0; i < newImageFiles.length; i++) {
-          const file = newImageFiles[i];
+        // Place video on Slide 1 and synthesized photo on Slide 2
+        const filesToProcess: File[] = [];
+        for (const file of newImageFiles) {
+          const isVideo = file.type.startsWith("video/") || file.name.match(/\.(mp4|mov|webm|mkv|avi)$/i);
+          filesToProcess.push(file);
+          if (isVideo) {
+            try {
+              const posterFile = await extractVideoThumbnail(file);
+              if (posterFile) {
+                filesToProcess.push(posterFile);
+              }
+            } catch (thumbErr) {
+              console.warn("Edit video thumbnail extraction skipped:", thumbErr);
+            }
+          }
+        }
+
+        for (let i = 0; i < filesToProcess.length; i++) {
+          const file = filesToProcess[i];
           const isVideo = file.type.startsWith("video/") || file.name.match(/\.(mp4|mov|webm|mkv|avi)$/i);
           const limitMb = isVideo ? MAX_VIDEO_SIZE_MB : MAX_IMAGE_SIZE_MB;
           const sizeMb = file.size / (1024 * 1024);
