@@ -341,23 +341,28 @@ export default function Explore() {
                         {/* Property Media in middle */}
                         <div style={{ position: "relative", width: "100%", height: "160px", borderRadius: "12px", overflow: "hidden", marginBottom: "12px", backgroundColor: "#0f172a" }}>
                           {(() => {
-                            const mediaUrl = property.images?.[0] || "https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80";
-                            const isVideo = mediaUrl.match(/\.(mp4|webm|ogg|mov|mkv)(\?.*)?$/i);
-                            return isVideo ? (
+                            const videoUrl = property.images?.find((img: string) => img.match(/\.(mp4|webm|ogg|mov|mkv)(\?.*)?$/i));
+                            const posterUrl = property.images?.find((img: string) => !img.match(/\.(mp4|webm|ogg|mov|mkv)(\?.*)?$/i));
+                            const defaultImg = "https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80";
+
+                            return videoUrl ? (
                               <>
                                 <video 
-                                  src={mediaUrl} 
+                                  ref={(el) => {
+                                    if (el) {
+                                      el.muted = true;
+                                      el.defaultMuted = true;
+                                      el.play().catch(() => {});
+                                    }
+                                  }}
+                                  src={videoUrl} 
+                                  poster={posterUrl}
                                   style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} 
                                   muted 
                                   loop 
                                   playsInline 
                                   autoPlay
                                   preload="auto"
-                                  onLoadedMetadata={(e) => {
-                                    const v = e.currentTarget;
-                                    v.muted = true;
-                                    v.play().catch(() => {});
-                                  }}
                                 />
                                 <div style={{
                                   position: "absolute",
@@ -381,7 +386,7 @@ export default function Explore() {
                               </>
                             ) : (
                               <img 
-                                src={mediaUrl} 
+                                src={posterUrl || property.images?.[0] || defaultImg} 
                                 alt={property.title} 
                                 style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} 
                               />

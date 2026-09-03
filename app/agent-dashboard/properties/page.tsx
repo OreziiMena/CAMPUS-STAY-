@@ -108,13 +108,23 @@ export default function AgentPropertiesListing() {
           {properties.map((property) => (
             <div key={property.id} className="property-row-card">
               {(() => {
-                const mediaUrl = property.images?.[0] || "https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?ixlib=rb-4.0.3";
-                const isVideo = mediaUrl.match(/\.(mp4|webm|ogg|mov|mkv)(\?.*)?$/i);
+                const videoUrl = property.images?.find((img: string) => img.match(/\.(mp4|webm|ogg|mov|mkv)(\?.*)?$/i));
+                const posterUrl = property.images?.find((img: string) => !img.match(/\.(mp4|webm|ogg|mov|mkv)(\?.*)?$/i));
+                const defaultImg = "https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?ixlib=rb-4.0.3";
+
                 return (
                   <div style={{ position: "relative", width: "100px", height: "80px", borderRadius: "8px", overflow: "hidden", flexShrink: 0, backgroundColor: "#0f172a" }}>
-                    {isVideo ? (
+                    {videoUrl ? (
                       <video
-                        src={mediaUrl}
+                        ref={(el) => {
+                          if (el) {
+                            el.muted = true;
+                            el.defaultMuted = true;
+                            el.play().catch(() => {});
+                          }
+                        }}
+                        src={videoUrl}
+                        poster={posterUrl}
                         className="property-row-img"
                         muted
                         playsInline
@@ -122,21 +132,16 @@ export default function AgentPropertiesListing() {
                         autoPlay
                         loop
                         style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }}
-                        onLoadedMetadata={(e) => {
-                          const v = e.currentTarget;
-                          v.muted = true;
-                          v.play().catch(() => {});
-                        }}
                       />
                     ) : (
                       <img
-                        src={mediaUrl}
+                        src={posterUrl || property.images?.[0] || defaultImg}
                         alt={property.title}
                         className="property-row-img"
                         style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }}
                       />
                     )}
-                    {isVideo && (
+                    {videoUrl && (
                       <span style={{
                         position: "absolute",
                         bottom: "4px",
