@@ -172,25 +172,8 @@ export default function EditProperty() {
     try {
       let newlyUploadedUrls: string[] = [];
       if (newImageFiles.length > 0) {
-        // Pre-process video files to extract crystal-clear poster thumbnails
-        const filesToProcess: File[] = [];
-        for (const file of newImageFiles) {
-          const isVideo = file.type.startsWith("video/") || file.name.match(/\.(mp4|mov|webm|mkv|avi)$/i);
-          if (isVideo) {
-            try {
-              const posterFile = await extractVideoThumbnail(file);
-              if (posterFile) {
-                filesToProcess.push(posterFile);
-              }
-            } catch (thumbErr) {
-              console.warn("Edit video thumbnail extraction skipped:", thumbErr);
-            }
-          }
-          filesToProcess.push(file);
-        }
-
-        for (let i = 0; i < filesToProcess.length; i++) {
-          const file = filesToProcess[i];
+        for (let i = 0; i < newImageFiles.length; i++) {
+          const file = newImageFiles[i];
           const isVideo = file.type.startsWith("video/") || file.name.match(/\.(mp4|mov|webm|mkv|avi)$/i);
           const limitMb = isVideo ? MAX_VIDEO_SIZE_MB : MAX_IMAGE_SIZE_MB;
           const sizeMb = file.size / (1024 * 1024);
