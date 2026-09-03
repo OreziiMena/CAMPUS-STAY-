@@ -111,22 +111,29 @@ export default function AgentPropertiesListing() {
                 const mediaUrl = property.images?.[0] || "https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?ixlib=rb-4.0.3";
                 const isVideo = mediaUrl.match(/\.(mp4|webm|ogg|mov|mkv)(\?.*)?$/i);
                 return (
-                  <div style={{ position: "relative", width: "100px", height: "80px", borderRadius: "8px", overflow: "hidden", flexShrink: 0 }}>
+                  <div style={{ position: "relative", width: "100px", height: "80px", borderRadius: "8px", overflow: "hidden", flexShrink: 0, backgroundColor: "#0f172a" }}>
                     {isVideo ? (
                       <video
                         src={mediaUrl}
                         className="property-row-img"
                         muted
                         playsInline
-                        preload="metadata"
-                        style={{ width: "100%", height: "100%", objectFit: "cover" }}
+                        preload="auto"
+                        autoPlay
+                        loop
+                        style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }}
+                        onLoadedMetadata={(e) => {
+                          const v = e.currentTarget;
+                          v.muted = true;
+                          v.play().catch(() => {});
+                        }}
                       />
                     ) : (
                       <img
                         src={mediaUrl}
                         alt={property.title}
                         className="property-row-img"
-                        style={{ width: "100%", height: "100%", objectFit: "cover" }}
+                        style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }}
                       />
                     )}
                     {isVideo && (
@@ -134,11 +141,12 @@ export default function AgentPropertiesListing() {
                         position: "absolute",
                         bottom: "4px",
                         right: "4px",
-                        background: "rgba(0,0,0,0.7)",
+                        background: "rgba(0,0,0,0.75)",
                         color: "#fff",
                         fontSize: "9px",
+                        fontWeight: "700",
                         borderRadius: "3px",
-                        padding: "1px 4px",
+                        padding: "2px 5px",
                         lineHeight: 1,
                       }}>
                         ▶ Video

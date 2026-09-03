@@ -339,24 +339,51 @@ export default function Explore() {
                         </div>
 
                         {/* Property Media in middle */}
-                        <div style={{ position: "relative", width: "100%", height: "160px", borderRadius: "12px", overflow: "hidden", marginBottom: "12px" }}>
+                        <div style={{ position: "relative", width: "100%", height: "160px", borderRadius: "12px", overflow: "hidden", marginBottom: "12px", backgroundColor: "#0f172a" }}>
                           {(() => {
                             const mediaUrl = property.images?.[0] || "https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80";
                             const isVideo = mediaUrl.match(/\.(mp4|webm|ogg|mov|mkv)(\?.*)?$/i);
                             return isVideo ? (
-                              <video 
-                                src={mediaUrl} 
-                                style={{ width: "100%", height: "100%", objectFit: "cover" }} 
-                                muted 
-                                loop 
-                                playsInline 
-                                autoPlay
-                              />
+                              <>
+                                <video 
+                                  src={mediaUrl} 
+                                  style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} 
+                                  muted 
+                                  loop 
+                                  playsInline 
+                                  autoPlay
+                                  preload="auto"
+                                  onLoadedMetadata={(e) => {
+                                    const v = e.currentTarget;
+                                    v.muted = true;
+                                    v.play().catch(() => {});
+                                  }}
+                                />
+                                <div style={{
+                                  position: "absolute",
+                                  top: "8px",
+                                  right: "8px",
+                                  background: "rgba(0, 0, 0, 0.7)",
+                                  backdropFilter: "blur(4px)",
+                                  color: "#fff",
+                                  fontSize: "0.68rem",
+                                  fontWeight: "700",
+                                  padding: "3px 8px",
+                                  borderRadius: "6px",
+                                  display: "flex",
+                                  alignItems: "center",
+                                  gap: "4px",
+                                  zIndex: 2,
+                                  fontFamily: "'Poppins', sans-serif"
+                                }}>
+                                  <i className="fas fa-play" style={{ fontSize: "0.6rem", color: "#10b981" }}></i> Video Tour
+                                </div>
+                              </>
                             ) : (
                               <img 
                                 src={mediaUrl} 
                                 alt={property.title} 
-                                style={{ width: "100%", height: "100%", objectFit: "cover" }} 
+                                style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} 
                               />
                             );
                           })()}
