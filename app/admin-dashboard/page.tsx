@@ -449,12 +449,7 @@ function AdminDashboardContent() {
       )}
 
       {/* Global Admin Metrics Overview */}
-      <div style={{
-        display: "grid",
-        gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
-        gap: "16px",
-        marginBottom: "24px"
-      }}>
+      <div className="admin-metrics-grid">
         {/* Verified Students Card */}
         <div style={{
           background: "white",
