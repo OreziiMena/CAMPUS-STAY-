@@ -296,12 +296,16 @@ function ApartmentDetailsContent() {
             {(() => {
               const activeMediaUrl = property.images[currentImageIndex] || "https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?ixlib=rb-4.0.3&auto=format&fit=crop&w=1200&q=80";
               const isVideo = activeMediaUrl.match(/\.(mp4|webm|ogg|mov|mkv)(\?.*)?$/i);
+              const posterUrl = property.images.find((img: string) => !img.match(/\.(mp4|webm|ogg|mov|mkv)(\?.*)?$/i));
               return isVideo ? (
                 <video 
                   src={activeMediaUrl} 
+                  poster={posterUrl}
                   className="property-main-image" 
                   controls 
-                  style={{ width: "100%", height: "100%", objectFit: "cover" }}
+                  playsInline
+                  preload="auto"
+                  style={{ width: "100%", height: "100%", objectFit: "contain", backgroundColor: "#000" }}
                 />
               ) : (
                 <img 
