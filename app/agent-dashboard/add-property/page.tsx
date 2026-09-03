@@ -127,7 +127,7 @@ export default function AddProperty() {
             return;
           }
 
-          // Step 1: Direct browser-to-R2 upload (bypasses Vercel serverless payload limits)
+          // Tier 1: Direct browser-to-R2 upload
           let uploaded = false;
           try {
             const presignedRes = await getMediaUploadPresignedUrl(
@@ -146,38 +146,54 @@ export default function AddProperty() {
                 uploadedUrls.push(presignedRes.publicUrl);
                 uploaded = true;
               } else {
-                console.error("Direct R2 upload response error:", uploadPutRes.status);
+                console.warn("Direct R2 upload response error:", uploadPutRes.status);
               }
             }
           } catch (presignedErr) {
-            console.warn("Direct upload error:", presignedErr);
+            console.warn("Direct presigned upload error (likely CORS/network), trying same-origin /api/upload:", presignedErr);
           }
 
-          // Step 2: Fallback to Server Action only for small files (<= 4MB) if direct upload didn't succeed
+          // Tier 2: Same-Origin /api/upload (Guaranteed 0 CORS issues)
           if (!uploaded) {
-            if (file.size > 4 * 1024 * 1024) {
-              setError(`Cloud direct upload failed for "${file.name}" (${sizeMb.toFixed(1)} MB). Please check your internet connection or try again.`);
-              setIsLoading(false);
-              return;
-            }
+            try {
+              const apiFormData = new FormData();
+              apiFormData.append("file", file);
 
+              const apiRes = await fetch("/api/upload", {
+                method: "POST",
+                body: apiFormData,
+              });
+
+              const apiJson = await apiRes.json();
+              if (apiRes.ok && apiJson.success && apiJson.url) {
+                uploadedUrls.push(apiJson.url);
+                uploaded = true;
+              } else {
+                console.warn("/api/upload response error:", apiJson.error);
+              }
+            } catch (apiErr) {
+              console.warn("/api/upload fetch error:", apiErr);
+            }
+          }
+
+          // Tier 3: Server Action fallback
+          if (!uploaded) {
             const formData = new FormData();
             formData.append("images", file);
 
             try {
               const uploadRes = await uploadPropertyImages(formData);
-              if (!uploadRes || !uploadRes.success) {
-                setError(uploadRes?.error || `Failed to upload "${file.name}".`);
+              if (uploadRes && uploadRes.success && uploadRes.urls && uploadRes.urls.length > 0) {
+                uploadedUrls.push(...uploadRes.urls);
+                uploaded = true;
+              } else {
+                setError(uploadRes?.error || `Failed to upload "${file.name}". Please ensure video is under 20MB.`);
                 setIsLoading(false);
                 return;
               }
-              if (uploadRes.urls) {
-                uploadedUrls.push(...uploadRes.urls);
-              }
             } catch (uploadErr: any) {
-              console.error("Individual upload error:", uploadErr);
-              const msg = uploadErr?.message || "";
-              setError(msg || `Failed to upload "${file.name}".`);
+              console.error("Server action upload error:", uploadErr);
+              setError(`Upload failed for "${file.name}" (${sizeMb.toFixed(1)} MB). Please check your internet connection and try again.`);
               setIsLoading(false);
               return;
             }
