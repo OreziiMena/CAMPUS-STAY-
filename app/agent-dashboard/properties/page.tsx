@@ -107,11 +107,46 @@ export default function AgentPropertiesListing() {
         <div className="properties-list">
           {properties.map((property) => (
             <div key={property.id} className="property-row-card">
-              <img
-                src={property.images?.[0] || "https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?ixlib=rb-4.0.3"}
-                alt={property.title}
-                className="property-row-img"
-              />
+              {(() => {
+                const mediaUrl = property.images?.[0] || "https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?ixlib=rb-4.0.3";
+                const isVideo = mediaUrl.match(/\.(mp4|webm|ogg|mov|mkv)(\?.*)?$/i);
+                return (
+                  <div style={{ position: "relative", width: "100px", height: "80px", borderRadius: "8px", overflow: "hidden", flexShrink: 0 }}>
+                    {isVideo ? (
+                      <video
+                        src={mediaUrl}
+                        className="property-row-img"
+                        muted
+                        playsInline
+                        preload="metadata"
+                        style={{ width: "100%", height: "100%", objectFit: "cover" }}
+                      />
+                    ) : (
+                      <img
+                        src={mediaUrl}
+                        alt={property.title}
+                        className="property-row-img"
+                        style={{ width: "100%", height: "100%", objectFit: "cover" }}
+                      />
+                    )}
+                    {isVideo && (
+                      <span style={{
+                        position: "absolute",
+                        bottom: "4px",
+                        right: "4px",
+                        background: "rgba(0,0,0,0.7)",
+                        color: "#fff",
+                        fontSize: "9px",
+                        borderRadius: "3px",
+                        padding: "1px 4px",
+                        lineHeight: 1,
+                      }}>
+                        ▶ Video
+                      </span>
+                    )}
+                  </div>
+                );
+              })()}
               
               <div className="property-row-info">
                 <h3 style={{ display: "flex", alignItems: "center", gap: "10px", flexWrap: "wrap" }}>

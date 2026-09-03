@@ -470,11 +470,26 @@ export default function RoommatesDirectory() {
                       {/* Image / Video in middle */}
                       {listing.images && listing.images.length > 0 && (
                         <div style={{ position: "relative", width: "100%", height: "160px", borderRadius: "12px", overflow: "hidden", marginBottom: "12px" }}>
-                          <img 
-                            src={listing.images[0]} 
-                            alt={listing.title} 
-                            style={{ width: "100%", height: "100%", objectFit: "cover" }} 
-                          />
+                          {(() => {
+                            const mediaUrl = listing.images[0];
+                            const isVideo = mediaUrl.match(/\.(mp4|webm|ogg|mov|mkv)(\?.*)?$/i);
+                            return isVideo ? (
+                              <video 
+                                src={mediaUrl} 
+                                style={{ width: "100%", height: "100%", objectFit: "cover" }} 
+                                muted 
+                                loop 
+                                playsInline 
+                                autoPlay
+                              />
+                            ) : (
+                              <img 
+                                src={mediaUrl} 
+                                alt={listing.title} 
+                                style={{ width: "100%", height: "100%", objectFit: "cover" }} 
+                              />
+                            );
+                          })()}
                           <span style={{ position: "absolute", bottom: "8px", left: "8px", background: "rgba(2, 53, 28, 0.85)", color: "white", padding: "4px 8px", borderRadius: "6px", fontSize: "0.7rem", fontWeight: "bold" }}>
                             {listing.hostelType}
                           </span>
@@ -980,11 +995,24 @@ export default function RoommatesDirectory() {
               <div style={{ marginBottom: "20px" }}>
                 {selectedRoommateDetails.images && selectedRoommateDetails.images.length > 0 && (
                   <div style={{ width: "100%", height: "220px", borderRadius: "12px", overflow: "hidden", marginBottom: "16px" }}>
-                    <img 
-                      src={selectedRoommateDetails.images[0]} 
-                      alt={selectedRoommateDetails.title} 
-                      style={{ width: "100%", height: "100%", objectFit: "cover" }} 
-                    />
+                    {(() => {
+                      const mediaUrl = selectedRoommateDetails.images[0];
+                      const isVideo = mediaUrl.match(/\.(mp4|webm|ogg|mov|mkv)(\?.*)?$/i);
+                      return isVideo ? (
+                        <video 
+                          src={mediaUrl} 
+                          style={{ width: "100%", height: "100%", objectFit: "cover" }} 
+                          controls
+                          playsInline 
+                        />
+                      ) : (
+                        <img 
+                          src={mediaUrl} 
+                          alt={selectedRoommateDetails.title} 
+                          style={{ width: "100%", height: "100%", objectFit: "cover" }} 
+                        />
+                      );
+                    })()}
                   </div>
                 )}
                 

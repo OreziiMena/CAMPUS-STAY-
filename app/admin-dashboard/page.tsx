@@ -897,14 +897,49 @@ function AdminDashboardContent() {
                           {filteredQueueProperties.map((property) => (
                             <tr key={property.id}>
                               <td>
-                                <div className="property-preview-cell">
-                                  <img 
-                                    src={property.images?.[0] || "https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?ixlib=rb-4.0.3"} 
-                                    alt={property.title} 
-                                    className="property-preview-img"
-                                  />
-                                  <span className="property-preview-title">{property.title}</span>
-                                </div>
+                                {(() => {
+                                  const mediaUrl = property.images?.[0] || "https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?ixlib=rb-4.0.3";
+                                  const isVideo = mediaUrl.match(/\.(mp4|webm|ogg|mov|mkv)(\?.*)?$/i);
+                                  return (
+                                    <div className="property-preview-cell">
+                                      <div style={{ position: "relative", width: "42px", height: "42px", borderRadius: "8px", overflow: "hidden", flexShrink: 0 }}>
+                                        {isVideo ? (
+                                          <video 
+                                            src={mediaUrl} 
+                                            className="property-preview-img"
+                                            muted
+                                            playsInline
+                                            preload="metadata"
+                                            style={{ width: "100%", height: "100%", objectFit: "cover" }}
+                                          />
+                                        ) : (
+                                          <img 
+                                            src={mediaUrl} 
+                                            alt={property.title} 
+                                            className="property-preview-img"
+                                            style={{ width: "100%", height: "100%", objectFit: "cover" }}
+                                          />
+                                        )}
+                                        {isVideo && (
+                                          <span style={{
+                                            position: "absolute",
+                                            bottom: "2px",
+                                            right: "2px",
+                                            background: "rgba(0,0,0,0.7)",
+                                            color: "#fff",
+                                            fontSize: "8px",
+                                            borderRadius: "3px",
+                                            padding: "1px 3px",
+                                            lineHeight: 1,
+                                          }}>
+                                            ▶
+                                          </span>
+                                        )}
+                                      </div>
+                                      <span className="property-preview-title">{property.title}</span>
+                                    </div>
+                                  );
+                                })()}
                               </td>
                               <td>{property.hostelType}</td>
                               <td>
@@ -1181,17 +1216,52 @@ function AdminDashboardContent() {
                         const isVerified = p.isVerified || false;
                         const isOwnerVerified = p.agent ? p.agent.isVerified : (p.student ? p.student.isVerified : false);
                         return (
-                          <tr key={p.id}>
-                            <td>
-                              <div className="property-preview-cell">
-                                <img 
-                                  src={p.images?.[0] || "https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?ixlib=rb-4.0.3"} 
-                                  alt={p.title} 
-                                  className="property-preview-img"
-                                />
-                                <span className="property-preview-title">{p.title}</span>
-                              </div>
-                            </td>
+                            <tr key={p.id}>
+                              <td>
+                                {(() => {
+                                  const mediaUrl = p.images?.[0] || "https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?ixlib=rb-4.0.3";
+                                  const isVideo = mediaUrl.match(/\.(mp4|webm|ogg|mov|mkv)(\?.*)?$/i);
+                                  return (
+                                    <div className="property-preview-cell">
+                                      <div style={{ position: "relative", width: "42px", height: "42px", borderRadius: "8px", overflow: "hidden", flexShrink: 0 }}>
+                                        {isVideo ? (
+                                          <video 
+                                            src={mediaUrl} 
+                                            className="property-preview-img"
+                                            muted
+                                            playsInline
+                                            preload="metadata"
+                                            style={{ width: "100%", height: "100%", objectFit: "cover" }}
+                                          />
+                                        ) : (
+                                          <img 
+                                            src={mediaUrl} 
+                                            alt={p.title} 
+                                            className="property-preview-img"
+                                            style={{ width: "100%", height: "100%", objectFit: "cover" }}
+                                          />
+                                        )}
+                                        {isVideo && (
+                                          <span style={{
+                                            position: "absolute",
+                                            bottom: "2px",
+                                            right: "2px",
+                                            background: "rgba(0,0,0,0.7)",
+                                            color: "#fff",
+                                            fontSize: "8px",
+                                            borderRadius: "3px",
+                                            padding: "1px 3px",
+                                            lineHeight: 1,
+                                          }}>
+                                            ▶
+                                          </span>
+                                        )}
+                                      </div>
+                                      <span className="property-preview-title">{p.title}</span>
+                                    </div>
+                                  );
+                                })()}
+                              </td>
                             <td>{p.hostelType}</td>
                             <td>
                               <div style={{ display: "flex", flexDirection: "column", gap: "2px", minWidth: "140px" }}>
