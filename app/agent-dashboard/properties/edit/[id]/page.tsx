@@ -232,8 +232,8 @@ export default function EditProperty() {
             }
           }
 
-          // Tier 3: Server Action fallback
-          if (!uploaded) {
+          // Tier 3: Server Action fallback for files <= 4MB
+          if (!uploaded && file.size <= 4 * 1024 * 1024) {
             const formData = new FormData();
             formData.append("images", file);
 
@@ -242,17 +242,16 @@ export default function EditProperty() {
               if (uploadRes && uploadRes.success && uploadRes.urls && uploadRes.urls.length > 0) {
                 newlyUploadedUrls.push(...uploadRes.urls);
                 uploaded = true;
-              } else {
-                setError(uploadRes?.error || `Failed to upload "${file.name}". Please ensure video is under 20MB.`);
-                setIsLoading(false);
-                return;
               }
             } catch (uploadErr: any) {
-              console.error("Individual edit upload error:", uploadErr);
-              setError(`Upload failed for "${file.name}" (${sizeMb.toFixed(1)} MB). Please check your internet connection and try again.`);
-              setIsLoading(false);
-              return;
+              console.warn("Edit server action upload fallback failed:", uploadErr);
             }
+          }
+
+          if (!uploaded) {
+            setError(`Failed to upload "${file.name}" (${sizeMb.toFixed(1)} MB). Please try again.`);
+            setIsLoading(false);
+            return;
           }
         }
       }
