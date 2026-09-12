@@ -107,11 +107,6 @@ export async function getProperties(filterParam?: string | {
         agent: true,
         student: true,
       },
-      orderBy: {
-        createdAt: "desc",
-      },
-      // If we are filtering by proximity in-memory, we can't limit in DB
-      ...(!isProximityFiltered ? { skip, take: limit } : {}),
     });
 
     // 5. Proximity filter (in-memory walk time minutes comparison)
@@ -131,12 +126,18 @@ export async function getProperties(filterParam?: string | {
         }
         return true;
       });
-
-      // Slice post-filtering
-      properties = properties.slice(skip, skip + limit);
     }
 
-    return { success: true, properties };
+    // Randomly shuffle listings so users discover varied properties across campus on each visit
+    for (let i = properties.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [properties[i], properties[j]] = [properties[j], properties[i]];
+    }
+
+    // Apply pagination slice
+    const paginatedProperties = properties.slice(skip, skip + limit);
+
+    return { success: true, properties: paginatedProperties };
   } catch (err: any) {
     return { success: false, error: err.message || "Failed to fetch properties." };
   }

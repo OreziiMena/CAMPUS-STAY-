@@ -515,18 +515,95 @@ body {
     border-left: 4px solid rgb(2, 53, 28);
 }
 
-.scheduling-card h3 {
+.scheduling-header {
     display: flex;
     align-items: center;
-    gap: 8px;
-    color: rgb(2, 53, 28);
-    font-size: 18px;
-    margin-top: 0;
-    margin-bottom: 12px;
+    gap: 14px;
+    margin-bottom: 18px;
 }
 
-.scheduling-card h3 i {
-    color: #d35400;
+.scheduling-icon-badge {
+    width: 44px;
+    height: 44px;
+    border-radius: 10px;
+    background-color: rgba(2, 53, 28, 0.08);
+    color: rgb(2, 53, 28);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.25rem;
+    flex-shrink: 0;
+}
+
+.scheduling-inputs-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 14px;
+}
+
+@media (max-width: 580px) {
+    .scheduling-inputs-grid {
+        grid-template-columns: 1fr;
+        gap: 12px;
+    }
+}
+
+.time-chips-container {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    margin-top: -4px;
+}
+
+.time-chips-label {
+    font-size: 12px;
+    font-weight: 600;
+    color: #64748b;
+    font-family: 'Poppins', sans-serif;
+}
+
+.time-chips-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+
+.time-chip-btn {
+    background-color: #f1f5f9;
+    color: #334155;
+    border: 1px solid #e2e8f0;
+    padding: 5px 11px;
+    border-radius: 16px;
+    font-size: 12px;
+    font-weight: 600;
+    font-family: 'Poppins', sans-serif;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.time-chip-btn:hover {
+    background-color: #e2e8f0;
+    color: rgb(2, 53, 28);
+}
+
+.time-chip-btn.active {
+    background-color: rgb(2, 53, 28);
+    color: #ffffff;
+    border-color: rgb(2, 53, 28);
+    box-shadow: 0 2px 6px rgba(2, 53, 28, 0.2);
+}
+
+.appointment-preview-badge {
+    background-color: #f0fdf4;
+    border: 1px solid #bbf7d0;
+    border-radius: 8px;
+    padding: 10px 14px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 13.5px;
+    color: #166534;
+    font-family: 'Poppins', sans-serif;
 }
 
 .scheduling-locked-overlay {
@@ -589,6 +666,9 @@ body {
     font-size: 13px;
     font-weight: 600;
     color: rgb(2, 53, 28);
+    display: flex;
+    align-items: center;
+    gap: 6px;
 }
 
 .scheduling-time-input {
