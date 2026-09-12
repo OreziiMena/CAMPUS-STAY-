@@ -57,6 +57,11 @@ export async function generateOTP(email: string, purpose: "EMAIL_VERIFICATION" |
 
 export async function verifyOTP(email: string, code: string, purpose: "EMAIL_VERIFICATION" | "PASSWORD_RESET") {
   try {
+    const rateCheck = await checkRateLimit("verify-otp", 5, 5);
+    if (!rateCheck.success) {
+      return { success: false, error: rateCheck.error };
+    }
+
     const otpRecord = await prisma.oTP.findFirst({
       where: {
         email,
