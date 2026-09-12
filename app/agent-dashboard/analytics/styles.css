@@ -1,5 +1,4 @@
-
-        .analytics-grid {
+.analytics-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(min(100%, 350px), 1fr));
             gap: 20px;
@@ -40,9 +39,6 @@
             color: #bbb;
         }
 
-
-        
-        /* Adjusting specific stat icons for variety */
         .stat-icon.views { color: #28a745; background: rgba(40,167,69,0.1); }
         .stat-icon.clicks { color: #d35400; background: rgba(211,84,0,0.1); }
         .stat-icon.requests { color: #f39c12; background: rgba(243,156,18,0.1); }

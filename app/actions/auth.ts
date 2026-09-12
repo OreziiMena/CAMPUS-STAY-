@@ -10,14 +10,15 @@ import crypto from "crypto";
 import { generateOTP } from "./otp";
 import { checkRateLimit } from "@/lib/rate-limit";
 import { validateFileBuffer, generateSecureFilename } from "@/lib/upload-validator";
+import { getAuthSecret } from "@/lib/auth-secret";
 
 const SESSION_COOKIE_NAME = "campus_stay_session";
-const AUTH_SECRET = process.env.AUTH_SECRET || "fallback-secret-key-at-least-32-chars-long-security-key";
 
 // Cryptographic signing of session JSON payload
 function signSession(payload: any): string {
+  const secret = getAuthSecret();
   const data = Buffer.from(JSON.stringify(payload)).toString("base64url");
-  const signature = crypto.createHmac("sha256", AUTH_SECRET).update(data).digest("hex");
+  const signature = crypto.createHmac("sha256", secret).update(data).digest("hex");
   return `${data}.${signature}`;
 }
 
@@ -27,8 +28,9 @@ function verifySession(token: string): any | null {
     const parts = token.split(".");
     if (parts.length !== 2) return null;
     const [data, signature] = parts;
+    const secret = getAuthSecret();
     
-    const expectedSignature = crypto.createHmac("sha256", AUTH_SECRET).update(data).digest("hex");
+    const expectedSignature = crypto.createHmac("sha256", secret).update(data).digest("hex");
     
     const sigBuffer = Buffer.from(signature, "hex");
     const expectedBuffer = Buffer.from(expectedSignature, "hex");
@@ -94,6 +96,10 @@ export async function registerStudent(data: any) {
 
     const { fullname, email, phone, university, username, password } = data;
 
+    if (!password || typeof password !== "string" || password.length < 8) {
+      return { success: false, error: "Password must be at least 8 characters long." };
+    }
+
     const existingUser = await prisma.user.findUnique({ where: { email } });
     if (existingUser) {
       return { success: false, error: "Email already registered." };
@@ -139,6 +145,10 @@ export async function registerAgent(data: any) {
     }
 
     const { fullname, email, phone, address, username, password } = data;
+
+    if (!password || typeof password !== "string" || password.length < 8) {
+      return { success: false, error: "Password must be at least 8 characters long." };
+    }
 
     const existingUser = await prisma.user.findUnique({ where: { email } });
     if (existingUser) {
@@ -334,21 +344,18 @@ export async function uploadAgentVerification(formData: FormData) {
       return { success: false, error: validation.error || "Invalid file." };
     }
 
-    const uploadDir = path.join(process.cwd(), "public", "uploads", "verification");
+    const uploadDir = path.join(process.cwd(), "private_uploads", "verification");
     const safeExt = validation.sanitizedExtension || ".pdf";
     const filename = generateSecureFilename(`${user.agentProfile.id}-nin`, safeExt);
     const contentType = validation.canonicalMime || "application/pdf";
 
-    let relativePath = "";
     const r2Result = await uploadToR2(buffer, `verification/${filename}`, contentType);
-    if (r2Result.success && r2Result.url) {
-      relativePath = r2Result.url;
-    } else {
+    if (!r2Result.success) {
       await mkdir(uploadDir, { recursive: true });
       const filePath = path.join(uploadDir, filename);
       await writeFile(filePath, buffer);
-      relativePath = `/uploads/verification/${filename}`;
     }
+    const relativePath = `/api/documents/verification/${filename}`;
 
     await prisma.agentProfile.update({
       where: { id: user.agentProfile.id },
@@ -440,6 +447,11 @@ export async function requestPasswordReset(email: string) {
 
 export async function verifyPasswordResetOTP(email: string, code: string) {
   try {
+    const rateCheck = await checkRateLimit("otp-verify-reset", 5, 5);
+    if (!rateCheck.success) {
+      return { success: false, error: rateCheck.error };
+    }
+
     const otpRecord = await prisma.oTP.findFirst({
       where: {
         email,
@@ -459,8 +471,12 @@ export async function verifyPasswordResetOTP(email: string, code: string) {
 
     await prisma.oTP.delete({ where: { id: otpRecord.id } }).catch(() => {});
 
+    const user = await prisma.user.findUnique({ where: { email } });
+    const passwordVersion = user ? user.password.substring(0, 10) : "initial";
+
     const resetToken = signSession({
       email,
+      passwordVersion,
       expiresAt: Date.now() + 15 * 60 * 1000,
     });
 
@@ -472,6 +488,10 @@ export async function verifyPasswordResetOTP(email: string, code: string) {
 
 export async function resetPasswordWithToken(email: string, token: string, newPassword: string) {
   try {
+    if (!newPassword || typeof newPassword !== "string" || newPassword.length < 8) {
+      return { success: false, error: "New password must be at least 8 characters long." };
+    }
+
     const payload = verifySession(token);
     if (!payload || !payload.email || payload.email !== email) {
       return { success: false, error: "Invalid or expired reset session. Please start over." };
@@ -479,6 +499,16 @@ export async function resetPasswordWithToken(email: string, token: string, newPa
 
     if (Date.now() > payload.expiresAt) {
       return { success: false, error: "Reset session has expired. Please start over." };
+    }
+
+    const user = await prisma.user.findUnique({ where: { email } });
+    if (!user) {
+      return { success: false, error: "User account not found." };
+    }
+
+    // Single-use token enforcement: verify password version hasn't already been changed
+    if (payload.passwordVersion && user.password.substring(0, 10) !== payload.passwordVersion) {
+      return { success: false, error: "This password reset link has already been used." };
     }
 
     const hashedPassword = await bcrypt.hash(newPassword, 10);

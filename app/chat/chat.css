@@ -1,5 +1,3 @@
-/* Premium Live Chat Layout CSS */
-
 .chat-container {
   display: flex;
   position: fixed;
@@ -12,7 +10,6 @@
   overflow: hidden;
 }
 
-/* Sidebar Conversations List */
 .chat-sidebar {
   width: 320px;
   background-color: white;
@@ -85,7 +82,7 @@
 
 .conversation-details {
   flex: 1;
-  min-width: 0; /* Important for text-overflow to work */
+  min-width: 0; 
 }
 
 .conversation-details h4 {
@@ -117,14 +114,13 @@
   text-overflow: ellipsis;
 }
 
-/* Chat Main window pane */
 .chat-main {
   flex: 1;
   display: flex;
   flex-direction: column;
   background-color: #f8faf9;
   height: 100%;
-  overflow: hidden; /* Prevent chat-main from expanding beyond container */
+  overflow: hidden; 
 }
 
 .chat-empty-state {
@@ -160,7 +156,7 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  flex-shrink: 0; /* Prevent header from shrinking */
+  flex-shrink: 0; 
 }
 
 .header-info h3 {
@@ -193,7 +189,6 @@
   color: white;
 }
 
-/* Messages area */
 .messages-feed {
   flex: 1;
   overflow-y: auto;
@@ -255,14 +250,13 @@
   color: rgba(255, 255, 255, 0.8);
 }
 
-/* Input Area */
 .chat-input-bar {
   background-color: white;
   padding: 20px 25px;
   border-top: 1px solid #eaeaea;
   display: flex;
   gap: 15px;
-  flex-shrink: 0; /* Prevent the input bar from shrinking */
+  flex-shrink: 0; 
 }
 
 .chat-input-bar input {
@@ -314,7 +308,6 @@
   gap: 10px;
 }
 
-/* Mobile Back button in Chat Header */
 .chat-back-btn {
   display: none;
   background: none;
@@ -325,7 +318,6 @@
   padding: 5px;
 }
 
-/* Responsive adjustments */
 @media (max-width: 768px) {
   .chat-container {
     position: fixed !important;
@@ -367,7 +359,6 @@
   }
 }
 
-/* Sticky top utility classes matching user instructions */
 .sticky {
   position: sticky !important;
 }

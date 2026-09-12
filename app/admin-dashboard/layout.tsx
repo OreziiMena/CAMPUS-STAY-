@@ -29,52 +29,88 @@ function AdminSidebarWrapper({
       <div className="sidebar-menu">
         <ul>
           <li>
-            <Link href="/admin-dashboard?tab=analytics" className={activeTab === "analytics" ? "active" : ""}>
+            <Link 
+              href="/admin-dashboard?tab=analytics" 
+              className={activeTab === "analytics" ? "active" : ""}
+              onClick={() => setIsSidebarOpen(false)}
+            >
               <i className="fas fa-chart-line"></i> Analytics Overview
             </Link>
           </li>
           <li>
-            <Link href="/admin-dashboard" className={activeTab === "verifications" ? "active" : ""}>
+            <Link 
+              href="/admin-dashboard" 
+              className={activeTab === "verifications" ? "active" : ""}
+              onClick={() => setIsSidebarOpen(false)}
+            >
               <i className="fas fa-user-check"></i> Verifications
             </Link>
           </li>
           <li>
-            <Link href="/admin-dashboard?tab=students" className={activeTab === "students" ? "active" : ""}>
+            <Link 
+              href="/admin-dashboard?tab=students" 
+              className={activeTab === "students" ? "active" : ""}
+              onClick={() => setIsSidebarOpen(false)}
+            >
               <i className="fas fa-user-graduate"></i> Student Users
             </Link>
           </li>
           <li>
-            <Link href="/admin-dashboard?tab=agents" className={activeTab === "agents" ? "active" : ""}>
+            <Link 
+              href="/admin-dashboard?tab=agents" 
+              className={activeTab === "agents" ? "active" : ""}
+              onClick={() => setIsSidebarOpen(false)}
+            >
               <i className="fas fa-user-tie"></i> Agent Users
             </Link>
           </li>
           <li>
-            <Link href="/admin-dashboard?tab=properties" className={activeTab === "properties" ? "active" : ""}>
+            <Link 
+              href="/admin-dashboard?tab=properties" 
+              className={activeTab === "properties" ? "active" : ""}
+              onClick={() => setIsSidebarOpen(false)}
+            >
               <i className="fas fa-building"></i> Hostels & Properties
             </Link>
           </li>
           <li>
-            <Link href="/admin-dashboard?tab=roommates" className={activeTab === "roommates" ? "active" : ""}>
+            <Link 
+              href="/admin-dashboard?tab=roommates" 
+              className={activeTab === "roommates" ? "active" : ""}
+              onClick={() => setIsSidebarOpen(false)}
+            >
               <i className="fas fa-user-friends"></i> Roommate Listings
             </Link>
           </li>
           <li>
-            <Link href="/admin-dashboard?tab=reports" className={activeTab === "reports" ? "active" : ""}>
+            <Link 
+              href="/admin-dashboard?tab=reports" 
+              className={activeTab === "reports" ? "active" : ""}
+              onClick={() => setIsSidebarOpen(false)}
+            >
               <i className="fas fa-flag"></i> Reports Moderation
             </Link>
           </li>
           <li>
-            <Link href="/admin-dashboard?tab=broadcast" className={activeTab === "broadcast" ? "active" : ""}>
+            <Link 
+              href="/admin-dashboard?tab=broadcast" 
+              className={activeTab === "broadcast" ? "active" : ""}
+              onClick={() => setIsSidebarOpen(false)}
+            >
               <i className="fas fa-paper-plane"></i> Broadcast Emails
             </Link>
           </li>
           <li>
-            <Link href="/admin-dashboard?tab=activity-logs" className={activeTab === "activity-logs" ? "active" : ""}>
+            <Link 
+              href="/admin-dashboard?tab=activity-logs" 
+              className={activeTab === "activity-logs" ? "active" : ""}
+              onClick={() => setIsSidebarOpen(false)}
+            >
               <i className="fas fa-history"></i> Agent Activity Logs
             </Link>
           </li>
-          <li style={{ marginTop: "20px", borderTop: "1px solid rgba(255, 255, 255, 0.1)", paddingTop: "10px" }}>
-            <Link href="/">
+          <li className="sidebar-nav-divider">
+            <Link href="/" onClick={() => setIsSidebarOpen(false)}>
               <i className="fas fa-globe"></i> View Explore Site
             </Link>
           </li>
@@ -143,7 +179,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       <main className="admin-main">
         {/* Header */}
         <header className="admin-header">
-          <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+          <div className="admin-header-left">
             <button className="admin-menu-toggle" onClick={() => setIsSidebarOpen(true)}>
               <i className="fas fa-bars"></i>
             </button>

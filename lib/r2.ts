@@ -1,4 +1,4 @@
-import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3";
+import { S3Client, PutObjectCommand, GetObjectCommand } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 
 const accountId = process.env.CLOUDFLARE_ACCOUNT_ID;
@@ -79,5 +79,36 @@ export async function getR2PresignedUploadUrl(
   } catch (err: any) {
     console.error("Cloudflare R2 presigned URL error:", err);
     return { success: false, error: err.message || "Failed to generate upload URL" };
+  }
+}
+
+export async function getR2ObjectBuffer(
+  key: string
+): Promise<{ success: boolean; buffer?: Buffer; contentType?: string; error?: string }> {
+  if (!s3 || !isR2Configured) {
+    return { success: false, error: "Cloudflare R2 is not configured." };
+  }
+
+  try {
+    const response = await s3.send(
+      new GetObjectCommand({
+        Bucket: bucketName,
+        Key: key,
+      })
+    );
+
+    if (!response.Body) {
+      return { success: false, error: "Empty response body from R2." };
+    }
+
+    const byteArray = await response.Body.transformToByteArray();
+    return {
+      success: true,
+      buffer: Buffer.from(byteArray),
+      contentType: response.ContentType,
+    };
+  } catch (err: any) {
+    console.error("Cloudflare R2 getObject error:", err);
+    return { success: false, error: err.message || "Failed to retrieve object from R2" };
   }
 }

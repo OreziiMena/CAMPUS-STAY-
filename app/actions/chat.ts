@@ -4,6 +4,7 @@ import prisma from "@/lib/prisma";
 import { getCurrentUser } from "./auth";
 import { triggerPusherEvent } from "@/lib/pusher";
 import { sendEmail } from "@/lib/email";
+import { escapeHtml } from "@/lib/email-sanitizer";
 
 export async function getOrCreateChatRoom(propertyId: string) {
   try {
@@ -224,8 +225,8 @@ export async function sendChatMessage(chatRoomId: string, text: string) {
       },
     });
 
-    // Trigger Pusher real-time broadcast on conversation channel
-    await triggerPusherEvent(`chat-${chatRoomId}`, "new-message", {
+    // Trigger Pusher real-time broadcast on private conversation channel
+    await triggerPusherEvent(`private-chat-${chatRoomId}`, "new-message", {
       id: message.id,
       chatRoomId: message.chatRoomId,
       senderId: message.senderId,
@@ -245,9 +246,10 @@ export async function sendChatMessage(chatRoomId: string, text: string) {
             });
 
             if (recipientUser) {
-              const senderName = user.studentProfile?.fullName || user.email;
-              const recipientName = recipientUser.studentProfile?.fullName || "Student";
-              const listingTitle = chatRoom.property.title;
+              const senderName = escapeHtml(user.studentProfile?.fullName || user.email);
+              const recipientName = escapeHtml(recipientUser.studentProfile?.fullName || "Student");
+              const listingTitle = escapeHtml(chatRoom.property.title);
+              const safeText = escapeHtml(text);
 
               await sendEmail({
                 to: recipientUser.email,
@@ -259,12 +261,12 @@ export async function sendChatMessage(chatRoomId: string, text: string) {
                     <p><strong>${senderName}</strong> has sent you a message regarding your roommate listing: <strong>"${listingTitle}"</strong> on Campus Tent.</p>
                     
                     <div style="background-color: #f9f9f9; padding: 15px; border-left: 4px solid rgb(2, 53, 28); border-radius: 4px; margin: 20px 0; font-style: italic;">
-                       "${text}"
+                       "${safeText}"
                     </div>
                     
                     <p>Please log in to your dashboard to reply and coordinate details:</p>
                     <div style="text-align: center; margin: 25px 0;">
-                      <a href="${process.env.NEXT_PUBLIC_APP_URL || 'https://campustent.com'}/chat?roomId=${chatRoomId}" style="background-color: rgb(2, 53, 28); color: white; padding: 12px 24px; text-decoration: none; border-radius: 8px; font-weight: bold; display: inline-block;">
+                      <a href="${process.env.NEXT_PUBLIC_APP_URL || 'https://campustent.com'}/chat?roomId=${encodeURIComponent(chatRoomId)}" style="background-color: rgb(2, 53, 28); color: white; padding: 12px 24px; text-decoration: none; border-radius: 8px; font-weight: bold; display: inline-block;">
                         Open Chat Room
                       </a>
                     </div>

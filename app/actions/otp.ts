@@ -5,13 +5,14 @@ import { cookies } from "next/headers";
 import crypto from "crypto";
 import { checkRateLimit } from "@/lib/rate-limit";
 import { sendEmail } from "@/lib/email";
+import { getAuthSecret } from "@/lib/auth-secret";
 
 const SESSION_COOKIE_NAME = "campus_stay_session";
-const AUTH_SECRET = process.env.AUTH_SECRET || "fallback-secret-key-at-least-32-chars-long-security-key";
 
 function signSession(payload: any): string {
+  const secret = getAuthSecret();
   const data = Buffer.from(JSON.stringify(payload)).toString("base64url");
-  const signature = crypto.createHmac("sha256", AUTH_SECRET).update(data).digest("hex");
+  const signature = crypto.createHmac("sha256", secret).update(data).digest("hex");
   return `${data}.${signature}`;
 }
 

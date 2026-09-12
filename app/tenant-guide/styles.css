@@ -1,5 +1,3 @@
-/* app/tenant-guide/styles.css */
-
 .guide-hero {
     background: linear-gradient(135deg, rgb(2, 53, 28) 0%, rgb(1, 30, 15) 100%);
     padding: 120px 5% 70px 5%;
@@ -28,7 +26,7 @@
 }
 
 .guide-hero h1 span {
-    color: #f39c12; /* Gold accent */
+    color: #f39c12; 
 }
 
 .guide-hero p {
@@ -110,7 +108,6 @@
     line-height: 1.65;
 }
 
-/* Sidebar callout cards */
 .guide-sidebar {
     display: flex;
     flex-direction: column;
@@ -173,7 +170,6 @@
     border-left: 4px solid #d35400;
 }
 
-/* Dark Mode support */
 body.dark-mode .guide-step-card,
 body.dark-mode .sidebar-box {
     background: #1e293b;

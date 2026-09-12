@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState, useRef, Suspense } from "react";
+import React, { useEffect, useState, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import { 
   getAdminDashboardData, 
@@ -14,70 +14,22 @@ import {
   sendBroadcastEmailAction
 } from "@/app/actions/admin";
 import { getPendingReports, moderateReport } from "@/app/actions/reports";
-import Chart from "chart.js/auto";
+import "./admin-dashboard.css";
 
-const BROADCAST_TEMPLATES = [
-  {
-    id: "custom",
-    name: "✏️ Custom Blank Message",
-    audience: "ALL" as const,
-    subject: "",
-    headline: "",
-    message: "",
-    ctaText: "",
-    ctaUrl: "",
-  },
-  {
-    id: "new_session_hostels",
-    name: "🎒 New Academic Session & Hostels Alert",
-    audience: "STUDENTS" as const,
-    subject: "Find Verified Off-Campus Hostels for the New Academic Session - Campus Tent",
-    headline: "Verified Student Hostels & Bedsitters Now Available",
-    message: "Dear Student,\n\nAs the new academic session begins, hundreds of verified off-campus hostels, bedsitters, and self-contain apartments are now live on Campus Tent.\n\nBrowse verified listings near your institution with direct landlord contacts, transparent fee breakdowns, and zero hidden inspection charges.\n\nStart your search early to secure the best rooms near your school gate!",
-    ctaText: "Explore Verified Hostels",
-    ctaUrl: "https://campustent.com/explore",
-  },
-  {
-    id: "roommate_matching",
-    name: "🤝 Split Rent & Roommate Finder Announcement",
-    audience: "STUDENTS" as const,
-    subject: "Split Rent Costs: Find Compatible Student Roommates on Campus Tent",
-    headline: "Cut Your Housing Expenses in Half",
-    message: "Hello Student,\n\nLooking for a study-friendly roommate or want to list a spare bed in your room to split rent?\n\nCampus Tent Roommate Finder connects verified university students with compatible peers based on lifestyle habits, budget, department, and school.\n\nPost your roommate space today or find your ideal roommate in minutes!",
-    ctaText: "Find Roommates Now",
-    ctaUrl: "https://campustent.com/roommates",
-  },
-  {
-    id: "agent_listings_boost",
-    name: "🏢 Landlords & Agents: Upload Available Hostels",
-    audience: "AGENTS" as const,
-    subject: "Notice to Agents & Landlords: Upload Available Hostels Before School Resumes",
-    headline: "Maximize Your Occupancy with Campus Tent",
-    message: "Hello Valued Partner,\n\nStudent search activity on Campus Tent has increased significantly this week. If you have vacant self-contain rooms, bedsitters, or flats, make sure they are listed and active.\n\nEnsure your profile documents are verified to receive the Verified Partner badge and get top priority placement in search results.",
-    ctaText: "Go to Agent Dashboard",
-    ctaUrl: "https://campustent.com/agent-dashboard/add-property",
-  },
-  {
-    id: "safety_notice",
-    name: "🛡️ Important Tenant Safety Guidelines",
-    audience: "ALL" as const,
-    subject: "Important Safety Notice: Protect Yourself While Inspecting Hostels",
-    headline: "Campus Tent Safety & Anti-Fraud Guidelines",
-    message: "Hello Campus Tent Member,\n\nYour security and peace of mind are our highest priorities. Please remember these essential safety precautions:\n\n1. Always inspect properties during daylight hours and inform a coursemate or friend.\n2. Never make payments or rent transfers until you have physically inspected the property and verified ownership.\n3. Look for the green verified checkmark on listings.\n\nReport any suspicious listing or contact immediately using the in-app Report button.",
-    ctaText: "Read Tenant Guide",
-    ctaUrl: "https://campustent.com/tenant-guide",
-  },
-  {
-    id: "maintenance",
-    name: "⚙️ Scheduled System Maintenance Notice",
-    audience: "ALL" as const,
-    subject: "Notice: Scheduled System Maintenance & Performance Upgrades",
-    headline: "Campus Tent Platform Infrastructure Upgrades",
-    message: "Dear Campus Tent User,\n\nWe will be performing a scheduled infrastructure upgrade to improve media upload speed, real-time messaging, and search performance.\n\nDuring this brief window, you may experience momentary delays. We apologize for any inconvenience as we work to bring you an even better accommodation platform.",
-    ctaText: "Visit Campus Tent",
-    ctaUrl: "https://campustent.com",
-  },
-];
+// Modular Components
+import AdminStatCards from "./components/AdminStatCards";
+import AdminSearchBar from "./components/AdminSearchBar";
+import VerificationsTab from "./components/VerificationsTab";
+import DirectoriesTab from "./components/DirectoriesTab";
+import AnalyticsTab from "./components/AnalyticsTab";
+import ReportsTab from "./components/ReportsTab";
+import ActivityLogsTab from "./components/ActivityLogsTab";
+import BroadcastTab, { BROADCAST_TEMPLATES } from "./components/BroadcastTab";
+
+// Modals
+import DocViewerModal from "./components/modals/DocViewerModal";
+import EmailPreviewModal from "./components/modals/EmailPreviewModal";
+import BroadcastConfirmModal from "./components/modals/BroadcastConfirmModal";
 
 function AdminDashboardContent() {
   const searchParams = useSearchParams();
@@ -100,17 +52,16 @@ function AdminDashboardContent() {
   
   // Tab control
   const [activeTab, setActiveTab] = useState("verifications");
-  const [activeQueueTab, setActiveQueueTab] = useState("students");
   const [actionLoading, setActionLoading] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
 
   // Analytics states
   const [analyticsData, setAnalyticsData] = useState<any>(null);
-  const chartInstancesRef = useRef<Chart[]>([]);
   const [activePreviewDoc, setActivePreviewDoc] = useState<{ url: string; title: string } | null>(null);
 
   // Broadcast Email States
   const [broadcastAudience, setBroadcastAudience] = useState<"ALL" | "STUDENTS" | "AGENTS" | "VERIFIED_STUDENTS" | "VERIFIED_AGENTS">("ALL");
+  const [broadcastSenderOption, setBroadcastSenderOption] = useState<"support" | "noreply">("support");
   const [broadcastSubject, setBroadcastSubject] = useState("");
   const [broadcastHeadline, setBroadcastHeadline] = useState("");
   const [broadcastMessage, setBroadcastMessage] = useState("");
@@ -214,6 +165,7 @@ function AdminDashboardContent() {
       message: broadcastMessage,
       ctaText: broadcastCtaText,
       ctaUrl: broadcastCtaUrl,
+      senderOption: broadcastSenderOption,
       sendTestOnly: true,
       testEmail: adminEmail,
     });
@@ -238,6 +190,7 @@ function AdminDashboardContent() {
       message: broadcastMessage,
       ctaText: broadcastCtaText,
       ctaUrl: broadcastCtaUrl,
+      senderOption: broadcastSenderOption,
       sendTestOnly: false,
     });
 
@@ -270,80 +223,8 @@ function AdminDashboardContent() {
 
   useEffect(() => {
     setActiveTab(tabParam);
-    setSearchQuery(""); // Clear search query when changing tabs
+    setSearchQuery("");
   }, [tabParam]);
-
-  useEffect(() => {
-    if (activeTab !== "analytics" || !analyticsData) return;
-
-    // Clean up any existing instances first
-    chartInstancesRef.current.forEach((instance) => instance.destroy());
-    chartInstancesRef.current = [];
-
-    const userDistributionCtx = document.getElementById("userDistributionChart") as HTMLCanvasElement | null;
-    const growthCtx = document.getElementById("growthChart") as HTMLCanvasElement | null;
-
-    if (userDistributionCtx) {
-      const userChart = new Chart(userDistributionCtx, {
-        type: "doughnut",
-        data: {
-          labels: ["Students", "Agents"],
-          datasets: [
-            {
-              data: [analyticsData.stats.totalStudents, analyticsData.stats.totalAgents],
-              backgroundColor: ["#10b981", "#3b82f6"],
-              borderWidth: 1,
-            },
-          ],
-        },
-        options: {
-          responsive: true,
-          plugins: {
-            legend: {
-              position: "bottom",
-            },
-          },
-        },
-      });
-      chartInstancesRef.current.push(userChart);
-    }
-
-    if (growthCtx && analyticsData.charts.labels.length > 0) {
-      const growthChart = new Chart(growthCtx, {
-        type: "line",
-        data: {
-          labels: analyticsData.charts.labels,
-          datasets: [
-            {
-              label: "New Listings Over Time",
-              data: analyticsData.charts.data,
-              borderColor: "rgb(2, 53, 28)",
-              backgroundColor: "rgba(2, 53, 28, 0.1)",
-              fill: true,
-              tension: 0.3,
-            },
-          ],
-        },
-        options: {
-          responsive: true,
-          scales: {
-            y: {
-              beginAtZero: true,
-              ticks: {
-                precision: 0,
-              },
-            },
-          },
-        },
-      });
-      chartInstancesRef.current.push(growthChart);
-    }
-
-    return () => {
-      chartInstancesRef.current.forEach((instance) => instance.destroy());
-      chartInstancesRef.current = [];
-    };
-  }, [activeTab, analyticsData]);
 
   const handleVerifyUser = async (profileId: string, role: "STUDENT" | "AGENT") => {
     setActionLoading(profileId);
@@ -499,7 +380,7 @@ function AdminDashboardContent() {
         fetchQueues();
       }
     } else {
-      alert(res.error || "Failed to update property status.");
+      alert(res.error || "Failed to toggle property verification.");
     }
     setActionLoading(null);
   };
@@ -542,12 +423,13 @@ function AdminDashboardContent() {
   const roommatesQueue = properties.filter((p) => p.isRoommateOption);
 
   // Search filter logic
+  const query = searchQuery.toLowerCase();
+
   const filteredStudents = studentUsers.filter((u) => {
     const name = u.studentProfile?.fullName?.toLowerCase() || "";
     const username = u.studentProfile?.username?.toLowerCase() || "";
     const email = u.email?.toLowerCase() || "";
     const phone = u.phone?.toLowerCase() || "";
-    const query = searchQuery.toLowerCase();
     return name.includes(query) || username.includes(query) || email.includes(query) || phone.includes(query);
   });
 
@@ -555,7 +437,6 @@ function AdminDashboardContent() {
     const name = u.agentProfile?.fullName?.toLowerCase() || "";
     const email = u.email?.toLowerCase() || "";
     const phone = u.phone?.toLowerCase() || "";
-    const query = searchQuery.toLowerCase();
     return name.includes(query) || email.includes(query) || phone.includes(query);
   });
 
@@ -564,7 +445,6 @@ function AdminDashboardContent() {
     const location = p.location?.toLowerCase() || "";
     const university = p.university?.toLowerCase() || "";
     const agentName = p.agent?.fullName?.toLowerCase() || "";
-    const query = searchQuery.toLowerCase();
     return title.includes(query) || location.includes(query) || university.includes(query) || agentName.includes(query);
   });
 
@@ -573,18 +453,15 @@ function AdminDashboardContent() {
     const location = p.location?.toLowerCase() || "";
     const university = p.university?.toLowerCase() || "";
     const studentName = (p.student?.fullName || p.student?.username || "").toLowerCase();
-    const query = searchQuery.toLowerCase();
     return title.includes(query) || location.includes(query) || university.includes(query) || studentName.includes(query);
   });
 
-  // Filter queues under verification tab too if query exists
   const filteredQueueStudents = students.filter((s) => {
     const name = s.fullName?.toLowerCase() || "";
     const username = s.username?.toLowerCase() || "";
     const university = s.university?.toLowerCase() || "";
     const email = s.user?.email?.toLowerCase() || "";
     const phone = s.user?.phone?.toLowerCase() || "";
-    const query = searchQuery.toLowerCase();
     return name.includes(query) || username.includes(query) || university.includes(query) || email.includes(query) || phone.includes(query);
   });
 
@@ -593,7 +470,6 @@ function AdminDashboardContent() {
     const address = a.address?.toLowerCase() || "";
     const email = a.user?.email?.toLowerCase() || "";
     const phone = a.user?.phone?.toLowerCase() || "";
-    const query = searchQuery.toLowerCase();
     return name.includes(query) || address.includes(query) || email.includes(query) || phone.includes(query);
   });
 
@@ -602,7 +478,6 @@ function AdminDashboardContent() {
     const location = p.location?.toLowerCase() || "";
     const university = p.university?.toLowerCase() || "";
     const agentName = p.agent?.fullName?.toLowerCase() || "";
-    const query = searchQuery.toLowerCase();
     return title.includes(query) || location.includes(query) || university.includes(query) || agentName.includes(query);
   });
 
@@ -611,7 +486,6 @@ function AdminDashboardContent() {
     const location = p.location?.toLowerCase() || "";
     const university = p.university?.toLowerCase() || "";
     const studentName = (p.student?.fullName || p.student?.username || "").toLowerCase();
-    const query = searchQuery.toLowerCase();
     return title.includes(query) || location.includes(query) || university.includes(query) || studentName.includes(query);
   });
 
@@ -620,7 +494,6 @@ function AdminDashboardContent() {
     const description = r.description?.toLowerCase() || "";
     const reason = r.reason?.toLowerCase() || "";
     const targetName = (r.property?.title || r.roommate?.fullName || "").toLowerCase();
-    const query = searchQuery.toLowerCase();
     return reporterEmail.includes(query) || description.includes(query) || reason.includes(query) || targetName.includes(query);
   });
 
@@ -629,7 +502,6 @@ function AdminDashboardContent() {
       return false;
     }
     if (!searchQuery.trim()) return true;
-    const query = searchQuery.toLowerCase();
     const name = log.userName?.toLowerCase() || "";
     const email = log.userEmail?.toLowerCase() || "";
     const desc = log.description?.toLowerCase() || "";
@@ -641,236 +513,33 @@ function AdminDashboardContent() {
   return (
     <div>
       {error && (
-        <div className="error-banner" style={{ background: "#fdf2f2", border: "1px solid #f8b4b4", color: "#9b1c1c", padding: "15px", borderRadius: "8px", marginBottom: "20px" }}>
+        <div className="error-banner">
           <i className="fas fa-exclamation-circle"></i> {error}
         </div>
       )}
 
       {/* Global Admin Metrics Overview */}
-      <div className="admin-metrics-grid">
-        {/* Verified Students Card */}
-        <div style={{
-          background: "white",
-          padding: "18px 20px",
-          borderRadius: "12px",
-          border: "1px solid #eaeaea",
-          boxShadow: "0 2px 8px rgba(0,0,0,0.02)",
-          display: "flex",
-          alignItems: "center",
-          gap: "14px"
-        }}>
-          <div style={{
-            background: "#ecfdf5",
-            color: "#059669",
-            width: "48px",
-            height: "48px",
-            borderRadius: "10px",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            fontSize: "1.4rem",
-            flexShrink: 0
-          }}>
-            <i className="fas fa-user-graduate"></i>
-          </div>
-          <div>
-            <div style={{ display: "flex", alignItems: "baseline", gap: "6px" }}>
-              <span style={{ fontSize: "1.5rem", fontWeight: "800", color: "#065f46" }}>
-                {verifiedStudentsCount}
-              </span>
-              <span style={{ fontSize: "0.82rem", color: "#6b7280", fontWeight: "600" }}>
-                / {studentUsers.length} total
-              </span>
-            </div>
-            <div style={{ fontSize: "0.82rem", color: "#374151", fontWeight: "600" }}>
-              Verified Students
-            </div>
-            {unverifiedStudentsCount > 0 && (
-              <span style={{ fontSize: "0.75rem", color: "#d97706", fontWeight: "600" }}>
-                {unverifiedStudentsCount} unverified
-              </span>
-            )}
-          </div>
-        </div>
-
-        {/* Verified Agents Card */}
-        <div style={{
-          background: "white",
-          padding: "18px 20px",
-          borderRadius: "12px",
-          border: "1px solid #eaeaea",
-          boxShadow: "0 2px 8px rgba(0,0,0,0.02)",
-          display: "flex",
-          alignItems: "center",
-          gap: "14px"
-        }}>
-          <div style={{
-            background: "#eff6ff",
-            color: "#2563eb",
-            width: "48px",
-            height: "48px",
-            borderRadius: "10px",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            fontSize: "1.4rem",
-            flexShrink: 0
-          }}>
-            <i className="fas fa-user-tie"></i>
-          </div>
-          <div>
-            <div style={{ display: "flex", alignItems: "baseline", gap: "6px" }}>
-              <span style={{ fontSize: "1.5rem", fontWeight: "800", color: "#1e40af" }}>
-                {verifiedAgentsCount}
-              </span>
-              <span style={{ fontSize: "0.82rem", color: "#6b7280", fontWeight: "600" }}>
-                / {agentUsers.length} total
-              </span>
-            </div>
-            <div style={{ fontSize: "0.82rem", color: "#374151", fontWeight: "600" }}>
-              Verified Agents
-            </div>
-            {unverifiedAgentsCount > 0 && (
-              <span style={{ fontSize: "0.75rem", color: "#d97706", fontWeight: "600" }}>
-                {unverifiedAgentsCount} unverified
-              </span>
-            )}
-          </div>
-        </div>
-
-        {/* Verified Properties Card */}
-        <div style={{
-          background: "white",
-          padding: "18px 20px",
-          borderRadius: "12px",
-          border: "1px solid #eaeaea",
-          boxShadow: "0 2px 8px rgba(0,0,0,0.02)",
-          display: "flex",
-          alignItems: "center",
-          gap: "14px"
-        }}>
-          <div style={{
-            background: "#fef3c7",
-            color: "#d97706",
-            width: "48px",
-            height: "48px",
-            borderRadius: "10px",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            fontSize: "1.4rem",
-            flexShrink: 0
-          }}>
-            <i className="fas fa-building"></i>
-          </div>
-          <div>
-            <div style={{ display: "flex", alignItems: "baseline", gap: "6px" }}>
-              <span style={{ fontSize: "1.5rem", fontWeight: "800", color: "#92400e" }}>
-                {verifiedPropertiesCount}
-              </span>
-              <span style={{ fontSize: "0.82rem", color: "#6b7280", fontWeight: "600" }}>
-                / {allProperties.length} total
-              </span>
-            </div>
-            <div style={{ fontSize: "0.82rem", color: "#374151", fontWeight: "600" }}>
-              Verified Listings
-            </div>
-            {unverifiedPropertiesCount > 0 && (
-              <span style={{ fontSize: "0.75rem", color: "#d97706", fontWeight: "600" }}>
-                {unverifiedPropertiesCount} pending review
-              </span>
-            )}
-          </div>
-        </div>
-
-        {/* Pending Action Queue Card */}
-        <div style={{
-          background: "white",
-          padding: "18px 20px",
-          borderRadius: "12px",
-          border: "1px solid #eaeaea",
-          boxShadow: "0 2px 8px rgba(0,0,0,0.02)",
-          display: "flex",
-          alignItems: "center",
-          gap: "14px"
-        }}>
-          <div style={{
-            background: "#fef2f2",
-            color: "#dc2626",
-            width: "48px",
-            height: "48px",
-            borderRadius: "10px",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            fontSize: "1.4rem",
-            flexShrink: 0
-          }}>
-            <i className="fas fa-tasks"></i>
-          </div>
-          <div>
-            <div style={{ display: "flex", alignItems: "baseline", gap: "6px" }}>
-              <span style={{ fontSize: "1.5rem", fontWeight: "800", color: "#991b1b" }}>
-                {students.length + agents.length + properties.length}
-              </span>
-              <span style={{ fontSize: "0.82rem", color: "#6b7280", fontWeight: "600" }}>
-                pending
-              </span>
-            </div>
-            <div style={{ fontSize: "0.82rem", color: "#374151", fontWeight: "600" }}>
-              Approvals Queue
-            </div>
-            <span style={{ fontSize: "0.75rem", color: "#6b7280" }}>
-              {students.length} students, {agents.length} agents
-            </span>
-          </div>
-        </div>
-      </div>
+      <AdminStatCards
+        verifiedStudentsCount={verifiedStudentsCount}
+        totalStudentsCount={studentUsers.length}
+        unverifiedStudentsCount={unverifiedStudentsCount}
+        verifiedAgentsCount={verifiedAgentsCount}
+        totalAgentsCount={agentUsers.length}
+        unverifiedAgentsCount={unverifiedAgentsCount}
+        verifiedPropertiesCount={verifiedPropertiesCount}
+        totalPropertiesCount={allProperties.length}
+        unverifiedPropertiesCount={unverifiedPropertiesCount}
+        pendingQueueCount={students.length + agents.length + properties.length}
+        pendingStudentsQueueCount={students.length}
+        pendingAgentsQueueCount={agents.length}
+      />
 
       {/* Dynamic Directory Search Bar */}
-      {activeTab !== "broadcast" && activeTab !== "analytics" && (
-        <div style={{ marginBottom: "25px", display: "flex", gap: "10px" }}>
-          <div style={{ position: "relative", flex: 1 }}>
-            <i className="fas fa-search" style={{ position: "absolute", left: "15px", top: "50%", transform: "translateY(-50%)", color: "#888" }}></i>
-            <input
-              type="text"
-              placeholder={
-                activeTab === "students" 
-                  ? "Search students by name, username, email, or phone..." 
-                  : activeTab === "agents" 
-                    ? "Search agents by name, email, or phone..." 
-                    : activeTab === "properties" 
-                      ? "Search hostel properties by title, location, school, or agent..."
-                      : activeTab === "roommates"
-                        ? "Search roommate spaces by title, location, school, or student..."
-                        : activeTab === "activity-logs"
-                          ? "Search activity logs by agent name, email, property title..."
-                          : "Search verification queues..."
-              }
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              style={{
-                width: "100%",
-                padding: "12px 15px 12px 40px",
-                borderRadius: "8px",
-                border: "1px solid #eaeaea",
-                fontSize: "14px",
-                outline: "none",
-                boxShadow: "0 2px 8px rgba(0,0,0,0.01)"
-              }}
-            />
-          </div>
-          {searchQuery && (
-            <button 
-              onClick={() => setSearchQuery("")}
-              className="reject-btn"
-              style={{ borderRadius: "8px", display: "flex", alignItems: "center", gap: "5px" }}
-            >
-              Clear
-            </button>
-          )}
-        </div>
-      )}
+      <AdminSearchBar
+        activeTab={activeTab}
+        searchQuery={searchQuery}
+        setSearchQuery={setSearchQuery}
+      />
 
       {loading ? (
         <div className="no-data-text">
@@ -880,2021 +549,142 @@ function AdminDashboardContent() {
         <>
           {/* 1. VERIFICATIONS DASHBOARD TAB */}
           {activeTab === "verifications" && (
-            <div>
-              <div className="admin-tabs">
-                <button 
-                  className={`tab-btn ${activeQueueTab === "students" ? "active" : ""}`}
-                  onClick={() => setActiveQueueTab("students")}
-                >
-                  Students Queue ({students.length})
-                </button>
-                <button 
-                  className={`tab-btn ${activeQueueTab === "agents" ? "active" : ""}`}
-                  onClick={() => setActiveQueueTab("agents")}
-                >
-                  Agents Queue ({agents.length})
-                </button>
-                <button 
-                  className={`tab-btn ${activeQueueTab === "properties" ? "active" : ""}`}
-                  onClick={() => setActiveQueueTab("properties")}
-                >
-                  Properties Queue ({propertiesQueue.length})
-                </button>
-                <button 
-                  className={`tab-btn ${activeQueueTab === "roommates" ? "active" : ""}`}
-                  onClick={() => setActiveQueueTab("roommates")}
-                >
-                  Roommates Queue ({roommatesQueue.length})
-                </button>
-              </div>
-
-              {activeQueueTab === "students" && (
-                <div className="admin-card">
-                  <h2><i className="fas fa-user-graduate"></i> Pending Student Verifications</h2>
-                  {students.length === 0 ? (
-                    <div className="no-data-text">No pending student verification requests.</div>
-                  ) : filteredQueueStudents.length === 0 ? (
-                    <div className="no-data-text">No matching student verification requests.</div>
-                  ) : (
-                    <div className="admin-table-wrapper">
-                      <table className="admin-table">
-                        <thead>
-                          <tr>
-                            <th>Full Name</th>
-                            <th>Username</th>
-                            <th>University</th>
-                            <th>Contact Details</th>
-                            <th>Verification Documents</th>
-                            <th>Actions</th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {filteredQueueStudents.map((student) => (
-                            <tr key={student.id}>
-                              <td><strong>{student.fullName}</strong></td>
-                              <td>@{student.username}</td>
-                              <td>{student.university}</td>
-                              <td>
-                                <div>{student.user.email}</div>
-                                <div style={{ color: "#666", fontSize: "12px" }}>{student.user.phone}</div>
-                              </td>
-                              <td>
-                                  <div className="doc-links-cell">
-                                    {!student.idCardDoc && !student.feesReceiptDoc && !student.portalScreenshotDoc && !student.jambLetterDoc && (
-                                      <span style={{ color: "#888", fontSize: "13px" }}>No documents uploaded</span>
-                                    )}
-                                    {student.idCardDoc && (
-                                      <button 
-                                        onClick={() => setActivePreviewDoc({ url: student.idCardDoc, title: `${student.fullName}'s Student ID Card` })}
-                                        className="doc-link"
-                                        style={{ background: "none", border: "none", cursor: "pointer", display: "flex", alignItems: "center", gap: "5px", padding: "4px 0", color: "#1c64f2", fontStyle: "normal", textAlign: "left", textDecoration: "underline" }}
-                                      >
-                                        <i className="fas fa-id-card"></i> Student ID Card
-                                      </button>
-                                    )}
-                                    {student.feesReceiptDoc && (
-                                      <button 
-                                        onClick={() => setActivePreviewDoc({ url: student.feesReceiptDoc, title: `${student.fullName}'s School Fees Receipt` })}
-                                        className="doc-link"
-                                        style={{ background: "none", border: "none", cursor: "pointer", display: "flex", alignItems: "center", gap: "5px", padding: "4px 0", color: "#1c64f2", fontStyle: "normal", textAlign: "left", textDecoration: "underline" }}
-                                      >
-                                        <i className="fas fa-receipt"></i> School Fees Receipt
-                                      </button>
-                                    )}
-                                    {student.portalScreenshotDoc && (
-                                      <button 
-                                        onClick={() => setActivePreviewDoc({ url: student.portalScreenshotDoc, title: `${student.fullName}'s Portal Screenshot` })}
-                                        className="doc-link"
-                                        style={{ background: "none", border: "none", cursor: "pointer", display: "flex", alignItems: "center", gap: "5px", padding: "4px 0", color: "#1c64f2", fontStyle: "normal", textAlign: "left", textDecoration: "underline" }}
-                                      >
-                                        <i className="fas fa-desktop"></i> Portal Screenshot
-                                      </button>
-                                    )}
-                                    {student.jambLetterDoc && (
-                                      <button 
-                                        onClick={() => setActivePreviewDoc({ url: student.jambLetterDoc, title: `${student.fullName}'s JAMB Letter` })}
-                                        className="doc-link"
-                                        style={{ background: "none", border: "none", cursor: "pointer", display: "flex", alignItems: "center", gap: "5px", padding: "4px 0", color: "#1c64f2", fontStyle: "normal", textAlign: "left", textDecoration: "underline" }}
-                                      >
-                                        <i className="fas fa-envelope-open-text"></i> JAMB Letter
-                                      </button>
-                                    )}
-                                  </div>
-                              </td>
-                              <td>
-                                <div className="admin-action-btns">
-                                  <button 
-                                    onClick={() => handleVerifyUser(student.id, "STUDENT")}
-                                    disabled={actionLoading !== null}
-                                    className="approve-btn"
-                                  >
-                                    {actionLoading === student.id ? "Approving..." : "Approve"}
-                                  </button>
-                                  <button 
-                                    onClick={() => handleRejectUser(student.id, "STUDENT")}
-                                    disabled={actionLoading !== null}
-                                    className="reject-btn"
-                                  >
-                                    {actionLoading === student.id ? "Rejecting..." : "Reject"}
-                                  </button>
-                                </div>
-                              </td>
-                            </tr>
-                          ))}
-                        </tbody>
-                      </table>
-                    </div>
-                  )}
-                </div>
-              )}
-
-              {activeQueueTab === "agents" && (
-                <div className="admin-card">
-                  <h2><i className="fas fa-user-tie"></i> Pending Agent/Landlord Verifications</h2>
-                  {agents.length === 0 ? (
-                    <div className="no-data-text">No pending agent verification requests.</div>
-                  ) : filteredQueueAgents.length === 0 ? (
-                    <div className="no-data-text">No matching agent verification requests.</div>
-                  ) : (
-                    <div className="admin-table-wrapper">
-                      <table className="admin-table">
-                        <thead>
-                          <tr>
-                            <th>Full Name</th>
-                            <th>Business Address</th>
-                            <th>Contact Details</th>
-                            <th>Verification Document</th>
-                            <th>Actions</th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {filteredQueueAgents.map((agent) => (
-                            <tr key={agent.id}>
-                              <td><strong>{agent.fullName}</strong></td>
-                              <td>{agent.address || "No office address provided"}</td>
-                              <td>
-                                <div>{agent.user.email}</div>
-                                <div style={{ color: "#666", fontSize: "12px" }}>{agent.user.phone}</div>
-                              </td>
-                              <td>
-                                {agent.ninDocument ? (
-                                  <button 
-                                    onClick={() => setActivePreviewDoc({ url: agent.ninDocument, title: `${agent.fullName}'s NIN / Govt ID Document` })}
-                                    className="doc-link"
-                                    style={{ background: "none", border: "none", cursor: "pointer", display: "flex", alignItems: "center", gap: "5px", padding: "4px 0", color: "#1c64f2", fontStyle: "normal", textAlign: "left", textDecoration: "underline" }}
-                                  >
-                                    <i className="fas fa-file-alt"></i> NIN / Govt ID Document
-                                  </button>
-                                ) : (
-                                  <span style={{ color: "#d32f2f", fontSize: "13px", fontWeight: "600" }}>No Document Uploaded</span>
-                                )}
-                              </td>
-                              <td>
-                                <div className="admin-action-btns">
-                                  <button 
-                                    onClick={() => handleVerifyUser(agent.id, "AGENT")}
-                                    disabled={actionLoading !== null}
-                                    className="approve-btn"
-                                  >
-                                    {actionLoading === agent.id ? "Approving..." : "Approve"}
-                                  </button>
-                                  <button 
-                                    onClick={() => handleRejectUser(agent.id, "AGENT")}
-                                    disabled={actionLoading !== null}
-                                    className="reject-btn"
-                                  >
-                                    {actionLoading === agent.id ? "Rejecting..." : "Reject"}
-                                  </button>
-                                </div>
-                              </td>
-                            </tr>
-                          ))}
-                        </tbody>
-                      </table>
-                    </div>
-                  )}
-                </div>
-              )}
-
-              {activeQueueTab === "properties" && (
-                <div className="admin-card">
-                  <h2><i className="fas fa-building"></i> Pending Property Approvals</h2>
-                  {propertiesQueue.length === 0 ? (
-                    <div className="no-data-text">No pending property approvals.</div>
-                  ) : filteredQueueProperties.length === 0 ? (
-                    <div className="no-data-text">No matching property approvals.</div>
-                  ) : (
-                    <div className="admin-table-wrapper">
-                      <table className="admin-table">
-                        <thead>
-                          <tr>
-                            <th>Property details</th>
-                            <th>Type</th>
-                            <th>Price & Fee Breakdown</th>
-                            <th>Location & Distance</th>
-                            <th>Listed By</th>
-                            <th>Actions</th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {filteredQueueProperties.map((property) => (
-                            <tr key={property.id}>
-                              <td>
-                                {(() => {
-                                  const mediaUrl = property.images?.[0] || "https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?ixlib=rb-4.0.3";
-                                  const isVideo = mediaUrl.match(/\.(mp4|webm|ogg|mov|mkv)(\?.*)?$/i);
-                                  return (
-                                    <div className="property-preview-cell">
-                                      <div style={{ position: "relative", width: "42px", height: "42px", borderRadius: "8px", overflow: "hidden", flexShrink: 0 }}>
-                                        {isVideo ? (
-                                          <video 
-                                            src={mediaUrl} 
-                                            className="property-preview-img"
-                                            muted
-                                            playsInline
-                                            preload="metadata"
-                                            style={{ width: "100%", height: "100%", objectFit: "cover" }}
-                                          />
-                                        ) : (
-                                          <img 
-                                            src={mediaUrl} 
-                                            alt={property.title} 
-                                            className="property-preview-img"
-                                            style={{ width: "100%", height: "100%", objectFit: "cover" }}
-                                          />
-                                        )}
-                                        {isVideo && (
-                                          <span style={{
-                                            position: "absolute",
-                                            bottom: "2px",
-                                            right: "2px",
-                                            background: "rgba(0,0,0,0.7)",
-                                            color: "#fff",
-                                            fontSize: "8px",
-                                            borderRadius: "3px",
-                                            padding: "1px 3px",
-                                            lineHeight: 1,
-                                          }}>
-                                            ▶
-                                          </span>
-                                        )}
-                                      </div>
-                                      <span className="property-preview-title">{property.title}</span>
-                                    </div>
-                                  );
-                                })()}
-                              </td>
-                              <td>{property.hostelType}</td>
-                              <td>
-                                <div style={{ display: "flex", flexDirection: "column", gap: "2px", minWidth: "140px" }}>
-                                  <strong style={{ fontSize: "0.95rem", color: "rgb(2, 53, 28)" }}>
-                                    ₦{property.price.toLocaleString()}
-                                    <span style={{ fontSize: "0.75rem", color: "#666", fontWeight: "normal" }}> / yr</span>
-                                  </strong>
-                                  <div style={{ fontSize: "0.78rem", color: "#374151", lineHeight: "1.35", backgroundColor: "#f9fafb", padding: "4px 8px", borderRadius: "6px", border: "1px solid #e5e7eb", marginTop: "3px" }}>
-                                    <div><span style={{ color: "#6b7280" }}>Rent:</span> ₦{(property.rentAmount ?? property.price).toLocaleString()}</div>
-                                    <div>
-                                      <span style={{ color: "#6b7280" }}>Agent Fee:</span> ₦{(property.agentFee ?? 0).toLocaleString()}{" "}
-                                      {property.isNegotiable ? (
-                                        <span style={{ color: "#047857", fontWeight: "700", fontSize: "0.7rem", backgroundColor: "rgba(16, 185, 129, 0.12)", padding: "1px 5px", borderRadius: "4px" }}>
-                                          Negotiable
-                                        </span>
-                                      ) : (
-                                        <span style={{ color: "#6b7280", fontSize: "0.7rem" }}>(Fixed)</span>
-                                      )}
-                                    </div>
-                                    {property.cautionFee !== null && property.cautionFee !== undefined && property.cautionFee > 0 && (
-                                      <div><span style={{ color: "#6b7280" }}>Caution Fee:</span> ₦{property.cautionFee.toLocaleString()}</div>
-                                    )}
-                                  </div>
-                                </div>
-                              </td>
-                              <td>
-                                <div>{property.location}</div>
-                                <div style={{ color: "#666", fontSize: "12px" }}>{property.distance}</div>
-                              </td>
-                              <td>
-                                {property.agent ? (
-                                  <div>
-                                    <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-                                      <strong>{property.agent.username ? `@${property.agent.username}` : property.agent.fullName}</strong>
-                                      {property.agent.isVerified && (
-                                        <span style={{ color: "#2e7d32" }} title="Verified Owner">
-                                          <i className="fas fa-check-circle"></i>
-                                        </span>
-                                      )}
-                                    </div>
-                                    <div style={{ fontSize: "12px", color: "#666" }}>Agent/Landlord</div>
-                                  </div>
-                                ) : (
-                                  "CS Official"
-                                )}
-                              </td>
-                              <td>
-                                <div className="admin-action-btns">
-                                  <button 
-                                    onClick={() => handleVerifyProperty(property.id)}
-                                    disabled={actionLoading !== null}
-                                    className="approve-btn"
-                                  >
-                                    {actionLoading === property.id ? "Approving..." : "Approve"}
-                                  </button>
-                                  <button 
-                                    onClick={() => handleRejectProperty(property.id)}
-                                    disabled={actionLoading !== null}
-                                    className="reject-btn"
-                                  >
-                                    {actionLoading === property.id ? "Rejecting..." : "Reject"}
-                                  </button>
-                                </div>
-                              </td>
-                            </tr>
-                          ))}
-                        </tbody>
-                      </table>
-                    </div>
-                  )}
-                </div>
-              )}
-
-              {activeQueueTab === "roommates" && (
-                <div className="admin-card">
-                  <h2><i className="fas fa-user-friends"></i> Pending Roommate Space Approvals</h2>
-                  {roommatesQueue.length === 0 ? (
-                    <div className="no-data-text">No pending roommate space approvals.</div>
-                  ) : filteredQueueRoommates.length === 0 ? (
-                    <div className="no-data-text">No matching roommate space approvals.</div>
-                  ) : (
-                    <div className="admin-table-wrapper">
-                      <table className="admin-table">
-                        <thead>
-                          <tr>
-                            <th>Room Details</th>
-                            <th>Type</th>
-                            <th>Shared Rent / Budget</th>
-                            <th>University & Location</th>
-                            <th>Student Profile</th>
-                            <th>Actions</th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {filteredQueueRoommates.map((property) => (
-                            <tr key={property.id}>
-                              <td>
-                                {(() => {
-                                  const mediaUrl = property.images?.[0] || "https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?ixlib=rb-4.0.3";
-                                  const isVideo = mediaUrl.match(/\.(mp4|webm|ogg|mov|mkv)(\?.*)?$/i);
-                                  return (
-                                    <div className="property-preview-cell">
-                                      <div style={{ position: "relative", width: "42px", height: "42px", borderRadius: "8px", overflow: "hidden", flexShrink: 0 }}>
-                                        {isVideo ? (
-                                          <video 
-                                            src={mediaUrl} 
-                                            className="property-preview-img"
-                                            muted
-                                            playsInline
-                                            preload="metadata"
-                                            style={{ width: "100%", height: "100%", objectFit: "cover" }}
-                                          />
-                                        ) : (
-                                          <img 
-                                            src={mediaUrl} 
-                                            alt={property.title} 
-                                            className="property-preview-img"
-                                            style={{ width: "100%", height: "100%", objectFit: "cover" }}
-                                          />
-                                        )}
-                                        {isVideo && (
-                                          <span style={{
-                                            position: "absolute",
-                                            bottom: "2px",
-                                            right: "2px",
-                                            background: "rgba(0,0,0,0.7)",
-                                            color: "#fff",
-                                            fontSize: "8px",
-                                            borderRadius: "3px",
-                                            padding: "1px 3px",
-                                            lineHeight: 1,
-                                          }}>
-                                            ▶
-                                          </span>
-                                        )}
-                                      </div>
-                                      <span className="property-preview-title">{property.title}</span>
-                                    </div>
-                                  );
-                                })()}
-                              </td>
-                              <td>{property.hostelType || "Bedsitter"}</td>
-                              <td>
-                                <strong style={{ fontSize: "0.95rem", color: "rgb(2, 53, 28)" }}>
-                                  ₦{property.price.toLocaleString()}
-                                  <span style={{ fontSize: "0.75rem", color: "#666", fontWeight: "normal" }}> / yr</span>
-                                </strong>
-                                {property.roommateGenderPreference && (
-                                  <div style={{ fontSize: "0.75rem", color: "#065f46", background: "#ecfdf5", padding: "2px 6px", borderRadius: "4px", display: "inline-block", marginTop: "3px" }}>
-                                    Prefers: {property.roommateGenderPreference}
-                                  </div>
-                                )}
-                              </td>
-                              <td>
-                                <div>{property.location}</div>
-                                <div style={{ color: "#666", fontSize: "12px" }}>Near {property.university} ({property.distance})</div>
-                              </td>
-                              <td>
-                                {property.student ? (
-                                  <div>
-                                    <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-                                      <strong>{property.student.fullName || (property.student.username ? `@${property.student.username}` : "Student")}</strong>
-                                      {property.student.isVerified && (
-                                        <span style={{ color: "#2e7d32" }} title="Verified Student">
-                                          <i className="fas fa-check-circle"></i>
-                                        </span>
-                                      )}
-                                    </div>
-                                    <div style={{ fontSize: "12px", color: "#666" }}>
-                                      {property.student.username ? `@${property.student.username}` : property.student.university || "Student Listing"}
-                                    </div>
-                                  </div>
-                                ) : (
-                                  "Student Listing"
-                                )}
-                              </td>
-                              <td>
-                                <div className="admin-action-btns">
-                                  <button 
-                                    onClick={() => handleVerifyProperty(property.id)}
-                                    disabled={actionLoading !== null}
-                                    className="approve-btn"
-                                  >
-                                    {actionLoading === property.id ? "Approving..." : "Approve"}
-                                  </button>
-                                  <button 
-                                    onClick={() => handleRejectProperty(property.id)}
-                                    disabled={actionLoading !== null}
-                                    className="reject-btn"
-                                  >
-                                    {actionLoading === property.id ? "Rejecting..." : "Reject"}
-                                  </button>
-                                </div>
-                              </td>
-                            </tr>
-                          ))}
-                        </tbody>
-                      </table>
-                    </div>
-                  )}
-                </div>
-              )}
-            </div>
+            <VerificationsTab
+              students={students}
+              agents={agents}
+              propertiesQueue={propertiesQueue}
+              roommatesQueue={roommatesQueue}
+              filteredQueueStudents={filteredQueueStudents}
+              filteredQueueAgents={filteredQueueAgents}
+              filteredQueueProperties={filteredQueueProperties}
+              filteredQueueRoommates={filteredQueueRoommates}
+              actionLoading={actionLoading}
+              onVerifyUser={handleVerifyUser}
+              onRejectUser={handleRejectUser}
+              onVerifyProperty={handleVerifyProperty}
+              onRejectProperty={handleRejectProperty}
+              onPreviewDoc={setActivePreviewDoc}
+            />
           )}
 
-          {/* 2. STUDENT USERS TAB */}
-          {activeTab === "students" && (
-            <div className="admin-card">
-              <h2>
-                <i className="fas fa-user-graduate"></i> Student Users Directory{" "}
-                <span style={{ fontSize: "0.85rem", fontWeight: "600", color: "#065f46", background: "#ecfdf5", padding: "4px 10px", borderRadius: "12px", marginLeft: "8px" }}>
-                  {verifiedStudentsCount} Verified / {studentUsers.length} Total
-                </span>
-              </h2>
-              {studentUsers.length === 0 ? (
-                <div className="no-data-text">No student accounts found.</div>
-              ) : filteredStudents.length === 0 ? (
-                <div className="no-data-text">No matching student accounts found.</div>
-              ) : (
-                <div className="admin-table-wrapper">
-                  <table className="admin-table">
-                    <thead>
-                      <tr>
-                        <th>Student Name</th>
-                        <th>Username</th>
-                        <th>University</th>
-                        <th>Email / Contact</th>
-                        <th>Verification Status</th>
-                        <th>Actions</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {filteredStudents.map((u) => {
-                        const isVerified = u.studentProfile?.isVerified || false;
-                        return (
-                          <tr key={u.id}>
-                            <td style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-                              <strong>{u.studentProfile?.fullName || "Student"}</strong>
-                              {isVerified && (
-                                <i className="fas fa-check-circle verified-icon" style={{ color: "#2e7d32", fontSize: "0.85rem" }}></i>
-                              )}
-                            </td>
-                            <td>{u.studentProfile?.username ? `@${u.studentProfile.username}` : "N/A"}</td>
-                            <td>{u.studentProfile?.university || "N/A"}</td>
-                            <td>
-                              <div>{u.email}</div>
-                              <div style={{ color: "#666", fontSize: "12px" }}>{u.phone}</div>
-                            </td>
-                            <td>
-                              {isVerified ? (
-                                <span className="status-badge verified"><i className="fas fa-check-circle"></i> Verified</span>
-                              ) : (
-                                <span className="status-badge unverified"><i className="fas fa-hourglass-half"></i> Unverified</span>
-                              )}
-                            </td>
-                            <td>
-                              <div className="admin-action-btns">
-                                <button 
-                                  onClick={() => handleToggleVerificationAllUsers(u.id, "STUDENT", isVerified)}
-                                  disabled={actionLoading !== null}
-                                  className={isVerified ? "reject-btn" : "approve-btn"}
-                                  style={{ minWidth: "120px" }}
-                                >
-                                  {actionLoading === u.id ? "Updating..." : (isVerified ? "Revoke Verify" : "Verify Account")}
-                                </button>
-                                <button 
-                                  onClick={() => handleDeleteUserAllUsers(u.id, "STUDENT")}
-                                  disabled={actionLoading !== null}
-                                  className="reject-btn"
-                                >
-                                  {actionLoading === u.id ? "Deleting..." : "Delete"}
-                                </button>
-                              </div>
-                            </td>
-                          </tr>
-                        );
-                      })}
-                    </tbody>
-                  </table>
-                </div>
-              )}
-            </div>
+          {/* 2-5. DIRECTORIES (Students, Agents, Properties, Roommates) */}
+          {(activeTab === "students" || activeTab === "agents" || activeTab === "properties" || activeTab === "roommates") && (
+            <DirectoriesTab
+              activeTab={activeTab as "students" | "agents" | "properties" | "roommates"}
+              studentUsers={studentUsers}
+              agentUsers={agentUsers}
+              allHostelProperties={allHostelProperties}
+              allRoommateListings={allRoommateListings}
+              filteredStudents={filteredStudents}
+              filteredAgents={filteredAgents}
+              filteredAllProperties={filteredAllProperties}
+              filteredAllRoommates={filteredAllRoommates}
+              verifiedStudentsCount={verifiedStudentsCount}
+              verifiedAgentsCount={verifiedAgentsCount}
+              verifiedPropertiesCount={verifiedPropertiesCount}
+              verifiedRoommatesCount={verifiedRoommatesCount}
+              actionLoading={actionLoading}
+              onToggleVerificationUser={handleToggleVerificationAllUsers}
+              onDeleteUser={handleDeleteUserAllUsers}
+              onTogglePropertyVerification={handleTogglePropertyVerificationAll}
+              onDeleteProperty={handleDeletePropertyAll}
+            />
           )}
 
-          {/* 3. AGENT USERS TAB */}
-          {activeTab === "agents" && (
-            <div className="admin-card">
-              <h2>
-                <i className="fas fa-user-tie"></i> Agent / Landlord Directory{" "}
-                <span style={{ fontSize: "0.85rem", fontWeight: "600", color: "#1e40af", background: "#eff6ff", padding: "4px 10px", borderRadius: "12px", marginLeft: "8px" }}>
-                  {verifiedAgentsCount} Verified / {agentUsers.length} Total
-                </span>
-              </h2>
-              {agentUsers.length === 0 ? (
-                <div className="no-data-text">No agent accounts found.</div>
-              ) : filteredAgents.length === 0 ? (
-                <div className="no-data-text">No matching agent accounts found.</div>
-              ) : (
-                <div className="admin-table-wrapper">
-                  <table className="admin-table">
-                    <thead>
-                      <tr>
-                        <th>Agent Name</th>
-                        <th>Office Address</th>
-                        <th>Email / Contact</th>
-                        <th>Verification Status</th>
-                        <th>Actions</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {filteredAgents.map((u) => {
-                        const isVerified = u.agentProfile?.isVerified || false;
-                        return (
-                          <tr key={u.id}>
-                            <td style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-                              <strong>{u.agentProfile?.fullName || "Agent"}</strong>
-                              {isVerified && (
-                                <i className="fas fa-check-circle verified-icon" style={{ color: "#2e7d32", fontSize: "0.85rem" }}></i>
-                              )}
-                            </td>
-                            <td>{u.agentProfile?.address || "No office address"}</td>
-                            <td>
-                              <div>{u.email}</div>
-                              <div style={{ color: "#666", fontSize: "12px" }}>{u.phone}</div>
-                            </td>
-                            <td>
-                              {isVerified ? (
-                                <span className="status-badge verified"><i className="fas fa-check-circle"></i> Verified</span>
-                              ) : (
-                                <span className="status-badge unverified"><i className="fas fa-hourglass-half"></i> Unverified</span>
-                              )}
-                            </td>
-                            <td>
-                              <div className="admin-action-btns">
-                                <button 
-                                  onClick={() => handleToggleVerificationAllUsers(u.id, "AGENT", isVerified)}
-                                  disabled={actionLoading !== null}
-                                  className={isVerified ? "reject-btn" : "approve-btn"}
-                                  style={{ minWidth: "120px" }}
-                                >
-                                  {actionLoading === u.id ? "Updating..." : (isVerified ? "Revoke Verify" : "Verify Account")}
-                                </button>
-                                <button 
-                                  onClick={() => handleDeleteUserAllUsers(u.id, "AGENT")}
-                                  disabled={actionLoading !== null}
-                                  className="reject-btn"
-                                >
-                                  {actionLoading === u.id ? "Deleting..." : "Delete"}
-                                </button>
-                              </div>
-                            </td>
-                          </tr>
-                        );
-                      })}
-                    </tbody>
-                  </table>
-                </div>
-              )}
-            </div>
-          )}
-
-          {/* 4. HOSTELS & PROPERTIES DIRECTORY TAB */}
-          {activeTab === "properties" && (
-            <div className="admin-card">
-              <h2>
-                <i className="fas fa-building"></i> Hostels & Properties Directory{" "}
-                <span style={{ fontSize: "0.85rem", fontWeight: "600", color: "#92400e", background: "#fef3c7", padding: "4px 10px", borderRadius: "12px", marginLeft: "8px" }}>
-                  {verifiedPropertiesCount} Verified / {allHostelProperties.length} Total
-                </span>
-              </h2>
-              {allHostelProperties.length === 0 ? (
-                <div className="no-data-text">No listed hostel properties found.</div>
-              ) : filteredAllProperties.length === 0 ? (
-                <div className="no-data-text">No matching hostel properties found.</div>
-              ) : (
-                <div className="admin-table-wrapper">
-                  <table className="admin-table">
-                    <thead>
-                      <tr>
-                        <th>Property Details</th>
-                        <th>Type</th>
-                        <th>Price & Fee Breakdown</th>
-                        <th>Location & School</th>
-                        <th>Listed By Agent</th>
-                        <th>Verification Status</th>
-                        <th>Actions</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {filteredAllProperties.map((p) => {
-                        const isVerified = p.isVerified || false;
-                        const isOwnerVerified = p.agent ? p.agent.isVerified : false;
-                        return (
-                            <tr key={p.id}>
-                              <td>
-                                {(() => {
-                                  const mediaUrl = p.images?.[0] || "https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?ixlib=rb-4.0.3";
-                                  const isVideo = mediaUrl.match(/\.(mp4|webm|ogg|mov|mkv)(\?.*)?$/i);
-                                  return (
-                                    <div className="property-preview-cell">
-                                      <div style={{ position: "relative", width: "42px", height: "42px", borderRadius: "8px", overflow: "hidden", flexShrink: 0 }}>
-                                        {isVideo ? (
-                                          <video 
-                                            src={mediaUrl} 
-                                            className="property-preview-img"
-                                            muted
-                                            playsInline
-                                            preload="metadata"
-                                            style={{ width: "100%", height: "100%", objectFit: "cover" }}
-                                          />
-                                        ) : (
-                                          <img 
-                                            src={mediaUrl} 
-                                            alt={p.title} 
-                                            className="property-preview-img"
-                                            style={{ width: "100%", height: "100%", objectFit: "cover" }}
-                                          />
-                                        )}
-                                        {isVideo && (
-                                          <span style={{
-                                            position: "absolute",
-                                            bottom: "2px",
-                                            right: "2px",
-                                            background: "rgba(0,0,0,0.7)",
-                                            color: "#fff",
-                                            fontSize: "8px",
-                                            borderRadius: "3px",
-                                            padding: "1px 3px",
-                                            lineHeight: 1,
-                                          }}>
-                                            ▶
-                                          </span>
-                                        )}
-                                      </div>
-                                      <span className="property-preview-title">{p.title}</span>
-                                    </div>
-                                  );
-                                })()}
-                              </td>
-                            <td>{p.hostelType}</td>
-                            <td>
-                              <div style={{ display: "flex", flexDirection: "column", gap: "2px", minWidth: "140px" }}>
-                                <strong style={{ fontSize: "0.95rem", color: "rgb(2, 53, 28)" }}>
-                                  ₦{p.price.toLocaleString()}
-                                  <span style={{ fontSize: "0.75rem", color: "#666", fontWeight: "normal" }}> / yr</span>
-                                </strong>
-                                <div style={{ fontSize: "0.78rem", color: "#374151", lineHeight: "1.35", backgroundColor: "#f9fafb", padding: "4px 8px", borderRadius: "6px", border: "1px solid #e5e7eb", marginTop: "3px" }}>
-                                  <div><span style={{ color: "#6b7280" }}>Rent:</span> ₦{(p.rentAmount ?? p.price).toLocaleString()}</div>
-                                  <div>
-                                    <span style={{ color: "#6b7280" }}>Agent Fee:</span> ₦{(p.agentFee ?? 0).toLocaleString()}{" "}
-                                    {p.isNegotiable ? (
-                                      <span style={{ color: "#047857", fontWeight: "700", fontSize: "0.7rem", backgroundColor: "rgba(16, 185, 129, 0.12)", padding: "1px 5px", borderRadius: "4px" }}>
-                                        Negotiable
-                                      </span>
-                                    ) : (
-                                      <span style={{ color: "#6b7280", fontSize: "0.7rem" }}>(Fixed)</span>
-                                    )}
-                                  </div>
-                                  {p.cautionFee !== null && p.cautionFee !== undefined && p.cautionFee > 0 && (
-                                    <div><span style={{ color: "#6b7280" }}>Caution Fee:</span> ₦{p.cautionFee.toLocaleString()}</div>
-                                  )}
-                                </div>
-                              </div>
-                            </td>
-                            <td>
-                              <div>{p.location}</div>
-                              <div style={{ color: "#666", fontSize: "12px" }}>Near {p.university} ({p.distance})</div>
-                            </td>
-                            <td>
-                              {p.agent ? (
-                                <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-                                  <strong>{p.agent.fullName}</strong>
-                                  {p.agent.isVerified && (
-                                    <span style={{ color: "#2e7d32" }} title="Verified Owner">
-                                      <i className="fas fa-check-circle"></i>
-                                    </span>
-                                  )}
-                                </div>
-                              ) : (
-                                "CS Official"
-                              )}
-                            </td>
-                            <td>
-                              {isOwnerVerified ? (
-                                <span className="status-badge verified"><i className="fas fa-check-circle"></i> Verified Agent</span>
-                              ) : (
-                                <span className="status-badge unverified"><i className="fas fa-hourglass-half"></i> Unverified Agent</span>
-                              )}
-                            </td>
-                            <td>
-                              <div className="admin-action-btns">
-                                <button 
-                                  onClick={() => handleTogglePropertyVerificationAll(p.id, isVerified)}
-                                  disabled={actionLoading !== null}
-                                  className={isVerified ? "reject-btn" : "approve-btn"}
-                                  style={{ minWidth: "120px" }}
-                                >
-                                  {actionLoading === p.id ? "Updating..." : (isVerified ? "Revoke Approval" : "Approve Listing")}
-                                </button>
-                                <button 
-                                  onClick={() => handleDeletePropertyAll(p.id)}
-                                  disabled={actionLoading !== null}
-                                  className="reject-btn"
-                                >
-                                  {actionLoading === p.id ? "Deleting..." : "Delete"}
-                                </button>
-                              </div>
-                            </td>
-                          </tr>
-                        );
-                      })}
-                    </tbody>
-                  </table>
-                </div>
-              )}
-            </div>
-          )}
-
-          {/* 5. ROOMMATE LISTINGS DIRECTORY TAB */}
-          {activeTab === "roommates" && (
-            <div className="admin-card">
-              <h2>
-                <i className="fas fa-user-friends"></i> Roommate Listings Directory{" "}
-                <span style={{ fontSize: "0.85rem", fontWeight: "600", color: "#065f46", background: "#ecfdf5", padding: "4px 10px", borderRadius: "12px", marginLeft: "8px" }}>
-                  {verifiedRoommatesCount} Verified / {allRoommateListings.length} Total
-                </span>
-              </h2>
-              {allRoommateListings.length === 0 ? (
-                <div className="no-data-text">No listed roommate spaces found.</div>
-              ) : filteredAllRoommates.length === 0 ? (
-                <div className="no-data-text">No matching roommate listings found.</div>
-              ) : (
-                <div className="admin-table-wrapper">
-                  <table className="admin-table">
-                    <thead>
-                      <tr>
-                        <th>Room Details</th>
-                        <th>Type</th>
-                        <th>Shared Rent / Budget</th>
-                        <th>University & Location</th>
-                        <th>Listed By Student</th>
-                        <th>Verification Status</th>
-                        <th>Actions</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {filteredAllRoommates.map((p) => {
-                        const isVerified = p.isVerified || false;
-                        const isStudentVerified = p.student?.isVerified || false;
-                        return (
-                            <tr key={p.id}>
-                              <td>
-                                {(() => {
-                                  const mediaUrl = p.images?.[0] || "https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?ixlib=rb-4.0.3";
-                                  const isVideo = mediaUrl.match(/\.(mp4|webm|ogg|mov|mkv)(\?.*)?$/i);
-                                  return (
-                                    <div className="property-preview-cell">
-                                      <div style={{ position: "relative", width: "42px", height: "42px", borderRadius: "8px", overflow: "hidden", flexShrink: 0 }}>
-                                        {isVideo ? (
-                                          <video 
-                                            src={mediaUrl} 
-                                            className="property-preview-img"
-                                            muted
-                                            playsInline
-                                            preload="metadata"
-                                            style={{ width: "100%", height: "100%", objectFit: "cover" }}
-                                          />
-                                        ) : (
-                                          <img 
-                                            src={mediaUrl} 
-                                            alt={p.title} 
-                                            className="property-preview-img"
-                                            style={{ width: "100%", height: "100%", objectFit: "cover" }}
-                                          />
-                                        )}
-                                        {isVideo && (
-                                          <span style={{
-                                            position: "absolute",
-                                            bottom: "2px",
-                                            right: "2px",
-                                            background: "rgba(0,0,0,0.7)",
-                                            color: "#fff",
-                                            fontSize: "8px",
-                                            borderRadius: "3px",
-                                            padding: "1px 3px",
-                                            lineHeight: 1,
-                                          }}>
-                                            ▶
-                                          </span>
-                                        )}
-                                      </div>
-                                      <span className="property-preview-title">{p.title}</span>
-                                    </div>
-                                  );
-                                })()}
-                              </td>
-                            <td>{p.hostelType || "Bedsitter"}</td>
-                            <td>
-                              <strong style={{ fontSize: "0.95rem", color: "rgb(2, 53, 28)" }}>
-                                ₦{p.price.toLocaleString()}
-                                <span style={{ fontSize: "0.75rem", color: "#666", fontWeight: "normal" }}> / yr</span>
-                              </strong>
-                              {p.roommateGenderPreference && (
-                                <div style={{ fontSize: "0.75rem", color: "#065f46", background: "#ecfdf5", padding: "2px 6px", borderRadius: "4px", display: "inline-block", marginTop: "3px" }}>
-                                  Prefers: {p.roommateGenderPreference}
-                                </div>
-                              )}
-                            </td>
-                            <td>
-                              <div>{p.location}</div>
-                              <div style={{ color: "#666", fontSize: "12px" }}>Near {p.university} ({p.distance})</div>
-                            </td>
-                            <td>
-                              {p.student ? (
-                                <div>
-                                  <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-                                    <strong>{p.student.fullName || (p.student.username ? `@${p.student.username}` : "Student")}</strong>
-                                    {isStudentVerified && (
-                                      <span style={{ color: "#2e7d32" }} title="Verified Student">
-                                        <i className="fas fa-check-circle"></i>
-                                      </span>
-                                    )}
-                                  </div>
-                                  <div style={{ fontSize: "12px", color: "#666" }}>
-                                    {p.student.username ? `@${p.student.username}` : "Student Profile"}
-                                  </div>
-                                </div>
-                              ) : (
-                                "Student Space"
-                              )}
-                            </td>
-                            <td>
-                              {isStudentVerified ? (
-                                <span className="status-badge verified"><i className="fas fa-check-circle"></i> Verified Student</span>
-                              ) : (
-                                <span className="status-badge unverified"><i className="fas fa-hourglass-half"></i> Unverified Student</span>
-                              )}
-                            </td>
-                            <td>
-                              <div className="admin-action-btns">
-                                <button 
-                                  onClick={() => handleTogglePropertyVerificationAll(p.id, isVerified)}
-                                  disabled={actionLoading !== null}
-                                  className={isVerified ? "reject-btn" : "approve-btn"}
-                                  style={{ minWidth: "120px" }}
-                                >
-                                  {actionLoading === p.id ? "Updating..." : (isVerified ? "Revoke Approval" : "Approve Listing")}
-                                </button>
-                                <button 
-                                  onClick={() => handleDeletePropertyAll(p.id)}
-                                  disabled={actionLoading !== null}
-                                  className="reject-btn"
-                                >
-                                  {actionLoading === p.id ? "Deleting..." : "Delete"}
-                                </button>
-                              </div>
-                            </td>
-                          </tr>
-                        );
-                      })}
-                    </tbody>
-                  </table>
-                </div>
-              )}
-            </div>
-          )}
-
+          {/* 6. ANALYTICS OVERVIEW TAB */}
           {activeTab === "analytics" && (
-            <div className="analytics-dashboard">
-              {/* Stat Cards Row */}
-              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: "20px", marginBottom: "30px" }}>
-                <div style={{ background: "white", padding: "20px", borderRadius: "12px", border: "1px solid #eaeaea", boxShadow: "0 4px 12px rgba(0,0,0,0.02)", display: "flex", alignItems: "center", gap: "15px" }}>
-                  <div style={{ background: "#e8fdf4", color: "#10b981", width: "50px", height: "50px", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "1.5rem" }} className="stat-icon">
-                    <i className="fas fa-user-graduate"></i>
-                  </div>
-                  <div>
-                    <h3 style={{ margin: "0 0 5px 0", color: "rgb(2, 53, 28)", fontSize: "1.6rem", fontWeight: "700" }}>
-                      {analyticsData?.stats.totalStudents || 0}
-                    </h3>
-                    <p style={{ margin: 0, color: "#666", fontSize: "0.85rem" }}>Total Students</p>
-                  </div>
-                </div>
-
-                <div style={{ background: "white", padding: "20px", borderRadius: "12px", border: "1px solid #eaeaea", boxShadow: "0 4px 12px rgba(0,0,0,0.02)", display: "flex", alignItems: "center", gap: "15px" }}>
-                  <div style={{ background: "#d1fae5", color: "#065f46", width: "50px", height: "50px", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "1.5rem" }} className="stat-icon">
-                    <i className="fas fa-user-shield"></i>
-                  </div>
-                  <div>
-                    <h3 style={{ margin: "0 0 5px 0", color: "rgb(2, 53, 28)", fontSize: "1.6rem", fontWeight: "700" }}>
-                      {analyticsData?.stats.verifiedStudents || 0}
-                    </h3>
-                    <p style={{ margin: 0, color: "#666", fontSize: "0.85rem" }}>Verified Students</p>
-                  </div>
-                </div>
-
-                <div style={{ background: "white", padding: "20px", borderRadius: "12px", border: "1px solid #eaeaea", boxShadow: "0 4px 12px rgba(0,0,0,0.02)", display: "flex", alignItems: "center", gap: "15px" }}>
-                  <div style={{ background: "#eef2ff", color: "#3b82f6", width: "50px", height: "50px", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "1.5rem" }} className="stat-icon">
-                    <i className="fas fa-user-tie"></i>
-                  </div>
-                  <div>
-                    <h3 style={{ margin: "0 0 5px 0", color: "rgb(2, 53, 28)", fontSize: "1.6rem", fontWeight: "700" }}>
-                      {analyticsData?.stats.totalAgents || 0}
-                    </h3>
-                    <p style={{ margin: 0, color: "#666", fontSize: "0.85rem" }}>Total Agents</p>
-                  </div>
-                </div>
-
-                <div style={{ background: "white", padding: "20px", borderRadius: "12px", border: "1px solid #eaeaea", boxShadow: "0 4px 12px rgba(0,0,0,0.02)", display: "flex", alignItems: "center", gap: "15px" }}>
-                  <div style={{ background: "#dbeafe", color: "#1e40af", width: "50px", height: "50px", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "1.5rem" }} className="stat-icon">
-                    <i className="fas fa-shield-alt"></i>
-                  </div>
-                  <div>
-                    <h3 style={{ margin: "0 0 5px 0", color: "rgb(2, 53, 28)", fontSize: "1.6rem", fontWeight: "700" }}>
-                      {analyticsData?.stats.verifiedAgents || 0}
-                    </h3>
-                    <p style={{ margin: 0, color: "#666", fontSize: "0.85rem" }}>Verified Agents</p>
-                  </div>
-                </div>
-
-                <div style={{ background: "white", padding: "20px", borderRadius: "12px", border: "1px solid #eaeaea", boxShadow: "0 4px 12px rgba(0,0,0,0.02)", display: "flex", alignItems: "center", gap: "15px" }}>
-                  <div style={{ background: "#fef7e0", color: "#f39c12", width: "50px", height: "50px", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "1.5rem" }} className="stat-icon">
-                    <i className="fas fa-building"></i>
-                  </div>
-                  <div>
-                    <h3 style={{ margin: "0 0 5px 0", color: "rgb(2, 53, 28)", fontSize: "1.6rem", fontWeight: "700" }}>
-                      {analyticsData?.stats.totalProperties || 0}
-                    </h3>
-                    <p style={{ margin: 0, color: "#666", fontSize: "0.85rem" }}>Hostel Listings</p>
-                  </div>
-                </div>
-
-                <div style={{ background: "white", padding: "20px", borderRadius: "12px", border: "1px solid #eaeaea", boxShadow: "0 4px 12px rgba(0,0,0,0.02)", display: "flex", alignItems: "center", gap: "15px" }}>
-                  <div style={{ background: "#fdf2f2", color: "#e74c3c", width: "50px", height: "50px", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "1.5rem" }} className="stat-icon">
-                    <i className="fas fa-user-friends"></i>
-                  </div>
-                  <div>
-                    <h3 style={{ margin: "0 0 5px 0", color: "rgb(2, 53, 28)", fontSize: "1.6rem", fontWeight: "700" }}>
-                      {analyticsData?.stats.totalRoommates || 0}
-                    </h3>
-                    <p style={{ margin: 0, color: "#666", fontSize: "0.85rem" }}>Roommate Listings</p>
-                  </div>
-                </div>
-              </div>
-
-              {/* Chart Canvases */}
-              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(320px, 1fr))", gap: "25px" }}>
-                <div style={{ background: "white", padding: "25px", borderRadius: "12px", border: "1px solid #eaeaea", boxShadow: "0 4px 15px rgba(0,0,0,0.02)" }}>
-                  <h4 style={{ margin: "0 0 20px 0", color: "rgb(2, 53, 28)", fontSize: "1.1rem", fontWeight: "700" }}>User Distribution</h4>
-                  <div style={{ maxHeight: "300px", display: "flex", justifyContent: "center" }}>
-                    <canvas id="userDistributionChart"></canvas>
-                  </div>
-                </div>
-
-                <div style={{ background: "white", padding: "25px", borderRadius: "12px", border: "1px solid #eaeaea", boxShadow: "0 4px 15px rgba(0,0,0,0.02)" }}>
-                  <h4 style={{ margin: "0 0 20px 0", color: "rgb(2, 53, 28)", fontSize: "1.1rem", fontWeight: "700" }}>Listing Growth Rate</h4>
-                  <div style={{ maxHeight: "300px" }}>
-                    <canvas id="growthChart"></canvas>
-                  </div>
-                </div>
-              </div>
-            </div>
+            <AnalyticsTab analyticsData={analyticsData} />
           )}
 
+          {/* 7. FLAGGED REPORTS QUEUE TAB */}
           {activeTab === "reports" && (
-            <div className="admin-card">
-              <div className="card-header" style={{ marginBottom: "20px" }}>
-                <h4 style={{ fontSize: "1.2rem", fontWeight: "700", color: "rgb(2, 53, 28)", display: "flex", alignItems: "center", gap: "8px", margin: 0 }}>
-                  <i className="fas fa-flag" style={{ color: "#d9534f" }}></i> User Flagged Reports Queue
-                </h4>
-                <p style={{ color: "#666", fontSize: "0.85rem", margin: "5px 0 0 0" }}>Review and moderate reports submitted by students against properties or roommate profiles.</p>
-              </div>
-
-              {filteredReports.length === 0 ? (
-                <div className="no-data-text">
-                  <i className="fas fa-check-circle" style={{ color: "#2e7d32", fontSize: "1.5rem", marginRight: "8px" }}></i>
-                  No pending flagged reports found matching your criteria.
-                </div>
-              ) : (
-                <div className="admin-table-container">
-                  <table className="admin-table">
-                    <thead>
-                      <tr>
-                        <th>Date Reported</th>
-                        <th>Reporter</th>
-                        <th>Target Details</th>
-                        <th>Reason for Report</th>
-                        <th>Description Details</th>
-                        <th>Moderation Actions</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {filteredReports.map((r: any) => {
-                        const targetType = r.propertyId ? "Property Listing" : "Roommate Profile";
-                        const targetName = r.property ? r.property.title : (r.roommate ? r.roommate.fullName : "Unknown Target");
-                        const targetId = r.propertyId || r.roommateId;
-                        const targetLink = r.propertyId 
-                          ? `/apartment-details?id=${r.propertyId}` 
-                          : `/roommates`;
-
-                        return (
-                          <tr key={r.id}>
-                            <td style={{ fontSize: "0.85rem", whiteSpace: "nowrap" }}>
-                              {new Date(r.createdAt).toLocaleDateString("en-US", {
-                                month: "short",
-                                day: "numeric",
-                                year: "numeric",
-                              })}
-                            </td>
-                            <td>
-                              <div style={{ fontWeight: "600", fontSize: "0.9rem" }}>{r.reporter?.email}</div>
-                              <span style={{ fontSize: "0.75rem", color: "#888" }}>ID: {r.reporter?.id.substring(0, 8)}</span>
-                            </td>
-                            <td>
-                              <span style={{ fontSize: "0.75rem", padding: "3px 8px", borderRadius: "20px", fontWeight: "700", textTransform: "uppercase", backgroundColor: r.propertyId ? "#e8f0fe" : "#fef7e0", color: r.propertyId ? "#1a73e8" : "#b06000", display: "inline-block", marginBottom: "5px" }}>
-                                {targetType}
-                              </span>
-                              <div style={{ fontWeight: "bold", fontSize: "0.9rem" }}>
-                                <a href={targetLink} target="_blank" rel="noopener noreferrer" style={{ color: "rgb(2, 53, 28)", textDecoration: "underline" }}>
-                                  {targetName}
-                                </a>
-                              </div>
-                              <span style={{ fontSize: "0.75rem", color: "#888" }}>ID: {targetId?.substring(0, 8)}</span>
-                            </td>
-                            <td>
-                              <span className="status-badge" style={{ backgroundColor: "#fce8e6", color: "#c5221f", border: "1px solid #fad2cf", display: "inline-flex", alignItems: "center", gap: "5px", textTransform: "uppercase", fontSize: "0.75rem", fontWeight: "700", padding: "4px 8px", borderRadius: "4px" }}>
-                                <i className="fas fa-exclamation-triangle"></i>
-                                {r.reason === "OTHER" ? (r.customReason || "OTHER") : r.reason.replace("_", " ")}
-                              </span>
-                            </td>
-                            <td style={{ maxWidth: "300px", fontSize: "0.85rem", color: "#444" }}>
-                              <div style={{ maxHeight: "100px", overflowY: "auto", wordBreak: "break-word" }}>
-                                {r.description}
-                              </div>
-                            </td>
-                            <td>
-                              <div className="admin-action-btns" style={{ flexDirection: "column", gap: "6px" }}>
-                                <div style={{ display: "flex", gap: "6px", width: "100%" }}>
-                                  <button
-                                    onClick={() => handleModerateReport(r.id, "DISMISS")}
-                                    disabled={actionLoading !== null}
-                                    className="reject-btn"
-                                    style={{ flex: 1, padding: "8px", fontSize: "0.85rem", whiteSpace: "nowrap" }}
-                                  >
-                                    Dismiss Report
-                                  </button>
-                                  <button
-                                    onClick={() => handleModerateReport(r.id, "RESOLVE", false)}
-                                    disabled={actionLoading !== null}
-                                    className="approve-btn"
-                                    style={{ flex: 1, padding: "8px", fontSize: "0.85rem", whiteSpace: "nowrap" }}
-                                  >
-                                    Resolve (Keep)
-                                  </button>
-                                </div>
-                                <button
-                                  onClick={() => handleModerateReport(r.id, "RESOLVE", true)}
-                                  disabled={actionLoading !== null}
-                                  className="reject-btn"
-                                  style={{ width: "100%", padding: "8px", fontSize: "0.85rem", backgroundColor: "#c5221f", color: "white", whiteSpace: "nowrap" }}
-                                >
-                                  Resolve & Delete Flagged Listing
-                                </button>
-                              </div>
-                            </td>
-                          </tr>
-                        );
-                      })}
-                    </tbody>
-                  </table>
-                </div>
-              )}
-            </div>
+            <ReportsTab
+              filteredReports={filteredReports}
+              actionLoading={actionLoading}
+              onModerateReport={handleModerateReport}
+            />
           )}
 
+          {/* 8. AGENT ACTIVITY AUDIT LOGS TAB */}
           {activeTab === "activity-logs" && (
-            <div className="admin-card">
-              <div className="card-header" style={{ marginBottom: "20px", display: "flex", justifyContent: "space-between", alignItems: "flex-start", flexWrap: "wrap", gap: "15px" }}>
-                <div>
-                  <h4 style={{ fontSize: "1.2rem", fontWeight: "700", color: "rgb(2, 53, 28)", display: "flex", alignItems: "center", gap: "8px", margin: 0, fontFamily: "'Poppins', sans-serif" }}>
-                    <i className="fas fa-history" style={{ color: "#d35400" }}></i> Agent Activity & Audit Logs
-                  </h4>
-                  <p style={{ color: "#666", fontSize: "0.85rem", margin: "5px 0 0 0", fontFamily: "'Open Sans', sans-serif" }}>
-                    Real-time timeline and audit history of every action taken by agents (creating, updating, pricing edits, status changes, and deletions).
-                  </p>
-                </div>
-
-                {/* Filter Pills */}
-                <div style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}>
-                  {[
-                    { id: "ALL", label: "All Activities" },
-                    { id: "PROPERTY_CREATED", label: "Created" },
-                    { id: "PROPERTY_UPDATED", label: "Updated" },
-                    { id: "PROPERTY_AVAILABILITY_TOGGLED", label: "Status Toggled" },
-                    { id: "PROPERTY_DELETED", label: "Deleted" },
-                  ].map((filter) => (
-                    <button
-                      key={filter.id}
-                      onClick={() => setActivityFilter(filter.id)}
-                      style={{
-                        padding: "6px 14px",
-                        borderRadius: "20px",
-                        fontSize: "0.78rem",
-                        fontWeight: "600",
-                        fontFamily: "'Poppins', sans-serif",
-                        border: activityFilter === filter.id ? "1px solid rgb(2, 53, 28)" : "1px solid #d1d5db",
-                        backgroundColor: activityFilter === filter.id ? "rgb(2, 53, 28)" : "#fff",
-                        color: activityFilter === filter.id ? "#fff" : "#4b5563",
-                        cursor: "pointer",
-                        transition: "all 0.2s ease"
-                      }}
-                    >
-                      {filter.label}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              {filteredActivityLogs.length === 0 ? (
-                <div className="no-data-text">
-                  <i className="fas fa-clipboard-list" style={{ color: "#6b7280", fontSize: "1.5rem", marginRight: "8px" }}></i>
-                  No activity logs found matching your criteria.
-                </div>
-              ) : (
-                <div className="admin-table-container">
-                  <table className="admin-table">
-                    <thead>
-                      <tr>
-                        <th>Date & Time</th>
-                        <th>User / Agent</th>
-                        <th>Action Type</th>
-                        <th>Property Target</th>
-                        <th>Activity Details & Changes</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {filteredActivityLogs.map((log: any) => {
-                        let actionBadgeStyle = { background: "#e0f2fe", color: "#0369a1", border: "1px solid #bae6fd" };
-                        let actionIcon = "fas fa-info-circle";
-                        let actionLabel = "Updated";
-
-                        if (log.action === "PROPERTY_CREATED") {
-                          actionBadgeStyle = { background: "#dcfce7", color: "#15803d", border: "1px solid #bbf7d0" };
-                          actionIcon = "fas fa-plus-circle";
-                          actionLabel = "Listing Created";
-                        } else if (log.action === "PROPERTY_UPDATED") {
-                          actionBadgeStyle = { background: "#e0e7ff", color: "#4338ca", border: "1px solid #c7d2fe" };
-                          actionIcon = "fas fa-edit";
-                          actionLabel = "Listing Edited";
-                        } else if (log.action === "PROPERTY_AVAILABILITY_TOGGLED") {
-                          actionBadgeStyle = { background: "#fef3c7", color: "#b45309", border: "1px solid #fde68a" };
-                          actionIcon = "fas fa-toggle-on";
-                          actionLabel = "Status Changed";
-                        } else if (log.action === "PROPERTY_DELETED") {
-                          actionBadgeStyle = { background: "#fee2e2", color: "#b91c1c", border: "1px solid #fecaca" };
-                          actionIcon = "fas fa-trash-alt";
-                          actionLabel = "Listing Deleted";
-                        }
-
-                        return (
-                          <tr key={log.id}>
-                            <td style={{ fontSize: "0.85rem", whiteSpace: "nowrap" }}>
-                              <div style={{ fontWeight: "600" }}>
-                                {new Date(log.createdAt).toLocaleDateString("en-US", {
-                                  month: "short",
-                                  day: "numeric",
-                                  year: "numeric",
-                                })}
-                              </div>
-                              <span style={{ fontSize: "0.75rem", color: "#6b7280" }}>
-                                {new Date(log.createdAt).toLocaleTimeString("en-US", {
-                                  hour: "2-digit",
-                                  minute: "2-digit",
-                                })}
-                              </span>
-                            </td>
-                            <td>
-                              <div style={{ fontWeight: "600", fontSize: "0.9rem", color: "rgb(2, 53, 28)" }}>{log.userName}</div>
-                              <div style={{ fontSize: "0.8rem", color: "#6b7280" }}>{log.userEmail}</div>
-                              <span style={{ fontSize: "0.7rem", backgroundColor: "#f3f4f6", padding: "2px 6px", borderRadius: "4px", color: "#374151", fontWeight: "600", marginTop: "3px", display: "inline-block" }}>
-                                {log.userRole || "AGENT"}
-                              </span>
-                            </td>
-                            <td>
-                              <span style={{
-                                display: "inline-flex",
-                                alignItems: "center",
-                                gap: "5px",
-                                padding: "4px 10px",
-                                borderRadius: "20px",
-                                fontSize: "0.75rem",
-                                fontWeight: "700",
-                                textTransform: "uppercase",
-                                ...actionBadgeStyle
-                              }}>
-                                <i className={actionIcon}></i>
-                                {actionLabel}
-                              </span>
-                            </td>
-                            <td>
-                              {log.propertyTitle ? (
-                                <div>
-                                  <strong style={{ fontSize: "0.88rem", color: "#111827", display: "block" }}>
-                                    {log.propertyTitle}
-                                  </strong>
-                                  {log.propertyId && log.action !== "PROPERTY_DELETED" && (
-                                    <a
-                                      href={`/apartment-details?id=${log.propertyId}`}
-                                      target="_blank"
-                                      rel="noopener noreferrer"
-                                      style={{ fontSize: "0.78rem", color: "#047857", textDecoration: "underline", display: "inline-flex", alignItems: "center", gap: "3px" }}
-                                    >
-                                      View Details <i className="fas fa-external-link-alt" style={{ fontSize: "0.65rem" }}></i>
-                                    </a>
-                                  )}
-                                </div>
-                              ) : (
-                                <span style={{ color: "#9ca3af", fontSize: "0.85rem" }}>-</span>
-                              )}
-                            </td>
-                            <td style={{ maxWidth: "340px", fontSize: "0.85rem", color: "#374151" }}>
-                              <div style={{ lineHeight: "1.5" }}>
-                                {log.description}
-                              </div>
-                            </td>
-                          </tr>
-                        );
-                      })}
-                    </tbody>
-                  </table>
-                </div>
-              )}
-            </div>
+            <ActivityLogsTab
+              filteredActivityLogs={filteredActivityLogs}
+              activityFilter={activityFilter}
+              setActivityFilter={setActivityFilter}
+            />
           )}
 
+          {/* 9. SEND BROADCAST ANNOUNCEMENTS TAB */}
           {activeTab === "broadcast" && (
-            <div className="admin-card" style={{ maxWidth: "1000px", margin: "0 auto" }}>
-              {/* Header */}
-              <div style={{ marginBottom: "24px", borderBottom: "1px solid #eaeaea", paddingBottom: "18px" }}>
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", flexWrap: "wrap", gap: "12px" }}>
-                  <div>
-                    <h2 style={{ fontSize: "1.35rem", fontWeight: "800", color: "rgb(2, 53, 28)", margin: "0 0 6px 0", display: "flex", alignItems: "center", gap: "10px" }}>
-                      <i className="fas fa-paper-plane" style={{ color: "#059669" }}></i> Send Broadcast Announcements
-                    </h2>
-                    <p style={{ margin: 0, color: "#6b7280", fontSize: "0.88rem", lineHeight: "1.5" }}>
-                      Broadcast official platform announcements, alerts, and feature updates directly to registered students, landlords, or the entire Campus Tent community.
-                    </p>
-                  </div>
-                  <div style={{ background: "#ecfdf5", border: "1px solid #a7f3d0", padding: "8px 14px", borderRadius: "10px", fontSize: "0.8rem", color: "#065f46", fontWeight: "600", display: "flex", alignItems: "center", gap: "8px" }}>
-                    <i className="fas fa-envelope-open-text" style={{ fontSize: "1rem" }}></i>
-                    <div>
-                      <div>From: <strong>noreply@campustent.com</strong></div>
-                      <div style={{ fontSize: "0.72rem", color: "#047857", fontWeight: "normal" }}>Reply-To: support@campustent.com</div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* Broadcast Result Feedback Banner */}
-              {broadcastResult && (
-                <div style={{
-                  marginBottom: "24px",
-                  padding: "16px 20px",
-                  borderRadius: "12px",
-                  backgroundColor: broadcastResult.success ? "#ecfdf5" : "#fef2f2",
-                  border: broadcastResult.success ? "1px solid #10b981" : "1px solid #ef4444",
-                  display: "flex",
-                  alignItems: "flex-start",
-                  gap: "14px"
-                }}>
-                  <div style={{
-                    color: broadcastResult.success ? "#059669" : "#dc2626",
-                    fontSize: "1.4rem",
-                    marginTop: "2px"
-                  }}>
-                    <i className={broadcastResult.success ? "fas fa-check-circle" : "fas fa-exclamation-circle"}></i>
-                  </div>
-                  <div style={{ flex: 1 }}>
-                    <h4 style={{ margin: "0 0 4px 0", color: broadcastResult.success ? "#065f46" : "#991b1b", fontSize: "1rem", fontWeight: "700" }}>
-                      {broadcastResult.isTest ? "Test Email Delivered Successfully! 🎉" : "Broadcast Completed! 🚀"}
-                    </h4>
-                    <p style={{ margin: 0, color: broadcastResult.success ? "#047857" : "#b91c1c", fontSize: "0.88rem", lineHeight: "1.4" }}>
-                      {broadcastResult.message || (
-                        broadcastResult.isTest 
-                          ? `A sample copy of this broadcast was sent to ${broadcastResult.testRecipient || adminEmail}. Check your inbox to review the layout!`
-                          : `Successfully dispatched to ${broadcastResult.sentCount} recipients (${broadcastResult.failedCount || 0} failed / bounced).`
-                      )}
-                    </p>
-                    {broadcastResult.errors && broadcastResult.errors.length > 0 && (
-                      <div style={{ marginTop: "10px", fontSize: "0.78rem", color: "#b91c1c", background: "rgba(255,255,255,0.7)", padding: "8px", borderRadius: "6px" }}>
-                        <strong>Delivery Notes:</strong>
-                        <ul style={{ margin: "4px 0 0 0", paddingLeft: "20px" }}>
-                          {broadcastResult.errors.map((err, i) => (
-                            <li key={i}>{err}</li>
-                          ))}
-                        </ul>
-                      </div>
-                    )}
-                  </div>
-                  <button 
-                    onClick={() => setBroadcastResult(null)}
-                    style={{ background: "none", border: "none", color: "#6b7280", cursor: "pointer", fontSize: "1.1rem" }}
-                  >
-                    <i className="fas fa-times"></i>
-                  </button>
-                </div>
-              )}
-
-              {/* 1. Target Audience Selection */}
-              <div style={{ marginBottom: "22px" }}>
-                <label style={{ display: "block", fontSize: "0.9rem", fontWeight: "700", color: "rgb(2, 53, 28)", marginBottom: "8px" }}>
-                  <i className="fas fa-users"></i> 1. Select Target Audience
-                </label>
-                <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(170px, 1fr))", gap: "10px" }}>
-                  {[
-                    { id: "ALL", label: "All Users", count: broadcastStats.all, icon: "fas fa-globe", color: "#065f46", bg: "#ecfdf5" },
-                    { id: "STUDENTS", label: "All Students", count: broadcastStats.students, icon: "fas fa-user-graduate", color: "#1e40af", bg: "#eff6ff" },
-                    { id: "AGENTS", label: "All Agents", count: broadcastStats.agents, icon: "fas fa-user-tie", color: "#92400e", bg: "#fef3c7" },
-                    { id: "VERIFIED_STUDENTS", label: "Verified Students", count: broadcastStats.verifiedStudents, icon: "fas fa-user-check", color: "#047857", bg: "#d1fae5" },
-                    { id: "VERIFIED_AGENTS", label: "Verified Agents", count: broadcastStats.verifiedAgents, icon: "fas fa-shield-alt", color: "#4338ca", bg: "#e0e7ff" },
-                  ].map((aud) => {
-                    const isSelected = broadcastAudience === aud.id;
-                    return (
-                      <button
-                        key={aud.id}
-                        type="button"
-                        onClick={() => setBroadcastAudience(aud.id as any)}
-                        style={{
-                          padding: "12px 14px",
-                          borderRadius: "10px",
-                          border: isSelected ? `2px solid ${aud.color}` : "1px solid #e5e7eb",
-                          backgroundColor: isSelected ? aud.bg : "#ffffff",
-                          display: "flex",
-                          alignItems: "center",
-                          gap: "10px",
-                          cursor: "pointer",
-                          textAlign: "left",
-                          transition: "all 0.2s ease",
-                          boxShadow: isSelected ? "0 2px 8px rgba(0,0,0,0.06)" : "none"
-                        }}
-                      >
-                        <div style={{
-                          width: "36px",
-                          height: "36px",
-                          borderRadius: "8px",
-                          backgroundColor: isSelected ? aud.color : "#f3f4f6",
-                          color: isSelected ? "#ffffff" : "#6b7280",
-                          display: "flex",
-                          alignItems: "center",
-                          justifyContent: "center",
-                          fontSize: "1rem",
-                          flexShrink: 0
-                        }}>
-                          <i className={aud.icon}></i>
-                        </div>
-                        <div style={{ minWidth: 0 }}>
-                          <div style={{ fontSize: "0.85rem", fontWeight: "700", color: isSelected ? aud.color : "#374151", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
-                            {aud.label}
-                          </div>
-                          <div style={{ fontSize: "0.75rem", color: "#6b7280", fontWeight: "600" }}>
-                            {aud.count} recipients
-                          </div>
-                        </div>
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
-
-              {/* 2. Pre-made Announcement Templates */}
-              <div style={{ marginBottom: "22px" }}>
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "8px" }}>
-                  <label style={{ fontSize: "0.9rem", fontWeight: "700", color: "rgb(2, 53, 28)" }}>
-                    <i className="fas fa-magic"></i> 2. Choose Quick Template (Optional)
-                  </label>
-                  <span style={{ fontSize: "0.78rem", color: "#6b7280" }}>Pre-fills subject, headline & message</span>
-                </div>
-                <select
-                  value={broadcastTemplate}
-                  onChange={(e) => handleSelectTemplate(e.target.value)}
-                  style={{
-                    width: "100%",
-                    padding: "10px 14px",
-                    borderRadius: "8px",
-                    border: "1px solid #d1d5db",
-                    fontSize: "0.9rem",
-                    backgroundColor: "#f9fafb",
-                    color: "#111827",
-                    cursor: "pointer",
-                    outline: "none"
-                  }}
-                >
-                  {BROADCAST_TEMPLATES.map((tmpl) => (
-                    <option key={tmpl.id} value={tmpl.id}>
-                      {tmpl.name}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              {/* 3. Composer Fields */}
-              <div style={{ display: "flex", flexDirection: "column", gap: "16px", marginBottom: "25px" }}>
-                {/* Subject */}
-                <div>
-                  <label style={{ display: "block", fontSize: "0.88rem", fontWeight: "700", color: "#374151", marginBottom: "6px" }}>
-                    Email Subject Line <span style={{ color: "#dc2626" }}>*</span>
-                  </label>
-                  <input
-                    type="text"
-                    placeholder="e.g. 🎒 Verified Hostels & Bedsitters Live for New Academic Session!"
-                    value={broadcastSubject}
-                    onChange={(e) => setBroadcastSubject(e.target.value)}
-                    style={{
-                      width: "100%",
-                      padding: "12px 14px",
-                      borderRadius: "8px",
-                      border: "1px solid #d1d5db",
-                      fontSize: "0.95rem",
-                      fontWeight: "600",
-                      outline: "none",
-                      boxSizing: "border-box"
-                    }}
-                  />
-                </div>
-
-                {/* Headline */}
-                <div>
-                  <label style={{ display: "block", fontSize: "0.88rem", fontWeight: "700", color: "#374151", marginBottom: "6px" }}>
-                    Top Banner Sub-headline (Optional)
-                  </label>
-                  <input
-                    type="text"
-                    placeholder="e.g. Secure verified accommodation near campus today"
-                    value={broadcastHeadline}
-                    onChange={(e) => setBroadcastHeadline(e.target.value)}
-                    style={{
-                      width: "100%",
-                      padding: "10px 14px",
-                      borderRadius: "8px",
-                      border: "1px solid #d1d5db",
-                      fontSize: "0.9rem",
-                      outline: "none",
-                      boxSizing: "border-box"
-                    }}
-                  />
-                </div>
-
-                {/* Message Body */}
-                <div>
-                  <label style={{ display: "block", fontSize: "0.88rem", fontWeight: "700", color: "#374151", marginBottom: "6px" }}>
-                    Message Content <span style={{ color: "#dc2626" }}>*</span>
-                  </label>
-                  <textarea
-                    rows={8}
-                    placeholder="Type your official announcement here... Use separate paragraphs for clean readability."
-                    value={broadcastMessage}
-                    onChange={(e) => setBroadcastMessage(e.target.value)}
-                    style={{
-                      width: "100%",
-                      padding: "12px 14px",
-                      borderRadius: "8px",
-                      border: "1px solid #d1d5db",
-                      fontSize: "0.92rem",
-                      lineHeight: "1.6",
-                      fontFamily: "inherit",
-                      outline: "none",
-                      boxSizing: "border-box",
-                      resize: "vertical"
-                    }}
-                  />
-                  <div style={{ fontSize: "0.75rem", color: "#6b7280", marginTop: "4px" }}>
-                    Tip: Recipients will receive a personalized greeting automatically with their full name or username.
-                  </div>
-                </div>
-
-                {/* Optional CTA Button Fields */}
-                <div style={{ background: "#f9fafb", border: "1px solid #e5e7eb", padding: "16px", borderRadius: "10px" }}>
-                  <div style={{ fontSize: "0.88rem", fontWeight: "700", color: "rgb(2, 53, 28)", marginBottom: "10px", display: "flex", alignItems: "center", gap: "6px" }}>
-                    <i className="fas fa-link"></i> Optional Action Button (Call-To-Action)
-                  </div>
-                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1.5fr", gap: "12px" }}>
-                    <div>
-                      <label style={{ display: "block", fontSize: "0.8rem", color: "#4b5563", marginBottom: "4px" }}>Button Text</label>
-                      <input
-                        type="text"
-                        placeholder="e.g. Explore Hostels"
-                        value={broadcastCtaText}
-                        onChange={(e) => setBroadcastCtaText(e.target.value)}
-                        style={{
-                          width: "100%",
-                          padding: "8px 12px",
-                          borderRadius: "6px",
-                          border: "1px solid #d1d5db",
-                          fontSize: "0.85rem",
-                          boxSizing: "border-box"
-                        }}
-                      />
-                    </div>
-                    <div>
-                      <label style={{ display: "block", fontSize: "0.8rem", color: "#4b5563", marginBottom: "4px" }}>Destination URL</label>
-                      <input
-                        type="text"
-                        placeholder="https://campustent.com/explore"
-                        value={broadcastCtaUrl}
-                        onChange={(e) => setBroadcastCtaUrl(e.target.value)}
-                        style={{
-                          width: "100%",
-                          padding: "8px 12px",
-                          borderRadius: "6px",
-                          border: "1px solid #d1d5db",
-                          fontSize: "0.85rem",
-                          boxSizing: "border-box"
-                        }}
-                      />
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* 4. Action Controls */}
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "12px", paddingTop: "15px", borderTop: "1px solid #eaeaea" }}>
-                <div style={{ display: "flex", gap: "10px", flexWrap: "wrap" }}>
-                  <button
-                    type="button"
-                    onClick={handleSendTestEmail}
-                    disabled={broadcastTestSending || broadcastSending}
-                    style={{
-                      padding: "10px 18px",
-                      borderRadius: "8px",
-                      border: "1px solid #d1d5db",
-                      backgroundColor: "#ffffff",
-                      color: "#374151",
-                      fontSize: "0.88rem",
-                      fontWeight: "600",
-                      cursor: "pointer",
-                      display: "flex",
-                      alignItems: "center",
-                      gap: "8px",
-                      transition: "all 0.2s ease"
-                    }}
-                  >
-                    {broadcastTestSending ? (
-                      <><i className="fas fa-spinner fa-spin"></i> Sending Test...</>
-                    ) : (
-                      <><i className="fas fa-vial"></i> Send Test to Admin</>
-                    )}
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={() => setShowPreviewModal(true)}
-                    style={{
-                      padding: "10px 18px",
-                      borderRadius: "8px",
-                      border: "1px solid #d1d5db",
-                      backgroundColor: "#ffffff",
-                      color: "#374151",
-                      fontSize: "0.88rem",
-                      fontWeight: "600",
-                      cursor: "pointer",
-                      display: "flex",
-                      alignItems: "center",
-                      gap: "8px",
-                      transition: "all 0.2s ease"
-                    }}
-                  >
-                    <i className="fas fa-eye"></i> Preview Email Design
-                  </button>
-                </div>
-
-                <div>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      if (!broadcastSubject.trim()) {
-                        alert("Please enter an email subject.");
-                        return;
-                      }
-                      if (!broadcastMessage.trim()) {
-                        alert("Please enter message content.");
-                        return;
-                      }
-                      setShowConfirmModal(true);
-                    }}
-                    disabled={broadcastSending || broadcastTestSending}
-                    style={{
-                      padding: "12px 26px",
-                      borderRadius: "8px",
-                      border: "none",
-                      backgroundColor: "rgb(2, 53, 28)",
-                      color: "#ffffff",
-                      fontSize: "0.95rem",
-                      fontWeight: "700",
-                      cursor: "pointer",
-                      display: "flex",
-                      alignItems: "center",
-                      gap: "10px",
-                      boxShadow: "0 4px 14px rgba(2, 53, 28, 0.25)",
-                      transition: "all 0.2s ease"
-                    }}
-                  >
-                    {broadcastSending ? (
-                      <><i className="fas fa-spinner fa-spin"></i> Broadcasting to Users...</>
-                    ) : (
-                      <>
-                        <i className="fas fa-paper-plane"></i>
-                        Broadcast to{" "}
-                        {broadcastAudience === "ALL"
-                          ? `${broadcastStats.all} Users`
-                          : broadcastAudience === "STUDENTS"
-                            ? `${broadcastStats.students} Students`
-                            : broadcastAudience === "AGENTS"
-                              ? `${broadcastStats.agents} Agents`
-                              : broadcastAudience === "VERIFIED_STUDENTS"
-                                ? `${broadcastStats.verifiedStudents} Verified Students`
-                                : `${broadcastStats.verifiedAgents} Verified Agents`}
-                      </>
-                    )}
-                  </button>
-                </div>
-              </div>
-            </div>
+            <BroadcastTab
+              broadcastAudience={broadcastAudience}
+              setBroadcastAudience={setBroadcastAudience}
+              broadcastSenderOption={broadcastSenderOption}
+              setBroadcastSenderOption={setBroadcastSenderOption}
+              broadcastSubject={broadcastSubject}
+              setBroadcastSubject={setBroadcastSubject}
+              broadcastHeadline={broadcastHeadline}
+              setBroadcastHeadline={setBroadcastHeadline}
+              broadcastMessage={broadcastMessage}
+              setBroadcastMessage={setBroadcastMessage}
+              broadcastCtaText={broadcastCtaText}
+              setBroadcastCtaText={setBroadcastCtaText}
+              broadcastCtaUrl={broadcastCtaUrl}
+              setBroadcastCtaUrl={setBroadcastCtaUrl}
+              broadcastTemplate={broadcastTemplate}
+              onSelectTemplate={handleSelectTemplate}
+              broadcastSending={broadcastSending}
+              broadcastTestSending={broadcastTestSending}
+              broadcastResult={broadcastResult}
+              setBroadcastResult={setBroadcastResult}
+              broadcastStats={broadcastStats}
+              adminEmail={adminEmail}
+              onSendTestEmail={handleSendTestEmail}
+              onOpenPreviewModal={() => setShowPreviewModal(true)}
+              onOpenConfirmModal={() => {
+                if (!broadcastSubject.trim()) {
+                  alert("Please enter an email subject.");
+                  return;
+                }
+                if (!broadcastMessage.trim()) {
+                  alert("Please enter message content.");
+                  return;
+                }
+                setShowConfirmModal(true);
+              }}
+            />
           )}
         </>
       )}
 
       {/* Broadcast Live Visual Preview Modal */}
-      {showPreviewModal && (
-        <div 
-          onClick={() => setShowPreviewModal(false)}
-          style={{
-            position: "fixed",
-            top: 0,
-            left: 0,
-            width: "100vw",
-            height: "100vh",
-            backgroundColor: "rgba(0, 0, 0, 0.65)",
-            backdropFilter: "blur(4px)",
-            zIndex: 10000,
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            padding: "20px"
-          }}
-        >
-          <div 
-            onClick={(e) => e.stopPropagation()}
-            style={{
-              backgroundColor: "#f4f7f6",
-              borderRadius: "16px",
-              width: "100%",
-              maxWidth: "680px",
-              maxHeight: "90vh",
-              display: "flex",
-              flexDirection: "column",
-              boxShadow: "0 24px 64px rgba(0,0,0,0.22)",
-              overflow: "hidden"
-            }}
-          >
-            {/* Modal Header */}
-            <div style={{ padding: "16px 24px", backgroundColor: "#ffffff", borderBottom: "1px solid #eaeaea", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-              <div>
-                <h3 style={{ margin: 0, color: "rgb(2, 53, 28)", fontSize: "1.1rem", fontWeight: "700" }}>
-                  <i className="fas fa-envelope"></i> Live Email Template Preview
-                </h3>
-                <div style={{ fontSize: "0.75rem", color: "#6b7280" }}>
-                  From: Campus Tent &lt;noreply@campustent.com&gt; • Subject: {broadcastSubject || "(Untitled Subject)"}
-                </div>
-              </div>
-              <button 
-                onClick={() => setShowPreviewModal(false)}
-                style={{ background: "none", border: "none", fontSize: "1.2rem", cursor: "pointer", color: "#666" }}
-              >
-                <i className="fas fa-times"></i>
-              </button>
-            </div>
-
-            {/* Email Canvas Preview */}
-            <div style={{ padding: "24px 20px", overflowY: "auto", flexGrow: 1 }}>
-              <div style={{ maxWidth: "560px", margin: "0 auto", backgroundColor: "#ffffff", borderRadius: "14px", overflow: "hidden", border: "1px solid #e5e7eb", boxShadow: "0 4px 20px rgba(0,0,0,0.04)" }}>
-                {/* Banner */}
-                <div style={{ backgroundColor: "rgb(2, 53, 28)", padding: "28px 24px", textAlign: "center" }}>
-                  <div style={{ fontSize: "22px", fontWeight: "800", color: "#ffffff", letterSpacing: "-0.5px" }}>
-                    ⛺ Campus Tent
-                  </div>
-                  <div style={{ color: "rgba(255, 255, 255, 0.85)", fontSize: "12px", marginTop: "3px" }}>
-                    Verified Student Accommodation & Roommates
-                  </div>
-                  {broadcastHeadline && (
-                    <div style={{ marginTop: "14px", paddingTop: "14px", borderTop: "1px solid rgba(255, 255, 255, 0.15)", color: "#fef08a", fontSize: "16px", fontWeight: "700" }}>
-                      {broadcastHeadline}
-                    </div>
-                  )}
-                </div>
-
-                {/* Content */}
-                <div style={{ padding: "28px 24px" }}>
-                  <p style={{ margin: "0 0 16px 0", color: "#111827", fontSize: "15px", fontWeight: "600" }}>
-                    Hello [Recipient Name],
-                  </p>
-                  <div style={{ color: "#374151", fontSize: "14px", lineHeight: "1.6", whiteSpace: "pre-line" }}>
-                    {broadcastMessage || "Your announcement message body will appear here..."}
-                  </div>
-
-                  {broadcastCtaText && broadcastCtaUrl && (
-                    <div style={{ margin: "24px 0", textAlign: "center" }}>
-                      <a
-                        href={broadcastCtaUrl}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        style={{
-                          display: "inline-block",
-                          backgroundColor: "rgb(2, 53, 28)",
-                          color: "#ffffff",
-                          padding: "12px 24px",
-                          textDecoration: "none",
-                          borderRadius: "8px",
-                          fontWeight: "700",
-                          fontSize: "14px",
-                          boxShadow: "0 4px 12px rgba(2, 53, 28, 0.25)"
-                        }}
-                      >
-                        {broadcastCtaText}
-                      </a>
-                    </div>
-                  )}
-
-                  <div style={{ marginTop: "25px", paddingTop: "18px", borderTop: "1px solid #f3f4f6", color: "#6b7280", fontSize: "13px", lineHeight: "1.5" }}>
-                    Warm regards,<br/>
-                    <strong style={{ color: "rgb(2, 53, 28)" }}>The Campus Tent Team</strong><br/>
-                    <span style={{ color: "#059669" }}>campustent.com</span>
-                  </div>
-                </div>
-
-                {/* Footer */}
-                <div style={{ backgroundColor: "#f9fafb", padding: "18px 24px", textAlign: "center", borderTop: "1px solid #e5e7eb", color: "#9ca3af", fontSize: "11px", lineHeight: "1.5" }}>
-                  <p style={{ margin: "0 0 4px 0" }}>
-                    You are receiving this official communication as a registered member of Campus Tent.
-                  </p>
-                  <p style={{ margin: 0 }}>
-                    Questions or support? Reach us at support@campustent.com
-                  </p>
-                </div>
-              </div>
-            </div>
-
-            {/* Modal Footer */}
-            <div style={{ padding: "12px 24px", backgroundColor: "#ffffff", borderTop: "1px solid #eaeaea", display: "flex", justifyContent: "flex-end" }}>
-              <button 
-                onClick={() => setShowPreviewModal(false)}
-                style={{ backgroundColor: "rgb(2, 53, 28)", color: "white", padding: "8px 20px", borderRadius: "8px", border: "none", cursor: "pointer", fontSize: "0.9rem", fontWeight: "600" }}
-              >
-                Close Preview
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      <EmailPreviewModal
+        isOpen={showPreviewModal}
+        onClose={() => setShowPreviewModal(false)}
+        senderOption={broadcastSenderOption}
+        subject={broadcastSubject}
+        headline={broadcastHeadline}
+        message={broadcastMessage}
+        ctaText={broadcastCtaText}
+        ctaUrl={broadcastCtaUrl}
+      />
 
       {/* Broadcast Send Confirmation Modal */}
-      {showConfirmModal && (
-        <div 
-          onClick={() => setShowConfirmModal(false)}
-          style={{
-            position: "fixed",
-            top: 0,
-            left: 0,
-            width: "100vw",
-            height: "100vh",
-            backgroundColor: "rgba(0, 0, 0, 0.65)",
-            backdropFilter: "blur(4px)",
-            zIndex: 10000,
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            padding: "20px"
-          }}
-        >
-          <div 
-            onClick={(e) => e.stopPropagation()}
-            style={{
-              backgroundColor: "white",
-              borderRadius: "16px",
-              width: "100%",
-              maxWidth: "500px",
-              padding: "24px",
-              boxShadow: "0 24px 64px rgba(0,0,0,0.22)",
-            }}
-          >
-            <div style={{ display: "flex", alignItems: "center", gap: "12px", marginBottom: "16px" }}>
-              <div style={{ width: "44px", height: "44px", borderRadius: "50%", backgroundColor: "#ecfdf5", color: "#059669", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "1.3rem" }}>
-                <i className="fas fa-paper-plane"></i>
-              </div>
-              <div>
-                <h3 style={{ margin: 0, color: "rgb(2, 53, 28)", fontSize: "1.2rem", fontWeight: "700" }}>
-                  Confirm Broadcast Dispatch
-                </h3>
-                <div style={{ fontSize: "0.8rem", color: "#6b7280" }}>
-                  Official Email Announcement via Resend
-                </div>
-              </div>
-            </div>
+      <BroadcastConfirmModal
+        isOpen={showConfirmModal}
+        onClose={() => setShowConfirmModal(false)}
+        onConfirm={handleSendBroadcast}
+        audience={broadcastAudience}
+        stats={broadcastStats}
+        subject={broadcastSubject}
+        senderOption={broadcastSenderOption}
+      />
 
-            <div style={{ backgroundColor: "#f9fafb", padding: "14px", borderRadius: "10px", border: "1px solid #e5e7eb", marginBottom: "20px", fontSize: "0.88rem" }}>
-              <div style={{ marginBottom: "6px" }}>
-                <span style={{ color: "#6b7280" }}>Target Audience:</span>{" "}
-                <strong>
-                  {broadcastAudience === "ALL"
-                    ? `All Users (${broadcastStats.all} recipients)`
-                    : broadcastAudience === "STUDENTS"
-                      ? `All Students (${broadcastStats.students} recipients)`
-                      : broadcastAudience === "AGENTS"
-                        ? `All Agents (${broadcastStats.agents} recipients)`
-                        : broadcastAudience === "VERIFIED_STUDENTS"
-                          ? `Verified Students (${broadcastStats.verifiedStudents} recipients)`
-                          : `Verified Agents (${broadcastStats.verifiedAgents} recipients)`}
-                </strong>
-              </div>
-              <div style={{ marginBottom: "6px" }}>
-                <span style={{ color: "#6b7280" }}>Subject:</span>{" "}
-                <strong>{broadcastSubject}</strong>
-              </div>
-              <div>
-                <span style={{ color: "#6b7280" }}>Sender:</span>{" "}
-                <span>Campus Tent &lt;noreply@campustent.com&gt;</span>
-              </div>
-            </div>
-
-            <p style={{ fontSize: "0.85rem", color: "#6b7280", margin: "0 0 20px 0", lineHeight: "1.5" }}>
-              Are you sure you want to broadcast this announcement email to all targeted users immediately?
-            </p>
-
-            <div style={{ display: "flex", justifyContent: "flex-end", gap: "10px" }}>
-              <button
-                type="button"
-                onClick={() => setShowConfirmModal(false)}
-                style={{
-                  padding: "10px 18px",
-                  borderRadius: "8px",
-                  border: "1px solid #d1d5db",
-                  backgroundColor: "#ffffff",
-                  color: "#374151",
-                  fontSize: "0.9rem",
-                  fontWeight: "600",
-                  cursor: "pointer"
-                }}
-              >
-                Cancel
-              </button>
-              <button
-                type="button"
-                onClick={handleSendBroadcast}
-                style={{
-                  padding: "10px 22px",
-                  borderRadius: "8px",
-                  border: "none",
-                  backgroundColor: "rgb(2, 53, 28)",
-                  color: "#ffffff",
-                  fontSize: "0.9rem",
-                  fontWeight: "700",
-                  cursor: "pointer",
-                  boxShadow: "0 4px 12px rgba(2, 53, 28, 0.2)"
-                }}
-              >
-                Yes, Send Broadcast Now 🚀
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {activePreviewDoc && (
-        <div 
-          onClick={() => setActivePreviewDoc(null)}
-          style={{
-            position: "fixed",
-            top: 0,
-            left: 0,
-            width: "100vw",
-            height: "100vh",
-            backgroundColor: "rgba(0, 0, 0, 0.65)",
-            backdropFilter: "blur(4px)",
-            zIndex: 10000,
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            padding: "20px"
-          }}
-        >
-          <div 
-            onClick={(e) => e.stopPropagation()}
-            style={{
-              backgroundColor: "white",
-              borderRadius: "16px",
-              width: "100%",
-              maxWidth: "800px",
-              height: "85vh",
-              display: "flex",
-              flexDirection: "column",
-              boxShadow: "0 24px 64px rgba(0,0,0,0.18)",
-              overflow: "hidden"
-            }}
-          >
-            {/* Modal Header */}
-            <div style={{ padding: "16px 24px", borderBottom: "1px solid #eaeaea", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-              <h3 style={{ margin: 0, color: "rgb(2, 53, 28)", fontSize: "1.15rem", fontWeight: "700", fontFamily: "'Poppins', sans-serif" }}>{activePreviewDoc.title}</h3>
-              <button 
-                onClick={() => setActivePreviewDoc(null)}
-                style={{ background: "none", border: "none", fontSize: "1.2rem", cursor: "pointer", color: "#666" }}
-              >
-                <i className="fas fa-times"></i>
-              </button>
-            </div>
-
-            {/* Modal Body */}
-            <div style={{ flexGrow: 1, backgroundColor: "#f9f9f9", padding: "12px", display: "flex", alignItems: "center", justifyContent: "center", overflow: "hidden" }}>
-              {activePreviewDoc.url.toLowerCase().endsWith(".pdf") ? (
-                <iframe 
-                  src={activePreviewDoc.url} 
-                  style={{ width: "100%", height: "100%", border: "none", borderRadius: "8px" }}
-                ></iframe>
-              ) : (
-                <div style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center", overflow: "auto" }}>
-                  <img 
-                    src={activePreviewDoc.url} 
-                    alt={activePreviewDoc.title} 
-                    style={{ maxWidth: "100%", maxHeight: "100%", objectFit: "contain", borderRadius: "8px" }}
-                  />
-                </div>
-              )}
-            </div>
-
-            {/* Modal Footer */}
-            <div style={{ padding: "12px 24px", borderTop: "1px solid #eaeaea", display: "flex", justifyContent: "flex-end", gap: "10px" }}>
-              <a 
-                href={activePreviewDoc.url} 
-                target="_blank" 
-                rel="noopener noreferrer" 
-                style={{ display: "inline-flex", alignItems: "center", gap: "6px", backgroundColor: "#f1f3f4", color: "#333", padding: "8px 16px", borderRadius: "8px", textDecoration: "none", fontSize: "0.9rem", fontWeight: "600", fontFamily: "'Poppins', sans-serif" }}
-              >
-                <i className="fas fa-external-link-alt"></i> Open In New Tab
-              </a>
-              <button 
-                onClick={() => setActivePreviewDoc(null)}
-                style={{ backgroundColor: "rgb(2, 53, 28)", color: "white", padding: "8px 18px", borderRadius: "8px", border: "none", cursor: "pointer", fontSize: "0.9rem", fontWeight: "600", fontFamily: "'Poppins', sans-serif" }}
-              >
-                Close Preview
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      {/* Document & ID Lightbox Preview Modal */}
+      <DocViewerModal
+        activePreviewDoc={activePreviewDoc}
+        onClose={() => setActivePreviewDoc(null)}
+      />
     </div>
   );
 }

@@ -1,5 +1,3 @@
-/* Student Profile Page Styles */
-
 :root {
     --primary-green: rgb(2, 53, 28);
     --primary-green-hover: rgb(1, 38, 20);
@@ -123,7 +121,6 @@
     color: #dc3545;
 }
 
-/* PROFILE TABS */
 .profile-tabs {
     display: flex;
     gap: 10px;
@@ -154,7 +151,6 @@
     border-bottom-color: var(--primary-green);
 }
 
-/* TAB CONTENT */
 .tab-content {
     background: var(--bg-white);
     padding: 30px;
@@ -189,7 +185,6 @@
     margin-bottom: 20px;
 }
 
-/* Verification banners */
 .verification-banner {
     display: flex;
     align-items: flex-start;
@@ -242,7 +237,6 @@
     line-height: 1.5;
 }
 
-/* Upload Inputs Grid */
 .upload-group-row {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
@@ -321,7 +315,6 @@
     margin-top: 5px;
 }
 
-/* Dev Toggle Verify Card */
 .dev-test-verification-card {
     border: 1px dashed #7e6b01;
     background-color: #fcfbf2;
@@ -368,7 +361,6 @@
     color: white;
 }
 
-/* FORM INPUT STYLING */
 .input-group {
     display: flex;
     flex-direction: column;
@@ -443,7 +435,6 @@
 .status-message-text.success { color: #28a745; }
 .status-message-text.error { color: #dc3545; }
 
-/* Settings Group Toggle */
 .settings-group {
     display: flex;
     flex-direction: column;
@@ -522,7 +513,6 @@
     transform: translateX(20px);
 }
 
-/* RESPONSIVE QUERIES */
 @media (max-width: 768px) {
     .profile-layout {
         margin: 20px auto;

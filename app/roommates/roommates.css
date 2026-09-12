@@ -319,7 +319,6 @@
   }
 }
 
-/* Roommate Upload Modal Overlay & Card Styling */
 .modal-overlay {
   position: fixed;
   top: 0;
@@ -402,7 +401,6 @@
   padding: 24px;
 }
 
-/* Modal Form Styles */
 .form-grid-2 {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -457,7 +455,6 @@
   min-height: 80px;
 }
 
-/* Amenities Checks */
 .checkbox-grid-custom {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));

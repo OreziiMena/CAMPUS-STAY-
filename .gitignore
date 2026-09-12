@@ -39,3 +39,9 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# uploads
+/private_uploads
+/public/uploads/student_verification
+/public/uploads/verification
+

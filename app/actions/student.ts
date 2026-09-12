@@ -7,6 +7,8 @@ import path from "path";
 import { uploadToR2 } from "@/lib/r2";
 import { validateFileBuffer, generateSecureFilename } from "@/lib/upload-validator";
 import { sendEmail } from "@/lib/email";
+import { checkRateLimit } from "@/lib/rate-limit";
+import { escapeHtml } from "@/lib/email-sanitizer";
 
 function getFriendlyErrorMessage(err: any, defaultMsg: string): string {
   console.error("Student server action error:", err);
@@ -245,7 +247,7 @@ export async function uploadStudentVerification(formData: FormData) {
       return { success: false, error: "Please upload at least one verification document." };
     }
 
-    const uploadDir = path.join(process.cwd(), "public", "uploads", "student_verification");
+    const uploadDir = path.join(process.cwd(), "private_uploads", "student_verification");
     const updateData: any = {};
 
     const uploadDoc = async (file: File, prefix: string): Promise<string> => {
@@ -260,13 +262,11 @@ export async function uploadStudentVerification(formData: FormData) {
       const contentType = validation.canonicalMime || "application/pdf";
 
       const r2Result = await uploadToR2(buffer, `student_verification/${filename}`, contentType);
-      if (r2Result.success && r2Result.url) {
-        return r2Result.url;
-      } else {
+      if (!r2Result.success) {
         await mkdir(uploadDir, { recursive: true });
         await writeFile(path.join(uploadDir, filename), buffer);
-        return `/uploads/student_verification/${filename}`;
       }
+      return `/api/documents/student_verification/${filename}`;
     };
 
     if (hasIdCard) {
@@ -296,27 +296,6 @@ export async function uploadStudentVerification(formData: FormData) {
     return { success: true, paths: updateData };
   } catch (err: any) {
     return { success: false, error: getFriendlyErrorMessage(err, "Failed to upload document.") };
-  }
-}
-
-export async function instantToggleVerification() {
-  try {
-    const user = await getCurrentUser();
-    if (!user || user.role !== "STUDENT" || !user.studentProfile) {
-      return { success: false, error: "Unauthorized." };
-    }
-
-    const currentStatus = user.studentProfile.isVerified;
-    const nextStatus = !currentStatus;
-
-    await prisma.studentProfile.update({
-      where: { id: user.studentProfile.id },
-      data: { isVerified: nextStatus },
-    });
-
-    return { success: true, isVerified: nextStatus };
-  } catch (err: any) {
-    return { success: false, error: getFriendlyErrorMessage(err, "Failed to toggle verification status.") };
   }
 }
 
@@ -353,6 +332,11 @@ export async function scheduleViewing(data: {
   note?: string;
 }) {
   try {
+    const rateCheck = await checkRateLimit("schedule-viewing", 5, 10);
+    if (!rateCheck.success) {
+      return { success: false, error: rateCheck.error };
+    }
+
     const user = await getCurrentUser();
     if (!user) {
       return { success: false, error: "Please log in to schedule a viewing appointment." };
@@ -374,12 +358,26 @@ export async function scheduleViewing(data: {
       include: {
         agent: {
           include: {
-            user: true,
+            user: {
+              select: {
+                id: true,
+                email: true,
+                phone: true,
+                role: true,
+              },
+            },
           },
         },
         student: {
           include: {
-            user: true,
+            user: {
+              select: {
+                id: true,
+                email: true,
+                phone: true,
+                role: true,
+              },
+            },
           },
         },
       },
@@ -404,8 +402,11 @@ export async function scheduleViewing(data: {
       },
     });
 
-    const studentName = user.studentProfile?.fullName || user.agentProfile?.fullName || user.name || "Student";
-    const studentPhone = user.phone || "Not provided";
+    const studentName = escapeHtml(user.studentProfile?.fullName || user.agentProfile?.fullName || user.name || "Student");
+    const studentPhone = escapeHtml(user.phone || "Not provided");
+    const propertyTitle = escapeHtml(property.title);
+    const propertyLocation = escapeHtml(property.location);
+    const safeUserEmail = escapeHtml(user.email);
     const formattedTime = appointmentDate.toLocaleString("en-US", {
       weekday: "long",
       year: "numeric",
@@ -439,11 +440,11 @@ export async function scheduleViewing(data: {
               A student has requested to inspect your hostel listing in person.
             </p>
             <div style="background-color: #f8fafc; border-left: 4px solid #d35400; padding: 16px; border-radius: 6px; margin: 20px 0;">
-              <p style="margin: 0 0 8px 0; font-size: 14px; color: #1e293b;"><strong>🏠 Property:</strong> ${property.title}</p>
+              <p style="margin: 0 0 8px 0; font-size: 14px; color: #1e293b;"><strong>🏠 Property:</strong> ${propertyTitle}</p>
               <p style="margin: 0 0 8px 0; font-size: 14px; color: #1e293b;"><strong>🕒 Date & Time:</strong> ${formattedTime}</p>
               <p style="margin: 0 0 8px 0; font-size: 14px; color: #1e293b;"><strong>👤 Student:</strong> ${studentName}</p>
               <p style="margin: 0 0 8px 0; font-size: 14px; color: #1e293b;"><strong>📞 Phone:</strong> ${studentPhone}</p>
-              <p style="margin: 0; font-size: 14px; color: #1e293b;"><strong>📧 Email:</strong> ${user.email}</p>
+              <p style="margin: 0; font-size: 14px; color: #1e293b;"><strong>📧 Email:</strong> ${safeUserEmail}</p>
             </div>
             <div style="text-align: center; margin-top: 24px;">
               <a href="https://campustent.com/chat" style="background-color: #02351c; color: #ffffff; padding: 12px 24px; border-radius: 8px; text-decoration: none; font-weight: 600; font-size: 14px; display: inline-block;">
@@ -475,11 +476,11 @@ export async function scheduleViewing(data: {
           <div style="padding: 24px;">
             <h2 style="color: #02351c; font-size: 18px; margin-top: 0;">✅ Viewing Request Sent</h2>
             <p style="color: #4b5563; font-size: 14px; line-height: 1.6;">
-              Hi ${studentName}, your inspection request for <strong>"${property.title}"</strong> has been sent to the agent.
+              Hi ${studentName}, your inspection request for <strong>"${propertyTitle}"</strong> has been sent to the agent.
             </p>
             <div style="background-color: #ecfdf5; border-left: 4px solid #10b981; padding: 16px; border-radius: 6px; margin: 20px 0;">
               <p style="margin: 0 0 8px 0; font-size: 14px; color: #065f46;"><strong>🕒 Scheduled Time:</strong> ${formattedTime}</p>
-              <p style="margin: 0; font-size: 14px; color: #065f46;"><strong>📍 Location:</strong> ${property.location}</p>
+              <p style="margin: 0; font-size: 14px; color: #065f46;"><strong>📍 Location:</strong> ${propertyLocation}</p>
             </div>
             <p style="color: #4b5563; font-size: 13.5px;">
               The agent will contact you shortly or reply via Campus Tent Chat to confirm details.

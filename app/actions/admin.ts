@@ -4,6 +4,7 @@ import prisma from "@/lib/prisma";
 import { getCurrentUser } from "./auth";
 import { Role } from "@prisma/client";
 import { sendEmail } from "@/lib/email";
+import { escapeHtml, sanitizeUrl, formatSafeEmailMessage } from "@/lib/email-sanitizer";
 
 export async function getAdminDashboardData() {
   try {
@@ -50,9 +51,16 @@ export async function getAdminDashboardData() {
       orderBy: { createdAt: "desc" },
     });
 
-    // 4. Fetch all users
+    // 4. Fetch all users (excluding sensitive password hashes)
     const allUsers = await prisma.user.findMany({
-      include: {
+      select: {
+        id: true,
+        email: true,
+        phone: true,
+        role: true,
+        isEmailVerified: true,
+        createdAt: true,
+        updatedAt: true,
         studentProfile: true,
         agentProfile: true,
       },
@@ -122,13 +130,14 @@ export async function toggleUserVerification(profileId: string, role: "STUDENT" 
     }
 
     if (status && targetEmail) {
+      const safeTargetName = escapeHtml(targetName || (role === "STUDENT" ? "Student" : "Agent"));
       await sendEmail({
         to: targetEmail,
         subject: role === "STUDENT" ? "✅ Your Student Verification Approved! - Campus Tent" : "✅ Your Agent Profile Approved! - Campus Tent",
         html: `
           <div style="font-family: Arial, sans-serif; max-width: 600px; padding: 20px; border: 1px solid #eaeaea; border-radius: 8px;">
             <h2 style="color: rgb(2, 53, 28);">Congratulations! 🎉</h2>
-            <p>Hi ${targetName},</p>
+            <p>Hi ${safeTargetName},</p>
             <p>Your identity verification documents have been successfully reviewed and approved by our team.</p>            
             <p>You now have full access to:
               <ul>
@@ -371,6 +380,7 @@ export async function sendBroadcastEmailAction(params: {
   message: string;
   ctaText?: string;
   ctaUrl?: string;
+  senderOption?: "support" | "noreply";
   sendTestOnly?: boolean;
   testEmail?: string;
 }) {
@@ -380,26 +390,29 @@ export async function sendBroadcastEmailAction(params: {
       return { success: false, error: "Unauthorized. Admin access required." };
     }
 
-    const { audience, subject, headline, message, ctaText, ctaUrl, sendTestOnly, testEmail } = params;
+    const { audience, subject, headline, message, ctaText, ctaUrl, senderOption = "support", sendTestOnly, testEmail } = params;
+
+    const fromAddress = senderOption === "noreply" 
+      ? "Campus Tent Announcements <noreply@campustent.com>" 
+      : "Campus Tent Support <support@campustent.com>";
 
     if (!subject || subject.trim() === "") {
       return { success: false, error: "Email subject is required." };
     }
-    if (!message || message.trim() === "") {
-      return { success: false, error: "Email message content is required." };
-    }
+    const safeSubject = escapeHtml(subject.trim());
+    const safeHeadline = headline ? escapeHtml(headline.trim()) : "";
+    const safeCtaText = ctaText ? escapeHtml(ctaText.trim()) : "";
+    const safeCtaUrl = sanitizeUrl(ctaUrl);
+    const formattedMessage = formatSafeEmailMessage(message);
 
     // Helper to generate styled HTML email
     const generateHtml = (recipientName?: string) => {
-      const formattedMessage = message
-        .split("\n\n")
-        .map((p) => `<p style="margin: 0 0 16px 0; line-height: 1.6; color: #374151; font-size: 15px;">${p.replace(/\n/g, "<br/>")}</p>`)
-        .join("");
+      const safeRecipient = recipientName ? escapeHtml(recipientName) : "";
 
-      const buttonHtml = ctaText && ctaUrl ? `
+      const buttonHtml = safeCtaText && safeCtaUrl ? `
         <div style="margin: 28px 0; text-align: center;">
-          <a href="${ctaUrl}" style="display: inline-block; background-color: rgb(2, 53, 28); color: #ffffff; padding: 14px 28px; text-decoration: none; border-radius: 8px; font-weight: 700; font-size: 15px; box-shadow: 0 4px 12px rgba(2, 53, 28, 0.25);">
-            ${ctaText}
+          <a href="${safeCtaUrl}" style="display: inline-block; background-color: rgb(2, 53, 28); color: #ffffff; padding: 14px 28px; text-decoration: none; border-radius: 8px; font-weight: 700; font-size: 15px; box-shadow: 0 4px 12px rgba(2, 53, 28, 0.25);">
+            ${safeCtaText}
           </a>
         </div>
       ` : "";
@@ -410,7 +423,7 @@ export async function sendBroadcastEmailAction(params: {
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>${subject}</title>
+  <title>${safeSubject}</title>
 </head>
 <body style="margin: 0; padding: 0; background-color: #f4f7f6; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;">
   <table width="100%" border="0" cellspacing="0" cellpadding="0" style="background-color: #f4f7f6; padding: 30px 15px;">
@@ -426,9 +439,9 @@ export async function sendBroadcastEmailAction(params: {
               <div style="color: rgba(255, 255, 255, 0.85); font-size: 13px; margin-top: 4px; font-weight: 500;">
                 Verified Student Accommodation & Roommates
               </div>
-              ${headline ? `
+              ${safeHeadline ? `
                 <div style="margin-top: 18px; padding-top: 18px; border-top: 1px solid rgba(255, 255, 255, 0.15); color: #fef08a; font-size: 18px; font-weight: 700;">
-                  ${headline}
+                  ${safeHeadline}
                 </div>
               ` : ""}
             </td>
@@ -437,9 +450,9 @@ export async function sendBroadcastEmailAction(params: {
           <!-- Main Content -->
           <tr>
             <td style="padding: 32px 30px;">
-              ${recipientName ? `
+              ${safeRecipient ? `
                 <p style="margin: 0 0 18px 0; color: #111827; font-size: 16px; font-weight: 600;">
-                  Hello ${recipientName},
+                  Hello ${safeRecipient},
                 </p>
               ` : ""}
               ${formattedMessage}
@@ -485,6 +498,8 @@ export async function sendBroadcastEmailAction(params: {
         subject: `[TEST] ${subject}`,
         html: testHtml,
         text: message,
+        from: fromAddress,
+        replyTo: "support@campustent.com",
       });
 
       if (!res.success) {
@@ -495,7 +510,7 @@ export async function sendBroadcastEmailAction(params: {
         success: true, 
         isTest: true, 
         testRecipient: targetTestEmail,
-        message: `Test email successfully delivered to ${targetTestEmail}`
+        message: `Test email successfully delivered to ${targetTestEmail} (Sent as ${fromAddress})`
       };
     }
 
@@ -570,6 +585,8 @@ export async function sendBroadcastEmailAction(params: {
           subject: subject,
           html: htmlContent,
           text: message,
+          from: fromAddress,
+          replyTo: "support@campustent.com",
         });
         if (result.success) {
           sentCount++;

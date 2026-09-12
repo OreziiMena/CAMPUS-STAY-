@@ -3,6 +3,7 @@
 import prisma from "@/lib/prisma";
 import { getCurrentUser } from "./auth";
 import { ReportReason, ReportStatus } from "@prisma/client";
+import { checkRateLimit } from "@/lib/rate-limit";
 
 export async function submitReport(data: {
   propertyId?: string;
@@ -12,6 +13,11 @@ export async function submitReport(data: {
   description: string;
 }) {
   try {
+    const rateCheck = await checkRateLimit("submit-report", 5, 10);
+    if (!rateCheck.success) {
+      return { success: false, error: rateCheck.error };
+    }
+
     const user = await getCurrentUser();
     if (!user) {
       return { success: false, error: "Unauthorized. Please log in to submit a report." };

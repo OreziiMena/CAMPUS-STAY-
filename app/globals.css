@@ -56,7 +56,7 @@ nav{
     left: 0;
     background-color: rgb(2, 53, 28);
     width: 100%;
-    height: 80px; /* Stable fixed height */
+    height: 80px; 
     margin-left: 0;
     margin-right: 0;
     margin-top: 0;
@@ -162,7 +162,6 @@ nav{
     color: white;
 }
 
-/* Second section*/
 .second-hero{
     margin-top: 7%;
     display: flex;
@@ -221,13 +220,12 @@ nav{
     transform: scale(1.05);
 }
 
-/*Third section*/
 .third-hero {
     padding: 50px 5%;
     display: flex;
     justify-content: space-between;
     align-items: center;
-    flex-wrap: wrap; /* Ensures they drop to the next line on mobile screens */
+    flex-wrap: wrap; 
     background-color: #f9fbfa; 
 }
 .stat-group{
@@ -264,7 +262,6 @@ nav{
     font-family: 'Poppins', sans-serif;
 }
 
-/*Fourth Section*/
 .features-section {
     padding: 50px 10%;
     background-color: #f8f4f4;
@@ -281,7 +278,7 @@ nav{
     grid-template-columns: repeat(4, 1fr); 
     gap: 25px; 
     max-width: 1200px; 
-    margin: 0 auto; /* Centers the grid */
+    margin: 0 auto; 
 }
 .feature-card {
     background: white;
@@ -320,7 +317,6 @@ nav{
     font-family: 'Open Sans', sans-serif;
 }
 
-/*Fifth Section*/
 .faq-section {
     display: flex;
     gap: 80px;
@@ -383,7 +379,6 @@ nav{
     transform: rotate(180deg); 
 }
 
-/*Sixth Section*/
 .landlord-cta {
     padding: 50px 5%; 
     background-color: #fcfcfc;
@@ -471,7 +466,6 @@ nav{
     transform: scale(1.05);
 }
 
-/*Footer*/
 .main-footer {
     background-color: rgb(2, 53, 28);
     color: #ffffff;
@@ -530,7 +524,7 @@ nav{
     max-width: 1200px;
     margin: 0;
     padding-top: 30px;
-    border-top: 1px solid rgba(255, 255, 255, 0.1); /* Faint horizontal line */
+    border-top: 1px solid rgba(255, 255, 255, 0.1); 
     text-align: center;
 }
 
@@ -559,10 +553,9 @@ nav{
     }
 }
 
-/*TABLETS*/
 @media (max-width: 1024px) {
     nav{
-        height: 70px; /* Stable height on tablets */
+        height: 70px; 
     }
     .navlinks ul {
         gap: 20px;
@@ -597,24 +590,23 @@ nav{
     }
 }
 
-/*MOBILE DEVICES*/
 @media (max-width: 768px) {
     .navlinks {
         display: flex; 
         position: fixed;
-        top: 0; /* Align with nav top */
-        right: -300px; /* Hide to the right */
-        width: 280px; /* Standard sidebar drawer width */
-        height: 100vh; /* Fill entire height */ 
-        background-color: #02351c; /* Soft brand dark green */ 
+        top: 0; 
+        right: -300px; 
+        width: 280px; 
+        height: 100vh;  
+        background-color: #02351c;  
         box-shadow: -5px 0 25px rgba(0, 0, 0, 0.25);
-        align-items: stretch; /* Stretch items to fit */
-        padding: 90px 24px 40px 24px; /* Space for logo/hamburger and bottom padding */
+        align-items: stretch; 
+        padding: 90px 24px 40px 24px; 
         margin-right: 0;
         flex-direction: column;
         transition: right 0.4s cubic-bezier(0.4, 0, 0.2, 1); 
         z-index: 999;
-        overflow-y: auto; /* Enable scroll if content overflows */
+        overflow-y: auto; 
         gap: 20px;
     }
     .navlinks.active {
@@ -641,7 +633,7 @@ nav{
         transition: all 0.3s;
     }
     .navlinks ul li a:hover, .navlinks ul li a.active {
-        color: #f39c12; /* Gold text */
+        color: #f39c12; 
         border-bottom-color: rgba(243, 156, 18, 0.3);
         padding-left: 5px;
         background: transparent;
@@ -668,7 +660,6 @@ nav{
         z-index: 1005;
     }
 
-    /* User Profile Area on Mobile Sidebar */
     .navlinks .explore-profile-dropdown {
         width: 100%;
         flex-direction: column;
@@ -700,14 +691,13 @@ nav{
         color: white;
     }
 
-    /* Inline Dropdown Menu on Mobile Sidebar */
     .navlinks .explore-dropdown-menu {
         position: static;
         width: 100%;
         background: rgba(255, 255, 255, 0.04) !important;
         box-shadow: none;
         border: none;
-        border-left: 3px solid rgba(243, 156, 18, 0.6); /* Gold left indicator */
+        border-left: 3px solid rgba(243, 156, 18, 0.6); 
         border-radius: 4px;
         opacity: 0;
         visibility: hidden;
@@ -882,7 +872,6 @@ nav{
     }
 }
 
-/*SMALL MOBILE PHONES*/
 @media (max-width: 480px) {
     .hero-text {
         font-size: 35px;
@@ -906,7 +895,6 @@ nav{
     }
 }
 
-/* Global Logo and Navbar Spacing Corrections */
 nav .logo {
     height: 40px !important;
     width: auto !important;
@@ -931,7 +919,6 @@ nav .logo {
     }
 }
 
-/* Global Custom Styled Select Dropdowns */
 select {
     appearance: none;
     -webkit-appearance: none;
@@ -956,7 +943,6 @@ select:focus {
     box-shadow: 0 0 0 3px rgba(2, 53, 28, 0.15) !important;
 }
 
-/* In Dark Mode: */
 body.dark-mode select {
     background-color: #1e293b !important;
     border-color: #475569 !important;
@@ -969,13 +955,11 @@ body.dark-mode select:focus {
     box-shadow: 0 0 0 3px rgba(243, 156, 18, 0.2) !important;
 }
 
-/* Override global select arrow if wrapped in select-wrapper with a manual icon */
 .select-wrapper select {
     background-image: none !important;
     padding-right: 12px !important;
 }
 
-/* --- Global Navbar Profile Dropdown, Theme Toggle, and Filter Chips (Light Mode) --- */
 .explore-profile-dropdown {
     position: relative;
     display: flex;
@@ -1084,7 +1068,6 @@ body.dark-mode select:focus {
     transform: rotate(15deg);
 }
 
-/* Filter Chips (Light Mode) */
 .filter-chip {
     display: inline-flex;
     align-items: center;
@@ -1131,7 +1114,6 @@ body.dark-mode select:focus {
     }
 }
 
-/* Dark mode variations for dropdown */
 body.dark-mode .explore-dropdown-menu {
     background-color: #1e293b !important;
     border-color: #334155 !important;
@@ -1170,7 +1152,6 @@ body.dark-mode .filters-horizontal-row input::placeholder {
     color: #64748b !important;
 }
 
-/* Prevent iOS Safari auto-zoom on inputs/selects with font-size < 16px */
 @media screen and (max-width: 768px) {
   input,
   textarea,
@@ -1184,6 +1165,4 @@ body.dark-mode .filters-horizontal-row input::placeholder {
     font-size: 16px !important;
   }
 }
-
-
 

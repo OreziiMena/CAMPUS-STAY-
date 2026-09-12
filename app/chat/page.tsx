@@ -203,7 +203,7 @@ function ChatContent() {
     if (!pusherClient || !isPusherClientConfigured || rooms.length === 0) return;
 
     const subscriptions = rooms.map((room) => {
-      const channelName = `chat-${room.id}`;
+      const channelName = `private-chat-${room.id}`;
       const channel = pusherClient!.subscribe(channelName);
 
       channel.bind("new-message", (data: any) => {
@@ -237,7 +237,7 @@ function ChatContent() {
 
     return () => {
       subscriptions.forEach((sub) => {
-        pusherClient!.unsubscribe(`chat-${sub.roomId}`);
+        pusherClient!.unsubscribe(`private-chat-${sub.roomId}`);
       });
     };
   }, [rooms, selectedRoomId]);

@@ -258,7 +258,7 @@ html{
     text-decoration: none;
 }
 .agent-submit-btn {
-    background: #d35400; /* Rust Orange */
+    background: #d35400; 
 }
 .agent-submit-btn:hover {
     background: #b24700;

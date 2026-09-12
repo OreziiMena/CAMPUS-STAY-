@@ -113,7 +113,6 @@ body {
     gap: 10px;
 }
 
-/*main content*/
 .dashboard-main {
     flex: 1;
     display: flex;
@@ -225,7 +224,6 @@ body {
     color: #dc3545;
 }
 
-/*Dashboard content*/
 .dashboard-content {
     padding: 30px;
     max-width: 1200px;
@@ -389,9 +387,6 @@ body {
 }
 .reply-btn:hover { background: #d35400; color: white; }
 
-
-/* MOBILE RESPONSIVENESS*/
-
 @media (max-width: 992px) {
     .logo{
         width: 10%;
@@ -459,9 +454,6 @@ body {
     }
 }
 
-/* ==========================================================================
-   AGENT ONBOARDING / NAVIGATION GUIDE STYLES
-   ========================================================================== */
 .guide-modal-overlay {
     position: fixed;
     top: 0;

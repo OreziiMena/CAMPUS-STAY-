@@ -84,7 +84,7 @@ body {
    padding-left: 20px; 
    font-size: 15px; 
 }
-/*Footer*/
+
 .main-footer {
     background-color: rgb(2, 53, 28);
     color: #ffffff;
@@ -144,7 +144,7 @@ body {
     max-width: 1200px;
     margin: 0;
     padding-top: 30px;
-    border-top: 1px solid rgba(255, 255, 255, 0.1); /* Faint horizontal line */
+    border-top: 1px solid rgba(255, 255, 255, 0.1); 
     text-align: center;
 }
 

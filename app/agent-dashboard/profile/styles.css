@@ -100,7 +100,6 @@
     font-size: 15px;
 }
 
-/*The Verification Badge & Status Pill*/
 .verified-badge {
     color: var(--success-green);
     font-size: 20px;
@@ -125,7 +124,6 @@
     color: var(--warning-orange);
 }
 
-/* PROFILE TABS*/
 .profile-tabs {
     display: flex;
     gap: 10px;
@@ -156,7 +154,6 @@
     border-bottom-color: var(--primary-green);
 }
 
-/* TAB CONTENT & UPLOAD ZONE*/
 .tab-content {
     background: var(--bg-white);
     padding: 30px;
@@ -266,8 +263,6 @@
     cursor: pointer;
 }
 
-/* FORM INPUT STYLING*/
-
 .input-group {
     display: flex;
     flex-direction: column;
@@ -329,8 +324,6 @@
     background-color: #ccc;
     cursor: not-allowed;
 }
-
-/* RESPONSIVE QUERIES */
 
 @media (max-width: 768px) {
     .profile-layout {

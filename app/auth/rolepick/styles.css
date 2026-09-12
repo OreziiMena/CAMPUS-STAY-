@@ -1,5 +1,4 @@
-
-    *{
+*{
     margin: 0;
     padding: 0;
     box-sizing: border-box;
@@ -153,7 +152,7 @@ nav{
     font-size: 15px;
     line-height: 1.6;
     margin-bottom: 30px;
-    flex-grow: 1; /* Ensures the buttons align at the bottom even if text length differs */
+    flex-grow: 1; 
 }
 .role-btn {
     font-family: 'Poppins', sans-serif;
@@ -197,7 +196,7 @@ nav{
         gap: 8px !important;
     }
     .role-cards-wrapper {
-        flex-direction: column; /* Stacks the boxes vertically on phones */
+        flex-direction: column; 
         gap: 25px;
     }
     .role-header {

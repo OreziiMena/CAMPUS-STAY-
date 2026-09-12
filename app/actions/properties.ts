@@ -8,6 +8,8 @@ import { uploadToR2, getR2PresignedUploadUrl } from "@/lib/r2";
 import { sendEmail } from "@/lib/email";
 import { logAgentActivity } from "@/lib/activity";
 import { validateFileBuffer, generateSecureFilename } from "@/lib/upload-validator";
+import { checkRateLimit } from "@/lib/rate-limit";
+import { escapeHtml } from "@/lib/email-sanitizer";
 
 export async function getProperties(filterParam?: string | {
   searchQuery?: string;
@@ -155,12 +157,28 @@ export async function getPropertyDetails(id: string) {
       include: {
         agent: {
           include: {
-            user: true,
+            user: {
+              select: {
+                id: true,
+                email: true,
+                phone: true,
+                role: true,
+                isEmailVerified: true,
+              },
+            },
           },
         },
         student: {
           include: {
-            user: true,
+            user: {
+              select: {
+                id: true,
+                email: true,
+                phone: true,
+                role: true,
+                isEmailVerified: true,
+              },
+            },
           },
         },
       },
@@ -200,25 +218,43 @@ export async function addProperty(data: any) {
       genderPreference 
     } = data;
 
+    if (!title || typeof title !== "string" || !title.trim()) {
+      return { success: false, error: "Listing title is required." };
+    }
+    if (!location || typeof location !== "string" || !location.trim()) {
+      return { success: false, error: "Location is required." };
+    }
+    if (!hostelType || typeof hostelType !== "string" || !hostelType.trim()) {
+      return { success: false, error: "Accommodation type is required." };
+    }
+
     const parsedRent = rentAmount !== undefined && rentAmount !== "" ? parseFloat(rentAmount) : (price ? parseFloat(price) : 0);
     const parsedAgentFee = agentFee !== undefined && agentFee !== "" ? parseFloat(agentFee) : 0;
     const parsedCautionFee = cautionFee !== undefined && cautionFee !== "" ? parseFloat(cautionFee) : 0;
+
+    if (isNaN(parsedRent) || parsedRent < 0 || isNaN(parsedAgentFee) || parsedAgentFee < 0 || isNaN(parsedCautionFee) || parsedCautionFee < 0) {
+      return { success: false, error: "Prices and fees must be valid non-negative numbers." };
+    }
+
     const computedTotalPrice = parsedRent + parsedAgentFee + parsedCautionFee;
+    if (computedTotalPrice > 100_000_000) {
+      return { success: false, error: "Total price exceeds allowable maximum limit." };
+    }
 
     const createData: any = {
-      title,
-      hostelType,
+      title: title.trim(),
+      hostelType: hostelType.trim(),
       price: computedTotalPrice,
       rentAmount: parsedRent,
       agentFee: parsedAgentFee,
       cautionFee: parsedCautionFee,
       isNegotiable: Boolean(isNegotiable),
-      location,
-      distance,
-      description,
+      location: location.trim(),
+      distance: distance ? String(distance).trim() : "",
+      description: description ? String(description).trim() : "",
       university: university || "FUPRE",
-      amenities: amenities || [],
-      images: images || [],
+      amenities: Array.isArray(amenities) ? amenities : [],
+      images: Array.isArray(images) ? images : [],
       genderPreference: genderPreference || "Any",
     };
 
@@ -275,6 +311,11 @@ export async function addProperty(data: any) {
 
 export async function createInquiry(data: { propertyId: string; message: string }) {
   try {
+    const rateCheck = await checkRateLimit("create-inquiry", 10, 10);
+    if (!rateCheck.success) {
+      return { success: false, error: rateCheck.error };
+    }
+
     const user = await getCurrentUser();
     if (!user) {
       return { success: false, error: "You must be logged in to send inquiries." };
@@ -286,17 +327,35 @@ export async function createInquiry(data: { propertyId: string; message: string 
 
     const { propertyId, message } = data;
 
+    if (!message || typeof message !== "string" || !message.trim()) {
+      return { success: false, error: "Message content cannot be empty." };
+    }
+
     const property = await prisma.property.findUnique({
       where: { id: propertyId },
       include: {
         agent: {
           include: {
-            user: true,
+            user: {
+              select: {
+                id: true,
+                email: true,
+                phone: true,
+                role: true,
+              },
+            },
           },
         },
         student: {
           include: {
-            user: true,
+            user: {
+              select: {
+                id: true,
+                email: true,
+                phone: true,
+                role: true,
+              },
+            },
           },
         },
       },
@@ -316,12 +375,16 @@ export async function createInquiry(data: { propertyId: string; message: string 
         studentId: user.id,
         propertyId,
         agentId: recipientId,
-        message,
+        message: message.trim(),
       },
     });
 
     const recipientEmail = property.agent?.user.email || property.student?.user.email;
-    const recipientName = property.agent?.fullName || property.student?.fullName || "User";
+    const rawRecipientName = property.agent?.fullName || property.student?.fullName || "User";
+    const recipientName = escapeHtml(rawRecipientName);
+    const propertyTitle = escapeHtml(property.title);
+    const safeMessage = escapeHtml(message);
+
     if (recipientEmail) {
       await sendEmail({
         to: recipientEmail,
@@ -330,15 +393,15 @@ export async function createInquiry(data: { propertyId: string; message: string 
           <div style="font-family: Arial, sans-serif; max-width: 600px; padding: 20px; border: 1px solid #eaeaea; border-radius: 8px;">
             <h2 style="color: rgb(2, 53, 28);">New Inquiry Received!</h2>
             <p>Hi ${recipientName},</p>
-            <p>A user has sent an inquiry regarding your listing: <strong>"${property.title}"</strong>.</p>
+            <p>A user has sent an inquiry regarding your listing: <strong>"${propertyTitle}"</strong>.</p>
             <blockquote style="background: #f9f9f9; padding: 12px; border-left: 4px solid rgb(2, 53, 28); margin: 20px 0;">
-              "${message}"
+              "${safeMessage}"
             </blockquote>
             <p>Log in to your Campus Tent dashboard to reply in the chat room.</p>
             <a href="https://campustent.com/chat" style="display: inline-block; background-color: rgb(2, 53, 28); color: white; padding: 10px 20px; text-decoration: none; border-radius: 4px; font-weight: bold; margin-top: 10px;">Go to Chat Inbox</a>
           </div>
         `,
-        text: `Hi ${recipientName},\n\nA user has sent an inquiry regarding your listing: "${property.title}".\n\n"${message}"\n\nLog in to your Campus Tent dashboard to reply in the chat inbox: https://campustent.com/chat`
+        text: `Hi ${rawRecipientName},\n\nA user has sent an inquiry regarding your listing: "${property.title}".\n\n"${message}"\n\nLog in to your Campus Tent dashboard to reply in the chat inbox: https://campustent.com/chat`
       });
     }
 
@@ -722,24 +785,32 @@ export async function updateProperty(propertyId: string, data: any) {
     const parsedCautionFee = cautionFee !== undefined && cautionFee !== "" 
       ? parseFloat(cautionFee) 
       : (existingProperty.cautionFee ?? 0);
+
+    if (isNaN(parsedRent) || parsedRent < 0 || isNaN(parsedAgentFee) || parsedAgentFee < 0 || isNaN(parsedCautionFee) || parsedCautionFee < 0) {
+      return { success: false, error: "Prices and fees must be valid non-negative numbers." };
+    }
+
     const computedTotalPrice = parsedRent + parsedAgentFee + parsedCautionFee;
+    if (computedTotalPrice > 100_000_000) {
+      return { success: false, error: "Total price exceeds allowable maximum limit." };
+    }
 
     const updated = await prisma.property.update({
       where: { id: propertyId },
       data: {
-        title,
-        hostelType,
+        title: title ? String(title).trim() : existingProperty.title,
+        hostelType: hostelType ? String(hostelType).trim() : existingProperty.hostelType,
         price: computedTotalPrice,
         rentAmount: parsedRent,
         agentFee: parsedAgentFee,
         cautionFee: parsedCautionFee,
         isNegotiable: isNegotiable !== undefined ? Boolean(isNegotiable) : existingProperty.isNegotiable,
-        location,
-        distance,
-        description,
+        location: location ? String(location).trim() : existingProperty.location,
+        distance: distance !== undefined ? String(distance).trim() : existingProperty.distance,
+        description: description !== undefined ? String(description).trim() : existingProperty.description,
         university: university || existingProperty.university || "FUPRE",
-        amenities: amenities || [],
-        images: images || [],
+        amenities: Array.isArray(amenities) ? amenities : existingProperty.amenities,
+        images: Array.isArray(images) ? images : existingProperty.images,
       },
     });
 
