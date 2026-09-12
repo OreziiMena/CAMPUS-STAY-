@@ -429,38 +429,46 @@ function ApartmentDetailsContent() {
           <div className="info-card scheduling-card">
             <h3><i className="fas fa-calendar-alt"></i> Schedule a Viewing</h3>
             
-            {!currentUser || (currentUser.role === "STUDENT" && !currentUser.studentProfile?.isVerified) ? (
+            {!currentUser ? (
               <div className="scheduling-locked-overlay">
-                <i className="fas fa-lock"></i>
-                <h4>Viewing Scheduler Locked</h4>
-                <p>You must be a logged-in, verified student to schedule physical viewing appointments.</p>
-                {!currentUser ? (
-                  <Link href="/auth/login" className="primary-btn btn-sm">Log in to view</Link>
-                ) : (
-                  <Link href="/student-dashboard/profile" className="primary-btn btn-sm">Verify Profile</Link>
-                )}
+                <i className="fas fa-calendar-plus lock-icon" style={{ color: "rgb(2, 53, 28)" }}></i>
+                <h4>Ready to Inspect in Person?</h4>
+                <p>Log in or sign up to schedule an in-person viewing appointment with the agent.</p>
+                <Link href={`/auth/login?redirect=/apartment-details?id=${property?.id || id}`} className="primary-btn btn-sm">
+                  <i className="fas fa-sign-in-alt"></i> Log in to Schedule Viewing
+                </Link>
               </div>
             ) : (
               <form onSubmit={handleScheduleViewing} className="scheduling-form">
-                <p>Select a preferred date and time to inspect this hostel in person with the agent.</p>
+                <p className="scheduler-desc">Select a preferred date and time to inspect this hostel in person with the agent.</p>
                 <div className="input-group">
                   <label htmlFor="viewing-time">Preferred Date & Time</label>
                   <input 
                     type="datetime-local" 
                     id="viewing-time" 
                     value={viewingDateTime}
+                    min={new Date().toISOString().slice(0, 16)}
                     onChange={(e) => setViewingDateTime(e.target.value)}
                     required 
                     className="scheduling-time-input"
                   />
                 </div>
                 {schedulingStatus && (
-                  <p className={`status-message-text ${schedulingStatus.startsWith("Error") ? "error" : "success"}`}>
-                    {schedulingStatus}
-                  </p>
+                  <div className={`scheduling-feedback ${schedulingStatus.startsWith("Error") ? "error" : "success"}`}>
+                    <i className={schedulingStatus.startsWith("Error") ? "fas fa-exclamation-circle" : "fas fa-check-circle"}></i>
+                    <span>{schedulingStatus}</span>
+                  </div>
                 )}
                 <button type="submit" className="primary-btn" disabled={isScheduling || !viewingDateTime}>
-                  {isScheduling ? "Requesting..." : "Schedule Viewing Appointment"}
+                  {isScheduling ? (
+                    <>
+                      <i className="fas fa-spinner fa-spin"></i> Requesting Appointment...
+                    </>
+                  ) : (
+                    <>
+                      <i className="fas fa-calendar-check"></i> Schedule Viewing Appointment
+                    </>
+                  )}
                 </button>
               </form>
             )}

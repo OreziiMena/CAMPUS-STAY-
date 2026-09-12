@@ -461,61 +461,175 @@ body {
     pointer-events: none;
 }
 
+/* Primary Button Global for Details */
+.primary-btn {
+    background-color: rgb(2, 53, 28);
+    color: #ffffff !important;
+    border: none;
+    padding: 13px 24px;
+    border-radius: 8px;
+    font-family: 'Poppins', sans-serif;
+    font-size: 14.5px;
+    font-weight: 600;
+    cursor: pointer;
+    width: 100%;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 0 4px 12px rgba(2, 53, 28, 0.18);
+    text-decoration: none;
+    box-sizing: border-box;
+}
+
+.primary-btn:hover:not(:disabled) {
+    background-color: #034d28;
+    color: #ffffff !important;
+    transform: translateY(-1px);
+    box-shadow: 0 6px 18px rgba(2, 53, 28, 0.25);
+}
+
+.primary-btn:active:not(:disabled) {
+    transform: translateY(0);
+}
+
+.primary-btn:disabled {
+    background-color: #cbd5e1 !important;
+    color: #94a3b8 !important;
+    cursor: not-allowed;
+    transform: none !important;
+    box-shadow: none !important;
+}
+
+.primary-btn.btn-sm {
+    padding: 9px 18px !important;
+    font-size: 13px !important;
+    width: auto !important;
+    border-radius: 6px !important;
+    margin-top: 8px !important;
+}
+
 /* Viewing scheduler */
+.scheduling-card {
+    border-left: 4px solid rgb(2, 53, 28);
+}
+
+.scheduling-card h3 {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: rgb(2, 53, 28);
+    font-size: 18px;
+    margin-top: 0;
+    margin-bottom: 12px;
+}
+
+.scheduling-card h3 i {
+    color: #d35400;
+}
+
 .scheduling-locked-overlay {
     text-align: center;
-    padding: 30px 20px;
-    background: #f7fafc;
-    border: 1px dashed #cbd5e0;
-    border-radius: 8px;
+    padding: 24px 18px;
+    background: #f8fafc;
+    border: 1px dashed #cbd5e1;
+    border-radius: 10px;
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 12px;
+    gap: 8px;
 }
 
-.scheduling-locked-overlay i {
-    font-size: 36px;
-    color: #a0aec0;
+.scheduling-locked-overlay i.lock-icon {
+    font-size: 28px;
+    color: #64748b;
+    margin-bottom: 4px;
 }
 
 .scheduling-locked-overlay h4 {
     font-family: 'Poppins', sans-serif;
-    font-size: 16px;
+    font-size: 15px;
     font-weight: 700;
-    color: #4a5568;
+    color: rgb(2, 53, 28);
     margin: 0;
 }
 
 .scheduling-locked-overlay p {
     font-family: 'Open Sans', sans-serif;
-    font-size: 13.5px;
-    color: #718096;
+    font-size: 13px;
+    color: #64748b;
     margin: 0;
-    max-width: 380px;
+    max-width: 400px;
     line-height: 1.5;
 }
 
-.btn-sm {
-    padding: 8px 16px !important;
-    font-size: 13px !important;
-    margin-top: 5px !important;
+.scheduling-form {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
 }
 
-.status-message-text {
-    font-size: 14px;
-    font-weight: 600;
-    margin-top: 10px;
-    margin-bottom: 10px;
+.scheduling-form p.scheduler-desc {
     font-family: 'Open Sans', sans-serif;
+    font-size: 13.5px;
+    color: #4b5563;
+    margin: 0 0 4px 0;
+    line-height: 1.5;
 }
-.status-message-text.success { color: #28a745; }
-.status-message-text.error { color: #dc3545; }
+
+.scheduling-form .input-group {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.scheduling-form label {
+    font-family: 'Poppins', sans-serif;
+    font-size: 13px;
+    font-weight: 600;
+    color: rgb(2, 53, 28);
+}
 
 .scheduling-time-input {
     width: 100%;
-    padding: 12px;
-    border: 1px solid #ccc;
-    border-radius: 6px;
+    padding: 11px 14px;
+    border: 1.5px solid #e2e8f0;
+    border-radius: 8px;
+    font-family: 'Poppins', sans-serif;
+    font-size: 14px;
+    color: #1e293b;
+    background-color: #ffffff;
+    box-sizing: border-box;
+    transition: all 0.2s ease;
+    outline: none;
+}
+
+.scheduling-time-input:focus {
+    border-color: rgb(2, 53, 28);
+    box-shadow: 0 0 0 3px rgba(2, 53, 28, 0.12);
+}
+
+.scheduling-feedback {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 14px;
+    border-radius: 8px;
     font-family: 'Open Sans', sans-serif;
+    font-size: 13.5px;
+    font-weight: 600;
+    line-height: 1.4;
+}
+
+.scheduling-feedback.success {
+    background-color: #ecfdf5;
+    color: #065f46;
+    border: 1px solid #a7f3d0;
+}
+
+.scheduling-feedback.error {
+    background-color: #fef2f2;
+    color: #991b1b;
+    border: 1px solid #fecaca;
 }

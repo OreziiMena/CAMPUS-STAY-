@@ -6,6 +6,7 @@ import { writeFile, mkdir } from "fs/promises";
 import path from "path";
 import { uploadToR2 } from "@/lib/r2";
 import { validateFileBuffer, generateSecureFilename } from "@/lib/upload-validator";
+import { sendEmail } from "@/lib/email";
 
 function getFriendlyErrorMessage(err: any, defaultMsg: string): string {
   console.error("Student server action error:", err);
@@ -349,18 +350,24 @@ export async function saveStudentPreferences(preferences: {
 export async function scheduleViewing(data: {
   propertyId: string;
   dateTime: string;
+  note?: string;
 }) {
   try {
     const user = await getCurrentUser();
-    if (!user || user.role !== "STUDENT" || !user.studentProfile) {
-      return { success: false, error: "You must be logged in as a student to schedule viewings." };
+    if (!user) {
+      return { success: false, error: "Please log in to schedule a viewing appointment." };
     }
 
-    if (!user.studentProfile.isVerified) {
-      return { success: false, error: "Verification required. You must verify your student profile to schedule viewings." };
+    const { propertyId, dateTime, note } = data;
+    const appointmentDate = new Date(dateTime);
+
+    if (isNaN(appointmentDate.getTime())) {
+      return { success: false, error: "Please select a valid date and time." };
     }
 
-    const { propertyId, dateTime } = data;
+    if (appointmentDate.getTime() < Date.now()) {
+      return { success: false, error: "Please select an upcoming future date and time." };
+    }
 
     const property = await prisma.property.findUnique({
       where: { id: propertyId },
@@ -382,29 +389,111 @@ export async function scheduleViewing(data: {
       return { success: false, error: "Property not found." };
     }
 
-    const recipientId = property.agent?.userId || property.student?.userId;
+    const recipientUser = property.agent?.user || property.student?.user;
+    const recipientId = recipientUser?.id;
     if (!recipientId) {
-      return { success: false, error: "Listing owner not found." };
+      return { success: false, error: "Listing host not found." };
     }
 
     const viewing = await prisma.viewing.create({
       data: {
         studentId: user.id,
         propertyId,
-        dateTime: new Date(dateTime),
+        dateTime: appointmentDate,
         status: "PENDING",
       },
     });
 
-    // Also send a simulated inquiry/message to the agent for this viewing request
+    const studentName = user.studentProfile?.fullName || user.agentProfile?.fullName || user.name || "Student";
+    const studentPhone = user.phone || "Not provided";
+    const formattedTime = appointmentDate.toLocaleString("en-US", {
+      weekday: "long",
+      year: "numeric",
+      month: "short",
+      day: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+
+    // 1. Create simulated chat inquiry in system
     await prisma.inquiry.create({
       data: {
         studentId: user.id,
         propertyId,
         agentId: recipientId,
-        message: `Hi, I have requested a physical viewing appointment for your property "${property.title}" on ${new Date(dateTime).toLocaleString()}.`,
+        message: `Hi, I have requested an in-person viewing appointment for your property "${property.title}" on ${formattedTime}.${note ? ` Note: "${note}"` : ""}`,
       },
     });
+
+    // 2. Send instant Email Notification to the Agent / Landlord via Resend
+    if (recipientUser?.email) {
+      const agentHtml = `
+        <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 600px; margin: 0 auto; background: #ffffff; border: 1px solid #e2e8f0; border-radius: 12px; overflow: hidden;">
+          <div style="background-color: #02351c; padding: 24px; text-align: center;">
+            <h1 style="color: #ffffff; font-size: 22px; margin: 0; font-weight: 700;">Campus Tent</h1>
+            <p style="color: #cbd5e1; font-size: 14px; margin: 6px 0 0 0;">New Physical Viewing Request</p>
+          </div>
+          <div style="padding: 24px;">
+            <h2 style="color: #02351c; font-size: 18px; margin-top: 0;">📅 Viewing Requested</h2>
+            <p style="color: #4b5563; font-size: 14px; line-height: 1.6;">
+              A student has requested to inspect your hostel listing in person.
+            </p>
+            <div style="background-color: #f8fafc; border-left: 4px solid #d35400; padding: 16px; border-radius: 6px; margin: 20px 0;">
+              <p style="margin: 0 0 8px 0; font-size: 14px; color: #1e293b;"><strong>🏠 Property:</strong> ${property.title}</p>
+              <p style="margin: 0 0 8px 0; font-size: 14px; color: #1e293b;"><strong>🕒 Date & Time:</strong> ${formattedTime}</p>
+              <p style="margin: 0 0 8px 0; font-size: 14px; color: #1e293b;"><strong>👤 Student:</strong> ${studentName}</p>
+              <p style="margin: 0 0 8px 0; font-size: 14px; color: #1e293b;"><strong>📞 Phone:</strong> ${studentPhone}</p>
+              <p style="margin: 0; font-size: 14px; color: #1e293b;"><strong>📧 Email:</strong> ${user.email}</p>
+            </div>
+            <div style="text-align: center; margin-top: 24px;">
+              <a href="https://campustent.com/chat" style="background-color: #02351c; color: #ffffff; padding: 12px 24px; border-radius: 8px; text-decoration: none; font-weight: 600; font-size: 14px; display: inline-block;">
+                Reply in Chat
+              </a>
+            </div>
+          </div>
+          <div style="background-color: #f1f5f9; padding: 16px; text-align: center; font-size: 12px; color: #64748b;">
+            Campus Tent &bull; Safe Student Accommodation
+          </div>
+        </div>
+      `;
+
+      sendEmail({
+        to: recipientUser.email,
+        subject: `📅 New Viewing Request: ${property.title}`,
+        html: agentHtml,
+      }).catch((e) => console.error("Agent viewing email notification failed:", e));
+    }
+
+    // 3. Send confirmation Email to Student
+    if (user.email) {
+      const studentHtml = `
+        <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 600px; margin: 0 auto; background: #ffffff; border: 1px solid #e2e8f0; border-radius: 12px; overflow: hidden;">
+          <div style="background-color: #02351c; padding: 24px; text-align: center;">
+            <h1 style="color: #ffffff; font-size: 22px; margin: 0; font-weight: 700;">Campus Tent</h1>
+            <p style="color: #cbd5e1; font-size: 14px; margin: 6px 0 0 0;">Viewing Request Received</p>
+          </div>
+          <div style="padding: 24px;">
+            <h2 style="color: #02351c; font-size: 18px; margin-top: 0;">✅ Viewing Request Sent</h2>
+            <p style="color: #4b5563; font-size: 14px; line-height: 1.6;">
+              Hi ${studentName}, your inspection request for <strong>"${property.title}"</strong> has been sent to the agent.
+            </p>
+            <div style="background-color: #ecfdf5; border-left: 4px solid #10b981; padding: 16px; border-radius: 6px; margin: 20px 0;">
+              <p style="margin: 0 0 8px 0; font-size: 14px; color: #065f46;"><strong>🕒 Scheduled Time:</strong> ${formattedTime}</p>
+              <p style="margin: 0; font-size: 14px; color: #065f46;"><strong>📍 Location:</strong> ${property.location}</p>
+            </div>
+            <p style="color: #4b5563; font-size: 13.5px;">
+              The agent will contact you shortly or reply via Campus Tent Chat to confirm details.
+            </p>
+          </div>
+        </div>
+      `;
+
+      sendEmail({
+        to: user.email,
+        subject: `✅ Viewing Request Sent: ${property.title}`,
+        html: studentHtml,
+      }).catch((e) => console.error("Student viewing confirmation email failed:", e));
+    }
 
     return { success: true, viewingId: viewing.id };
   } catch (err: any) {
