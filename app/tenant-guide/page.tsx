@@ -28,7 +28,7 @@ export default function TenantGuide() {
               <div className="step-content">
                 <h3>Browse & Filter Smartly</h3>
                 <p>
-                  Start by searching for listings near your specific institution. Use advanced search filters to narrow down properties based on hostel type (self-contain, flat, shared room), budget limits, and walk proximity from campus gates (e.g. under 5 minutes walk).
+                  Start by searching for listings near your specific institution. Use advanced search filters to narrow down properties based on hostel type (self-contain, flat, bedsitter), budget limits, and walk proximity from campus gates (e.g. under 5 minutes walk).
                 </p>
               </div>
             </div>

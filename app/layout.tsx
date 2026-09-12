@@ -90,7 +90,7 @@ export default function RootLayout({
             "@type": "SiteNavigationElement",
             "position": 1,
             "name": "Explore Hostels & Apartments",
-            "description": "Discover verified student hostels, single rooms, and self-contain apartments near campus.",
+            "description": "Discover verified student hostels, bedsitters, and self-contain apartments near campus.",
             "url": "https://campustent.com/explore",
           },
           {

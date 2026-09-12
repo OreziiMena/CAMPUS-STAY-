@@ -3,17 +3,21 @@ import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { getCurrentUser } from "@/app/actions/auth";
-import { addProperty } from "@/app/actions/properties";
+import { addProperty, getMediaUploadPresignedUrl } from "@/app/actions/properties";
+import { extractVideoThumbnail } from "@/lib/video-helper";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import "./styles.css";
 import SearchableSelect from "@/components/SearchableSelect";
 
+const MAX_IMAGE_SIZE_MB = 5;
+const MAX_VIDEO_SIZE_MB = 20;
+
 export default function AddRoommateListing() {
   const router = useRouter();
   const [user, setUser] = useState<any>(null);
   const [title, setTitle] = useState("");
-  const [hostelType, setHostelType] = useState("Shared Room");
+  const [hostelType, setHostelType] = useState("Bedsitter");
   const [price, setPrice] = useState("");
   const [location, setLocation] = useState("");
   const [distance, setDistance] = useState("");
@@ -32,6 +36,7 @@ export default function AddRoommateListing() {
   });
 
   const [images, setImages] = useState<string[]>([]);
+  const [imageFiles, setImageFiles] = useState<File[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [success, setSuccess] = useState(false);
   const [error, setError] = useState("");
@@ -52,11 +57,35 @@ export default function AddRoommateListing() {
     setAmenities((prev) => ({ ...prev, [name]: !prev[name] }));
   };
 
-  const handleMockUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files.length > 0) {
-      const fileNames = Array.from(e.target.files).map(file => URL.createObjectURL(file));
-      setImages((prev) => [...prev, ...fileNames]);
+      const filesArray = Array.from(e.target.files);
+      const newFiles: File[] = [];
+      const newUrls: string[] = [];
+
+      for (const file of filesArray) {
+        const isVideo = file.type.startsWith("video/") || file.name.match(/\.(mp4|mov|webm|mkv|avi)$/i);
+        const limitMb = isVideo ? MAX_VIDEO_SIZE_MB : MAX_IMAGE_SIZE_MB;
+        const sizeMb = file.size / (1024 * 1024);
+
+        if (sizeMb > limitMb) {
+          setError(`File "${file.name}" (${sizeMb.toFixed(1)} MB) exceeds the ${limitMb} MB limit. Please compress or choose a smaller file.`);
+          return;
+        }
+
+        newFiles.push(file);
+        newUrls.push(URL.createObjectURL(file));
+      }
+
+      setImageFiles((prev) => [...prev, ...newFiles]);
+      setImages((prev) => [...prev, ...newUrls]);
+      setError("");
     }
+  };
+
+  const removeImage = (index: number) => {
+    setImages((prev) => prev.filter((_, i) => i !== index));
+    setImageFiles((prev) => prev.filter((_, i) => i !== index));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -81,6 +110,92 @@ export default function AddRoommateListing() {
     if (amenities.kitchen) activeAmenities.push("Kitchen");
 
     try {
+      let uploadedUrls: string[] = [];
+      if (imageFiles.length > 0) {
+        // Place video on Slide 1 and synthesized photo on Slide 2
+        const filesToProcess: File[] = [];
+        for (const file of imageFiles) {
+          const isVideo = file.type.startsWith("video/") || file.name.match(/\.(mp4|mov|webm|mkv|avi)$/i);
+          filesToProcess.push(file);
+          if (isVideo) {
+            try {
+              const posterFile = await extractVideoThumbnail(file);
+              if (posterFile) {
+                filesToProcess.push(posterFile);
+              }
+            } catch (thumbErr) {
+              console.warn("Roommate video thumbnail extraction skipped:", thumbErr);
+            }
+          }
+        }
+
+        for (let i = 0; i < filesToProcess.length; i++) {
+          const file = filesToProcess[i];
+          const isVideo = file.type.startsWith("video/") || file.name.match(/\.(mp4|mov|webm|mkv|avi)$/i);
+          const limitMb = isVideo ? MAX_VIDEO_SIZE_MB : MAX_IMAGE_SIZE_MB;
+          const sizeMb = file.size / (1024 * 1024);
+
+          if (sizeMb > limitMb) {
+            setError(`File "${file.name}" (${sizeMb.toFixed(1)} MB) has exceeded the ${limitMb} MB limit. Please choose a smaller file.`);
+            setIsLoading(false);
+            return;
+          }
+
+          // Tier 1: Direct browser-to-R2 upload
+          let uploaded = false;
+          try {
+            const presignedRes = await getMediaUploadPresignedUrl(
+              file.name,
+              file.type || (isVideo ? "video/mp4" : "image/jpeg"),
+              file.size
+            );
+
+            if (presignedRes.success && presignedRes.uploadUrl && presignedRes.publicUrl) {
+              const uploadPutRes = await fetch(presignedRes.uploadUrl, {
+                method: "PUT",
+                body: file,
+              });
+
+              if (uploadPutRes.ok) {
+                uploadedUrls.push(presignedRes.publicUrl);
+                uploaded = true;
+              } else {
+                console.warn("Direct R2 upload response error:", uploadPutRes.status);
+              }
+            }
+          } catch (presignedErr) {
+            console.warn("Direct presigned upload error, trying same-origin /api/upload:", presignedErr);
+          }
+
+          // Tier 2: Same-Origin /api/upload
+          if (!uploaded) {
+            try {
+              const apiFormData = new FormData();
+              apiFormData.append("file", file);
+              const apiRes = await fetch("/api/upload", {
+                method: "POST",
+                body: apiFormData,
+              });
+              if (apiRes.ok) {
+                const apiData = await apiRes.json();
+                if (apiData.success && apiData.publicUrl) {
+                  uploadedUrls.push(apiData.publicUrl);
+                  uploaded = true;
+                }
+              }
+            } catch (apiErr) {
+              console.error("Same-origin /api/upload error:", apiErr);
+            }
+          }
+
+          if (!uploaded) {
+            setError(`Failed to upload "${file.name}". Please check your internet connection and try again.`);
+            setIsLoading(false);
+            return;
+          }
+        }
+      }
+
       const res = await addProperty({
         title,
         hostelType,
@@ -89,7 +204,7 @@ export default function AddRoommateListing() {
         distance,
         description,
         amenities: activeAmenities,
-        images: images.length > 0 ? images : ["https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?ixlib=rb-4.0.3"],
+        images: uploadedUrls.length > 0 ? uploadedUrls : ["https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?ixlib=rb-4.0.3"],
         genderPreference,
       });
 
@@ -103,9 +218,9 @@ export default function AddRoommateListing() {
       } else {
         setError(res.error || "Failed to list roommate option.");
       }
-    } catch {
+    } catch (err: any) {
       setIsLoading(false);
-      setError("An unexpected error occurred.");
+      setError(err.message || "An unexpected error occurred.");
     }
   };
 
@@ -127,7 +242,7 @@ export default function AddRoommateListing() {
             <h1>
               <i className="fas fa-user-friends"></i> List Roommate Space
             </h1>
-            <p>Upload details of your current apartment to find roommate sharing partners.</p>
+            <p>Upload details and video tours of your apartment to find compatible student roommates.</p>
           </div>
           <Link href="/student-dashboard" className="back-to-dash-btn">
             <i className="fas fa-arrow-left"></i> Back to Dashboard
@@ -138,7 +253,7 @@ export default function AddRoommateListing() {
           <div className="success-banner-card">
             <i className="fas fa-check-circle"></i>
             <h2>Roommate Listing Uploaded!</h2>
-            <p>Your roommate request listing is now live. Redirecting to your dashboard...</p>
+            <p>Your roommate space is now live. Redirecting to your dashboard...</p>
           </div>
         ) : (
           <form className="property-form-card" onSubmit={handleSubmit}>
@@ -174,15 +289,14 @@ export default function AddRoommateListing() {
                 <label htmlFor="hostel-type">Roommate Space Type *</label>
                 <SearchableSelect
                   options={[
-                    { code: "Shared Room", name: "Shared Room (Single Room)" },
-                    { code: "Roommate Sharing (Self-Contain)", name: "Roommate Sharing (Self-Contain)" },
-                    { code: "Roommate Sharing (1-Bedroom Flat)", name: "Roommate Sharing (1-Bedroom Flat)" },
-                    { code: "Roommate Sharing (2-Bedroom Flat)", name: "Roommate Sharing (2-Bedroom Flat)" },
-                    { code: "Shared Hostel Room", name: "Shared Hostel Room" }
+                    { code: "Bedsitter", name: "Bedsitter" },
+                    { code: "Self-Contain", name: "Self-Contain" },
+                    { code: "1-Bedroom Flat", name: "1-Bedroom Flat" },
+                    { code: "2-Bedroom Flat", name: "2-Bedroom Flat" }
                   ]}
                   value={hostelType}
                   onChange={(val) => setHostelType(val)}
-                  placeholder="Select roommate space type..."
+                  placeholder="Select space type..."
                   required
                 />
               </div>
@@ -319,23 +433,27 @@ export default function AddRoommateListing() {
               </label>
             </div>
 
-            <div className="form-section-title">Apartment Media</div>
+            <div className="form-section-title">Apartment Photos & Video Tours</div>
             <div className="image-upload-section">
-              <div className="upload-box-wrapper">
-                <i className="fas fa-images"></i>
-                <p>Drag and drop media or click to select files</p>
+              <div className="upload-box-wrapper" style={{ position: "relative" }}>
+                <i className="fas fa-cloud-upload-alt" style={{ fontSize: "2rem", color: "#10b981", marginBottom: "8px" }}></i>
+                <p>Drag and drop media or <span style={{ color: "rgb(2, 53, 28)", fontWeight: "700" }}>Browse files</span></p>
+                <p style={{ fontSize: "0.78rem", color: "#64748b", margin: "4px 0 0 0" }}>
+                  Supports JPG, PNG, WEBP (Max 5MB) & MP4, MOV, WebM videos (Max 20MB)
+                </p>
                 <input
                   type="file"
                   multiple
                   accept="image/*,video/*"
-                  onChange={handleMockUpload}
+                  onChange={handleFileUpload}
+                  style={{ position: "absolute", top: 0, left: 0, width: "100%", height: "100%", opacity: 0, cursor: "pointer" }}
                 />
               </div>
 
               {images.length > 0 && (
                 <div className="uploaded-previews-grid">
                   {images.map((img, index) => {
-                    const isVideo = img.match(/\.(mp4|webm|ogg|mov|mkv)(\?.*)?$/i);
+                    const isVideo = img.match(/\.(mp4|webm|ogg|mov|mkv)(\?.*)?$/i) || (imageFiles[index] && imageFiles[index].type.startsWith("video/"));
                     return (
                       <div key={index} className="preview-image-card">
                         {isVideo ? (
@@ -345,10 +463,10 @@ export default function AddRoommateListing() {
                         )}
                         <button
                           type="button"
-                          onClick={() => setImages((prev) => prev.filter((_, i) => i !== index))}
+                          onClick={() => removeImage(index)}
                           className="delete-preview-btn"
                         >
-                          <i className="fas fa-trash-alt"></i>
+                          <i className="fas fa-times"></i>
                         </button>
                       </div>
                     );
@@ -364,7 +482,7 @@ export default function AddRoommateListing() {
             >
               {isLoading ? (
                 <>
-                  <i className="fas fa-spinner fa-spin"></i> Submitting...
+                  <i className="fas fa-spinner fa-spin"></i> Uploading & Publishing...
                 </>
               ) : (
                 "Publish Roommate Listing"

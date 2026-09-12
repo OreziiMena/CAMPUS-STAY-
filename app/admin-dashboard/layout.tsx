@@ -50,7 +50,12 @@ function AdminSidebarWrapper({
           </li>
           <li>
             <Link href="/admin-dashboard?tab=properties" className={activeTab === "properties" ? "active" : ""}>
-              <i className="fas fa-building"></i> Properties
+              <i className="fas fa-building"></i> Hostels & Properties
+            </Link>
+          </li>
+          <li>
+            <Link href="/admin-dashboard?tab=roommates" className={activeTab === "roommates" ? "active" : ""}>
+              <i className="fas fa-user-friends"></i> Roommate Listings
             </Link>
           </li>
           <li>

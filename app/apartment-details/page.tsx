@@ -73,11 +73,11 @@ const mockProperties: Record<string, Property> = {
   },
   "3": {
     id: "3",
-    title: "Single Room Off-Campus",
+    title: "Bedsitter Apartment Off-Campus",
     price: "₦80,000",
     location: "Ugbomro Community",
     distance: "12 mins walk to campus",
-    description: "Budget-friendly single room in Ugbomro Community. Suitable for students looking for low-cost off-campus housing. The environment is quiet and study-friendly. Shared bathroom facility and 24/7 borehole water access.",
+    description: "Budget-friendly bedsitter in Ugbomro Community. Suitable for students looking for low-cost off-campus housing. The environment is quiet and study-friendly. Shared bathroom facility and 24/7 borehole water access.",
     amenities: ["1 Bed", "Shared Bath", "Borehole Water", "Kitchen Space", "Prepaid Meter"],
     images: [
       "https://images.unsplash.com/photo-1522771739844-6a9f6d5f14af?ixlib=rb-4.0.3&auto=format&fit=crop&w=1200&q=80",

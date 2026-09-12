@@ -27,7 +27,7 @@ const CAMPUS_OPTIONS = [
 ];
 
 const SPACE_TYPES = [
-  { code: "Shared Room", name: "Shared Room" },
+  { code: "Bedsitter", name: "Bedsitter" },
   { code: "Self-Contain", name: "Self-Contain" },
   { code: "1-Bedroom Flat", name: "1-Bedroom Flat" },
   { code: "2-Bedroom Flat", name: "2-Bedroom Flat" }
@@ -74,7 +74,7 @@ export default function RoommatesDirectory() {
   // Upload Roommate Listing Form State
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [formTitle, setFormTitle] = useState("");
-  const [formHostelType, setFormHostelType] = useState("Shared Room");
+  const [formHostelType, setFormHostelType] = useState("Bedsitter");
   const [formPrice, setFormPrice] = useState("");
   const [formLocation, setFormLocation] = useState("");
   const [formDistance, setFormDistance] = useState("");

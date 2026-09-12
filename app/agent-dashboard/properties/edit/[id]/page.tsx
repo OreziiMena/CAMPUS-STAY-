@@ -371,10 +371,9 @@ export default function EditProperty() {
               <SearchableSelect
                 options={[
                   { code: "Self-Contain", name: "Self-Contain" },
-                  { code: "Single Room", name: "Single Room" },
+                  { code: "Bedsitter", name: "Bedsitter" },
                   { code: "1-Bedroom Flat", name: "1-Bedroom Flat" },
                   { code: "2-Bedroom Flat", name: "2-Bedroom Flat" },
-                  { code: "Shared Hostel Room", name: "Shared Hostel Room" }
                 ]}
                 value={hostelType}
                 onChange={(val) => setHostelType(val)}

@@ -356,8 +356,17 @@ function AdminDashboardContent() {
   const verifiedAgentsCount = agentUsers.filter((u) => u.agentProfile?.isVerified).length;
   const unverifiedAgentsCount = agentUsers.filter((u) => !u.agentProfile?.isVerified).length;
 
-  const verifiedPropertiesCount = allProperties.filter((p) => p.isVerified).length;
-  const unverifiedPropertiesCount = allProperties.filter((p) => !p.isVerified).length;
+  const allHostelProperties = allProperties.filter((p) => !p.isRoommateOption);
+  const allRoommateListings = allProperties.filter((p) => p.isRoommateOption);
+
+  const verifiedPropertiesCount = allHostelProperties.filter((p) => p.isVerified).length;
+  const unverifiedPropertiesCount = allHostelProperties.filter((p) => !p.isVerified).length;
+
+  const verifiedRoommatesCount = allRoommateListings.filter((p) => p.isVerified).length;
+  const unverifiedRoommatesCount = allRoommateListings.filter((p) => !p.isVerified).length;
+
+  const propertiesQueue = properties.filter((p) => !p.isRoommateOption);
+  const roommatesQueue = properties.filter((p) => p.isRoommateOption);
 
   // Search filter logic
   const filteredStudents = studentUsers.filter((u) => {
@@ -377,14 +386,22 @@ function AdminDashboardContent() {
     return name.includes(query) || email.includes(query) || phone.includes(query);
   });
 
-  const filteredAllProperties = allProperties.filter((p) => {
+  const filteredAllProperties = allHostelProperties.filter((p) => {
     const title = p.title?.toLowerCase() || "";
     const location = p.location?.toLowerCase() || "";
     const university = p.university?.toLowerCase() || "";
     const agentName = p.agent?.fullName?.toLowerCase() || "";
-    const studentName = p.student?.fullName?.toLowerCase() || "";
     const query = searchQuery.toLowerCase();
-    return title.includes(query) || location.includes(query) || university.includes(query) || agentName.includes(query) || studentName.includes(query);
+    return title.includes(query) || location.includes(query) || university.includes(query) || agentName.includes(query);
+  });
+
+  const filteredAllRoommates = allRoommateListings.filter((p) => {
+    const title = p.title?.toLowerCase() || "";
+    const location = p.location?.toLowerCase() || "";
+    const university = p.university?.toLowerCase() || "";
+    const studentName = (p.student?.fullName || p.student?.username || "").toLowerCase();
+    const query = searchQuery.toLowerCase();
+    return title.includes(query) || location.includes(query) || university.includes(query) || studentName.includes(query);
   });
 
   // Filter queues under verification tab too if query exists
@@ -407,14 +424,22 @@ function AdminDashboardContent() {
     return name.includes(query) || address.includes(query) || email.includes(query) || phone.includes(query);
   });
 
-  const filteredQueueProperties = properties.filter((p) => {
+  const filteredQueueProperties = propertiesQueue.filter((p) => {
     const title = p.title?.toLowerCase() || "";
     const location = p.location?.toLowerCase() || "";
     const university = p.university?.toLowerCase() || "";
     const agentName = p.agent?.fullName?.toLowerCase() || "";
-    const studentName = p.student?.fullName?.toLowerCase() || "";
     const query = searchQuery.toLowerCase();
-    return title.includes(query) || location.includes(query) || university.includes(query) || agentName.includes(query) || studentName.includes(query);
+    return title.includes(query) || location.includes(query) || university.includes(query) || agentName.includes(query);
+  });
+
+  const filteredQueueRoommates = roommatesQueue.filter((p) => {
+    const title = p.title?.toLowerCase() || "";
+    const location = p.location?.toLowerCase() || "";
+    const university = p.university?.toLowerCase() || "";
+    const studentName = (p.student?.fullName || p.student?.username || "").toLowerCase();
+    const query = searchQuery.toLowerCase();
+    return title.includes(query) || location.includes(query) || university.includes(query) || studentName.includes(query);
   });
 
   const filteredReports = reports.filter((r) => {
@@ -641,10 +666,12 @@ function AdminDashboardContent() {
                 : activeTab === "agents" 
                   ? "Search agents by name, email, or phone..." 
                   : activeTab === "properties" 
-                    ? "Search properties by title, location, school, or owner..."
-                    : activeTab === "activity-logs"
-                      ? "Search activity logs by agent name, email, property title..."
-                      : "Search verification queues..."
+                    ? "Search hostel properties by title, location, school, or agent..."
+                    : activeTab === "roommates"
+                      ? "Search roommate spaces by title, location, school, or student..."
+                      : activeTab === "activity-logs"
+                        ? "Search activity logs by agent name, email, property title..."
+                        : "Search verification queues..."
             }
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
@@ -696,7 +723,13 @@ function AdminDashboardContent() {
                   className={`tab-btn ${activeQueueTab === "properties" ? "active" : ""}`}
                   onClick={() => setActiveQueueTab("properties")}
                 >
-                  Properties Queue ({properties.length})
+                  Properties Queue ({propertiesQueue.length})
+                </button>
+                <button 
+                  className={`tab-btn ${activeQueueTab === "roommates" ? "active" : ""}`}
+                  onClick={() => setActiveQueueTab("roommates")}
+                >
+                  Roommates Queue ({roommatesQueue.length})
                 </button>
               </div>
 
@@ -871,7 +904,7 @@ function AdminDashboardContent() {
               {activeQueueTab === "properties" && (
                 <div className="admin-card">
                   <h2><i className="fas fa-building"></i> Pending Property Approvals</h2>
-                  {properties.length === 0 ? (
+                  {propertiesQueue.length === 0 ? (
                     <div className="no-data-text">No pending property approvals.</div>
                   ) : filteredQueueProperties.length === 0 ? (
                     <div className="no-data-text">No matching property approvals.</div>
@@ -978,20 +1011,138 @@ function AdminDashboardContent() {
                                     </div>
                                     <div style={{ fontSize: "12px", color: "#666" }}>Agent/Landlord</div>
                                   </div>
-                                ) : property.student ? (
+                                ) : (
+                                  "CS Official"
+                                )}
+                              </td>
+                              <td>
+                                <div className="admin-action-btns">
+                                  <button 
+                                    onClick={() => handleVerifyProperty(property.id)}
+                                    disabled={actionLoading !== null}
+                                    className="approve-btn"
+                                  >
+                                    {actionLoading === property.id ? "Approving..." : "Approve"}
+                                  </button>
+                                  <button 
+                                    onClick={() => handleRejectProperty(property.id)}
+                                    disabled={actionLoading !== null}
+                                    className="reject-btn"
+                                  >
+                                    {actionLoading === property.id ? "Rejecting..." : "Reject"}
+                                  </button>
+                                </div>
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {activeQueueTab === "roommates" && (
+                <div className="admin-card">
+                  <h2><i className="fas fa-user-friends"></i> Pending Roommate Space Approvals</h2>
+                  {roommatesQueue.length === 0 ? (
+                    <div className="no-data-text">No pending roommate space approvals.</div>
+                  ) : filteredQueueRoommates.length === 0 ? (
+                    <div className="no-data-text">No matching roommate space approvals.</div>
+                  ) : (
+                    <div className="admin-table-wrapper">
+                      <table className="admin-table">
+                        <thead>
+                          <tr>
+                            <th>Room Details</th>
+                            <th>Type</th>
+                            <th>Shared Rent / Budget</th>
+                            <th>University & Location</th>
+                            <th>Student Profile</th>
+                            <th>Actions</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {filteredQueueRoommates.map((property) => (
+                            <tr key={property.id}>
+                              <td>
+                                {(() => {
+                                  const mediaUrl = property.images?.[0] || "https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?ixlib=rb-4.0.3";
+                                  const isVideo = mediaUrl.match(/\.(mp4|webm|ogg|mov|mkv)(\?.*)?$/i);
+                                  return (
+                                    <div className="property-preview-cell">
+                                      <div style={{ position: "relative", width: "42px", height: "42px", borderRadius: "8px", overflow: "hidden", flexShrink: 0 }}>
+                                        {isVideo ? (
+                                          <video 
+                                            src={mediaUrl} 
+                                            className="property-preview-img"
+                                            muted
+                                            playsInline
+                                            preload="metadata"
+                                            style={{ width: "100%", height: "100%", objectFit: "cover" }}
+                                          />
+                                        ) : (
+                                          <img 
+                                            src={mediaUrl} 
+                                            alt={property.title} 
+                                            className="property-preview-img"
+                                            style={{ width: "100%", height: "100%", objectFit: "cover" }}
+                                          />
+                                        )}
+                                        {isVideo && (
+                                          <span style={{
+                                            position: "absolute",
+                                            bottom: "2px",
+                                            right: "2px",
+                                            background: "rgba(0,0,0,0.7)",
+                                            color: "#fff",
+                                            fontSize: "8px",
+                                            borderRadius: "3px",
+                                            padding: "1px 3px",
+                                            lineHeight: 1,
+                                          }}>
+                                            ▶
+                                          </span>
+                                        )}
+                                      </div>
+                                      <span className="property-preview-title">{property.title}</span>
+                                    </div>
+                                  );
+                                })()}
+                              </td>
+                              <td>{property.hostelType || "Bedsitter"}</td>
+                              <td>
+                                <strong style={{ fontSize: "0.95rem", color: "rgb(2, 53, 28)" }}>
+                                  ₦{property.price.toLocaleString()}
+                                  <span style={{ fontSize: "0.75rem", color: "#666", fontWeight: "normal" }}> / yr</span>
+                                </strong>
+                                {property.roommateGenderPreference && (
+                                  <div style={{ fontSize: "0.75rem", color: "#065f46", background: "#ecfdf5", padding: "2px 6px", borderRadius: "4px", display: "inline-block", marginTop: "3px" }}>
+                                    Prefers: {property.roommateGenderPreference}
+                                  </div>
+                                )}
+                              </td>
+                              <td>
+                                <div>{property.location}</div>
+                                <div style={{ color: "#666", fontSize: "12px" }}>Near {property.university} ({property.distance})</div>
+                              </td>
+                              <td>
+                                {property.student ? (
                                   <div>
                                     <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-                                      <strong>{property.student.username ? `@${property.student.username}` : property.student.fullName}</strong>
+                                      <strong>{property.student.fullName || (property.student.username ? `@${property.student.username}` : "Student")}</strong>
                                       {property.student.isVerified && (
-                                        <span style={{ color: "#2e7d32" }} title="Verified Owner">
+                                        <span style={{ color: "#2e7d32" }} title="Verified Student">
                                           <i className="fas fa-check-circle"></i>
                                         </span>
                                       )}
                                     </div>
-                                    <div style={{ fontSize: "12px", color: "#666" }}>Student (Roommate Space)</div>
+                                    <div style={{ fontSize: "12px", color: "#666" }}>
+                                      {property.student.username ? `@${property.student.username}` : property.student.university || "Student Listing"}
+                                    </div>
                                   </div>
                                 ) : (
-                                  "CS Official"
+                                  "Student Listing"
                                 )}
                               </td>
                               <td>
@@ -1179,19 +1330,19 @@ function AdminDashboardContent() {
             </div>
           )}
 
-          {/* 4. PROPERTIES DIRECTORY TAB */}
+          {/* 4. HOSTELS & PROPERTIES DIRECTORY TAB */}
           {activeTab === "properties" && (
             <div className="admin-card">
               <h2>
-                <i className="fas fa-building"></i> Properties Directory{" "}
+                <i className="fas fa-building"></i> Hostels & Properties Directory{" "}
                 <span style={{ fontSize: "0.85rem", fontWeight: "600", color: "#92400e", background: "#fef3c7", padding: "4px 10px", borderRadius: "12px", marginLeft: "8px" }}>
-                  {verifiedPropertiesCount} Verified / {allProperties.length} Total
+                  {verifiedPropertiesCount} Verified / {allHostelProperties.length} Total
                 </span>
               </h2>
-              {allProperties.length === 0 ? (
-                <div className="no-data-text">No listed properties found.</div>
+              {allHostelProperties.length === 0 ? (
+                <div className="no-data-text">No listed hostel properties found.</div>
               ) : filteredAllProperties.length === 0 ? (
-                <div className="no-data-text">No matching properties found.</div>
+                <div className="no-data-text">No matching hostel properties found.</div>
               ) : (
                 <div className="admin-table-wrapper">
                   <table className="admin-table">
@@ -1201,7 +1352,7 @@ function AdminDashboardContent() {
                         <th>Type</th>
                         <th>Price & Fee Breakdown</th>
                         <th>Location & School</th>
-                        <th>Listed By</th>
+                        <th>Listed By Agent</th>
                         <th>Verification Status</th>
                         <th>Actions</th>
                       </tr>
@@ -1209,7 +1360,7 @@ function AdminDashboardContent() {
                     <tbody>
                       {filteredAllProperties.map((p) => {
                         const isVerified = p.isVerified || false;
-                        const isOwnerVerified = p.agent ? p.agent.isVerified : (p.student ? p.student.isVerified : false);
+                        const isOwnerVerified = p.agent ? p.agent.isVerified : false;
                         return (
                             <tr key={p.id}>
                               <td>
@@ -1296,24 +1447,164 @@ function AdminDashboardContent() {
                                     </span>
                                   )}
                                 </div>
-                              ) : p.student ? (
-                                <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-                                  <strong>{p.student.username ? `@${p.student.username}` : p.student.fullName}</strong>
-                                  {p.student.isVerified && (
-                                    <span style={{ color: "#2e7d32" }} title="Verified Owner">
-                                      <i className="fas fa-check-circle"></i>
-                                    </span>
-                                  )}
-                                </div>
                               ) : (
                                 "CS Official"
                               )}
                             </td>
                             <td>
                               {isOwnerVerified ? (
-                                <span className="status-badge verified"><i className="fas fa-check-circle"></i> Verified</span>
+                                <span className="status-badge verified"><i className="fas fa-check-circle"></i> Verified Agent</span>
                               ) : (
-                                <span className="status-badge unverified"><i className="fas fa-hourglass-half"></i> Unverified</span>
+                                <span className="status-badge unverified"><i className="fas fa-hourglass-half"></i> Unverified Agent</span>
+                              )}
+                            </td>
+                            <td>
+                              <div className="admin-action-btns">
+                                <button 
+                                  onClick={() => handleTogglePropertyVerificationAll(p.id, isVerified)}
+                                  disabled={actionLoading !== null}
+                                  className={isVerified ? "reject-btn" : "approve-btn"}
+                                  style={{ minWidth: "120px" }}
+                                >
+                                  {actionLoading === p.id ? "Updating..." : (isVerified ? "Revoke Approval" : "Approve Listing")}
+                                </button>
+                                <button 
+                                  onClick={() => handleDeletePropertyAll(p.id)}
+                                  disabled={actionLoading !== null}
+                                  className="reject-btn"
+                                >
+                                  {actionLoading === p.id ? "Deleting..." : "Delete"}
+                                </button>
+                              </div>
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* 5. ROOMMATE LISTINGS DIRECTORY TAB */}
+          {activeTab === "roommates" && (
+            <div className="admin-card">
+              <h2>
+                <i className="fas fa-user-friends"></i> Roommate Listings Directory{" "}
+                <span style={{ fontSize: "0.85rem", fontWeight: "600", color: "#065f46", background: "#ecfdf5", padding: "4px 10px", borderRadius: "12px", marginLeft: "8px" }}>
+                  {verifiedRoommatesCount} Verified / {allRoommateListings.length} Total
+                </span>
+              </h2>
+              {allRoommateListings.length === 0 ? (
+                <div className="no-data-text">No listed roommate spaces found.</div>
+              ) : filteredAllRoommates.length === 0 ? (
+                <div className="no-data-text">No matching roommate listings found.</div>
+              ) : (
+                <div className="admin-table-wrapper">
+                  <table className="admin-table">
+                    <thead>
+                      <tr>
+                        <th>Room Details</th>
+                        <th>Type</th>
+                        <th>Shared Rent / Budget</th>
+                        <th>University & Location</th>
+                        <th>Listed By Student</th>
+                        <th>Verification Status</th>
+                        <th>Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {filteredAllRoommates.map((p) => {
+                        const isVerified = p.isVerified || false;
+                        const isStudentVerified = p.student?.isVerified || false;
+                        return (
+                            <tr key={p.id}>
+                              <td>
+                                {(() => {
+                                  const mediaUrl = p.images?.[0] || "https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?ixlib=rb-4.0.3";
+                                  const isVideo = mediaUrl.match(/\.(mp4|webm|ogg|mov|mkv)(\?.*)?$/i);
+                                  return (
+                                    <div className="property-preview-cell">
+                                      <div style={{ position: "relative", width: "42px", height: "42px", borderRadius: "8px", overflow: "hidden", flexShrink: 0 }}>
+                                        {isVideo ? (
+                                          <video 
+                                            src={mediaUrl} 
+                                            className="property-preview-img"
+                                            muted
+                                            playsInline
+                                            preload="metadata"
+                                            style={{ width: "100%", height: "100%", objectFit: "cover" }}
+                                          />
+                                        ) : (
+                                          <img 
+                                            src={mediaUrl} 
+                                            alt={p.title} 
+                                            className="property-preview-img"
+                                            style={{ width: "100%", height: "100%", objectFit: "cover" }}
+                                          />
+                                        )}
+                                        {isVideo && (
+                                          <span style={{
+                                            position: "absolute",
+                                            bottom: "2px",
+                                            right: "2px",
+                                            background: "rgba(0,0,0,0.7)",
+                                            color: "#fff",
+                                            fontSize: "8px",
+                                            borderRadius: "3px",
+                                            padding: "1px 3px",
+                                            lineHeight: 1,
+                                          }}>
+                                            ▶
+                                          </span>
+                                        )}
+                                      </div>
+                                      <span className="property-preview-title">{p.title}</span>
+                                    </div>
+                                  );
+                                })()}
+                              </td>
+                            <td>{p.hostelType || "Bedsitter"}</td>
+                            <td>
+                              <strong style={{ fontSize: "0.95rem", color: "rgb(2, 53, 28)" }}>
+                                ₦{p.price.toLocaleString()}
+                                <span style={{ fontSize: "0.75rem", color: "#666", fontWeight: "normal" }}> / yr</span>
+                              </strong>
+                              {p.roommateGenderPreference && (
+                                <div style={{ fontSize: "0.75rem", color: "#065f46", background: "#ecfdf5", padding: "2px 6px", borderRadius: "4px", display: "inline-block", marginTop: "3px" }}>
+                                  Prefers: {p.roommateGenderPreference}
+                                </div>
+                              )}
+                            </td>
+                            <td>
+                              <div>{p.location}</div>
+                              <div style={{ color: "#666", fontSize: "12px" }}>Near {p.university} ({p.distance})</div>
+                            </td>
+                            <td>
+                              {p.student ? (
+                                <div>
+                                  <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                                    <strong>{p.student.fullName || (p.student.username ? `@${p.student.username}` : "Student")}</strong>
+                                    {isStudentVerified && (
+                                      <span style={{ color: "#2e7d32" }} title="Verified Student">
+                                        <i className="fas fa-check-circle"></i>
+                                      </span>
+                                    )}
+                                  </div>
+                                  <div style={{ fontSize: "12px", color: "#666" }}>
+                                    {p.student.username ? `@${p.student.username}` : "Student Profile"}
+                                  </div>
+                                </div>
+                              ) : (
+                                "Student Space"
+                              )}
+                            </td>
+                            <td>
+                              {isStudentVerified ? (
+                                <span className="status-badge verified"><i className="fas fa-check-circle"></i> Verified Student</span>
+                              ) : (
+                                <span className="status-badge unverified"><i className="fas fa-hourglass-half"></i> Unverified Student</span>
                               )}
                             </td>
                             <td>
