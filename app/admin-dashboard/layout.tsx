@@ -64,6 +64,11 @@ function AdminSidebarWrapper({
             </Link>
           </li>
           <li>
+            <Link href="/admin-dashboard?tab=broadcast" className={activeTab === "broadcast" ? "active" : ""}>
+              <i className="fas fa-paper-plane"></i> Broadcast Emails
+            </Link>
+          </li>
+          <li>
             <Link href="/admin-dashboard?tab=activity-logs" className={activeTab === "activity-logs" ? "active" : ""}>
               <i className="fas fa-history"></i> Agent Activity Logs
             </Link>
@@ -71,11 +76,6 @@ function AdminSidebarWrapper({
           <li style={{ marginTop: "20px", borderTop: "1px solid rgba(255, 255, 255, 0.1)", paddingTop: "10px" }}>
             <Link href="/">
               <i className="fas fa-globe"></i> View Explore Site
-            </Link>
-          </li>
-          <li>
-            <Link href="/landing">
-              <i className="fas fa-home"></i> View Landing Page
             </Link>
           </li>
         </ul>

@@ -9,10 +9,75 @@ import {
   deletePropertyByAdmin,
   deleteUserByAdmin,
   getAdminAnalyticsData,
-  getAgentActivityLogs
+  getAgentActivityLogs,
+  getBroadcastAudienceStats,
+  sendBroadcastEmailAction
 } from "@/app/actions/admin";
 import { getPendingReports, moderateReport } from "@/app/actions/reports";
 import Chart from "chart.js/auto";
+
+const BROADCAST_TEMPLATES = [
+  {
+    id: "custom",
+    name: "✏️ Custom Blank Message",
+    audience: "ALL" as const,
+    subject: "",
+    headline: "",
+    message: "",
+    ctaText: "",
+    ctaUrl: "",
+  },
+  {
+    id: "new_session_hostels",
+    name: "🎒 New Academic Session & Hostels Alert",
+    audience: "STUDENTS" as const,
+    subject: "Find Verified Off-Campus Hostels for the New Academic Session - Campus Tent",
+    headline: "Verified Student Hostels & Bedsitters Now Available",
+    message: "Dear Student,\n\nAs the new academic session begins, hundreds of verified off-campus hostels, bedsitters, and self-contain apartments are now live on Campus Tent.\n\nBrowse verified listings near your institution with direct landlord contacts, transparent fee breakdowns, and zero hidden inspection charges.\n\nStart your search early to secure the best rooms near your school gate!",
+    ctaText: "Explore Verified Hostels",
+    ctaUrl: "https://campustent.com/explore",
+  },
+  {
+    id: "roommate_matching",
+    name: "🤝 Split Rent & Roommate Finder Announcement",
+    audience: "STUDENTS" as const,
+    subject: "Split Rent Costs: Find Compatible Student Roommates on Campus Tent",
+    headline: "Cut Your Housing Expenses in Half",
+    message: "Hello Student,\n\nLooking for a study-friendly roommate or want to list a spare bed in your room to split rent?\n\nCampus Tent Roommate Finder connects verified university students with compatible peers based on lifestyle habits, budget, department, and school.\n\nPost your roommate space today or find your ideal roommate in minutes!",
+    ctaText: "Find Roommates Now",
+    ctaUrl: "https://campustent.com/roommates",
+  },
+  {
+    id: "agent_listings_boost",
+    name: "🏢 Landlords & Agents: Upload Available Hostels",
+    audience: "AGENTS" as const,
+    subject: "Notice to Agents & Landlords: Upload Available Hostels Before School Resumes",
+    headline: "Maximize Your Occupancy with Campus Tent",
+    message: "Hello Valued Partner,\n\nStudent search activity on Campus Tent has increased significantly this week. If you have vacant self-contain rooms, bedsitters, or flats, make sure they are listed and active.\n\nEnsure your profile documents are verified to receive the Verified Partner badge and get top priority placement in search results.",
+    ctaText: "Go to Agent Dashboard",
+    ctaUrl: "https://campustent.com/agent-dashboard/add-property",
+  },
+  {
+    id: "safety_notice",
+    name: "🛡️ Important Tenant Safety Guidelines",
+    audience: "ALL" as const,
+    subject: "Important Safety Notice: Protect Yourself While Inspecting Hostels",
+    headline: "Campus Tent Safety & Anti-Fraud Guidelines",
+    message: "Hello Campus Tent Member,\n\nYour security and peace of mind are our highest priorities. Please remember these essential safety precautions:\n\n1. Always inspect properties during daylight hours and inform a coursemate or friend.\n2. Never make payments or rent transfers until you have physically inspected the property and verified ownership.\n3. Look for the green verified checkmark on listings.\n\nReport any suspicious listing or contact immediately using the in-app Report button.",
+    ctaText: "Read Tenant Guide",
+    ctaUrl: "https://campustent.com/tenant-guide",
+  },
+  {
+    id: "maintenance",
+    name: "⚙️ Scheduled System Maintenance Notice",
+    audience: "ALL" as const,
+    subject: "Notice: Scheduled System Maintenance & Performance Upgrades",
+    headline: "Campus Tent Platform Infrastructure Upgrades",
+    message: "Dear Campus Tent User,\n\nWe will be performing a scheduled infrastructure upgrade to improve media upload speed, real-time messaging, and search performance.\n\nDuring this brief window, you may experience momentary delays. We apologize for any inconvenience as we work to bring you an even better accommodation platform.",
+    ctaText: "Visit Campus Tent",
+    ctaUrl: "https://campustent.com",
+  },
+];
 
 function AdminDashboardContent() {
   const searchParams = useSearchParams();
@@ -44,6 +109,37 @@ function AdminDashboardContent() {
   const chartInstancesRef = useRef<Chart[]>([]);
   const [activePreviewDoc, setActivePreviewDoc] = useState<{ url: string; title: string } | null>(null);
 
+  // Broadcast Email States
+  const [broadcastAudience, setBroadcastAudience] = useState<"ALL" | "STUDENTS" | "AGENTS" | "VERIFIED_STUDENTS" | "VERIFIED_AGENTS">("ALL");
+  const [broadcastSubject, setBroadcastSubject] = useState("");
+  const [broadcastHeadline, setBroadcastHeadline] = useState("");
+  const [broadcastMessage, setBroadcastMessage] = useState("");
+  const [broadcastCtaText, setBroadcastCtaText] = useState("");
+  const [broadcastCtaUrl, setBroadcastCtaUrl] = useState("");
+  const [broadcastTemplate, setBroadcastTemplate] = useState("custom");
+  const [broadcastSending, setBroadcastSending] = useState(false);
+  const [broadcastTestSending, setBroadcastTestSending] = useState(false);
+  const [broadcastResult, setBroadcastResult] = useState<{
+    success: boolean;
+    isTest?: boolean;
+    testRecipient?: string;
+    totalTargeted?: number;
+    sentCount?: number;
+    failedCount?: number;
+    message?: string;
+    errors?: string[];
+  } | null>(null);
+  const [broadcastStats, setBroadcastStats] = useState<{
+    all: number;
+    students: number;
+    agents: number;
+    verifiedStudents: number;
+    verifiedAgents: number;
+  }>({ all: 0, students: 0, agents: 0, verifiedStudents: 0, verifiedAgents: 0 });
+  const [adminEmail, setAdminEmail] = useState("");
+  const [showPreviewModal, setShowPreviewModal] = useState(false);
+  const [showConfirmModal, setShowConfirmModal] = useState(false);
+
   const fetchQueues = async () => {
     setLoading(true);
     setError("");
@@ -73,7 +169,84 @@ function AdminDashboardContent() {
       setActivityLogs(activityRes.logs || []);
     }
 
+    const broadcastStatsRes = await getBroadcastAudienceStats();
+    if (broadcastStatsRes.success && broadcastStatsRes.stats) {
+      setBroadcastStats(broadcastStatsRes.stats);
+      if (broadcastStatsRes.adminEmail) {
+        setAdminEmail(broadcastStatsRes.adminEmail);
+      }
+    }
+
     setLoading(false);
+  };
+
+  const handleSelectTemplate = (templateId: string) => {
+    setBroadcastTemplate(templateId);
+    const tmpl = BROADCAST_TEMPLATES.find((t) => t.id === templateId);
+    if (tmpl) {
+      if (tmpl.id !== "custom") {
+        setBroadcastAudience(tmpl.audience);
+        setBroadcastSubject(tmpl.subject);
+        setBroadcastHeadline(tmpl.headline);
+        setBroadcastMessage(tmpl.message);
+        setBroadcastCtaText(tmpl.ctaText);
+        setBroadcastCtaUrl(tmpl.ctaUrl);
+      }
+    }
+  };
+
+  const handleSendTestEmail = async () => {
+    if (!broadcastSubject.trim()) {
+      alert("Please enter an email subject before sending a test.");
+      return;
+    }
+    if (!broadcastMessage.trim()) {
+      alert("Please enter email message content before sending a test.");
+      return;
+    }
+
+    setBroadcastTestSending(true);
+    setBroadcastResult(null);
+    const res = await sendBroadcastEmailAction({
+      audience: broadcastAudience,
+      subject: broadcastSubject,
+      headline: broadcastHeadline,
+      message: broadcastMessage,
+      ctaText: broadcastCtaText,
+      ctaUrl: broadcastCtaUrl,
+      sendTestOnly: true,
+      testEmail: adminEmail,
+    });
+
+    setBroadcastTestSending(false);
+    if (res.success) {
+      setBroadcastResult(res);
+    } else {
+      alert(res.error || "Failed to send test email.");
+    }
+  };
+
+  const handleSendBroadcast = async () => {
+    setShowConfirmModal(false);
+    setBroadcastSending(true);
+    setBroadcastResult(null);
+
+    const res = await sendBroadcastEmailAction({
+      audience: broadcastAudience,
+      subject: broadcastSubject,
+      headline: broadcastHeadline,
+      message: broadcastMessage,
+      ctaText: broadcastCtaText,
+      ctaUrl: broadcastCtaUrl,
+      sendTestOnly: false,
+    });
+
+    setBroadcastSending(false);
+    if (res.success) {
+      setBroadcastResult(res);
+    } else {
+      alert(res.error || "Failed to send broadcast email.");
+    }
   };
 
   const handleModerateReport = async (reportId: string, action: "DISMISS" | "RESOLVE", deleteListing: boolean = false) => {
@@ -655,47 +828,49 @@ function AdminDashboardContent() {
       </div>
 
       {/* Dynamic Directory Search Bar */}
-      <div style={{ marginBottom: "25px", display: "flex", gap: "10px" }}>
-        <div style={{ position: "relative", flex: 1 }}>
-          <i className="fas fa-search" style={{ position: "absolute", left: "15px", top: "50%", transform: "translateY(-50%)", color: "#888" }}></i>
-          <input
-            type="text"
-            placeholder={
-              activeTab === "students" 
-                ? "Search students by name, username, email, or phone..." 
-                : activeTab === "agents" 
-                  ? "Search agents by name, email, or phone..." 
-                  : activeTab === "properties" 
-                    ? "Search hostel properties by title, location, school, or agent..."
-                    : activeTab === "roommates"
-                      ? "Search roommate spaces by title, location, school, or student..."
-                      : activeTab === "activity-logs"
-                        ? "Search activity logs by agent name, email, property title..."
-                        : "Search verification queues..."
-            }
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            style={{
-              width: "100%",
-              padding: "12px 15px 12px 40px",
-              borderRadius: "8px",
-              border: "1px solid #eaeaea",
-              fontSize: "14px",
-              outline: "none",
-              boxShadow: "0 2px 8px rgba(0,0,0,0.01)"
-            }}
-          />
+      {activeTab !== "broadcast" && activeTab !== "analytics" && (
+        <div style={{ marginBottom: "25px", display: "flex", gap: "10px" }}>
+          <div style={{ position: "relative", flex: 1 }}>
+            <i className="fas fa-search" style={{ position: "absolute", left: "15px", top: "50%", transform: "translateY(-50%)", color: "#888" }}></i>
+            <input
+              type="text"
+              placeholder={
+                activeTab === "students" 
+                  ? "Search students by name, username, email, or phone..." 
+                  : activeTab === "agents" 
+                    ? "Search agents by name, email, or phone..." 
+                    : activeTab === "properties" 
+                      ? "Search hostel properties by title, location, school, or agent..."
+                      : activeTab === "roommates"
+                        ? "Search roommate spaces by title, location, school, or student..."
+                        : activeTab === "activity-logs"
+                          ? "Search activity logs by agent name, email, property title..."
+                          : "Search verification queues..."
+              }
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              style={{
+                width: "100%",
+                padding: "12px 15px 12px 40px",
+                borderRadius: "8px",
+                border: "1px solid #eaeaea",
+                fontSize: "14px",
+                outline: "none",
+                boxShadow: "0 2px 8px rgba(0,0,0,0.01)"
+              }}
+            />
+          </div>
+          {searchQuery && (
+            <button 
+              onClick={() => setSearchQuery("")}
+              className="reject-btn"
+              style={{ borderRadius: "8px", display: "flex", alignItems: "center", gap: "5px" }}
+            >
+              Clear
+            </button>
+          )}
         </div>
-        {searchQuery && (
-          <button 
-            onClick={() => setSearchQuery("")}
-            className="reject-btn"
-            style={{ borderRadius: "8px", display: "flex", alignItems: "center", gap: "5px" }}
-          >
-            Clear
-          </button>
-        )}
-      </div>
+      )}
 
       {loading ? (
         <div className="no-data-text">
@@ -2002,7 +2177,641 @@ function AdminDashboardContent() {
               )}
             </div>
           )}
+
+          {activeTab === "broadcast" && (
+            <div className="admin-card" style={{ maxWidth: "1000px", margin: "0 auto" }}>
+              {/* Header */}
+              <div style={{ marginBottom: "24px", borderBottom: "1px solid #eaeaea", paddingBottom: "18px" }}>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", flexWrap: "wrap", gap: "12px" }}>
+                  <div>
+                    <h2 style={{ fontSize: "1.35rem", fontWeight: "800", color: "rgb(2, 53, 28)", margin: "0 0 6px 0", display: "flex", alignItems: "center", gap: "10px" }}>
+                      <i className="fas fa-paper-plane" style={{ color: "#059669" }}></i> Send Broadcast Announcements
+                    </h2>
+                    <p style={{ margin: 0, color: "#6b7280", fontSize: "0.88rem", lineHeight: "1.5" }}>
+                      Broadcast official platform announcements, alerts, and feature updates directly to registered students, landlords, or the entire Campus Tent community.
+                    </p>
+                  </div>
+                  <div style={{ background: "#ecfdf5", border: "1px solid #a7f3d0", padding: "8px 14px", borderRadius: "10px", fontSize: "0.8rem", color: "#065f46", fontWeight: "600", display: "flex", alignItems: "center", gap: "8px" }}>
+                    <i className="fas fa-envelope-open-text" style={{ fontSize: "1rem" }}></i>
+                    <div>
+                      <div>From: <strong>noreply@campustent.com</strong></div>
+                      <div style={{ fontSize: "0.72rem", color: "#047857", fontWeight: "normal" }}>Reply-To: support@campustent.com</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Broadcast Result Feedback Banner */}
+              {broadcastResult && (
+                <div style={{
+                  marginBottom: "24px",
+                  padding: "16px 20px",
+                  borderRadius: "12px",
+                  backgroundColor: broadcastResult.success ? "#ecfdf5" : "#fef2f2",
+                  border: broadcastResult.success ? "1px solid #10b981" : "1px solid #ef4444",
+                  display: "flex",
+                  alignItems: "flex-start",
+                  gap: "14px"
+                }}>
+                  <div style={{
+                    color: broadcastResult.success ? "#059669" : "#dc2626",
+                    fontSize: "1.4rem",
+                    marginTop: "2px"
+                  }}>
+                    <i className={broadcastResult.success ? "fas fa-check-circle" : "fas fa-exclamation-circle"}></i>
+                  </div>
+                  <div style={{ flex: 1 }}>
+                    <h4 style={{ margin: "0 0 4px 0", color: broadcastResult.success ? "#065f46" : "#991b1b", fontSize: "1rem", fontWeight: "700" }}>
+                      {broadcastResult.isTest ? "Test Email Delivered Successfully! 🎉" : "Broadcast Completed! 🚀"}
+                    </h4>
+                    <p style={{ margin: 0, color: broadcastResult.success ? "#047857" : "#b91c1c", fontSize: "0.88rem", lineHeight: "1.4" }}>
+                      {broadcastResult.message || (
+                        broadcastResult.isTest 
+                          ? `A sample copy of this broadcast was sent to ${broadcastResult.testRecipient || adminEmail}. Check your inbox to review the layout!`
+                          : `Successfully dispatched to ${broadcastResult.sentCount} recipients (${broadcastResult.failedCount || 0} failed / bounced).`
+                      )}
+                    </p>
+                    {broadcastResult.errors && broadcastResult.errors.length > 0 && (
+                      <div style={{ marginTop: "10px", fontSize: "0.78rem", color: "#b91c1c", background: "rgba(255,255,255,0.7)", padding: "8px", borderRadius: "6px" }}>
+                        <strong>Delivery Notes:</strong>
+                        <ul style={{ margin: "4px 0 0 0", paddingLeft: "20px" }}>
+                          {broadcastResult.errors.map((err, i) => (
+                            <li key={i}>{err}</li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+                  </div>
+                  <button 
+                    onClick={() => setBroadcastResult(null)}
+                    style={{ background: "none", border: "none", color: "#6b7280", cursor: "pointer", fontSize: "1.1rem" }}
+                  >
+                    <i className="fas fa-times"></i>
+                  </button>
+                </div>
+              )}
+
+              {/* 1. Target Audience Selection */}
+              <div style={{ marginBottom: "22px" }}>
+                <label style={{ display: "block", fontSize: "0.9rem", fontWeight: "700", color: "rgb(2, 53, 28)", marginBottom: "8px" }}>
+                  <i className="fas fa-users"></i> 1. Select Target Audience
+                </label>
+                <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(170px, 1fr))", gap: "10px" }}>
+                  {[
+                    { id: "ALL", label: "All Users", count: broadcastStats.all, icon: "fas fa-globe", color: "#065f46", bg: "#ecfdf5" },
+                    { id: "STUDENTS", label: "All Students", count: broadcastStats.students, icon: "fas fa-user-graduate", color: "#1e40af", bg: "#eff6ff" },
+                    { id: "AGENTS", label: "All Agents", count: broadcastStats.agents, icon: "fas fa-user-tie", color: "#92400e", bg: "#fef3c7" },
+                    { id: "VERIFIED_STUDENTS", label: "Verified Students", count: broadcastStats.verifiedStudents, icon: "fas fa-user-check", color: "#047857", bg: "#d1fae5" },
+                    { id: "VERIFIED_AGENTS", label: "Verified Agents", count: broadcastStats.verifiedAgents, icon: "fas fa-shield-alt", color: "#4338ca", bg: "#e0e7ff" },
+                  ].map((aud) => {
+                    const isSelected = broadcastAudience === aud.id;
+                    return (
+                      <button
+                        key={aud.id}
+                        type="button"
+                        onClick={() => setBroadcastAudience(aud.id as any)}
+                        style={{
+                          padding: "12px 14px",
+                          borderRadius: "10px",
+                          border: isSelected ? `2px solid ${aud.color}` : "1px solid #e5e7eb",
+                          backgroundColor: isSelected ? aud.bg : "#ffffff",
+                          display: "flex",
+                          alignItems: "center",
+                          gap: "10px",
+                          cursor: "pointer",
+                          textAlign: "left",
+                          transition: "all 0.2s ease",
+                          boxShadow: isSelected ? "0 2px 8px rgba(0,0,0,0.06)" : "none"
+                        }}
+                      >
+                        <div style={{
+                          width: "36px",
+                          height: "36px",
+                          borderRadius: "8px",
+                          backgroundColor: isSelected ? aud.color : "#f3f4f6",
+                          color: isSelected ? "#ffffff" : "#6b7280",
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          fontSize: "1rem",
+                          flexShrink: 0
+                        }}>
+                          <i className={aud.icon}></i>
+                        </div>
+                        <div style={{ minWidth: 0 }}>
+                          <div style={{ fontSize: "0.85rem", fontWeight: "700", color: isSelected ? aud.color : "#374151", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                            {aud.label}
+                          </div>
+                          <div style={{ fontSize: "0.75rem", color: "#6b7280", fontWeight: "600" }}>
+                            {aud.count} recipients
+                          </div>
+                        </div>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* 2. Pre-made Announcement Templates */}
+              <div style={{ marginBottom: "22px" }}>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "8px" }}>
+                  <label style={{ fontSize: "0.9rem", fontWeight: "700", color: "rgb(2, 53, 28)" }}>
+                    <i className="fas fa-magic"></i> 2. Choose Quick Template (Optional)
+                  </label>
+                  <span style={{ fontSize: "0.78rem", color: "#6b7280" }}>Pre-fills subject, headline & message</span>
+                </div>
+                <select
+                  value={broadcastTemplate}
+                  onChange={(e) => handleSelectTemplate(e.target.value)}
+                  style={{
+                    width: "100%",
+                    padding: "10px 14px",
+                    borderRadius: "8px",
+                    border: "1px solid #d1d5db",
+                    fontSize: "0.9rem",
+                    backgroundColor: "#f9fafb",
+                    color: "#111827",
+                    cursor: "pointer",
+                    outline: "none"
+                  }}
+                >
+                  {BROADCAST_TEMPLATES.map((tmpl) => (
+                    <option key={tmpl.id} value={tmpl.id}>
+                      {tmpl.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              {/* 3. Composer Fields */}
+              <div style={{ display: "flex", flexDirection: "column", gap: "16px", marginBottom: "25px" }}>
+                {/* Subject */}
+                <div>
+                  <label style={{ display: "block", fontSize: "0.88rem", fontWeight: "700", color: "#374151", marginBottom: "6px" }}>
+                    Email Subject Line <span style={{ color: "#dc2626" }}>*</span>
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="e.g. 🎒 Verified Hostels & Bedsitters Live for New Academic Session!"
+                    value={broadcastSubject}
+                    onChange={(e) => setBroadcastSubject(e.target.value)}
+                    style={{
+                      width: "100%",
+                      padding: "12px 14px",
+                      borderRadius: "8px",
+                      border: "1px solid #d1d5db",
+                      fontSize: "0.95rem",
+                      fontWeight: "600",
+                      outline: "none",
+                      boxSizing: "border-box"
+                    }}
+                  />
+                </div>
+
+                {/* Headline */}
+                <div>
+                  <label style={{ display: "block", fontSize: "0.88rem", fontWeight: "700", color: "#374151", marginBottom: "6px" }}>
+                    Top Banner Sub-headline (Optional)
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="e.g. Secure verified accommodation near campus today"
+                    value={broadcastHeadline}
+                    onChange={(e) => setBroadcastHeadline(e.target.value)}
+                    style={{
+                      width: "100%",
+                      padding: "10px 14px",
+                      borderRadius: "8px",
+                      border: "1px solid #d1d5db",
+                      fontSize: "0.9rem",
+                      outline: "none",
+                      boxSizing: "border-box"
+                    }}
+                  />
+                </div>
+
+                {/* Message Body */}
+                <div>
+                  <label style={{ display: "block", fontSize: "0.88rem", fontWeight: "700", color: "#374151", marginBottom: "6px" }}>
+                    Message Content <span style={{ color: "#dc2626" }}>*</span>
+                  </label>
+                  <textarea
+                    rows={8}
+                    placeholder="Type your official announcement here... Use separate paragraphs for clean readability."
+                    value={broadcastMessage}
+                    onChange={(e) => setBroadcastMessage(e.target.value)}
+                    style={{
+                      width: "100%",
+                      padding: "12px 14px",
+                      borderRadius: "8px",
+                      border: "1px solid #d1d5db",
+                      fontSize: "0.92rem",
+                      lineHeight: "1.6",
+                      fontFamily: "inherit",
+                      outline: "none",
+                      boxSizing: "border-box",
+                      resize: "vertical"
+                    }}
+                  />
+                  <div style={{ fontSize: "0.75rem", color: "#6b7280", marginTop: "4px" }}>
+                    Tip: Recipients will receive a personalized greeting automatically with their full name or username.
+                  </div>
+                </div>
+
+                {/* Optional CTA Button Fields */}
+                <div style={{ background: "#f9fafb", border: "1px solid #e5e7eb", padding: "16px", borderRadius: "10px" }}>
+                  <div style={{ fontSize: "0.88rem", fontWeight: "700", color: "rgb(2, 53, 28)", marginBottom: "10px", display: "flex", alignItems: "center", gap: "6px" }}>
+                    <i className="fas fa-link"></i> Optional Action Button (Call-To-Action)
+                  </div>
+                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1.5fr", gap: "12px" }}>
+                    <div>
+                      <label style={{ display: "block", fontSize: "0.8rem", color: "#4b5563", marginBottom: "4px" }}>Button Text</label>
+                      <input
+                        type="text"
+                        placeholder="e.g. Explore Hostels"
+                        value={broadcastCtaText}
+                        onChange={(e) => setBroadcastCtaText(e.target.value)}
+                        style={{
+                          width: "100%",
+                          padding: "8px 12px",
+                          borderRadius: "6px",
+                          border: "1px solid #d1d5db",
+                          fontSize: "0.85rem",
+                          boxSizing: "border-box"
+                        }}
+                      />
+                    </div>
+                    <div>
+                      <label style={{ display: "block", fontSize: "0.8rem", color: "#4b5563", marginBottom: "4px" }}>Destination URL</label>
+                      <input
+                        type="text"
+                        placeholder="https://campustent.com/explore"
+                        value={broadcastCtaUrl}
+                        onChange={(e) => setBroadcastCtaUrl(e.target.value)}
+                        style={{
+                          width: "100%",
+                          padding: "8px 12px",
+                          borderRadius: "6px",
+                          border: "1px solid #d1d5db",
+                          fontSize: "0.85rem",
+                          boxSizing: "border-box"
+                        }}
+                      />
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* 4. Action Controls */}
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "12px", paddingTop: "15px", borderTop: "1px solid #eaeaea" }}>
+                <div style={{ display: "flex", gap: "10px", flexWrap: "wrap" }}>
+                  <button
+                    type="button"
+                    onClick={handleSendTestEmail}
+                    disabled={broadcastTestSending || broadcastSending}
+                    style={{
+                      padding: "10px 18px",
+                      borderRadius: "8px",
+                      border: "1px solid #d1d5db",
+                      backgroundColor: "#ffffff",
+                      color: "#374151",
+                      fontSize: "0.88rem",
+                      fontWeight: "600",
+                      cursor: "pointer",
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "8px",
+                      transition: "all 0.2s ease"
+                    }}
+                  >
+                    {broadcastTestSending ? (
+                      <><i className="fas fa-spinner fa-spin"></i> Sending Test...</>
+                    ) : (
+                      <><i className="fas fa-vial"></i> Send Test to Admin</>
+                    )}
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setShowPreviewModal(true)}
+                    style={{
+                      padding: "10px 18px",
+                      borderRadius: "8px",
+                      border: "1px solid #d1d5db",
+                      backgroundColor: "#ffffff",
+                      color: "#374151",
+                      fontSize: "0.88rem",
+                      fontWeight: "600",
+                      cursor: "pointer",
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "8px",
+                      transition: "all 0.2s ease"
+                    }}
+                  >
+                    <i className="fas fa-eye"></i> Preview Email Design
+                  </button>
+                </div>
+
+                <div>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (!broadcastSubject.trim()) {
+                        alert("Please enter an email subject.");
+                        return;
+                      }
+                      if (!broadcastMessage.trim()) {
+                        alert("Please enter message content.");
+                        return;
+                      }
+                      setShowConfirmModal(true);
+                    }}
+                    disabled={broadcastSending || broadcastTestSending}
+                    style={{
+                      padding: "12px 26px",
+                      borderRadius: "8px",
+                      border: "none",
+                      backgroundColor: "rgb(2, 53, 28)",
+                      color: "#ffffff",
+                      fontSize: "0.95rem",
+                      fontWeight: "700",
+                      cursor: "pointer",
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "10px",
+                      boxShadow: "0 4px 14px rgba(2, 53, 28, 0.25)",
+                      transition: "all 0.2s ease"
+                    }}
+                  >
+                    {broadcastSending ? (
+                      <><i className="fas fa-spinner fa-spin"></i> Broadcasting to Users...</>
+                    ) : (
+                      <>
+                        <i className="fas fa-paper-plane"></i>
+                        Broadcast to{" "}
+                        {broadcastAudience === "ALL"
+                          ? `${broadcastStats.all} Users`
+                          : broadcastAudience === "STUDENTS"
+                            ? `${broadcastStats.students} Students`
+                            : broadcastAudience === "AGENTS"
+                              ? `${broadcastStats.agents} Agents`
+                              : broadcastAudience === "VERIFIED_STUDENTS"
+                                ? `${broadcastStats.verifiedStudents} Verified Students`
+                                : `${broadcastStats.verifiedAgents} Verified Agents`}
+                      </>
+                    )}
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
         </>
+      )}
+
+      {/* Broadcast Live Visual Preview Modal */}
+      {showPreviewModal && (
+        <div 
+          onClick={() => setShowPreviewModal(false)}
+          style={{
+            position: "fixed",
+            top: 0,
+            left: 0,
+            width: "100vw",
+            height: "100vh",
+            backgroundColor: "rgba(0, 0, 0, 0.65)",
+            backdropFilter: "blur(4px)",
+            zIndex: 10000,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            padding: "20px"
+          }}
+        >
+          <div 
+            onClick={(e) => e.stopPropagation()}
+            style={{
+              backgroundColor: "#f4f7f6",
+              borderRadius: "16px",
+              width: "100%",
+              maxWidth: "680px",
+              maxHeight: "90vh",
+              display: "flex",
+              flexDirection: "column",
+              boxShadow: "0 24px 64px rgba(0,0,0,0.22)",
+              overflow: "hidden"
+            }}
+          >
+            {/* Modal Header */}
+            <div style={{ padding: "16px 24px", backgroundColor: "#ffffff", borderBottom: "1px solid #eaeaea", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+              <div>
+                <h3 style={{ margin: 0, color: "rgb(2, 53, 28)", fontSize: "1.1rem", fontWeight: "700" }}>
+                  <i className="fas fa-envelope"></i> Live Email Template Preview
+                </h3>
+                <div style={{ fontSize: "0.75rem", color: "#6b7280" }}>
+                  From: Campus Tent &lt;noreply@campustent.com&gt; • Subject: {broadcastSubject || "(Untitled Subject)"}
+                </div>
+              </div>
+              <button 
+                onClick={() => setShowPreviewModal(false)}
+                style={{ background: "none", border: "none", fontSize: "1.2rem", cursor: "pointer", color: "#666" }}
+              >
+                <i className="fas fa-times"></i>
+              </button>
+            </div>
+
+            {/* Email Canvas Preview */}
+            <div style={{ padding: "24px 20px", overflowY: "auto", flexGrow: 1 }}>
+              <div style={{ maxWidth: "560px", margin: "0 auto", backgroundColor: "#ffffff", borderRadius: "14px", overflow: "hidden", border: "1px solid #e5e7eb", boxShadow: "0 4px 20px rgba(0,0,0,0.04)" }}>
+                {/* Banner */}
+                <div style={{ backgroundColor: "rgb(2, 53, 28)", padding: "28px 24px", textAlign: "center" }}>
+                  <div style={{ fontSize: "22px", fontWeight: "800", color: "#ffffff", letterSpacing: "-0.5px" }}>
+                    ⛺ Campus Tent
+                  </div>
+                  <div style={{ color: "rgba(255, 255, 255, 0.85)", fontSize: "12px", marginTop: "3px" }}>
+                    Verified Student Accommodation & Roommates
+                  </div>
+                  {broadcastHeadline && (
+                    <div style={{ marginTop: "14px", paddingTop: "14px", borderTop: "1px solid rgba(255, 255, 255, 0.15)", color: "#fef08a", fontSize: "16px", fontWeight: "700" }}>
+                      {broadcastHeadline}
+                    </div>
+                  )}
+                </div>
+
+                {/* Content */}
+                <div style={{ padding: "28px 24px" }}>
+                  <p style={{ margin: "0 0 16px 0", color: "#111827", fontSize: "15px", fontWeight: "600" }}>
+                    Hello [Recipient Name],
+                  </p>
+                  <div style={{ color: "#374151", fontSize: "14px", lineHeight: "1.6", whiteSpace: "pre-line" }}>
+                    {broadcastMessage || "Your announcement message body will appear here..."}
+                  </div>
+
+                  {broadcastCtaText && broadcastCtaUrl && (
+                    <div style={{ margin: "24px 0", textAlign: "center" }}>
+                      <a
+                        href={broadcastCtaUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        style={{
+                          display: "inline-block",
+                          backgroundColor: "rgb(2, 53, 28)",
+                          color: "#ffffff",
+                          padding: "12px 24px",
+                          textDecoration: "none",
+                          borderRadius: "8px",
+                          fontWeight: "700",
+                          fontSize: "14px",
+                          boxShadow: "0 4px 12px rgba(2, 53, 28, 0.25)"
+                        }}
+                      >
+                        {broadcastCtaText}
+                      </a>
+                    </div>
+                  )}
+
+                  <div style={{ marginTop: "25px", paddingTop: "18px", borderTop: "1px solid #f3f4f6", color: "#6b7280", fontSize: "13px", lineHeight: "1.5" }}>
+                    Warm regards,<br/>
+                    <strong style={{ color: "rgb(2, 53, 28)" }}>The Campus Tent Team</strong><br/>
+                    <span style={{ color: "#059669" }}>campustent.com</span>
+                  </div>
+                </div>
+
+                {/* Footer */}
+                <div style={{ backgroundColor: "#f9fafb", padding: "18px 24px", textAlign: "center", borderTop: "1px solid #e5e7eb", color: "#9ca3af", fontSize: "11px", lineHeight: "1.5" }}>
+                  <p style={{ margin: "0 0 4px 0" }}>
+                    You are receiving this official communication as a registered member of Campus Tent.
+                  </p>
+                  <p style={{ margin: 0 }}>
+                    Questions or support? Reach us at support@campustent.com
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {/* Modal Footer */}
+            <div style={{ padding: "12px 24px", backgroundColor: "#ffffff", borderTop: "1px solid #eaeaea", display: "flex", justifyContent: "flex-end" }}>
+              <button 
+                onClick={() => setShowPreviewModal(false)}
+                style={{ backgroundColor: "rgb(2, 53, 28)", color: "white", padding: "8px 20px", borderRadius: "8px", border: "none", cursor: "pointer", fontSize: "0.9rem", fontWeight: "600" }}
+              >
+                Close Preview
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Broadcast Send Confirmation Modal */}
+      {showConfirmModal && (
+        <div 
+          onClick={() => setShowConfirmModal(false)}
+          style={{
+            position: "fixed",
+            top: 0,
+            left: 0,
+            width: "100vw",
+            height: "100vh",
+            backgroundColor: "rgba(0, 0, 0, 0.65)",
+            backdropFilter: "blur(4px)",
+            zIndex: 10000,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            padding: "20px"
+          }}
+        >
+          <div 
+            onClick={(e) => e.stopPropagation()}
+            style={{
+              backgroundColor: "white",
+              borderRadius: "16px",
+              width: "100%",
+              maxWidth: "500px",
+              padding: "24px",
+              boxShadow: "0 24px 64px rgba(0,0,0,0.22)",
+            }}
+          >
+            <div style={{ display: "flex", alignItems: "center", gap: "12px", marginBottom: "16px" }}>
+              <div style={{ width: "44px", height: "44px", borderRadius: "50%", backgroundColor: "#ecfdf5", color: "#059669", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "1.3rem" }}>
+                <i className="fas fa-paper-plane"></i>
+              </div>
+              <div>
+                <h3 style={{ margin: 0, color: "rgb(2, 53, 28)", fontSize: "1.2rem", fontWeight: "700" }}>
+                  Confirm Broadcast Dispatch
+                </h3>
+                <div style={{ fontSize: "0.8rem", color: "#6b7280" }}>
+                  Official Email Announcement via Resend
+                </div>
+              </div>
+            </div>
+
+            <div style={{ backgroundColor: "#f9fafb", padding: "14px", borderRadius: "10px", border: "1px solid #e5e7eb", marginBottom: "20px", fontSize: "0.88rem" }}>
+              <div style={{ marginBottom: "6px" }}>
+                <span style={{ color: "#6b7280" }}>Target Audience:</span>{" "}
+                <strong>
+                  {broadcastAudience === "ALL"
+                    ? `All Users (${broadcastStats.all} recipients)`
+                    : broadcastAudience === "STUDENTS"
+                      ? `All Students (${broadcastStats.students} recipients)`
+                      : broadcastAudience === "AGENTS"
+                        ? `All Agents (${broadcastStats.agents} recipients)`
+                        : broadcastAudience === "VERIFIED_STUDENTS"
+                          ? `Verified Students (${broadcastStats.verifiedStudents} recipients)`
+                          : `Verified Agents (${broadcastStats.verifiedAgents} recipients)`}
+                </strong>
+              </div>
+              <div style={{ marginBottom: "6px" }}>
+                <span style={{ color: "#6b7280" }}>Subject:</span>{" "}
+                <strong>{broadcastSubject}</strong>
+              </div>
+              <div>
+                <span style={{ color: "#6b7280" }}>Sender:</span>{" "}
+                <span>Campus Tent &lt;noreply@campustent.com&gt;</span>
+              </div>
+            </div>
+
+            <p style={{ fontSize: "0.85rem", color: "#6b7280", margin: "0 0 20px 0", lineHeight: "1.5" }}>
+              Are you sure you want to broadcast this announcement email to all targeted users immediately?
+            </p>
+
+            <div style={{ display: "flex", justifyContent: "flex-end", gap: "10px" }}>
+              <button
+                type="button"
+                onClick={() => setShowConfirmModal(false)}
+                style={{
+                  padding: "10px 18px",
+                  borderRadius: "8px",
+                  border: "1px solid #d1d5db",
+                  backgroundColor: "#ffffff",
+                  color: "#374151",
+                  fontSize: "0.9rem",
+                  fontWeight: "600",
+                  cursor: "pointer"
+                }}
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleSendBroadcast}
+                style={{
+                  padding: "10px 22px",
+                  borderRadius: "8px",
+                  border: "none",
+                  backgroundColor: "rgb(2, 53, 28)",
+                  color: "#ffffff",
+                  fontSize: "0.9rem",
+                  fontWeight: "700",
+                  cursor: "pointer",
+                  boxShadow: "0 4px 12px rgba(2, 53, 28, 0.2)"
+                }}
+              >
+                Yes, Send Broadcast Now 🚀
+              </button>
+            </div>
+          </div>
+        </div>
       )}
 
       {activePreviewDoc && (
