@@ -102,13 +102,14 @@ function ApartmentDetailsContent() {
   const [isCheckingAvailability, setIsCheckingAvailability] = useState(false);
   const [isPayingInspection, setIsPayingInspection] = useState(false);
 
-  // Dual Payment Modal States (Paystack + Direct Bank Transfer)
+  // Dual Payment Modal States (Direct Bank Transfer First, Paystack Second)
   const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
-  const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<"paystack" | "bank_transfer">("paystack");
+  const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<"bank_transfer" | "paystack">("bank_transfer");
   const [bankSenderName, setBankSenderName] = useState("");
   const [bankSenderBank, setBankSenderBank] = useState("");
   const [bankTransferRef, setBankTransferRef] = useState("");
   const [isSubmittingBankTransfer, setIsSubmittingBankTransfer] = useState(false);
+  const [copiedAccountNum, setCopiedAccountNum] = useState(false);
 
   // Listing Report States
   const [isReportModalOpen, setIsReportModalOpen] = useState(false);
@@ -724,15 +725,8 @@ function ApartmentDetailsContent() {
               </div>
 
               <div className="payment-modal-body">
-                {/* Tab selector */}
+                {/* Tab selector (Direct Bank Transfer First, Paystack Second) */}
                 <div className="payment-method-selector-tabs">
-                  <button
-                    type="button"
-                    className={`payment-method-selector-tab ${selectedPaymentMethod === "paystack" ? "active" : ""}`}
-                    onClick={() => setSelectedPaymentMethod("paystack")}
-                  >
-                    <i className="fas fa-credit-card"></i> Online Paystack
-                  </button>
                   <button
                     type="button"
                     className={`payment-method-selector-tab ${selectedPaymentMethod === "bank_transfer" ? "active" : ""}`}
@@ -740,49 +734,48 @@ function ApartmentDetailsContent() {
                   >
                     <i className="fas fa-university"></i> Direct Bank Transfer
                   </button>
+                  <button
+                    type="button"
+                    className={`payment-method-selector-tab ${selectedPaymentMethod === "paystack" ? "active" : ""}`}
+                    onClick={() => setSelectedPaymentMethod("paystack")}
+                  >
+                    <i className="fas fa-credit-card"></i> Online Paystack
+                  </button>
                 </div>
 
-                {selectedPaymentMethod === "paystack" ? (
-                  <div className="paystack-option-container">
-                    <p className="paystack-option-info">
-                      Pay securely online via Debit Cards (Mastercard, Visa, Verve), USSD, Apple Pay, or Internet Banking.
-                    </p>
-                    <div className="paystack-channels-badge">
-                      <span className="paystack-channel-pill"><i className="fas fa-credit-card"></i> ATM Cards</span>
-                      <span className="paystack-channel-pill"><i className="fas fa-mobile-alt"></i> USSD</span>
-                      <span className="paystack-channel-pill"><i className="fas fa-building"></i> Bank Transfer</span>
-                    </div>
-                    <button
-                      type="button"
-                      className="paystack-launch-btn"
-                      onClick={handleLaunchPaystack}
-                      disabled={isPayingInspection}
-                    >
-                      {isPayingInspection ? (
-                        <><i className="fas fa-spinner fa-spin"></i> Initializing Paystack...</>
-                      ) : (
-                        <><i className="fas fa-lock"></i> Proceed to Paystack (₦7,500)</>
-                      )}
-                    </button>
-                  </div>
-                ) : (
+                {selectedPaymentMethod === "bank_transfer" ? (
                   <form onSubmit={handleConfirmBankTransfer} className="bank-transfer-form">
                     <div className="bank-transfer-instructions">
                       <div className="bank-transfer-instructions-title">
-                        <i className="fas fa-info-circle"></i> Campus Tent Bank Details
+                        <i className="fas fa-info-circle"></i> Campus Tent Official Bank Account
                       </div>
                       <div className="bank-account-details-list">
                         <div className="bank-account-item">
                           <span className="bank-account-label">Bank:</span>
-                          <span className="bank-account-val">Moniepoint MFB</span>
+                          <span className="bank-account-val">OPay</span>
                         </div>
                         <div className="bank-account-item">
                           <span className="bank-account-label">Account Number:</span>
-                          <span className="bank-account-val">6500123456</span>
+                          <span className="bank-account-val">
+                            610 554 8915
+                            <button
+                              type="button"
+                              className="bank-copy-btn"
+                              onClick={() => {
+                                navigator.clipboard.writeText("6105548915");
+                                setCopiedAccountNum(true);
+                                setTimeout(() => setCopiedAccountNum(false), 2000);
+                              }}
+                              title="Copy account number"
+                            >
+                              <i className={copiedAccountNum ? "fas fa-check text-green" : "fas fa-copy"}></i>
+                              {copiedAccountNum ? "Copied" : "Copy"}
+                            </button>
+                          </span>
                         </div>
                         <div className="bank-account-item">
                           <span className="bank-account-label">Account Name:</span>
-                          <span className="bank-account-val">Campus Tent Services</span>
+                          <span className="bank-account-val">OREZIME DESTINY ABED</span>
                         </div>
                         <div className="bank-account-item">
                           <span className="bank-account-label">Amount:</span>
@@ -796,7 +789,7 @@ function ApartmentDetailsContent() {
                       <input
                         type="text"
                         className="bank-input-field"
-                        placeholder="e.g. John Doe (name on bank account)"
+                        placeholder="e.g. John Doe (name on your bank account)"
                         value={bankSenderName}
                         onChange={(e) => setBankSenderName(e.target.value)}
                         required
@@ -808,7 +801,7 @@ function ApartmentDetailsContent() {
                       <input
                         type="text"
                         className="bank-input-field"
-                        placeholder="e.g. GTBank, Kuda, OPay, Zenith, Palmpay"
+                        placeholder="e.g. GTBank, Kuda, OPay, Zenith, Palmpay, Access"
                         value={bankSenderBank}
                         onChange={(e) => setBankSenderBank(e.target.value)}
                         required
@@ -838,6 +831,29 @@ function ApartmentDetailsContent() {
                       )}
                     </button>
                   </form>
+                ) : (
+                  <div className="paystack-option-container">
+                    <p className="paystack-option-info">
+                      Pay securely online via Debit Cards (Mastercard, Visa, Verve), USSD, Apple Pay, or Internet Banking.
+                    </p>
+                    <div className="paystack-channels-badge">
+                      <span className="paystack-channel-pill"><i className="fas fa-credit-card"></i> ATM Cards</span>
+                      <span className="paystack-channel-pill"><i className="fas fa-mobile-alt"></i> USSD</span>
+                      <span className="paystack-channel-pill"><i className="fas fa-building"></i> Bank Transfer</span>
+                    </div>
+                    <button
+                      type="button"
+                      className="paystack-launch-btn"
+                      onClick={handleLaunchPaystack}
+                      disabled={isPayingInspection}
+                    >
+                      {isPayingInspection ? (
+                        <><i className="fas fa-spinner fa-spin"></i> Initializing Paystack...</>
+                      ) : (
+                        <><i className="fas fa-lock"></i> Proceed to Paystack (₦7,500)</>
+                      )}
+                    </button>
+                  </div>
                 )}
               </div>
             </div>
