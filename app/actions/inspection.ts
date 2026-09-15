@@ -8,7 +8,7 @@ import { triggerPusherEvent } from "@/lib/pusher";
 import { randomUUID } from "crypto";
 
 const BASE_URL = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
-export const AVAILABILITY_EXPIRATION_MS = 24 * 60 * 60 * 1000; // 24 hours
+const AVAILABILITY_EXPIRATION_MS = 24 * 60 * 60 * 1000; // 24 hours
 
 /**
  * 1. Query Property Availability

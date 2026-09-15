@@ -7,6 +7,9 @@ import {
   rejectBankTransferPayment,
 } from "@/app/actions/admin";
 
+import ApprovePaymentModal from "./modals/ApprovePaymentModal";
+import RejectPaymentModal from "./modals/RejectPaymentModal";
+
 export interface PaymentRecord {
   id: string;
   amount: number;
@@ -78,6 +81,8 @@ export default function PaymentsTab({
   onRefresh,
 }: PaymentsTabProps) {
   const [selectedPayment, setSelectedPayment] = useState<PaymentRecord | null>(null);
+  const [approveModalPayment, setApproveModalPayment] = useState<PaymentRecord | null>(null);
+  const [rejectModalPayment, setRejectModalPayment] = useState<PaymentRecord | null>(null);
   const [copiedRef, setCopiedRef] = useState<string | null>(null);
   const [actionLoading, setActionLoading] = useState(false);
   const [actionMsg, setActionMsg] = useState("");
@@ -89,22 +94,25 @@ export default function PaymentsTab({
     setTimeout(() => setCopiedRef(null), 2000);
   };
 
-  const handleApproveBankTransfer = async (paymentId: string) => {
-    if (!window.confirm("Confirm that this ₦7,500 bank transfer has been received in the Campus Tent account? This will send confirmation emails to the student and agent and unlock physical tour booking.")) {
-      return;
-    }
+  const handleInitiateApprove = (payment: PaymentRecord) => {
+    setApproveModalPayment(payment);
+  };
+
+  const handleConfirmApprove = async () => {
+    if (!approveModalPayment) return;
+    const paymentId = approveModalPayment.id;
     setActionLoading(true);
     setActionMsg("");
     try {
       const res = await approveBankTransferPayment(paymentId);
       if (res.success) {
-        alert("Direct bank transfer successfully approved! Confirmation emails have been sent to both student and agent.");
         if (selectedPayment && selectedPayment.id === paymentId) {
           setSelectedPayment({
             ...selectedPayment,
             status: "PAID",
           });
         }
+        setApproveModalPayment(null);
         if (onRefresh) onRefresh();
       } else {
         alert(`Approval failed: ${res.error}`);
@@ -116,22 +124,25 @@ export default function PaymentsTab({
     }
   };
 
-  const handleRejectBankTransfer = async (paymentId: string) => {
-    const reason = window.prompt("Enter the rejection reason (e.g. Deposit not found in bank statement, incorrect amount, etc.):");
-    if (!reason || reason.trim() === "") return;
+  const handleInitiateReject = (payment: PaymentRecord) => {
+    setRejectModalPayment(payment);
+  };
 
+  const handleConfirmReject = async (reason: string) => {
+    if (!rejectModalPayment) return;
+    const paymentId = rejectModalPayment.id;
     setActionLoading(true);
     try {
-      const res = await rejectBankTransferPayment(paymentId, reason.trim());
+      const res = await rejectBankTransferPayment(paymentId, reason);
       if (res.success) {
-        alert("Bank transfer rejected. Student has been notified via email.");
         if (selectedPayment && selectedPayment.id === paymentId) {
           setSelectedPayment({
             ...selectedPayment,
             status: "REJECTED",
-            refundReason: reason.trim(),
+            refundReason: reason,
           });
         }
+        setRejectModalPayment(null);
         if (onRefresh) onRefresh();
       } else {
         alert(`Rejection failed: ${res.error}`);
@@ -546,33 +557,31 @@ export default function PaymentsTab({
 
                       {/* Action */}
                       <td>
-                        <div style={{ display: "flex", gap: "6px", alignItems: "center" }}>
+                        <div className="payment-table-actions-group">
                           {isPendingApproval && (
                             <>
                               <button
-                                onClick={() => handleApproveBankTransfer(payment.id)}
+                                onClick={() => handleInitiateApprove(payment)}
                                 disabled={actionLoading}
-                                className="verify-btn"
-                                title="Confirm bank deposit & send emails"
-                                style={{ padding: "4px 8px", fontSize: "11px" }}
+                                className="payment-btn-approve"
+                                title="Approve bank transfer & send confirmation emails"
                               >
                                 <i className="fas fa-check"></i> Approve
                               </button>
                               <button
-                                onClick={() => handleRejectBankTransfer(payment.id)}
+                                onClick={() => handleInitiateReject(payment)}
                                 disabled={actionLoading}
-                                className="delete-user-btn"
-                                title="Reject transfer"
-                                style={{ padding: "4px 8px", fontSize: "11px" }}
+                                className="payment-btn-reject"
+                                title="Reject unverified bank transfer"
                               >
-                                <i className="fas fa-times"></i>
+                                <i className="fas fa-times"></i> Reject
                               </button>
                             </>
                           )}
                           <button
                             onClick={() => setSelectedPayment(payment)}
-                            className="verify-btn payment-receipt-action-btn"
-                            style={isPendingApproval ? { background: "#f8fafc", color: "#334155", border: "1px solid #cbd5e1" } : {}}
+                            className="payment-btn-details"
+                            title="View detailed receipt & split breakdown"
                           >
                             <i className="fas fa-file-invoice"></i> Details
                           </button>
@@ -844,18 +853,16 @@ export default function PaymentsTab({
                 {selectedPayment.status === "PENDING_ADMIN_APPROVAL" && (
                   <>
                     <button
-                      onClick={() => handleApproveBankTransfer(selectedPayment.id)}
+                      onClick={() => handleInitiateApprove(selectedPayment)}
                       disabled={actionLoading}
-                      className="verify-btn"
-                      style={{ background: "#059669", color: "#fff", padding: "8px 16px", borderRadius: "8px", fontWeight: 700 }}
+                      className="payment-modal-btn-approve"
                     >
                       <i className="fas fa-check-circle"></i> Approve & Send Emails
                     </button>
                     <button
-                      onClick={() => handleRejectBankTransfer(selectedPayment.id)}
+                      onClick={() => handleInitiateReject(selectedPayment)}
                       disabled={actionLoading}
-                      className="delete-user-btn"
-                      style={{ padding: "8px 16px", borderRadius: "8px" }}
+                      className="payment-modal-btn-reject"
                     >
                       <i className="fas fa-times-circle"></i> Reject Transfer
                     </button>
@@ -866,7 +873,7 @@ export default function PaymentsTab({
                   <button
                     onClick={() => handleDisbursePayout(selectedPayment.id)}
                     disabled={actionLoading}
-                    className="verify-btn payment-disburse-footer-btn"
+                    className="payment-modal-btn-disburse"
                   >
                     <i className="fas fa-paper-plane"></i> Disburse ₦5,020 Payout
                   </button>
@@ -876,7 +883,7 @@ export default function PaymentsTab({
                   <button
                     onClick={() => handleRefund(selectedPayment.id)}
                     disabled={actionLoading}
-                    className="delete-user-btn payment-refund-footer-btn"
+                    className="payment-modal-btn-refund"
                   >
                     <i className="fas fa-undo"></i> Issue ₦{selectedPayment.amount.toLocaleString()} Refund
                   </button>
@@ -886,11 +893,14 @@ export default function PaymentsTab({
               <div className="payment-modal-actions-right">
                 <button
                   onClick={() => window.print()}
-                  className="doc-open-link-btn payment-print-btn"
+                  className="payment-modal-btn-print"
                 >
                   <i className="fas fa-print"></i> Print Receipt
                 </button>
-                <button onClick={() => setSelectedPayment(null)} className="doc-close-btn">
+                <button
+                  onClick={() => setSelectedPayment(null)}
+                  className="payment-modal-btn-close"
+                >
                   Close
                 </button>
               </div>
@@ -898,6 +908,24 @@ export default function PaymentsTab({
           </div>
         </div>
       )}
+
+      {/* 4. Approve Bank Transfer Confirmation Modal */}
+      <ApprovePaymentModal
+        isOpen={!!approveModalPayment}
+        payment={approveModalPayment}
+        onClose={() => setApproveModalPayment(null)}
+        onConfirm={handleConfirmApprove}
+        loading={actionLoading}
+      />
+
+      {/* 5. Reject Bank Transfer Modal */}
+      <RejectPaymentModal
+        isOpen={!!rejectModalPayment}
+        payment={rejectModalPayment}
+        onClose={() => setRejectModalPayment(null)}
+        onConfirm={handleConfirmReject}
+        loading={actionLoading}
+      />
     </div>
   );
 }
