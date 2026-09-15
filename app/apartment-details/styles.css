@@ -2384,25 +2384,33 @@ body {
 }
 
 .payment-modal-close-icon {
-  background: rgba(255, 255, 255, 0.15);
-  border: none;
+  background: rgba(255, 255, 255, 0.18);
+  border: 1px solid rgba(255, 255, 255, 0.25);
   color: #ffffff;
-  width: 32px;
-  height: 32px;
-  min-width: 32px;
+  width: 36px;
+  height: 36px;
+  min-width: 36px;
+  min-height: 36px;
   border-radius: 50%;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 14px;
-  transition: all 0.2s;
+  font-size: 16px;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
   flex-shrink: 0;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
 }
 
 .payment-modal-close-icon:hover {
-  background: rgba(255, 255, 255, 0.3);
-  transform: rotate(90deg);
+  background: rgba(239, 68, 68, 0.9);
+  border-color: #ef4444;
+  transform: rotate(90deg) scale(1.05);
+}
+
+.payment-modal-close-icon:active {
+  transform: scale(0.92);
 }
 
 .payment-modal-amount-tag {
@@ -2521,6 +2529,29 @@ body {
 .paystack-launch-btn:disabled {
   opacity: 0.7;
   cursor: not-allowed;
+}
+
+.paystack-cancel-btn {
+  background: #fef2f2;
+  border: 1.5px solid #fecaca;
+  color: #dc2626;
+  padding: clamp(10px, 2vw, 12px) 16px;
+  border-radius: 8px;
+  font-size: clamp(12.5px, 2vw, 13.5px);
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  transition: all 0.2s;
+  width: 100%;
+}
+
+.paystack-cancel-btn:hover {
+  background: #fee2e2;
+  border-color: #f87171;
+  color: #b91c1c;
 }
 
 .bank-transfer-instructions {

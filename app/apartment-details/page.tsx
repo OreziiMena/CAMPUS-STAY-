@@ -350,8 +350,34 @@ function ApartmentDetailsContent() {
     }
 
     setBankSenderName(currentUser.studentProfile?.fullName || currentUser.name || "");
+    setIsPayingInspection(false);
+    setIsSubmittingBankTransfer(false);
     setIsPaymentModalOpen(true);
   };
+
+  const handleClosePaymentModal = () => {
+    setIsPayingInspection(false);
+    setIsSubmittingBankTransfer(false);
+    setIsPaymentModalOpen(false);
+  };
+
+  // Reset loading states if user switches away or tab regains focus
+  useEffect(() => {
+    const handleFocusOrVisible = () => {
+      if (!document.hidden) {
+        setIsPayingInspection(false);
+        setIsSubmittingBankTransfer(false);
+      }
+    };
+
+    window.addEventListener("focus", handleFocusOrVisible);
+    document.addEventListener("visibilitychange", handleFocusOrVisible);
+
+    return () => {
+      window.removeEventListener("focus", handleFocusOrVisible);
+      document.removeEventListener("visibilitychange", handleFocusOrVisible);
+    };
+  }, []);
 
   // Handle Paystack callback after payment redirect
   useEffect(() => {
@@ -756,7 +782,7 @@ function ApartmentDetailsContent() {
 
         {/* Dual Payment Options Modal */}
         {isPaymentModalOpen && (
-          <div className="payment-modal-overlay" onClick={() => !isPayingInspection && !isSubmittingBankTransfer && setIsPaymentModalOpen(false)}>
+          <div className="payment-modal-overlay" onClick={handleClosePaymentModal}>
             <div className="payment-modal-container" onClick={(e) => e.stopPropagation()}>
               <div className="payment-modal-header">
                 <div className="payment-modal-header-top">
@@ -769,8 +795,9 @@ function ApartmentDetailsContent() {
                   <button
                     type="button"
                     className="payment-modal-close-icon"
-                    onClick={() => setIsPaymentModalOpen(false)}
-                    disabled={isPayingInspection || isSubmittingBankTransfer}
+                    onClick={handleClosePaymentModal}
+                    title="Close and cancel payment"
+                    aria-label="Close"
                   >
                     <i className="fas fa-times"></i>
                   </button>
@@ -783,14 +810,20 @@ function ApartmentDetailsContent() {
                   <button
                     type="button"
                     className={`payment-method-selector-tab ${selectedPaymentMethod === "bank_transfer" ? "active" : ""}`}
-                    onClick={() => setSelectedPaymentMethod("bank_transfer")}
+                    onClick={() => {
+                      setSelectedPaymentMethod("bank_transfer");
+                      setIsPayingInspection(false);
+                    }}
                   >
                     <i className="fas fa-university"></i> Direct Bank Transfer
                   </button>
                   <button
                     type="button"
                     className={`payment-method-selector-tab ${selectedPaymentMethod === "paystack" ? "active" : ""}`}
-                    onClick={() => setSelectedPaymentMethod("paystack")}
+                    onClick={() => {
+                      setSelectedPaymentMethod("paystack");
+                      setIsSubmittingBankTransfer(false);
+                    }}
                   >
                     <i className="fas fa-credit-card"></i> Online Paystack
                   </button>
@@ -941,6 +974,16 @@ function ApartmentDetailsContent() {
                         <><i className="fas fa-lock"></i> Proceed to Paystack (₦7,500)</>
                       )}
                     </button>
+
+                    {isPayingInspection && (
+                      <button
+                        type="button"
+                        className="paystack-cancel-btn"
+                        onClick={() => setIsPayingInspection(false)}
+                      >
+                        <i className="fas fa-times-circle"></i> Cancel / Stop Initialization
+                      </button>
+                    )}
                   </div>
                 )}
               </div>
