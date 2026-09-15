@@ -353,6 +353,37 @@ function ApartmentDetailsContent() {
     setIsPaymentModalOpen(true);
   };
 
+  // Handle Paystack callback after payment redirect
+  useEffect(() => {
+    const ref = searchParams.get("reference") || searchParams.get("trxref");
+    const isCallback = searchParams.get("paystack_callback");
+
+    if (id && (ref || isCallback)) {
+      const targetRef = ref || searchParams.get("reference");
+      if (targetRef) {
+        const verifyPayment = async () => {
+          try {
+            const res = await processInspectionPayment(id, targetRef);
+            if (res.success) {
+              setInspectionStatus((prev) => ({
+                ...prev,
+                isPaid: true,
+              }));
+              setToastMessage("Payment confirmed via Paystack! Physical tour scheduling unlocked.");
+              setShowToast(true);
+              setTimeout(() => setShowToast(false), 6000);
+              // Clean query parameters from URL
+              router.replace(`/apartment-details?id=${id}`);
+            }
+          } catch (err) {
+            console.error("Failed to auto-verify Paystack callback:", err);
+          }
+        };
+        verifyPayment();
+      }
+    }
+  }, [id, searchParams, router]);
+
   const handleLaunchPaystack = async () => {
     if (!property || !currentUser) return;
     setIsPayingInspection(true);
@@ -385,9 +416,23 @@ function ApartmentDetailsContent() {
     };
 
     try {
-      // Pre-initialize on server to ensure reference is registered with Paystack
+      // 1. Initialize on server to generate reference and authorization URL
       const initRes = await initializePaystackInspection(property.id);
-      const txRef = initRes?.reference || `INSP-${Date.now()}-${Math.random().toString(36).substring(2, 7).toUpperCase()}`;
+
+      if (!initRes || !initRes.success) {
+        alert(initRes?.error || "Failed to initialize payment with Paystack. Please try again.");
+        setIsPayingInspection(false);
+        return;
+      }
+
+      // 2. If Paystack returned direct authorization checkout URL, redirect immediately
+      if (initRes.authorizationUrl) {
+        window.location.href = initRes.authorizationUrl;
+        return;
+      }
+
+      // 3. Fallback to inline popup if no direct URL returned
+      const txRef = initRes.reference || `INSP-${Date.now()}-${Math.random().toString(36).substring(2, 7).toUpperCase()}`;
 
       const isScriptLoaded = await loadPaystackScript();
 

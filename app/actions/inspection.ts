@@ -7,7 +7,7 @@ import { escapeHtml } from "@/lib/email-sanitizer";
 import { triggerPusherEvent } from "@/lib/pusher";
 import { randomUUID } from "crypto";
 
-const BASE_URL = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
+const BASE_URL = process.env.NEXT_PUBLIC_APP_URL || process.env.ROOT_DOMAIN || "http://localhost:3000";
 const AVAILABILITY_EXPIRATION_MS = 24 * 60 * 60 * 1000; // 24 hours
 
 /**
