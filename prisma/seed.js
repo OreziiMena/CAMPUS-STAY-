@@ -55,8 +55,7 @@ async function main() {
             address: "12 FUPRE Road, Effurun",
             agencyName: "Olise & Partners Realty",
             bio: "Experienced student housing consultant operating around FUPRE and PTI campus areas.",
-            isVerified: true,
-            ninDocument: "/uploads/verification/sample-nin.pdf"
+            isVerified: true
           }
         }
       },
@@ -92,8 +91,7 @@ async function main() {
             address: "PTI Road, Effurun",
             agencyName: "Boma Housing Agency",
             bio: "New agent looking to list hostel accommodation options.",
-            isVerified: false,
-            ninDocument: "/uploads/verification/sample-nin-pending.pdf"
+            isVerified: false
           }
         }
       },
@@ -107,7 +105,7 @@ async function main() {
   }
 
   // 3. Create Sample Student Users
-  // Student 1: Verified Student
+  // Student 1: Student
   const student1Email = "student.verified@campusstay.com";
   const existingStudent1 = await prisma.user.findUnique({
     where: { email: student1Email }
@@ -115,7 +113,7 @@ async function main() {
 
   let student1;
   if (!existingStudent1) {
-    console.log("Creating verified student...");
+    console.log("Creating sample student 1...");
     const hashedPwd = await bcrypt.hash("studentpassword", 10);
     student1 = await prisma.user.create({
       data: {
@@ -129,9 +127,6 @@ async function main() {
             fullName: "Tobi Adebayo",
             university: "FUPRE",
             username: "tobi_fupre",
-            isVerified: true,
-            idCardDoc: "/uploads/verification/student-id.jpg",
-            feesReceiptDoc: "/uploads/verification/fees-receipt.jpg",
             preferences: {
               openToRoommates: true,
               budgetLimit: 150000,
@@ -152,7 +147,7 @@ async function main() {
     });
   }
 
-  // Student 2: Unverified Student
+  // Student 2: Student
   const student2Email = "student.pending@campusstay.com";
   const existingStudent2 = await prisma.user.findUnique({
     where: { email: student2Email }
@@ -160,7 +155,7 @@ async function main() {
 
   let student2;
   if (!existingStudent2) {
-    console.log("Creating unverified (pending) student...");
+    console.log("Creating sample student 2...");
     const hashedPwd = await bcrypt.hash("studentpassword", 10);
     student2 = await prisma.user.create({
       data: {
@@ -174,8 +169,6 @@ async function main() {
             fullName: "Amara Nwachukwu",
             university: "DSUST",
             username: "amara_dsust",
-            isVerified: false,
-            idCardDoc: "/uploads/verification/student-id-pending.jpg",
             preferences: {
               openToRoommates: true,
               budgetLimit: 120000,

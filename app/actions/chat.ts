@@ -20,10 +20,6 @@ export async function getOrCreateChatRoom(propertyId: string) {
       };
     }
 
-    if (user.role === "STUDENT" && !user.studentProfile?.isVerified) {
-      return { success: false, error: "Verification required. You must verify your student profile to message listing owners." };
-    }
-
     const property = await prisma.property.findUnique({
       where: { id: propertyId },
       include: {
@@ -144,7 +140,7 @@ export async function getChatRooms() {
           targetRoleLabel = "Student Partner";
           targetRole = "STUDENT";
           targetAvatarText = (username.replace(/^@/, "")[0] || "S").toUpperCase();
-          targetVerified = room.agent.studentProfile.isVerified;
+          targetVerified = false;
         } else {
           const agentName = room.agent.agentProfile?.fullName || "Agent";
           targetName = agentName;
@@ -168,7 +164,7 @@ export async function getChatRooms() {
         targetRoleLabel = "Student";
         targetRole = "STUDENT";
         targetAvatarText = (username.replace(/^@/, "")[0] || "S").toUpperCase();
-        targetVerified = room.student.studentProfile?.isVerified || false;
+        targetVerified = false;
       }
 
       return {
@@ -362,10 +358,6 @@ export async function getOrCreateRoommateChatRoom(recipientUserId: string) {
     const user = await getCurrentUser();
     if (!user) {
       return { success: false, error: "Please log in to contact potential roommates." };
-    }
-
-    if (user.role === "STUDENT" && !user.studentProfile?.isVerified) {
-      return { success: false, error: "Verification required. You must verify your student profile to message potential roommates." };
     }
 
     if (recipientUserId === user.id) {

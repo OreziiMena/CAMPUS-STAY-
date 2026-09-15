@@ -293,12 +293,6 @@ export default function RoommatesDirectory() {
       return;
     }
 
-    if (!activeUser.studentProfile?.isVerified) {
-      showToast("Verification required. Please verify your student profile to message potential roommates.", "error");
-      router.push("/student-dashboard/profile");
-      return;
-    }
-
     const res = await getOrCreateRoommateChatRoom(roommateUserId);
     if (res.success && res.chatRoomId) {
       router.push(`/chat?roomId=${res.chatRoomId}`);

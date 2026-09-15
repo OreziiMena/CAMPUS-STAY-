@@ -327,9 +327,6 @@ export async function addProperty(data: any) {
       if (!user.studentProfile) {
         return { success: false, error: "Student profile not found." };
       }
-      if (!user.studentProfile.isVerified) {
-        return { success: false, error: "Verification required. Please verify your student profile to upload roommate listings." };
-      }
       createData.studentId = user.studentProfile.id;
       createData.isRoommateOption = true; // Enforce roommate option for students
     } else if (user.role === "AGENT") {
@@ -391,10 +388,6 @@ export async function createInquiry(data: { propertyId: string; message: string 
         success: false,
         error: "Agents cannot submit inquiries on listings. This feature is for students.",
       };
-    }
-
-    if (user.role === "STUDENT" && !user.studentProfile?.isVerified) {
-      return { success: false, error: "Verification required. You must verify your student profile to contact agents." };
     }
 
     const { propertyId, message } = data;
@@ -565,7 +558,6 @@ export async function getAgentDashboardData() {
         studentName: room.student.studentProfile?.username 
           ? `@${room.student.studentProfile.username}` 
           : "Student",
-        studentVerified: room.student.studentProfile?.isVerified || false,
         phone: room.student.phone,
         email: room.student.email,
         propertyName: room.property.title,

@@ -12,7 +12,6 @@ import "./student-dashboard.css";
 
 // Modular Components
 import StudentWelcomeBanner from "./components/StudentWelcomeBanner";
-import StudentVerificationAlert from "./components/StudentVerificationAlert";
 import StudentPaymentsCard from "./components/StudentPaymentsCard";
 import StudentViewingsCard from "./components/StudentViewingsCard";
 import StudentInquiriesCard from "./components/StudentInquiriesCard";
@@ -143,9 +142,6 @@ export default function StudentDashboard() {
           <div className="student-dashboard-container">
             {/* Welcome Section */}
             <StudentWelcomeBanner studentName={studentName} />
-
-            {/* Verification Status Alert Banner */}
-            <StudentVerificationAlert profile={profile} />
 
             {/* Inspection Payments & Receipts Section */}
             <StudentPaymentsCard

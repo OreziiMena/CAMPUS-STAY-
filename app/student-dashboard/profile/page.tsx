@@ -5,7 +5,6 @@ import { useRouter } from "next/navigation";
 import { getCurrentUser } from "@/app/actions/auth";
 import { 
   updateStudentProfile, 
-  uploadStudentVerification, 
   saveStudentPreferences 
 } from "@/app/actions/student";
 import Navbar from "@/components/Navbar";
@@ -47,19 +46,6 @@ export default function StudentProfile() {
   const [university, setUniversity] = useState("");
   const [activeTab, setActiveTab] = useState("details-section");
 
-  // Verification document states
-  const [idCardFile, setIdCardFile] = useState<File | null>(null);
-  const [feesReceiptFile, setFeesReceiptFile] = useState<File | null>(null);
-  const [portalScreenshotFile, setPortalScreenshotFile] = useState<File | null>(null);
-  const [jambLetterFile, setJambLetterFile] = useState<File | null>(null);
-
-  // Verification status tracking
-  const [isVerified, setIsVerified] = useState(false);
-  const [idCardDoc, setIdCardDoc] = useState<string | null>(null);
-  const [feesReceiptDoc, setFeesReceiptDoc] = useState<string | null>(null);
-  const [portalScreenshotDoc, setPortalScreenshotDoc] = useState<string | null>(null);
-  const [jambLetterDoc, setJambLetterDoc] = useState<string | null>(null);
-
   // Roommate Preferences state
   const [openToRoommates, setOpenToRoommates] = useState(false);
   const [budgetLimit, setBudgetLimit] = useState("");
@@ -71,8 +57,6 @@ export default function StudentProfile() {
   // Status/saving helpers
   const [saveLoading, setSaveLoading] = useState(false);
   const [saveStatus, setSaveStatus] = useState("");
-  const [uploadLoading, setUploadLoading] = useState(false);
-  const [uploadStatus, setUploadStatus] = useState("");
   const [prefLoading, setPrefLoading] = useState(false);
   const [prefStatus, setPrefStatus] = useState("");
 
@@ -89,11 +73,6 @@ export default function StudentProfile() {
       setEmail(user.email);
       setPhone(user.phone);
       setUniversity(profile?.university || "");
-      setIsVerified(profile?.isVerified || false);
-      setIdCardDoc(profile?.idCardDoc || null);
-      setFeesReceiptDoc(profile?.feesReceiptDoc || null);
-      setPortalScreenshotDoc(profile?.portalScreenshotDoc || null);
-      setJambLetterDoc(profile?.jambLetterDoc || null);
 
       const names = (profile?.fullName || "").trim().split(/\s+/);
       setFirstName(names[0] || "");
@@ -136,45 +115,6 @@ export default function StudentProfile() {
     setSaveLoading(false);
   };
 
-  const handleUploadVerification = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!idCardFile && !feesReceiptFile && !portalScreenshotFile && !jambLetterFile) {
-      setUploadStatus("Error: Please select at least one document to upload.");
-      return;
-    }
-
-    setUploadLoading(true);
-    setUploadStatus("");
-
-    const formData = new FormData();
-    if (idCardFile) formData.append("idCard", idCardFile);
-    if (feesReceiptFile) formData.append("feesReceipt", feesReceiptFile);
-    if (portalScreenshotFile) formData.append("portalScreenshot", portalScreenshotFile);
-    if (jambLetterFile) formData.append("jambLetter", jambLetterFile);
-
-    const res = await uploadStudentVerification(formData);
-    if (res.success) {
-      setUploadStatus("Verification documents submitted successfully,Please wait at least 12 hrs for verification!(Note: It might not be up to that)");
-      if (res.paths?.idCardDoc) setIdCardDoc(res.paths.idCardDoc);
-      if (res.paths?.feesReceiptDoc) setFeesReceiptDoc(res.paths.feesReceiptDoc);
-      if (res.paths?.portalScreenshotDoc) setPortalScreenshotDoc(res.paths.portalScreenshotDoc);
-      if (res.paths?.jambLetterDoc) setJambLetterDoc(res.paths.jambLetterDoc);
-      
-      setIdCardFile(null);
-      setFeesReceiptFile(null);
-      setPortalScreenshotFile(null);
-      setJambLetterFile(null);
-      setIsVerified(false); // Reset to pending (not verified yet)
-      
-      setTimeout(() => setUploadStatus(""), 3000);
-    } else {
-      setUploadStatus(`Error: ${res.error}`);
-    }
-    setUploadLoading(false);
-  };
-
-  // Instant verification toggle has been removed to enforce admin moderation flow
-
   const handleSavePreferences = async (e: React.FormEvent) => {
     e.preventDefault();
     setPrefLoading(true);
@@ -200,7 +140,6 @@ export default function StudentProfile() {
   };
 
   const initials = (firstName.charAt(0) + lastName.charAt(0)).toUpperCase() || "--";
-  const hasUploadedDocs = idCardDoc || feesReceiptDoc || portalScreenshotDoc || jambLetterDoc;
 
   return (
     <>
@@ -221,15 +160,10 @@ export default function StudentProfile() {
               <div className="profile-title">
                 <h2>
                   <span>{firstName} {lastName}</span>
-                  {isVerified && (
-                    <span className="verified-badge" title="Verified Campus Tent Student">
-                      <i className="fas fa-check-circle"></i>
-                    </span>
-                  )}
                 </h2>
                 <p><span>{email}</span></p>
-                <span className={`status-pill ${isVerified ? "verified" : hasUploadedDocs ? "pending" : "unverified"}`}>
-                  {isVerified ? "Verified Student" : hasUploadedDocs ? "Pending Review" : "Unverified Student"}
+                <span className="status-pill verified">
+                  Student Account
                 </span>
               </div>
             </div>
@@ -237,7 +171,6 @@ export default function StudentProfile() {
             {/* Profile Tabs */}
             <div className="profile-tabs">
               <button className={`tab-btn ${activeTab === "details-section" ? "active" : ""}`} onClick={() => setActiveTab("details-section")}>Personal Details</button>
-              <button className={`tab-btn ${activeTab === "verification-section" ? "active" : ""}`} onClick={() => setActiveTab("verification-section")}>Identity Verification</button>
               <button className={`tab-btn ${activeTab === "roommate-section" ? "active" : ""}`} onClick={() => setActiveTab("roommate-section")}>Roommate Preferences</button>
             </div>
 
@@ -275,98 +208,6 @@ export default function StudentProfile() {
                     {saveLoading ? "Saving..." : "Save Changes"}
                   </button>
                 </form>
-              </section>
-            )}
-
-            {/* identity verification */}
-            {activeTab === "verification-section" && (
-              <section id="verification-section" className="tab-content active">
-                {isVerified ? (
-                  <div className="verification-banner success">
-                    <i className="fas fa-check-circle"></i>
-                    <div>
-                      <h4>Identity Verified</h4>
-                      <p>Your student profile is verified. You now have complete access to agent phone numbers, viewing booking features, and direct inquiry messaging.</p>
-                    </div>
-                  </div>
-                ) : hasUploadedDocs ? (
-                  <div className="verification-banner warning">
-                    <i className="fas fa-clock"></i>
-                    <div>
-                      <h4>Verification Under Review</h4>
-                      <p>We've received your verification document(s) and our admin team is reviewing them. Check back soon!</p>
-                    </div>
-                  </div>
-                ) : (
-                  <div className="verification-banner warning unverified-alert">
-                    <i className="fas fa-exclamation-triangle"></i>
-                    <div>
-                      <h4>Verification Required</h4>
-                      <p>You must upload **at least one** document below (Student ID, current session fees receipt, portal screenshot, or JAMB admission letter) to verify your student status and contact agents.</p>
-                    </div>
-                  </div>
-                )}
-
-                {!isVerified && (
-                  <form onSubmit={handleUploadVerification} className="verification-upload-form">
-                    <h3 className="h-header">Document Submission</h3>
-                    <p className="p-header">Please upload at least one of the following methods of verification:</p>
-
-                    <div className="upload-group-row">
-                      <div className="upload-field-card">
-                        <label>1. Valid Student ID Card</label>
-                        <div className="file-upload">
-                          <i className="fas fa-id-card"></i>
-                          <p>{idCardFile ? <span>Selected: {idCardFile.name}</span> : <>Upload ID Card</>}</p>
-                          <input type="file" accept=".pdf, .jpg, .jpeg, .png" onChange={(e) => e.target.files && setIdCardFile(e.target.files[0])} />
-                        </div>
-                        {idCardDoc && <span className="doc-link-label"><i className="fas fa-file-alt"></i> ID Card Uploaded</span>}
-                      </div>
-
-                      <div className="upload-field-card">
-                        <label>2. School Fees Receipt</label>
-                        <div className="file-upload">
-                          <i className="fas fa-receipt"></i>
-                          <p>{feesReceiptFile ? <span>Selected: {feesReceiptFile.name}</span> : <>Upload Fees Receipt</>}</p>
-                          <input type="file" accept=".pdf, .jpg, .jpeg, .png" onChange={(e) => e.target.files && setFeesReceiptFile(e.target.files[0])} />
-                        </div>
-                        {feesReceiptDoc && <span className="doc-link-label"><i className="fas fa-file-alt"></i> Fees Receipt Uploaded</span>}
-                      </div>
-
-                      <div className="upload-field-card">
-                        <label>3. School Portal Screenshot</label>
-                        <div className="file-upload">
-                          <i className="fas fa-desktop"></i>
-                          <p>{portalScreenshotFile ? <span>Selected: {portalScreenshotFile.name}</span> : <>Upload Portal Screenshot</>}</p>
-                          <input type="file" accept=".pdf, .jpg, .jpeg, .png" onChange={(e) => e.target.files && setPortalScreenshotFile(e.target.files[0])} />
-                        </div>
-                        {portalScreenshotDoc && <span className="doc-link-label"><i className="fas fa-file-alt"></i> Screenshot Uploaded</span>}
-                      </div>
-
-                      <div className="upload-field-card">
-                        <label>4. JAMB Admission Letter</label>
-                        <div className="file-upload">
-                          <i className="fas fa-envelope-open-text"></i>
-                          <p>{jambLetterFile ? <span>Selected: {jambLetterFile.name}</span> : <>Upload JAMB Letter</>}</p>
-                          <input type="file" accept=".pdf, .jpg, .jpeg, .png" onChange={(e) => e.target.files && setJambLetterFile(e.target.files[0])} />
-                        </div>
-                        {jambLetterDoc && <span className="doc-link-label"><i className="fas fa-file-alt"></i> JAMB Letter Uploaded</span>}
-                      </div>
-                    </div>
-
-                    {uploadStatus && (
-                      <p className={`status-message-text ${uploadStatus.startsWith("Error") ? "error" : "success"}`}>
-                        {uploadStatus}
-                      </p>
-                    )}
-
-                    <button type="submit" className="primary-btn" disabled={(!idCardFile && !feesReceiptFile && !portalScreenshotFile && !jambLetterFile) || uploadLoading}>
-                      {uploadLoading ? "Uploading..." : "Submit Documents"}
-                    </button>
-                  </form>
-                )}
-
-                {/* Admin moderation flow enforced - testing toggle disabled */}
               </section>
             )}
 

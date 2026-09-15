@@ -17,19 +17,8 @@ export async function getAdminDashboardData() {
       return { success: false, error: "Unauthorized. Admin access required." };
     }
 
-    // 1. Fetch unverified students
-    const unverifiedStudents = await prisma.studentProfile.findMany({
-      where: { isVerified: false, user: { deletedAt: null } },
-      include: {
-        user: {
-          select: {
-            email: true,
-            phone: true,
-          },
-        },
-      },
-      orderBy: { createdAt: "desc" },
-    });
+    // 1. Student verification is removed - returning empty array for backwards compatibility
+    const unverifiedStudents: any[] = [];
 
     // 2. Fetch unverified agents
     const unverifiedAgents = await prisma.agentProfile.findMany({
@@ -106,28 +95,7 @@ export async function toggleUserVerification(idOrProfileId: string, role: "STUDE
     let targetName: string | undefined;
 
     if (role === "STUDENT") {
-      let profile = await prisma.studentProfile.findUnique({
-        where: { id: idOrProfileId },
-        include: { user: true },
-      });
-      if (!profile) {
-        profile = await prisma.studentProfile.findUnique({
-          where: { userId: idOrProfileId },
-          include: { user: true },
-        });
-      }
-
-      if (!profile) {
-        return { success: false, error: "Student profile not found." };
-      }
-
-      targetEmail = profile.user?.email;
-      targetName = profile.fullName || "Student";
-
-      await prisma.studentProfile.update({
-        where: { id: profile.id },
-        data: { isVerified: status },
-      });
+      return { success: true, message: "Student verification is no longer required." };
     } else if (role === "AGENT") {
       let profile = await prisma.agentProfile.findUnique({
         where: { id: idOrProfileId },
@@ -156,10 +124,10 @@ export async function toggleUserVerification(idOrProfileId: string, role: "STUDE
     }
 
     if (status && targetEmail) {
-      const safeTargetName = escapeHtml(targetName || (role === "STUDENT" ? "Student" : "Agent"));
+      const safeTargetName = escapeHtml(targetName || "Agent");
       await sendEmail({
         to: targetEmail,
-        subject: role === "STUDENT" ? "Your Student Verification Approved! - Campus Tent" : "Your Agent Profile Approved! - Campus Tent",
+        subject: "Your Agent Profile Approved! - Campus Tent",
         html: `
           <div style="font-family: Arial, sans-serif; max-width: 600px; padding: 20px; border: 1px solid #eaeaea; border-radius: 8px;">
             <h2 style="color: rgb(2, 53, 28);">Congratulations!</h2>
@@ -354,9 +322,7 @@ export async function getAdminAnalyticsData() {
     const totalAgents = await prisma.agentProfile.count({
       where: { user: { deletedAt: null } },
     });
-    const verifiedStudents = await prisma.studentProfile.count({
-      where: { isVerified: true, user: { deletedAt: null } },
-    });
+    const verifiedStudents = totalStudents;
     const verifiedAgents = await prisma.agentProfile.count({
       where: { isVerified: true, user: { deletedAt: null } },
     });
@@ -466,13 +432,11 @@ export async function getBroadcastAudienceStats() {
       allUsersCount,
       studentsCount,
       agentsCount,
-      verifiedStudentsCount,
       verifiedAgentsCount,
     ] = await Promise.all([
       prisma.user.count({ where: { email: { not: "" }, deletedAt: null } }),
       prisma.user.count({ where: { role: Role.STUDENT, email: { not: "" }, deletedAt: null } }),
       prisma.user.count({ where: { role: Role.AGENT, email: { not: "" }, deletedAt: null } }),
-      prisma.studentProfile.count({ where: { isVerified: true, user: { deletedAt: null } } }),
       prisma.agentProfile.count({ where: { isVerified: true, user: { deletedAt: null } } }),
     ]);
 
@@ -482,7 +446,7 @@ export async function getBroadcastAudienceStats() {
         all: allUsersCount,
         students: studentsCount,
         agents: agentsCount,
-        verifiedStudents: verifiedStudentsCount,
+        verifiedStudents: studentsCount,
         verifiedAgents: verifiedAgentsCount,
       },
       adminEmail: adminUser.email,
@@ -639,13 +603,10 @@ export async function sendBroadcastEmailAction(params: {
       deletedAt: null,
     };
 
-    if (audience === "STUDENTS") {
+    if (audience === "STUDENTS" || audience === "VERIFIED_STUDENTS") {
       whereCondition.role = Role.STUDENT;
     } else if (audience === "AGENTS") {
       whereCondition.role = Role.AGENT;
-    } else if (audience === "VERIFIED_STUDENTS") {
-      whereCondition.role = Role.STUDENT;
-      whereCondition.studentProfile = { isVerified: true };
     } else if (audience === "VERIFIED_AGENTS") {
       whereCondition.role = Role.AGENT;
       whereCondition.agentProfile = { isVerified: true };

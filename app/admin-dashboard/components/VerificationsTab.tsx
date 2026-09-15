@@ -1,11 +1,11 @@
 import React, { useState } from "react";
 
 interface VerificationsTabProps {
-  students: any[];
+  students?: any[];
   agents: any[];
   propertiesQueue: any[];
   roommatesQueue: any[];
-  filteredQueueStudents: any[];
+  filteredQueueStudents?: any[];
   filteredQueueAgents: any[];
   filteredQueueProperties: any[];
   filteredQueueRoommates: any[];
@@ -14,15 +14,13 @@ interface VerificationsTabProps {
   onRejectUser: (profileId: string, role: "STUDENT" | "AGENT") => void;
   onVerifyProperty: (propertyId: string) => void;
   onRejectProperty: (propertyId: string) => void;
-  onPreviewDoc: (doc: { url: string; title: string }) => void;
+  onPreviewDoc?: (doc: { url: string; title: string }) => void;
 }
 
 export default function VerificationsTab({
-  students,
   agents,
   propertiesQueue,
   roommatesQueue,
-  filteredQueueStudents,
   filteredQueueAgents,
   filteredQueueProperties,
   filteredQueueRoommates,
@@ -31,19 +29,12 @@ export default function VerificationsTab({
   onRejectUser,
   onVerifyProperty,
   onRejectProperty,
-  onPreviewDoc,
 }: VerificationsTabProps) {
-  const [activeQueueTab, setActiveQueueTab] = useState<"students" | "agents" | "properties" | "roommates">("students");
+  const [activeQueueTab, setActiveQueueTab] = useState<"agents" | "properties" | "roommates">("agents");
 
   return (
     <div>
       <div className="admin-tabs">
-        <button 
-          className={`tab-btn ${activeQueueTab === "students" ? "active" : ""}`}
-          onClick={() => setActiveQueueTab("students")}
-        >
-          Students Queue ({students.length})
-        </button>
         <button 
           className={`tab-btn ${activeQueueTab === "agents" ? "active" : ""}`}
           onClick={() => setActiveQueueTab("agents")}
@@ -64,102 +55,6 @@ export default function VerificationsTab({
         </button>
       </div>
 
-      {activeQueueTab === "students" && (
-        <div className="admin-card">
-          <h2><i className="fas fa-user-graduate"></i> Pending Student Verifications</h2>
-          {students.length === 0 ? (
-            <div className="no-data-text">No pending student verification requests.</div>
-          ) : filteredQueueStudents.length === 0 ? (
-            <div className="no-data-text">No matching student verification requests.</div>
-          ) : (
-            <div className="admin-table-wrapper">
-              <table className="admin-table">
-                <thead>
-                  <tr>
-                    <th>Full Name</th>
-                    <th>Username</th>
-                    <th>University</th>
-                    <th>Contact Details</th>
-                    <th>Verification Documents</th>
-                    <th>Actions</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {filteredQueueStudents.map((student) => (
-                    <tr key={student.id}>
-                      <td><strong>{student.fullName}</strong></td>
-                      <td>@{student.username}</td>
-                      <td>{student.university}</td>
-                      <td>
-                        <div>{student.user.email}</div>
-                        <div className="user-sub-contact">{student.user.phone}</div>
-                      </td>
-                      <td>
-                        <div className="doc-links-cell">
-                          {!student.idCardDoc && !student.feesReceiptDoc && !student.portalScreenshotDoc && !student.jambLetterDoc && (
-                            <span className="no-doc-uploaded">No documents uploaded</span>
-                          )}
-                          {student.idCardDoc && (
-                            <button 
-                              onClick={() => onPreviewDoc({ url: student.idCardDoc, title: `${student.fullName}'s Student ID Card` })}
-                              className="doc-link-btn"
-                            >
-                              <i className="fas fa-id-card"></i> Student ID Card
-                            </button>
-                          )}
-                          {student.feesReceiptDoc && (
-                            <button 
-                              onClick={() => onPreviewDoc({ url: student.feesReceiptDoc, title: `${student.fullName}'s School Fees Receipt` })}
-                              className="doc-link-btn"
-                            >
-                              <i className="fas fa-receipt"></i> School Fees Receipt
-                            </button>
-                          )}
-                          {student.portalScreenshotDoc && (
-                            <button 
-                              onClick={() => onPreviewDoc({ url: student.portalScreenshotDoc, title: `${student.fullName}'s Portal Screenshot` })}
-                              className="doc-link-btn"
-                            >
-                              <i className="fas fa-desktop"></i> Portal Screenshot
-                            </button>
-                          )}
-                          {student.jambLetterDoc && (
-                            <button 
-                              onClick={() => onPreviewDoc({ url: student.jambLetterDoc, title: `${student.fullName}'s JAMB Letter` })}
-                              className="doc-link-btn"
-                            >
-                              <i className="fas fa-envelope-open-text"></i> JAMB Letter
-                            </button>
-                          )}
-                        </div>
-                      </td>
-                      <td>
-                        <div className="admin-action-btns">
-                          <button 
-                            onClick={() => onVerifyUser(student.id, "STUDENT")}
-                            disabled={actionLoading !== null}
-                            className="approve-btn"
-                          >
-                            {actionLoading === student.id ? "Approving..." : "Approve"}
-                          </button>
-                          <button 
-                            onClick={() => onRejectUser(student.id, "STUDENT")}
-                            disabled={actionLoading !== null}
-                            className="reject-btn"
-                          >
-                            {actionLoading === student.id ? "Rejecting..." : "Reject"}
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          )}
-        </div>
-      )}
-
       {activeQueueTab === "agents" && (
         <div className="admin-card">
           <h2><i className="fas fa-user-tie"></i> Pending Agent/Landlord Verifications</h2>
@@ -175,7 +70,7 @@ export default function VerificationsTab({
                     <th>Full Name</th>
                     <th>Business Address</th>
                     <th>Contact Details</th>
-                    <th>Verification Document</th>
+                    <th>Verification Status</th>
                     <th>Actions</th>
                   </tr>
                 </thead>
@@ -185,20 +80,13 @@ export default function VerificationsTab({
                       <td><strong>{agent.fullName}</strong></td>
                       <td>{agent.address || "No office address provided"}</td>
                       <td>
-                        <div>{agent.user.email}</div>
-                        <div className="user-sub-contact">{agent.user.phone}</div>
+                        <div>{agent.user?.email}</div>
+                        <div className="user-sub-contact">{agent.user?.phone}</div>
                       </td>
                       <td>
-                        {agent.ninDocument ? (
-                          <button 
-                            onClick={() => onPreviewDoc({ url: agent.ninDocument, title: `${agent.fullName}'s NIN / Govt ID Document` })}
-                            className="doc-link-btn"
-                          >
-                            <i className="fas fa-file-alt"></i> NIN / Govt ID Document
-                          </button>
-                        ) : (
-                          <span className="no-doc-uploaded danger">No Document Uploaded</span>
-                        )}
+                        <span className="status-badge unverified">
+                          <i className="fas fa-hourglass-half"></i> Pending Review
+                        </span>
                       </td>
                       <td>
                         <div className="admin-action-btns">
@@ -433,11 +321,6 @@ export default function VerificationsTab({
                           <div>
                             <div className="user-cell-name">
                               <strong>{property.student.fullName || (property.student.username ? `@${property.student.username}` : "Student")}</strong>
-                              {property.student.isVerified && (
-                                <span className="verified-icon-inline" title="Verified Student">
-                                  <i className="fas fa-check-circle"></i>
-                                </span>
-                              )}
                             </div>
                             <div className="user-sub-contact">
                               {property.student.username ? `@${property.student.username}` : property.student.university || "Student Listing"}

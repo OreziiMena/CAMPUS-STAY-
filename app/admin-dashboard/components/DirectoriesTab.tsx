@@ -47,7 +47,7 @@ export default function DirectoriesTab({
         <h2>
           <i className="fas fa-user-graduate"></i> Student Users Directory{" "}
           <span className="dir-count-badge student">
-            {verifiedStudentsCount} Verified / {studentUsers.length} Total
+            {studentUsers.length} Total Students
           </span>
         </h2>
         {studentUsers.length === 0 ? (
@@ -63,20 +63,15 @@ export default function DirectoriesTab({
                   <th>Username</th>
                   <th>University</th>
                   <th>Email / Contact</th>
-                  <th>Verification Status</th>
                   <th>Actions</th>
                 </tr>
               </thead>
               <tbody>
                 {filteredStudents.map((u) => {
-                  const isVerified = u.studentProfile?.isVerified || false;
                   return (
                     <tr key={u.id}>
                       <td className="user-cell-name">
                         <strong>{u.studentProfile?.fullName || "Student"}</strong>
-                        {isVerified && (
-                          <i className="fas fa-check-circle verified-icon-inline"></i>
-                        )}
                       </td>
                       <td>{u.studentProfile?.username ? `@${u.studentProfile.username}` : "N/A"}</td>
                       <td>{u.studentProfile?.university || "N/A"}</td>
@@ -85,21 +80,7 @@ export default function DirectoriesTab({
                         <div className="user-sub-contact">{u.phone}</div>
                       </td>
                       <td>
-                        {isVerified ? (
-                          <span className="status-badge verified"><i className="fas fa-check-circle"></i> Verified</span>
-                        ) : (
-                          <span className="status-badge unverified"><i className="fas fa-hourglass-half"></i> Unverified</span>
-                        )}
-                      </td>
-                      <td>
                         <div className="admin-action-btns">
-                          <button 
-                            onClick={() => onToggleVerificationUser(u.id, "STUDENT", isVerified)}
-                            disabled={actionLoading !== null}
-                            className={`${isVerified ? "reject-btn" : "approve-btn"} admin-action-btn-wide`}
-                          >
-                            {actionLoading === u.id ? "Updating..." : (isVerified ? "Revoke Verify" : "Verify Account")}
-                          </button>
                           <button 
                             onClick={() => onDeleteUser(u.id, "STUDENT")}
                             disabled={actionLoading !== null}
@@ -365,14 +346,13 @@ export default function DirectoriesTab({
                   <th>Shared Rent / Budget</th>
                   <th>University & Location</th>
                   <th>Listed By Student</th>
-                  <th>Verification Status</th>
+                  <th>Listing Status</th>
                   <th>Actions</th>
                 </tr>
               </thead>
               <tbody>
                 {filteredAllRoommates.map((p) => {
                   const isVerified = p.isVerified || false;
-                  const isStudentVerified = p.student?.isVerified || false;
                   return (
                     <tr key={p.id}>
                       <td>
@@ -429,11 +409,6 @@ export default function DirectoriesTab({
                           <div>
                             <div className="user-cell-name">
                               <strong>{p.student.fullName || (p.student.username ? `@${p.student.username}` : "Student")}</strong>
-                              {isStudentVerified && (
-                                <span className="verified-icon-inline" title="Verified Student">
-                                  <i className="fas fa-check-circle"></i>
-                                </span>
-                              )}
                             </div>
                             <div className="user-sub-contact">
                               {p.student.username ? `@${p.student.username}` : "Student Profile"}
@@ -444,10 +419,10 @@ export default function DirectoriesTab({
                         )}
                       </td>
                       <td>
-                        {isStudentVerified ? (
-                          <span className="status-badge verified"><i className="fas fa-check-circle"></i> Verified Student</span>
+                        {isVerified ? (
+                          <span className="status-badge verified"><i className="fas fa-check-circle"></i> Approved</span>
                         ) : (
-                          <span className="status-badge unverified"><i className="fas fa-hourglass-half"></i> Unverified Student</span>
+                          <span className="status-badge unverified"><i className="fas fa-hourglass-half"></i> Pending Review</span>
                         )}
                       </td>
                       <td>

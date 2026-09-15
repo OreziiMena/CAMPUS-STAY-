@@ -64,7 +64,7 @@ export async function getStudentDashboardData() {
         agentName = room.agent.studentProfile.username 
           ? `@${room.agent.studentProfile.username}` 
           : "Student";
-        agentVerified = room.agent.studentProfile.isVerified;
+        agentVerified = false;
       } else {
         agentName = room.agent.agentProfile?.fullName || "Agent";
         agentVerified = room.agent.agentProfile?.isVerified || false;
@@ -106,7 +106,7 @@ export async function getStudentDashboardData() {
         agentName = inq.property.student.username 
           ? `@${inq.property.student.username}` 
           : "Student";
-        agentVerified = inq.property.student.isVerified;
+        agentVerified = false;
       }
 
       return {
@@ -162,7 +162,7 @@ export async function getStudentDashboardData() {
           agentName = v.property.student.username 
             ? `@${v.property.student.username}` 
             : "Student";
-          agentVerified = v.property.student.isVerified;
+          agentVerified = true;
         }
 
         return {
@@ -230,78 +230,8 @@ export async function updateStudentProfile(data: {
   }
 }
 
-export async function uploadStudentVerification(formData: FormData) {
-  try {
-    const user = await getCurrentUser();
-    if (!user || user.role !== "STUDENT" || !user.studentProfile) {
-      return { success: false, error: "Unauthorized." };
-    }
-
-    const idCardFile = formData.get("idCard") as File | null;
-    const feesReceiptFile = formData.get("feesReceipt") as File | null;
-    const portalScreenshotFile = formData.get("portalScreenshot") as File | null;
-    const jambLetterFile = formData.get("jambLetter") as File | null;
-
-    // Check if at least one file was uploaded
-    const hasIdCard = idCardFile && idCardFile.size > 0;
-    const hasFeesReceipt = feesReceiptFile && feesReceiptFile.size > 0;
-    const hasPortalScreenshot = portalScreenshotFile && portalScreenshotFile.size > 0;
-    const hasJambLetter = jambLetterFile && jambLetterFile.size > 0;
-
-    if (!hasIdCard && !hasFeesReceipt && !hasPortalScreenshot && !hasJambLetter) {
-      return { success: false, error: "Please upload at least one verification document." };
-    }
-
-    const uploadDir = path.join(process.cwd(), "private_uploads", "student_verification");
-    const updateData: any = {};
-
-    const uploadDoc = async (file: File, prefix: string): Promise<string> => {
-      const buffer = Buffer.from(await file.arrayBuffer());
-      const validation = validateFileBuffer(buffer, "document", 5 * 1024 * 1024);
-      if (!validation.valid) {
-        throw new Error(`${file.name}: ${validation.error}`);
-      }
-
-      const safeExt = validation.sanitizedExtension || ".pdf";
-      const filename = generateSecureFilename(`${user.studentProfile!.id}-${prefix}`, safeExt);
-      const contentType = validation.canonicalMime || "application/pdf";
-
-      const r2Result = await uploadToR2(buffer, `student_verification/${filename}`, contentType);
-      if (!r2Result.success) {
-        await mkdir(uploadDir, { recursive: true });
-        await writeFile(path.join(uploadDir, filename), buffer);
-      }
-      return `/api/documents/student_verification/${filename}`;
-    };
-
-    if (hasIdCard) {
-      updateData.idCardDoc = await uploadDoc(idCardFile!, "idcard");
-    }
-
-    if (hasFeesReceipt) {
-      updateData.feesReceiptDoc = await uploadDoc(feesReceiptFile!, "fees");
-    }
-
-    if (hasPortalScreenshot) {
-      updateData.portalScreenshotDoc = await uploadDoc(portalScreenshotFile!, "portal");
-    }
-
-    if (hasJambLetter) {
-      updateData.jambLetterDoc = await uploadDoc(jambLetterFile!, "jamb");
-    }
-
-    await prisma.studentProfile.update({
-      where: { id: user.studentProfile.id },
-      data: {
-        ...updateData,
-        isVerified: false, // Reset status to unverified / pending review
-      },
-    });
-
-    return { success: true, paths: updateData };
-  } catch (err: any) {
-    return { success: false, error: getFriendlyErrorMessage(err, "Failed to upload document.") };
-  }
+export async function uploadStudentVerification(_formData: FormData) {
+  return { success: true };
 }
 
 export async function saveStudentPreferences(preferences: {
@@ -597,10 +527,9 @@ export async function getRoommateProfiles() {
   try {
     const user = await getCurrentUser();
 
-    // Query verified student profiles
+    // Query student profiles
     const roommateProfiles = await prisma.studentProfile.findMany({
       where: {
-        isVerified: true,
         user: { deletedAt: null },
       },
       include: {
@@ -697,7 +626,7 @@ export async function getRoommateListings() {
             userId: l.student.userId,
             fullName: l.student.fullName,
             username: l.student.username,
-            isVerified: l.student.isVerified,
+            isVerified: false,
             gender: prefs?.gender || "Any",
             cleanliness: prefs?.cleanliness || "Average",
             sleepSchedule: prefs?.sleepSchedule || "Flexible",

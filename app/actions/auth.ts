@@ -397,50 +397,8 @@ export async function updateAgentProfile(data: {
   }
 }
 
-export async function uploadAgentVerification(formData: FormData) {
-  try {
-    const user = await getCurrentUser();
-    if (!user || user.role !== "AGENT" || !user.agentProfile) {
-      return { success: false, error: "Unauthorized." };
-    }
-
-    const file = formData.get("ninDocument") as File;
-    if (!file) {
-      return { success: false, error: "No document file uploaded." };
-    }
-
-    const buffer = Buffer.from(await file.arrayBuffer());
-
-    // Strict magic-byte signature check for documents (PDF/images)
-    const validation = validateFileBuffer(buffer, "document", 5 * 1024 * 1024);
-    if (!validation.valid) {
-      return { success: false, error: validation.error || "Invalid file." };
-    }
-
-    const uploadDir = path.join(process.cwd(), "private_uploads", "verification");
-    const safeExt = validation.sanitizedExtension || ".pdf";
-    const filename = generateSecureFilename(`${user.agentProfile.id}-nin`, safeExt);
-    const contentType = validation.canonicalMime || "application/pdf";
-
-    const r2Result = await uploadToR2(buffer, `verification/${filename}`, contentType);
-    if (!r2Result.success) {
-      await mkdir(uploadDir, { recursive: true });
-      const filePath = path.join(uploadDir, filename);
-      await writeFile(filePath, buffer);
-    }
-    const relativePath = `/api/documents/verification/${filename}`;
-
-    await prisma.agentProfile.update({
-      where: { id: user.agentProfile.id },
-      data: {
-        ninDocument: relativePath,
-      },
-    });
-
-    return { success: true, filePath: relativePath };
-  } catch (err: any) {
-    return { success: false, error: getFriendlyErrorMessage(err, "Failed to upload document.") };
-  }
+export async function uploadAgentVerification(_formData: FormData) {
+  return { success: true };
 }
 
 export async function updateAgentPassword(data: any) {

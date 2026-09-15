@@ -1,7 +1,7 @@
 "use client";
 import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { getCurrentUser, updateAgentProfile, uploadAgentVerification, updateAgentPassword } from "@/app/actions/auth";
+import { getCurrentUser, updateAgentProfile, updateAgentPassword } from "@/app/actions/auth";
 import styles from "./profile.module.css";
 import "./styles.css";
 
@@ -19,7 +19,6 @@ export default function AgentProfilePage() {
   const [bio, setBio] = useState("");
   const [address, setAddress] = useState("");
   const [isVerified, setIsVerified] = useState(false);
-  const [ninDocument, setNinDocument] = useState<string | null>(null);
 
   // Tab State
   const [activeTab, setActiveTab] = useState("details-section");
@@ -27,9 +26,6 @@ export default function AgentProfilePage() {
   // Form loading/status states
   const [saveLoading, setSaveLoading] = useState(false);
   const [saveStatus, setSaveStatus] = useState("");
-  const [uploadFile, setUploadFile] = useState<File | null>(null);
-  const [uploadLoading, setUploadLoading] = useState(false);
-  const [uploadStatus, setUploadStatus] = useState("");
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [passLoading, setPassLoading] = useState(false);
@@ -52,7 +48,6 @@ export default function AgentProfilePage() {
       setAgencyName(profile?.agencyName || "");
       setBio(profile?.bio || "");
       setIsVerified(profile?.isVerified || false);
-      setNinDocument(profile?.ninDocument || null);
       
       const names = (profile?.fullName || "").trim().split(/\s+/);
       setFirstName(names[0] || "");
@@ -87,36 +82,6 @@ export default function AgentProfilePage() {
       setSaveStatus(`Error: ${res.error}`);
     }
     setSaveLoading(false);
-  };
-
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files.length > 0) {
-      setUploadFile(e.target.files[0]);
-    }
-  };
-
-  const handleFileUpload = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!uploadFile) return;
-
-    setUploadLoading(true);
-    setUploadStatus("");
-
-    const formData = new FormData();
-    formData.append("ninDocument", uploadFile);
-
-    const res = await uploadAgentVerification(formData);
-    if (res.success) {
-      setUploadStatus("Document submitted successfully for review!");
-      setNinDocument(res.filePath || null);
-      setUploadFile(null);
-      setTimeout(() => {
-        setUploadStatus("");
-      }, 3000);
-    } else {
-      setUploadStatus(`Error: ${res.error}`);
-    }
-    setUploadLoading(false);
   };
 
   const handleUpdatePassword = async (e: React.FormEvent) => {
@@ -243,39 +208,6 @@ export default function AgentProfilePage() {
                     <p>You can publish properties immediately. Getting verified earns your listings top ranking on the Explore page and higher student trust.</p>
                   </div>
                 </div>
-
-                <form id="verification-form" onSubmit={handleFileUpload}>
-                  <h3 className="h-header">Document Upload (Optional)</h3>
-                  <p className="p-header">Upload your National Identification Number (NIN) slip, driver's licence, or business registration certificate.</p>
-
-                  <div className="file-upload">
-                    <i className="fas fa-cloud-upload-alt"></i>
-                    <p>
-                      {uploadFile ? (
-                        <span>Selected file: <strong>{uploadFile.name}</strong></span>
-                      ) : (
-                        <>Drag and drop your document here, or <span>browse</span></>
-                      )}
-                    </p>
-                    <input type="file" id="nin-upload" accept=".pdf, .jpg, .jpeg, .png" onChange={handleFileChange} />
-                  </div>
-
-                  {ninDocument && (
-                    <p className={styles.fileMeta}>
-                      Currently uploaded document: <a href={ninDocument} target="_blank" rel="noopener noreferrer" className={styles.fileLink}>View File</a>
-                    </p>
-                  )}
-
-                  {uploadStatus && (
-                    <p className={`${styles.saveStatusText} ${uploadStatus.startsWith("Error") ? styles.errorColor : styles.successColor}`}>
-                      {uploadStatus}
-                    </p>
-                  )}
-
-                  <button type="submit" className={`primary-btn ${styles.btnMarginTop}`} disabled={!uploadFile || uploadLoading}>
-                    {uploadLoading ? "Uploading..." : "Submit for Verification Badge"}
-                  </button>
-                </form>
 
                 {/* Alternative Verification Methods Guide */}
                 <div className={styles.vettingCard}>

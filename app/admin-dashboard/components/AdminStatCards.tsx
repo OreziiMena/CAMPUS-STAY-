@@ -1,9 +1,7 @@
 import React from "react";
 
 interface AdminStatCardsProps {
-  verifiedStudentsCount: number;
   totalStudentsCount: number;
-  unverifiedStudentsCount: number;
   verifiedAgentsCount: number;
   totalAgentsCount: number;
   unverifiedAgentsCount: number;
@@ -11,14 +9,12 @@ interface AdminStatCardsProps {
   totalPropertiesCount: number;
   unverifiedPropertiesCount: number;
   pendingQueueCount: number;
-  pendingStudentsQueueCount: number;
   pendingAgentsQueueCount: number;
+  pendingPropertiesQueueCount?: number;
 }
 
 export default function AdminStatCards({
-  verifiedStudentsCount,
   totalStudentsCount,
-  unverifiedStudentsCount,
   verifiedAgentsCount,
   totalAgentsCount,
   unverifiedAgentsCount,
@@ -26,12 +22,12 @@ export default function AdminStatCards({
   totalPropertiesCount,
   unverifiedPropertiesCount,
   pendingQueueCount,
-  pendingStudentsQueueCount,
   pendingAgentsQueueCount,
+  pendingPropertiesQueueCount = 0,
 }: AdminStatCardsProps) {
   return (
     <div className="admin-metrics-grid">
-      {/* Verified Students Card */}
+      {/* Total Students Card */}
       <div className="admin-stat-card">
         <div className="stat-icon-wrapper student">
           <i className="fas fa-user-graduate"></i>
@@ -39,20 +35,15 @@ export default function AdminStatCards({
         <div>
           <div className="stat-value-group">
             <span className="stat-number text-green">
-              {verifiedStudentsCount}
-            </span>
-            <span className="stat-total-label">
-              / {totalStudentsCount} total
+              {totalStudentsCount}
             </span>
           </div>
           <div className="stat-title">
-            Verified Students
+            Registered Students
           </div>
-          {unverifiedStudentsCount > 0 && (
-            <span className="stat-subtext text-amber">
-              {unverifiedStudentsCount} unverified
-            </span>
-          )}
+          <span className="stat-subtext text-muted">
+            Active campus accounts
+          </span>
         </div>
       </div>
 
@@ -124,7 +115,7 @@ export default function AdminStatCards({
             Approvals Queue
           </div>
           <span className="stat-subtext text-muted">
-            {pendingStudentsQueueCount} students, {pendingAgentsQueueCount} agents
+            {pendingAgentsQueueCount} agents, {pendingPropertiesQueueCount} listings
           </span>
         </div>
       </div>

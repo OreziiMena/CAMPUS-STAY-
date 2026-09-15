@@ -267,20 +267,15 @@ function AdminDashboardContent() {
     setActionLoading(profileId);
     const res = await toggleUserVerification(profileId, role, true);
     if (res.success) {
-      if (role === "STUDENT") {
-        setStudents((prev) => prev.filter((s) => s.id !== profileId));
-      } else {
+      if (role === "AGENT") {
         setAgents((prev) => prev.filter((a) => a.id !== profileId));
+        setUsers((prev) => prev.map((u) => {
+          if (u.agentProfile?.id === profileId) {
+            return { ...u, agentProfile: { ...u.agentProfile, isVerified: true } };
+          }
+          return u;
+        }));
       }
-      setUsers((prev) => prev.map((u) => {
-        if (role === "STUDENT" && u.studentProfile?.id === profileId) {
-          return { ...u, studentProfile: { ...u.studentProfile, isVerified: true } };
-        }
-        if (role === "AGENT" && u.agentProfile?.id === profileId) {
-          return { ...u, agentProfile: { ...u.agentProfile, isVerified: true } };
-        }
-        return u;
-      }));
     } else {
       alert(res.error || "Failed to verify profile.");
     }
@@ -344,29 +339,22 @@ function AdminDashboardContent() {
   const handleToggleVerificationAllUsers = async (userId: string, role: "STUDENT" | "AGENT", currentStatus: boolean) => {
     const userObj = users.find((u) => u.id === userId);
     if (!userObj) return;
-    const profileId = role === "STUDENT" ? userObj.studentProfile?.id : userObj.agentProfile?.id;
+    if (role === "STUDENT") return;
+    const profileId = userObj.agentProfile?.id;
     if (!profileId) return;
 
     setActionLoading(userId);
-    const res = await toggleUserVerification(profileId, role, !currentStatus);
+    const res = await toggleUserVerification(profileId, "AGENT", !currentStatus);
     if (res.success) {
       setUsers((prev) => prev.map((u) => {
         if (u.id === userId) {
-          if (role === "STUDENT") {
-            return { ...u, studentProfile: { ...u.studentProfile, isVerified: !currentStatus } };
-          } else {
-            return { ...u, agentProfile: { ...u.agentProfile, isVerified: !currentStatus } };
-          }
+          return { ...u, agentProfile: { ...u.agentProfile, isVerified: !currentStatus } };
         }
         return u;
       }));
       
       if (!currentStatus) {
-        if (role === "STUDENT") {
-          setStudents((prev) => prev.filter((s) => s.id !== profileId));
-        } else {
-          setAgents((prev) => prev.filter((a) => a.id !== profileId));
-        }
+        setAgents((prev) => prev.filter((a) => a.id !== profileId));
       } else {
         fetchQueues();
       }
@@ -581,18 +569,16 @@ function AdminDashboardContent() {
 
       {/* Global Admin Metrics Overview */}
       <AdminStatCards
-        verifiedStudentsCount={verifiedStudentsCount}
         totalStudentsCount={studentUsers.length}
-        unverifiedStudentsCount={unverifiedStudentsCount}
         verifiedAgentsCount={verifiedAgentsCount}
         totalAgentsCount={agentUsers.length}
         unverifiedAgentsCount={unverifiedAgentsCount}
         verifiedPropertiesCount={verifiedPropertiesCount}
         totalPropertiesCount={allProperties.length}
         unverifiedPropertiesCount={unverifiedPropertiesCount}
-        pendingQueueCount={students.length + agents.length + properties.length}
-        pendingStudentsQueueCount={students.length}
+        pendingQueueCount={agents.length + properties.length}
         pendingAgentsQueueCount={agents.length}
+        pendingPropertiesQueueCount={properties.length}
       />
 
       {/* Dynamic Directory Search Bar & Security CTA */}
@@ -623,11 +609,9 @@ function AdminDashboardContent() {
           {/* 1. VERIFICATIONS DASHBOARD TAB */}
           {activeTab === "verifications" && (
             <VerificationsTab
-              students={students}
               agents={agents}
               propertiesQueue={propertiesQueue}
               roommatesQueue={roommatesQueue}
-              filteredQueueStudents={filteredQueueStudents}
               filteredQueueAgents={filteredQueueAgents}
               filteredQueueProperties={filteredQueueProperties}
               filteredQueueRoommates={filteredQueueRoommates}
@@ -636,7 +620,6 @@ function AdminDashboardContent() {
               onRejectUser={handleRejectUser}
               onVerifyProperty={handleVerifyProperty}
               onRejectProperty={handleRejectProperty}
-              onPreviewDoc={setActivePreviewDoc}
             />
           )}
 

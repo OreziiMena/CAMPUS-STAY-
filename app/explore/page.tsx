@@ -331,7 +331,7 @@ export default function Explore() {
                     : (property.student ? `@${property.student.username}` : "Campus Tent Official");
                   const isVerified = property.agent 
                     ? property.agent.isVerified 
-                    : (property.student ? property.student.isVerified : true);
+                    : false;
                   const initial = property.agent 
                     ? property.agent.fullName.charAt(0) 
                     : (property.student ? (property.student.fullName?.charAt(0) || "S") : "C");
