@@ -41,6 +41,7 @@ export default function Explore() {
   const [properties, setProperties] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [showSafetyTip, setShowSafetyTip] = useState(true);
+  const [playingVideoId, setPlayingVideoId] = useState<string | null>(null);
 
   // Advanced Filters State
   const [university, setUniversity] = useState("All");
@@ -357,35 +358,72 @@ export default function Explore() {
                             const videoUrl = property.images?.find((img: string) => img.match(/\.(mp4|webm|ogg|mov|mkv)(\?.*)?$/i));
                             const posterUrl = property.images?.find((img: string) => !img.match(/\.(mp4|webm|ogg|mov|mkv)(\?.*)?$/i));
                             const defaultImg = "https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80";
+                            const isPlaying = playingVideoId === property.id;
 
-                            return videoUrl ? (
-                              <>
-                                <video 
-                                  ref={(el) => {
-                                    if (el) {
-                                      el.muted = true;
-                                      el.defaultMuted = true;
-                                      el.play().catch(() => {});
-                                    }
-                                  }}
-                                  src={videoUrl} 
-                                  poster={posterUrl}
-                                  className="explore-media-element" 
-                                  muted 
-                                  loop 
-                                  playsInline 
-                                  autoPlay
-                                  preload="auto"
-                                />
-                                <div className="explore-video-tour-badge">
-                                  <i className="fas fa-play explore-video-play-icon"></i> Video Tour
+                            if (videoUrl) {
+                              return (
+                                <div className="explore-video-overlay-wrapper">
+                                  {isPlaying ? (
+                                    <>
+                                      <video 
+                                        src={videoUrl} 
+                                        poster={posterUrl || defaultImg}
+                                        className="explore-media-element" 
+                                        controls
+                                        autoPlay
+                                        playsInline 
+                                        preload="metadata"
+                                      />
+                                      <button
+                                        type="button"
+                                        className="explore-video-close-btn"
+                                        title="Close Video"
+                                        aria-label="Close Video"
+                                        onClick={(e) => {
+                                          e.preventDefault();
+                                          e.stopPropagation();
+                                          setPlayingVideoId(null);
+                                        }}
+                                      >
+                                        <i className="fas fa-times"></i>
+                                      </button>
+                                    </>
+                                  ) : (
+                                    <>
+                                      <img 
+                                        src={posterUrl || defaultImg} 
+                                        alt={property.title} 
+                                        className="explore-media-element" 
+                                        loading="lazy"
+                                      />
+                                      <div className="explore-video-tour-badge">
+                                        <i className="fas fa-video explore-video-play-icon"></i> Video Tour
+                                      </div>
+                                      <button
+                                        type="button"
+                                        className="explore-video-play-btn"
+                                        title="Play Video Tour"
+                                        aria-label="Play Video Tour"
+                                        onClick={(e) => {
+                                          e.preventDefault();
+                                          e.stopPropagation();
+                                          setPlayingVideoId(property.id);
+                                        }}
+                                      >
+                                        <i className="fas fa-play"></i>
+                                      </button>
+                                    </>
+                                  )}
                                 </div>
-                              </>
-                            ) : (
+                              );
+                            }
+
+                            return (
                               <img 
                                 src={posterUrl || property.images?.[0] || defaultImg} 
                                 alt={property.title} 
                                 className="explore-media-element" 
+                                loading="lazy"
                               />
                             );
                           })()}

@@ -49,6 +49,7 @@ export default function RoommatesDirectory() {
   const [currentUser, setCurrentUser] = useState<any>(null);
   const [showSafetyTip, setShowSafetyTip] = useState(true);
   const [selectedRoommateDetails, setSelectedRoommateDetails] = useState<any | null>(null);
+  const [playingVideoId, setPlayingVideoId] = useState<string | null>(null);
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -477,20 +478,73 @@ export default function RoommatesDirectory() {
                           {(() => {
                             const mediaUrl = listing.images[0];
                             const isVideo = mediaUrl.match(/\.(mp4|webm|ogg|mov|mkv)(\?.*)?$/i);
-                            return isVideo ? (
-                              <video 
-                                src={mediaUrl} 
-                                className="roommate-media-img" 
-                                muted 
-                                loop 
-                                playsInline 
-                                autoPlay
-                              />
-                            ) : (
+                            const posterUrl = listing.images.find((img: string) => !img.match(/\.(mp4|webm|ogg|mov|mkv)(\?.*)?$/i));
+                            const defaultImg = "https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80";
+                            const isPlaying = playingVideoId === listing.id;
+
+                            if (isVideo) {
+                              return (
+                                <>
+                                  {isPlaying ? (
+                                    <>
+                                      <video 
+                                        src={mediaUrl} 
+                                        className="roommate-media-img" 
+                                        controls
+                                        autoPlay
+                                        playsInline 
+                                        preload="metadata"
+                                      />
+                                      <button
+                                        type="button"
+                                        className="roommate-video-close-btn"
+                                        title="Close Video"
+                                        aria-label="Close Video"
+                                        onClick={(e) => {
+                                          e.preventDefault();
+                                          e.stopPropagation();
+                                          setPlayingVideoId(null);
+                                        }}
+                                      >
+                                        <i className="fas fa-times"></i>
+                                      </button>
+                                    </>
+                                  ) : (
+                                    <>
+                                      <img 
+                                        src={posterUrl || defaultImg} 
+                                        alt={listing.title} 
+                                        className="roommate-media-img" 
+                                        loading="lazy"
+                                      />
+                                      <div className="roommate-video-tour-badge">
+                                        <i className="fas fa-video"></i> Video Tour
+                                      </div>
+                                      <button
+                                        type="button"
+                                        className="roommate-video-play-btn"
+                                        title="Play Video Tour"
+                                        aria-label="Play Video Tour"
+                                        onClick={(e) => {
+                                          e.preventDefault();
+                                          e.stopPropagation();
+                                          setPlayingVideoId(listing.id);
+                                        }}
+                                      >
+                                        <i className="fas fa-play"></i>
+                                      </button>
+                                    </>
+                                  )}
+                                </>
+                              );
+                            }
+
+                            return (
                               <img 
                                 src={mediaUrl} 
                                 alt={listing.title} 
                                 className="roommate-media-img" 
+                                loading="lazy"
                               />
                             );
                           })()}
