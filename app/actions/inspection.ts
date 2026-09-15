@@ -5,13 +5,15 @@ import { getCurrentUser } from "./auth";
 import { sendEmail } from "@/lib/email";
 import { escapeHtml } from "@/lib/email-sanitizer";
 import { triggerPusherEvent } from "@/lib/pusher";
+import { randomUUID } from "crypto";
 
 const BASE_URL = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
+export const AVAILABILITY_EXPIRATION_MS = 24 * 60 * 60 * 1000; // 24 hours
 
 /**
  * 1. Query Property Availability
  * Student asks if the property is available right now before paying inspection fee.
- * Sends 1-click email to agent.
+ * Sends 1-click email to agent. Availability confirmations expire after 24 hours.
  */
 export async function queryPropertyAvailability(propertyId: string) {
   try {
@@ -68,19 +70,33 @@ export async function queryPropertyAvailability(propertyId: string) {
 
     let query = existingQuery;
 
-    // If query exists and is already AVAILABLE, return that immediately
+    // If query exists and was confirmed AVAILABLE within the last 24 hours, return that
     if (existingQuery && existingQuery.status === "AVAILABLE") {
-      return { success: true, queryId: existingQuery.id, status: "AVAILABLE", isAvailable: true };
+      const confirmedTime = new Date(existingQuery.respondedAt || existingQuery.updatedAt).getTime();
+      const isExpired = Date.now() - confirmedTime > AVAILABILITY_EXPIRATION_MS;
+      if (!isExpired) {
+        return { success: true, queryId: existingQuery.id, status: "AVAILABLE", isAvailable: true };
+      }
     }
 
-    // If no query or previous was answered UNAVAILABLE, create a fresh query
-    if (!existingQuery || existingQuery.status === "UNAVAILABLE") {
+    // If no query, or if expired/unavailable, create or refresh query with a new token
+    if (!existingQuery) {
       query = await prisma.availabilityQuery.create({
         data: {
           studentId: user.id,
           propertyId: propertyId,
           agentId: recipientId,
           status: "PENDING",
+          token: randomUUID(),
+        },
+      });
+    } else {
+      query = await prisma.availabilityQuery.update({
+        where: { id: existingQuery.id },
+        data: {
+          status: "PENDING",
+          token: randomUUID(),
+          respondedAt: null,
         },
       });
     }
@@ -388,6 +404,22 @@ export async function getInspectionStatus(propertyId: string) {
       orderBy: { createdAt: "desc" },
     });
 
+    let currentAvailabilityStatus = latestQuery?.status || "NONE";
+    let availabilityExpiresAt: string | null = null;
+    let hoursRemaining = 0;
+
+    if (latestQuery && latestQuery.status === "AVAILABLE" && !isPaid && !isPendingApproval) {
+      const confirmedTime = new Date(latestQuery.respondedAt || latestQuery.updatedAt).getTime();
+      const elapsed = Date.now() - confirmedTime;
+      if (elapsed > AVAILABILITY_EXPIRATION_MS) {
+        currentAvailabilityStatus = "EXPIRED";
+      } else {
+        const remainingMs = AVAILABILITY_EXPIRATION_MS - elapsed;
+        hoursRemaining = Math.max(1, Math.ceil(remainingMs / (1000 * 60 * 60)));
+        availabilityExpiresAt = new Date(confirmedTime + AVAILABILITY_EXPIRATION_MS).toISOString();
+      }
+    }
+
     return {
       success: true,
       isPaid,
@@ -401,7 +433,9 @@ export async function getInspectionStatus(propertyId: string) {
             reference: latestPayment.reference,
           }
         : null,
-      availabilityStatus: latestQuery?.status || "NONE",
+      availabilityStatus: currentAvailabilityStatus,
+      availabilityExpiresAt,
+      hoursRemaining,
       queryId: latestQuery?.id || null,
       isOwner: false,
     };
@@ -446,20 +480,22 @@ export async function initializePaystackInspection(propertyId: string) {
       return { success: false, error: "You cannot pay an inspection fee on your own listing." };
     }
 
-    // Require agent/host to confirm property availability first (unless Admin)
+    // Require agent/host to confirm property availability first (within 24 hours)
     if (user.role !== "ADMIN" && property.agentId) {
+      const twentyFourHoursAgo = new Date(Date.now() - AVAILABILITY_EXPIRATION_MS);
       const confirmedAvailability = await prisma.availabilityQuery.findFirst({
         where: {
           studentId: user.id,
           propertyId: propertyId,
           status: "AVAILABLE",
+          updatedAt: { gte: twentyFourHoursAgo },
         },
       });
 
       if (!confirmedAvailability) {
         return {
           success: false,
-          error: "Property availability must be confirmed by the agent before paying.",
+          error: "Property availability confirmation has expired (valid for 24 hours) or has not been confirmed. Please re-confirm availability with the agent before paying.",
         };
       }
     }
@@ -612,20 +648,22 @@ export async function submitBankTransferInspectionPayment(data: {
       };
     }
 
-    // Require confirmed availability
+    // Require confirmed availability (within 24 hours)
     if (user.role !== "ADMIN" && property.agentId) {
+      const twentyFourHoursAgo = new Date(Date.now() - AVAILABILITY_EXPIRATION_MS);
       const confirmedAvailability = await prisma.availabilityQuery.findFirst({
         where: {
           studentId: user.id,
           propertyId: propertyId,
           status: "AVAILABLE",
+          updatedAt: { gte: twentyFourHoursAgo },
         },
       });
 
       if (!confirmedAvailability) {
         return {
           success: false,
-          error: "Property availability must be confirmed by the agent before payment.",
+          error: "Property availability confirmation has expired (valid for 24 hours) or has not been confirmed. Please re-confirm availability with the agent before payment.",
         };
       }
     }
@@ -779,20 +817,22 @@ export async function processInspectionPayment(propertyId: string, reference?: s
       };
     }
 
-    // Require agent/host to confirm property availability first
-    if (user.role !== "ADMIN") {
+    // Require agent/host to confirm property availability first (within 24 hours)
+    if (user.role !== "ADMIN" && property.agentId) {
+      const twentyFourHoursAgo = new Date(Date.now() - AVAILABILITY_EXPIRATION_MS);
       const confirmedAvailability = await prisma.availabilityQuery.findFirst({
         where: {
           studentId: user.id,
           propertyId: propertyId,
           status: "AVAILABLE",
+          updatedAt: { gte: twentyFourHoursAgo },
         },
       });
 
-      if (!confirmedAvailability && property.agentId) {
+      if (!confirmedAvailability) {
         return {
           success: false,
-          error: "Property availability must be checked and confirmed by the agent before payment can be processed.",
+          error: "Property availability confirmation has expired (valid for 24 hours) or has not been confirmed. Please re-confirm availability with the agent before payment.",
         };
       }
     }

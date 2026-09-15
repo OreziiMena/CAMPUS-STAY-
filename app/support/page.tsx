@@ -140,17 +140,14 @@ export default function SupportPage() {
               <a href="mailto:support@campustent.com" className="quick-contact-item">
                 <i className="fas fa-envelope"></i> support@campustent.com
               </a>
-              <a href="https://wa.me/2349161863877?text=Hi%20Campus%20Tent%20Support,%20I%20need%20help" target="_blank" rel="noopener noreferrer" className="quick-contact-item">
-                <i className="fab fa-whatsapp"></i> Chat on WhatsApp (+234 916 186 3877)
+              <a href="https://www.instagram.com/campus_tent?stkn=djZ4YjQxeDZ4Zm1t&utm_source=qr" target="_blank" rel="noopener noreferrer" className="quick-contact-item">
+                <i className="fab fa-instagram"></i> Follow on Instagram (@campus_tent)
               </a>
-              <a href="https://instagram.com/campustent" target="_blank" rel="noopener noreferrer" className="quick-contact-item">
-                <i className="fab fa-instagram"></i> Follow on Instagram (@campustent)
-              </a>
-              <a href="https://x.com/campustent" target="_blank" rel="noopener noreferrer" className="quick-contact-item">
+              <a href="https://x.com/campustent?s=11" target="_blank" rel="noopener noreferrer" className="quick-contact-item">
                 <i className="fab fa-x-twitter"></i> Follow on Twitter / X (@campustent)
               </a>
-              <a href="https://tiktok.com/@campustent" target="_blank" rel="noopener noreferrer" className="quick-contact-item">
-                <i className="fab fa-tiktok"></i> Follow on TikTok (@campustent)
+              <a href="https://www.tiktok.com/@campus.tent" target="_blank" rel="noopener noreferrer" className="quick-contact-item">
+                <i className="fab fa-tiktok"></i> Follow on TikTok (@campus.tent)
               </a>
             </div>
           </div>

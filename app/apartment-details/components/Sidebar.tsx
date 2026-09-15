@@ -207,8 +207,33 @@ export default function Sidebar({
                         <div>
                           <strong>Confirmed: Property is Available!</strong>
                           <div className="status-pill-desc">
-                            The agent confirmed this hostel is ready for inspection.
+                            The agent confirmed this hostel is ready for inspection. (Valid for 24 hours)
                           </div>
+                        </div>
+                      </div>
+                    )}
+
+                    {inspectionStatus.availabilityStatus === "EXPIRED" && (
+                      <div className="availability-status-pill unavailable">
+                        <i className="fas fa-history status-pill-icon"></i>
+                        <div>
+                          <strong>Availability Expired (Over 24 hrs)</strong>
+                          <div className="status-pill-desc">
+                            The previous confirmation was valid for 24 hours. Please confirm with the agent again before paying.
+                          </div>
+                          <button
+                            type="button"
+                            className="availability-btn"
+                            style={{ marginTop: "10px", fontSize: "13.5px", padding: "10px 16px" }}
+                            onClick={onCheckAvailability}
+                            disabled={isCheckingAvailability}
+                          >
+                            {isCheckingAvailability ? (
+                              <><i className="fas fa-spinner fa-spin"></i> Checking availability...</>
+                            ) : (
+                              <><i className="fas fa-redo"></i> Confirm Availability Again</>
+                            )}
+                          </button>
                         </div>
                       </div>
                     )}
@@ -249,6 +274,11 @@ export default function Sidebar({
                         )}
                       </button>
                     </>
+                  ) : inspectionStatus.availabilityStatus === "EXPIRED" ? (
+                    <div className="availability-prompt-pending">
+                      <i className="fas fa-clock"></i>
+                      <span><strong>Confirmation Expired:</strong> Availability was confirmed over 24 hours ago. Please tap "Confirm Availability Again" above to proceed.</span>
+                    </div>
                   ) : inspectionStatus.availabilityStatus === "PENDING" ? (
                     <div className="availability-prompt-pending">
                       <i className="fas fa-hourglass-half"></i>

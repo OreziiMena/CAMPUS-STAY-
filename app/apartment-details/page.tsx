@@ -461,9 +461,9 @@ function ApartmentDetailsContent() {
   const handleConfirmBankTransfer = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!property || !currentUser) return;
-    const finalBankName = bankSenderBank === "OTHER" ? customBankName.trim() : bankSenderBank.trim();
+    const finalBankName = bankSenderBank.trim();
     if (!bankSenderName.trim() || !finalBankName) {
-      alert("Please select or enter the bank name and provide the sender's full name.");
+      alert("Please enter or select your bank and provide the sender's full name.");
       return;
     }
 
@@ -805,36 +805,51 @@ function ApartmentDetailsContent() {
                     </div>
 
                     <div>
-                      <label className="filter-label">Your Bank *</label>
-                      <select
-                        className="bank-input-field bank-select-field"
+                      <label className="filter-label">
+                        Your Bank * <span style={{ fontSize: "11px", fontWeight: "normal", color: "#64748b" }}>(Type to search or select)</span>
+                      </label>
+                      <input
+                        type="text"
+                        list="nigerian-banks-datalist"
+                        className="bank-input-field"
+                        placeholder="Type or select bank (e.g. OPay, GTBank, Kuda, Zenith...)"
                         value={bankSenderBank}
                         onChange={(e) => setBankSenderBank(e.target.value)}
                         required
-                      >
-                        <option value="">-- Select Your Bank --</option>
+                        autoComplete="off"
+                      />
+                      <datalist id="nigerian-banks-datalist">
                         {NIGERIAN_BANKS.map((b) => (
-                          <option key={b.code} value={b.name}>
-                            {b.name}
-                          </option>
+                          <option key={b.code} value={b.name} />
                         ))}
-                        <option value="OTHER">Other Bank / Microfinance Bank (Specify)</option>
-                      </select>
-                    </div>
+                      </datalist>
 
-                    {bankSenderBank === "OTHER" && (
-                      <div>
-                        <label className="filter-label">Specify Bank Name *</label>
-                        <input
-                          type="text"
-                          className="bank-input-field"
-                          placeholder="e.g. Hope MFB, Mint Finex, etc."
-                          value={customBankName}
-                          onChange={(e) => setCustomBankName(e.target.value)}
-                          required
-                        />
+                      {/* Quick selection chips for most popular banks */}
+                      <div className="bank-quick-pills">
+                        {["OPay", "Palmpay", "Kuda Bank", "Moniepoint MFB", "GTBank", "Access Bank", "Zenith Bank", "First Bank"].map((popularBank) => {
+                          const isSelected = bankSenderBank.toLowerCase().includes(popularBank.toLowerCase()) ||
+                            (popularBank === "GTBank" && bankSenderBank.toLowerCase().includes("guaranty")) ||
+                            (popularBank === "First Bank" && bankSenderBank.toLowerCase().includes("first bank"));
+                          return (
+                            <button
+                              key={popularBank}
+                              type="button"
+                              className={`bank-pill-btn ${isSelected ? "active" : ""}`}
+                              onClick={() => {
+                                const matched = NIGERIAN_BANKS.find(b => 
+                                  b.name.toLowerCase().includes(popularBank.toLowerCase()) || 
+                                  (popularBank === "GTBank" && b.name.toLowerCase().includes("guaranty")) ||
+                                  (popularBank === "First Bank" && b.name.toLowerCase().includes("first bank"))
+                                );
+                                setBankSenderBank(matched ? matched.name : popularBank);
+                              }}
+                            >
+                              {popularBank}
+                            </button>
+                          );
+                        })}
                       </div>
-                    )}
+                    </div>
 
                     <div>
                       <label className="filter-label">Session ID / Transaction Reference (Optional)</label>

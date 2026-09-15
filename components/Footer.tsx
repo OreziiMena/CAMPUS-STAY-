@@ -29,17 +29,14 @@ export default function Footer() {
           />
           <p className="brand-tagline">Connecting Students with <br />Trusted Off-Campus Housing.</p>
           <div className={styles.socialIcons}>
-            <a href="https://instagram.com/campustent" target="_blank" rel="noopener noreferrer" className={styles.socialLink} title="Follow us on Instagram">
+            <a href="https://www.instagram.com/campus_tent?stkn=djZ4YjQxeDZ4Zm1t&utm_source=qr" target="_blank" rel="noopener noreferrer" className={styles.socialLink} title="Follow us on Instagram">
               <i className="fa-brands fa-instagram"></i>
             </a>
-            <a href="https://x.com/campustent" target="_blank" rel="noopener noreferrer" className={styles.socialLink} title="Follow us on Twitter (X)">
+            <a href="https://x.com/campustent?s=11" target="_blank" rel="noopener noreferrer" className={styles.socialLink} title="Follow us on Twitter (X)">
               <i className="fa-brands fa-x-twitter"></i>
             </a>
-            <a href="https://tiktok.com/@campustent" target="_blank" rel="noopener noreferrer" className={styles.socialLink} title="Follow us on TikTok">
+            <a href="https://www.tiktok.com/@campus.tent" target="_blank" rel="noopener noreferrer" className={styles.socialLink} title="Follow us on TikTok">
               <i className="fa-brands fa-tiktok"></i>
-            </a>
-            <a href="https://wa.me/2349161863877" target="_blank" rel="noopener noreferrer" className={styles.socialLink} title="Contact on WhatsApp">
-              <i className="fa-brands fa-whatsapp"></i>
             </a>
           </div>
         </div>
@@ -72,11 +69,6 @@ export default function Footer() {
           <h4>CONNECT</h4>
           <ul>
             <li><a href="mailto:support@campustent.com"><i className="fa-solid fa-envelope"></i> support@campustent.com</a></li>
-            <li>
-              <a href="https://wa.me/2349161863877?text=Hi%20Campus%20Tent%20Support,%20I%20need%20help" target="_blank" rel="noopener noreferrer">
-                <i className="fa-brands fa-whatsapp"></i> Chat with Us
-              </a>
-            </li>
             <li><Link href="/terms">Terms of Service</Link></li>
             <li><Link href="/privacy">Privacy Policy</Link></li>
           </ul>
