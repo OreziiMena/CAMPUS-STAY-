@@ -16,6 +16,7 @@ import {
   initializePaystackInspection,
   submitBankTransferInspectionPayment,
 } from "@/app/actions/inspection";
+import { NIGERIAN_BANKS } from "@/lib/banks";
 import { pusherClient } from "@/lib/pusher-client";
 import "./styles.css";
 
@@ -107,6 +108,7 @@ function ApartmentDetailsContent() {
   const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<"bank_transfer" | "paystack">("bank_transfer");
   const [bankSenderName, setBankSenderName] = useState("");
   const [bankSenderBank, setBankSenderBank] = useState("");
+  const [customBankName, setCustomBankName] = useState("");
   const [bankTransferRef, setBankTransferRef] = useState("");
   const [isSubmittingBankTransfer, setIsSubmittingBankTransfer] = useState(false);
   const [copiedAccountNum, setCopiedAccountNum] = useState(false);
@@ -459,8 +461,9 @@ function ApartmentDetailsContent() {
   const handleConfirmBankTransfer = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!property || !currentUser) return;
-    if (!bankSenderName.trim() || !bankSenderBank.trim()) {
-      alert("Please enter both the sender's full name and the bank name used for transfer.");
+    const finalBankName = bankSenderBank === "OTHER" ? customBankName.trim() : bankSenderBank.trim();
+    if (!bankSenderName.trim() || !finalBankName) {
+      alert("Please select or enter the bank name and provide the sender's full name.");
       return;
     }
 
@@ -469,21 +472,26 @@ function ApartmentDetailsContent() {
       const res = await submitBankTransferInspectionPayment({
         propertyId: property.id,
         senderName: bankSenderName.trim(),
-        bankName: bankSenderBank.trim(),
+        bankName: finalBankName,
         reference: bankTransferRef.trim() || undefined,
       });
 
       if (res.success) {
         setInspectionStatus((prev) => ({
           ...prev,
-          isPaid: true,
+          isPaid: res.alreadyPaid ? true : false,
+          isPendingApproval: !res.alreadyPaid,
         }));
         setIsPaymentModalOpen(false);
-        setToastMessage("₦7,500 Bank Transfer confirmed! Direct chat & appointment booking unlocked.");
+        setToastMessage(
+          res.alreadyPaid
+            ? "Inspection fee already verified! Direct chat & appointment booking unlocked."
+            : "₦7,500 bank transfer submitted! Verification in progress with admin."
+        );
         setShowToast(true);
         setTimeout(() => setShowToast(false), 5000);
       } else {
-        alert(res.error || "Failed to confirm bank transfer payment.");
+        alert(res.error || "Failed to submit bank transfer payment.");
       }
     } catch (err: any) {
       alert(err.message || "Error finalizing bank transfer.");
@@ -775,7 +783,7 @@ function ApartmentDetailsContent() {
                         </div>
                         <div className="bank-account-item">
                           <span className="bank-account-label">Account Name:</span>
-                          <span className="bank-account-val">OREZIME DESTINY ABED</span>
+                          <span className="bank-account-val">OREZIME ABED(CAMPUS TENT)</span>
                         </div>
                         <div className="bank-account-item">
                           <span className="bank-account-label">Amount:</span>
@@ -797,16 +805,36 @@ function ApartmentDetailsContent() {
                     </div>
 
                     <div>
-                      <label className="filter-label">Your Bank Name *</label>
-                      <input
-                        type="text"
-                        className="bank-input-field"
-                        placeholder="e.g. GTBank, Kuda, OPay, Zenith, Palmpay, Access"
+                      <label className="filter-label">Your Bank *</label>
+                      <select
+                        className="bank-input-field bank-select-field"
                         value={bankSenderBank}
                         onChange={(e) => setBankSenderBank(e.target.value)}
                         required
-                      />
+                      >
+                        <option value="">-- Select Your Bank --</option>
+                        {NIGERIAN_BANKS.map((b) => (
+                          <option key={b.code} value={b.name}>
+                            {b.name}
+                          </option>
+                        ))}
+                        <option value="OTHER">Other Bank / Microfinance Bank (Specify)</option>
+                      </select>
                     </div>
+
+                    {bankSenderBank === "OTHER" && (
+                      <div>
+                        <label className="filter-label">Specify Bank Name *</label>
+                        <input
+                          type="text"
+                          className="bank-input-field"
+                          placeholder="e.g. Hope MFB, Mint Finex, etc."
+                          value={customBankName}
+                          onChange={(e) => setCustomBankName(e.target.value)}
+                          required
+                        />
+                      </div>
+                    )}
 
                     <div>
                       <label className="filter-label">Session ID / Transaction Reference (Optional)</label>

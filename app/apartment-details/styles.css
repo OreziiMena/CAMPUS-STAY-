@@ -2321,15 +2321,17 @@ body {
   align-items: center;
   justify-content: center;
   z-index: 100000;
-  padding: 16px;
+  padding: clamp(8px, 2.5vw, 20px);
   box-sizing: border-box;
+  overflow-y: auto;
 }
 
 .payment-modal-container {
   background: #ffffff;
-  border-radius: 16px;
+  border-radius: clamp(12px, 3vw, 18px);
   max-width: 520px;
   width: 100%;
+  max-height: calc(100dvh - 24px);
   box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
   border: 1px solid #e2e8f0;
   overflow: hidden;
@@ -2341,7 +2343,7 @@ body {
 @keyframes modalSlideUp {
   from {
     opacity: 0;
-    transform: translateY(20px) scale(0.98);
+    transform: translateY(16px) scale(0.98);
   }
   to {
     opacity: 1;
@@ -2351,30 +2353,34 @@ body {
 
 .payment-modal-header {
   background: linear-gradient(135deg, rgb(2, 53, 28) 0%, #064e3b 100%);
-  padding: 22px 24px;
+  padding: clamp(14px, 3vw, 20px) clamp(16px, 3.5vw, 24px);
   color: #ffffff;
   position: relative;
+  flex-shrink: 0;
 }
 
 .payment-modal-header-top {
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
+  gap: 12px;
 }
 
 .payment-modal-title {
   margin: 0;
-  font-size: 19px;
+  font-size: clamp(16px, 3.5vw, 19px);
   font-weight: 700;
   color: #ffffff;
   font-family: 'Poppins', sans-serif;
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 8px;
+  line-height: 1.3;
 }
 
 .payment-modal-title i {
   color: #a7f3d0;
+  flex-shrink: 0;
 }
 
 .payment-modal-close-icon {
@@ -2383,6 +2389,7 @@ body {
   color: #ffffff;
   width: 32px;
   height: 32px;
+  min-width: 32px;
   border-radius: 50%;
   cursor: pointer;
   display: flex;
@@ -2390,6 +2397,7 @@ body {
   justify-content: center;
   font-size: 14px;
   transition: all 0.2s;
+  flex-shrink: 0;
 }
 
 .payment-modal-close-icon:hover {
@@ -2402,35 +2410,36 @@ body {
   background: rgba(167, 243, 208, 0.2);
   border: 1px solid rgba(167, 243, 208, 0.4);
   color: #a7f3d0;
-  font-size: 13px;
+  font-size: clamp(11.5px, 2.2vw, 13px);
   font-weight: 700;
-  padding: 4px 12px;
+  padding: 3px 10px;
   border-radius: 20px;
-  margin-top: 8px;
+  margin-top: 6px;
 }
 
 .payment-modal-body {
-  padding: 22px 24px;
+  padding: clamp(14px, 3vw, 20px) clamp(14px, 3.5vw, 24px);
   overflow-y: auto;
-  max-height: 75vh;
+  -webkit-overflow-scrolling: touch;
+  max-height: calc(100dvh - 120px);
 }
 
 .payment-method-selector-tabs {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 10px;
+  gap: 8px;
   background: #f1f5f9;
-  padding: 6px;
+  padding: 5px;
   border-radius: 12px;
-  margin-bottom: 20px;
+  margin-bottom: 16px;
 }
 
 .payment-method-selector-tab {
-  padding: 10px 14px;
+  padding: clamp(8px, 2vw, 11px) clamp(6px, 1.8vw, 14px);
   border: none;
   background: transparent;
   font-family: 'Poppins', sans-serif;
-  font-size: 13.5px;
+  font-size: clamp(12px, 2.4vw, 13.5px);
   font-weight: 600;
   color: #64748b;
   border-radius: 8px;
@@ -2438,8 +2447,9 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 8px;
+  gap: 6px;
   transition: all 0.2s ease;
+  white-space: nowrap;
 }
 
 .payment-method-selector-tab.active {
@@ -2452,54 +2462,55 @@ body {
 .paystack-option-container {
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 14px;
   text-align: center;
-  padding: 8px 0;
+  padding: 4px 0;
 }
 
 .paystack-option-info {
-  font-size: 14px;
+  font-size: clamp(13px, 2vw, 14px);
   color: #475569;
-  line-height: 1.6;
+  line-height: 1.5;
   margin: 0;
 }
 
 .paystack-channels-badge {
   display: flex;
   justify-content: center;
-  gap: 12px;
+  gap: 8px;
   flex-wrap: wrap;
-  margin-top: 4px;
+  margin-top: 2px;
 }
 
 .paystack-channel-pill {
   background: #f8fafc;
   border: 1px solid #e2e8f0;
   border-radius: 6px;
-  padding: 6px 12px;
-  font-size: 12px;
+  padding: 5px 10px;
+  font-size: clamp(11px, 2vw, 12px);
   color: #334155;
   font-weight: 600;
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 5px;
 }
 
 .paystack-launch-btn {
   background: rgb(2, 53, 28);
   color: #ffffff;
   border: none;
-  padding: 14px 24px;
+  padding: clamp(12px, 2.5vw, 14px) 20px;
   border-radius: 10px;
-  font-size: 15px;
+  font-size: clamp(13.5px, 2.2vw, 15px);
   font-weight: 700;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 10px;
+  gap: 8px;
   transition: all 0.2s;
   box-shadow: 0 4px 14px rgba(2, 53, 28, 0.2);
+  width: 100%;
 }
 
 .paystack-launch-btn:hover:not(:disabled) {
@@ -2516,33 +2527,35 @@ body {
   background: #f0fdf4;
   border: 1.5px solid #bbf7d0;
   border-radius: 12px;
-  padding: 16px;
-  margin-bottom: 18px;
+  padding: clamp(12px, 2.5vw, 16px);
+  margin-bottom: 16px;
 }
 
 .bank-transfer-instructions-title {
-  font-size: 14px;
+  font-size: clamp(12.5px, 2.2vw, 13.5px);
   font-weight: 700;
   color: #166534;
   margin: 0 0 10px 0;
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
 }
 
 .bank-account-details-list {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 6px;
 }
 
 .bank-account-item {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  font-size: 13.5px;
+  flex-wrap: wrap;
+  gap: 4px;
+  font-size: clamp(12.5px, 2vw, 13.5px);
   color: #1e293b;
-  padding: 6px 0;
+  padding: 5px 0;
   border-bottom: 1px dashed #dcfce7;
 }
 
@@ -2553,32 +2566,48 @@ body {
 .bank-account-label {
   color: #4b5563;
   font-weight: 500;
+  flex-shrink: 0;
 }
 
 .bank-account-val {
   font-weight: 700;
   color: #064e3b;
-  font-family: monospace;
-  font-size: 14px;
-  user-select: all;
+  font-size: clamp(12.5px, 2.2vw, 14px);
+  display: inline-flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+  text-align: right;
 }
 
 .bank-transfer-form {
   display: flex;
   flex-direction: column;
-  gap: 14px;
+  gap: 12px;
 }
 
 .bank-input-field {
   width: 100%;
-  padding: 11px 14px;
+  padding: 10px 12px;
   border: 1.5px solid #cbd5e1;
   border-radius: 8px;
-  font-size: 14px;
+  font-size: clamp(13px, 2vw, 14px);
   font-family: inherit;
   box-sizing: border-box;
   outline: none;
   transition: border-color 0.2s;
+}
+
+.bank-select-field {
+  background-color: #ffffff;
+  cursor: pointer;
+  appearance: auto;
+  color: #1e293b;
+}
+
+.bank-select-field option {
+  color: #1e293b;
+  padding: 6px;
 }
 
 .bank-input-field:focus {
@@ -2590,9 +2619,9 @@ body {
   background: #059669;
   color: #ffffff;
   border: none;
-  padding: 14px;
+  padding: clamp(12px, 2.5vw, 14px);
   border-radius: 10px;
-  font-size: 15px;
+  font-size: clamp(13.5px, 2.2vw, 15px);
   font-weight: 700;
   cursor: pointer;
   display: flex;
@@ -2601,7 +2630,8 @@ body {
   gap: 8px;
   transition: all 0.2s;
   box-shadow: 0 4px 12px rgba(5, 150, 105, 0.25);
-  margin-top: 4px;
+  margin-top: 2px;
+  width: 100%;
 }
 
 .bank-confirm-submit-btn:hover:not(:disabled) {
@@ -2623,16 +2653,38 @@ body {
   font-size: 11px;
   font-weight: 600;
   cursor: pointer;
-  margin-left: 8px;
   display: inline-flex;
   align-items: center;
   gap: 4px;
   transition: all 0.2s;
+  flex-shrink: 0;
 }
 
 .bank-copy-btn:hover {
   background: #cbd5e1;
   color: #0f172a;
+}
+
+@media (max-width: 400px) {
+  .payment-method-selector-tabs {
+    gap: 4px;
+    padding: 4px;
+  }
+  
+  .payment-method-selector-tab {
+    font-size: 11.5px;
+    padding: 7px 4px;
+  }
+
+  .bank-account-item {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 2px;
+  }
+
+  .bank-account-val {
+    text-align: left;
+  }
 }
 
 

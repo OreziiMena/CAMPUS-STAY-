@@ -17,6 +17,8 @@ export default function Navbar() {
   const [unreadCount, setUnreadCount] = useState(0);
 
   useEffect(() => {
+    setIsMobileMenuOpen(false);
+    setIsProfileDropdownOpen(false);
     const checkUser = async () => {
       try {
         const currentUser = await getCurrentUser();
@@ -73,113 +75,127 @@ export default function Navbar() {
   };
 
   return (
-    <nav className="sticky-top">
-      <div className="brand">
-        <Link href="/" className={styles.brandLink}>
-          <Image 
-            src="/Assets/CAMPUS STAY LOGO.png" 
-            alt="logo" 
-            width={50} 
-            height={50} 
-            unoptimized
-            className={`logo ${styles.logoImg}`}
-          />
-          <h2 className={`logo-text ${styles.logoH2}`}>Campus Tent</h2>
-        </Link>
-      </div>
-      
-      <div className={`navlinks ${isMobileMenuOpen ? "active" : ""}`}>
-        <ul>
-          <li><Link className={isActive("/landing")} href="/landing">Home</Link></li>
-          <li><Link className={isActive("/about")} href="/about">About</Link></li>
-          <li><Link className={isActive("/")} href="/">Find Apartment</Link></li> 
-          <li><Link className={isActive("/roommates")} href="/roommates">Find Roommate</Link></li>
-          <li><Link className={isActive("/support")} href="/support">Support</Link></li>
-          <li><Link className={isActive("/ambassador")} href="/ambassador">Ambassadors</Link></li>
-        </ul>
-        <div className={styles.userDropdownWrapper}>
-          {user ? (
-            <div 
-              className={`explore-profile-dropdown ${styles.profileDropdownTrigger}`} 
-              onClick={(e) => {
-                setIsProfileDropdownOpen(!isProfileDropdownOpen);
-                e.stopPropagation();
-              }}
-            >
-              <div className={`explore-profile-info ${styles.profileInfoWrap}`}>
-                <img 
-                  src={`https://ui-avatars.com/api/?name=${encodeURIComponent(user.name || "Student")}&background=02351c&color=fff`} 
-                  alt="Profile" 
-                  className="explore-profile-pic" 
-                />
-                {unreadCount > 0 && (
-                  <span className={styles.unreadDot}></span>
-                )}
-                <span className={`explore-profile-name ${styles.profileName} ${styles.profileNameWrap}`}>
-                  {user.name ? user.name.split(" ")[0] : "Student"}
-                  {((user.role === "STUDENT" && user.studentProfile?.isVerified) || 
-                    (user.role === "AGENT" && user.agentProfile?.isVerified) || 
-                    (user.role === "ADMIN")) && (
-                    <i className={`fas fa-check-circle verified-icon ${styles.verifiedUserIcon}`} title="Verified User"></i>
-                  )}
-                </span>
-                <i className={`fas fa-chevron-down ${styles.chevronIcon}`}></i>
-              </div>
+    <>
+      {/* Backdrop overlay for mobile drawer */}
+      <div 
+        className={`${styles.drawerOverlay} ${isMobileMenuOpen ? styles.drawerOverlayActive : ""}`} 
+        onClick={() => setIsMobileMenuOpen(false)}
+        aria-hidden="true"
+      />
 
-              <div className={`explore-dropdown-menu ${isProfileDropdownOpen ? "active" : ""}`} onClick={(e) => e.stopPropagation()}>
-                <Link href={user.role === "AGENT" ? "/agent-dashboard/profile" : (user.role === "ADMIN" ? "/admin-dashboard" : "/student-dashboard/profile")} className="explore-dropdown-item">
-                  <i className={`fas fa-user ${styles.icon16}`}></i> PROFILE
-                </Link>
-                 <Link href="/chat" className={`explore-dropdown-item ${styles.chatDropdownLink}`}>
-                  <span className={styles.chatLabelWrap}>
-                    <i className={`fas fa-comments ${styles.icon16}`}></i> INBOX CHAT
-                  </span>
-                  {unreadCount > 0 && (
-                    <span className={styles.unreadBadge}>
-                      {unreadCount}
-                    </span>
-                  )}
-                </Link>
-                {user.role === "ADMIN" && (
-                  <Link href="/admin-dashboard" className="explore-dropdown-item">
-                    <i className={`fas fa-th-large ${styles.icon16}`}></i> ADMIN PORTAL
-                  </Link>
-                )}
-                {user.role === "AGENT" && (
-                  <Link href="/agent-dashboard" className="explore-dropdown-item">
-                    <i className={`fas fa-th-large ${styles.icon16}`}></i> DASHBOARD
-                  </Link>
-                )}
-                {user.role === "STUDENT" && (
-                  <Link href="/student-dashboard" className="explore-dropdown-item">
-                    <i className={`fas fa-th-large ${styles.icon16}`}></i> DASHBOARD
-                  </Link>
-                )}
-                <Link href={user.role === "AGENT" ? "/agent-dashboard/settings" : "/student-dashboard/settings"} className="explore-dropdown-item">
-                  <i className={`fas fa-cog ${styles.icon16}`}></i> SETTINGS
-                </Link>
-                <div className="explore-dropdown-divider"></div>
-                <button 
-                  onClick={handleLogout} 
-                  className={`explore-dropdown-item logout-link ${styles.logoutBtn}`}
-                >
-                  <i className={`fas fa-sign-out-alt ${styles.icon16}`}></i> LOG OUT
-                </button>
-              </div>
-            </div>
-          ) : isAuthChecking ? (
-            <div className={`nav-auth-group ${styles.authGroup} ${styles.authGroupPlaceholder}`}></div>
-          ) : (
-            <div className={`nav-auth-group ${styles.authGroup}`}>
-              <Link href="/auth/rolepick" className={`start-btn nav-btn ${styles.authBtnLink}`}>Get started</Link>
-            </div>
-          )}
+      <nav className="sticky-top">
+        <div className="brand">
+          <Link href="/" className={styles.brandLink} onClick={() => setIsMobileMenuOpen(false)}>
+            <Image 
+              src="/Assets/CAMPUS STAY LOGO.png" 
+              alt="logo" 
+              width={50} 
+              height={50} 
+              unoptimized
+              className={`logo ${styles.logoImg}`}
+            />
+            <h2 className={`logo-text ${styles.logoH2}`}>Campus Tent</h2>
+          </Link>
         </div>
-      </div>
-      
-      <button className="mobilebtn" onClick={toggleMobileMenu}>
-        <i className={`fas ${isMobileMenuOpen ? "fa-times" : "fa-bars"}`}></i>
-      </button>
-    </nav>
+        
+        <div className={`navlinks ${isMobileMenuOpen ? "active" : ""}`}>
+          <ul>
+            <li><Link className={isActive("/landing")} href="/landing" onClick={() => setIsMobileMenuOpen(false)}>Home</Link></li>
+            <li><Link className={isActive("/about")} href="/about" onClick={() => setIsMobileMenuOpen(false)}>About</Link></li>
+            <li><Link className={isActive("/")} href="/" onClick={() => setIsMobileMenuOpen(false)}>Find Apartment</Link></li> 
+            <li><Link className={isActive("/roommates")} href="/roommates" onClick={() => setIsMobileMenuOpen(false)}>Find Roommate</Link></li>
+            <li><Link className={isActive("/support")} href="/support" onClick={() => setIsMobileMenuOpen(false)}>Support</Link></li>
+            <li><Link className={isActive("/ambassador")} href="/ambassador" onClick={() => setIsMobileMenuOpen(false)}>Ambassadors</Link></li>
+          </ul>
+          <div className={styles.userDropdownWrapper}>
+            {user ? (
+              <div 
+                className={`explore-profile-dropdown ${styles.profileDropdownTrigger}`} 
+                onClick={(e) => {
+                  setIsProfileDropdownOpen(!isProfileDropdownOpen);
+                  e.stopPropagation();
+                }}
+              >
+                <div className={`explore-profile-info ${styles.profileInfoWrap}`}>
+                  <img 
+                    src={`https://ui-avatars.com/api/?name=${encodeURIComponent(user.name || "Student")}&background=02351c&color=fff`} 
+                    alt="Profile" 
+                    className="explore-profile-pic" 
+                  />
+                  {unreadCount > 0 && (
+                    <span className={styles.unreadDot}></span>
+                  )}
+                  <span className={`explore-profile-name ${styles.profileName} ${styles.profileNameWrap}`}>
+                    {user.name ? user.name.split(" ")[0] : "Student"}
+                    {((user.role === "STUDENT" && user.studentProfile?.isVerified) || 
+                      (user.role === "AGENT" && user.agentProfile?.isVerified) || 
+                      (user.role === "ADMIN")) && (
+                      <i className={`fas fa-check-circle verified-icon ${styles.verifiedUserIcon}`} title="Verified User"></i>
+                    )}
+                  </span>
+                  <i className={`fas fa-chevron-down ${styles.chevronIcon}`}></i>
+                </div>
+
+                <div className={`explore-dropdown-menu ${isProfileDropdownOpen ? "active" : ""}`} onClick={(e) => e.stopPropagation()}>
+                  <Link href={user.role === "AGENT" ? "/agent-dashboard/profile" : (user.role === "ADMIN" ? "/admin-dashboard" : "/student-dashboard/profile")} className="explore-dropdown-item" onClick={() => setIsMobileMenuOpen(false)}>
+                    <i className={`fas fa-user ${styles.icon16}`}></i> PROFILE
+                  </Link>
+                   <Link href="/chat" className={`explore-dropdown-item ${styles.chatDropdownLink}`} onClick={() => setIsMobileMenuOpen(false)}>
+                    <span className={styles.chatLabelWrap}>
+                      <i className={`fas fa-comments ${styles.icon16}`}></i> INBOX CHAT
+                    </span>
+                    {unreadCount > 0 && (
+                      <span className={styles.unreadBadge}>
+                        {unreadCount}
+                      </span>
+                    )}
+                  </Link>
+                  {user.role === "ADMIN" && (
+                    <Link href="/admin-dashboard" className="explore-dropdown-item" onClick={() => setIsMobileMenuOpen(false)}>
+                      <i className={`fas fa-th-large ${styles.icon16}`}></i> ADMIN PORTAL
+                    </Link>
+                  )}
+                  {user.role === "AGENT" && (
+                    <Link href="/agent-dashboard" className="explore-dropdown-item" onClick={() => setIsMobileMenuOpen(false)}>
+                      <i className={`fas fa-th-large ${styles.icon16}`}></i> DASHBOARD
+                    </Link>
+                  )}
+                  {user.role === "STUDENT" && (
+                    <Link href="/student-dashboard" className="explore-dropdown-item" onClick={() => setIsMobileMenuOpen(false)}>
+                      <i className={`fas fa-th-large ${styles.icon16}`}></i> DASHBOARD
+                    </Link>
+                  )}
+                  <Link href={user.role === "AGENT" ? "/agent-dashboard/settings" : "/student-dashboard/settings"} className="explore-dropdown-item" onClick={() => setIsMobileMenuOpen(false)}>
+                    <i className={`fas fa-cog ${styles.icon16}`}></i> SETTINGS
+                  </Link>
+                  <div className="explore-dropdown-divider"></div>
+                  <button 
+                    onClick={handleLogout} 
+                    className={`explore-dropdown-item logout-link ${styles.logoutBtn}`}
+                  >
+                    <i className={`fas fa-sign-out-alt ${styles.icon16}`}></i> LOG OUT
+                  </button>
+                </div>
+              </div>
+            ) : isAuthChecking ? (
+              <div className={`nav-auth-group ${styles.authGroup} ${styles.authGroupPlaceholder}`}></div>
+            ) : (
+              <div className={`nav-auth-group ${styles.authGroup}`}>
+                <Link href="/auth/rolepick" className={`start-btn nav-btn ${styles.authBtnLink}`} onClick={() => setIsMobileMenuOpen(false)}>Get started</Link>
+              </div>
+            )}
+          </div>
+        </div>
+        
+        <button 
+          className="mobilebtn" 
+          onClick={toggleMobileMenu}
+          aria-label={isMobileMenuOpen ? "Close navigation menu" : "Open navigation menu"}
+          aria-expanded={isMobileMenuOpen}
+        >
+          <i className={`fas ${isMobileMenuOpen ? "fa-times" : "fa-bars"}`}></i>
+        </button>
+      </nav>
+    </>
   );
 }

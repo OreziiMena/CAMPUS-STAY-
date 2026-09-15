@@ -367,14 +367,17 @@ export async function getInspectionStatus(propertyId: string) {
       };
     }
 
-    // Check inspection payment
-    const payment = await prisma.inspectionPayment.findFirst({
+    // Check inspection payment (both PAID and PENDING_ADMIN_APPROVAL)
+    const latestPayment = await prisma.inspectionPayment.findFirst({
       where: {
         studentId: user.id,
         propertyId: propertyId,
-        status: "PAID",
       },
+      orderBy: { createdAt: "desc" },
     });
+
+    const isPaid = latestPayment?.status === "PAID";
+    const isPendingApproval = latestPayment?.status === "PENDING_ADMIN_APPROVAL";
 
     // Check latest availability query
     const latestQuery = await prisma.availabilityQuery.findFirst({
@@ -387,13 +390,15 @@ export async function getInspectionStatus(propertyId: string) {
 
     return {
       success: true,
-      isPaid: !!payment,
-      payment: payment
+      isPaid,
+      isPendingApproval,
+      payment: latestPayment
         ? {
-            id: payment.id,
-            amount: payment.amount,
-            paidAt: payment.paidAt.toISOString(),
-            reference: payment.reference,
+            id: latestPayment.id,
+            amount: latestPayment.amount,
+            status: latestPayment.status,
+            paidAt: latestPayment.paidAt.toISOString(),
+            reference: latestPayment.reference,
           }
         : null,
       availabilityStatus: latestQuery?.status || "NONE",
@@ -634,7 +639,7 @@ export async function submitBankTransferInspectionPayment(data: {
         agentId: recipientId,
         amount: 7500,
         currency: "NGN",
-        status: "PAID",
+        status: "PENDING_ADMIN_APPROVAL",
         reference: paymentRef,
       },
     });
@@ -645,44 +650,40 @@ export async function submitBankTransferInspectionPayment(data: {
         userId: user.id,
         userName: senderName.trim(),
         userEmail: user.email || "",
-        action: "BANK_TRANSFER_INSPECTION_PAYMENT",
-        description: `Direct Bank Transfer Inspection Payment (₦7,500). Sender: ${senderName.trim()} (${bankName.trim()}). Ref: ${paymentRef}${receiptUrl ? ` Receipt: ${receiptUrl}` : ""}${notes ? ` Notes: ${notes}` : ""}`,
+        action: "BANK_TRANSFER_PENDING_APPROVAL",
+        description: `Direct Bank Transfer Inspection Payment Submitted (₦7,500). Sender: ${senderName.trim()} (${bankName.trim()}). Ref: ${paymentRef}${receiptUrl ? ` Receipt: ${receiptUrl}` : ""}${notes ? ` Notes: ${notes}` : ""}`,
         propertyTitle: property.title,
       },
     }).catch((e) => console.warn("Failed to create activity log for bank transfer:", e));
 
     const studentDisplayName = escapeHtml(user.studentProfile?.fullName || user.name || senderName || "Student");
     const propertyTitle = escapeHtml(property.title);
-    const agentDisplayName = escapeHtml(property.agent?.fullName || property.student?.fullName || "Agent");
 
-    // Send confirmation email to student
+    // Send pending acknowledgement email to student (Official confirmation emails will only send upon Admin Approval)
     if (user.email) {
       const studentHtml = `
         <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 600px; margin: 0 auto; background: #ffffff; border: 1px solid #e2e8f0; border-radius: 12px; overflow: hidden;">
           <div style="background-color: #02351c; padding: 24px; text-align: center;">
             <h1 style="color: #ffffff; font-size: 22px; margin: 0; font-weight: 700;">Campus Tent</h1>
-            <p style="color: #cbd5e1; font-size: 14px; margin: 6px 0 0 0;">Bank Transfer Inspection Confirmation</p>
+            <p style="color: #cbd5e1; font-size: 14px; margin: 6px 0 0 0;">Direct Bank Transfer Received</p>
           </div>
           <div style="padding: 24px;">
-            <h2 style="color: #02351c; font-size: 18px; margin-top: 0;">Inspection Payment Confirmed!</h2>
+            <h2 style="color: #02351c; font-size: 18px; margin-top: 0;">Bank Transfer Under Review</h2>
             <p style="color: #4b5563; font-size: 14px; line-height: 1.6;">
-              Hi ${studentDisplayName}, your direct bank transfer payment of <strong>₦7,500</strong> for <strong>"${propertyTitle}"</strong> has been confirmed.
+              Hi ${studentDisplayName}, we have received your direct bank transfer payment submission of <strong>₦7,500</strong> for <strong>"${propertyTitle}"</strong>.
             </p>
-            <div style="background-color: #ecfdf5; border-left: 4px solid #16a34a; padding: 16px; border-radius: 6px; margin: 20px 0;">
-              <p style="margin: 0 0 6px 0; font-size: 14px; color: #065f46;"><strong>Amount:</strong> ₦7,500</p>
-              <p style="margin: 0 0 6px 0; font-size: 14px; color: #065f46;"><strong>Method:</strong> Direct Bank Transfer (${escapeHtml(bankName)})</p>
-              <p style="margin: 0 0 6px 0; font-size: 14px; color: #065f46;"><strong>Reference:</strong> ${paymentRef}</p>
-              <p style="margin: 0; font-size: 14px; color: #065f46;"><strong>Agent:</strong> ${agentDisplayName}</p>
+            <div style="background-color: #fffbeb; border-left: 4px solid #f59e0b; padding: 16px; border-radius: 6px; margin: 20px 0;">
+              <p style="margin: 0 0 6px 0; font-size: 14px; color: #92400e;"><strong>Amount:</strong> ₦7,500</p>
+              <p style="margin: 0 0 6px 0; font-size: 14px; color: #92400e;"><strong>Bank Used:</strong> ${escapeHtml(bankName)}</p>
+              <p style="margin: 0 0 6px 0; font-size: 14px; color: #92400e;"><strong>Sender Name:</strong> ${escapeHtml(senderName)}</p>
+              <p style="margin: 0; font-size: 14px; color: #92400e;"><strong>Reference:</strong> ${paymentRef}</p>
             </div>
-            <div style="background-color: #f8fafc; border: 1px dashed #cbd5e1; padding: 16px; border-radius: 8px; margin: 20px 0;">
-              <p style="margin: 0; font-size: 13.5px; color: #334155; font-weight: 600;">Bonus Value Covered:</p>
-              <p style="margin: 6px 0 0 0; font-size: 13px; color: #64748b; line-height: 1.5;">
-                "Your ₦7,500 fee covers a physical inspection of this property, plus any alternative options the agent has available in the same area/budget."
-              </p>
-            </div>
+            <p style="color: #475569; font-size: 13.5px; line-height: 1.6;">
+              Our admin team is currently confirming your deposit with our bank. As soon as your transfer is verified, you will receive an official approval email and direct chat & inspection tour scheduling will be unlocked automatically.
+            </p>
             <div style="text-align: center; margin: 25px 0;">
               <a href="${BASE_URL}/apartment-details?id=${property.id}" style="background-color: #02351c; color: #ffffff; padding: 12px 24px; border-radius: 8px; text-decoration: none; font-weight: 700; font-size: 14px; display: inline-block;">
-                Book Physical Tour & Contact Agent
+                View Property Status
               </a>
             </div>
           </div>
@@ -694,61 +695,23 @@ export async function submitBankTransferInspectionPayment(data: {
 
       sendEmail({
         to: user.email,
-        subject: `Inspection Payment Confirmed (Bank Transfer): ${property.title}`,
+        subject: `Bank Transfer Received (Pending Admin Verification): ${property.title}`,
         html: studentHtml,
         isInspectionMessage: true,
-      }).catch((err) => console.error("Student bank transfer email failed:", err));
-    }
-
-    // Send notification email to Agent
-    if (recipientUser.email) {
-      const agentHtml = `
-        <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 600px; margin: 0 auto; background: #ffffff; border: 1px solid #e2e8f0; border-radius: 12px; overflow: hidden;">
-          <div style="background-color: #02351c; padding: 24px; text-align: center;">
-            <h1 style="color: #ffffff; font-size: 22px; margin: 0; font-weight: 700;">Campus Tent</h1>
-            <p style="color: #cbd5e1; font-size: 14px; margin: 6px 0 0 0;">New Inspection Fee Paid</p>
-          </div>
-          <div style="padding: 24px;">
-            <h2 style="color: #02351c; font-size: 18px; margin-top: 0;">Inspection Fee Received (₦7,500)</h2>
-            <p style="color: #4b5563; font-size: 14px; line-height: 1.6;">
-              <strong>${studentDisplayName}</strong> has paid the <strong>₦7,500 inspection fee</strong> for your property: <strong>"${propertyTitle}"</strong>.
-            </p>
-            <div style="background-color: #f8fafc; border-left: 4px solid #02351c; padding: 16px; border-radius: 6px; margin: 20px 0;">
-              <p style="margin: 0 0 6px 0; font-size: 14px; color: #1e293b;"><strong>Student:</strong> ${studentDisplayName}</p>
-              <p style="margin: 0 0 6px 0; font-size: 14px; color: #1e293b;"><strong>Phone:</strong> ${escapeHtml(user.phone || "Not provided")}</p>
-              <p style="margin: 0 0 6px 0; font-size: 14px; color: #1e293b;"><strong>Payment Method:</strong> Bank Transfer</p>
-              <p style="margin: 0; font-size: 14px; color: #1e293b;"><strong>Reference:</strong> ${paymentRef}</p>
-            </div>
-            <div style="background-color: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 8px; padding: 12px 16px; margin: 18px 0; text-align: center;">
-              <p style="margin: 0; color: #166534; font-size: 13.5px; font-weight: 600;">
-                💵 Your Payout: You will receive <strong>₦5,020</strong> automatically once this inspection tour is completed.
-              </p>
-            </div>
-            <div style="text-align: center; margin: 25px 0;">
-              <a href="${BASE_URL}/agent-dashboard" style="background-color: #02351c; color: #ffffff; padding: 12px 24px; border-radius: 8px; text-decoration: none; font-weight: 700; font-size: 14px; display: inline-block;">
-                View in Agent Dashboard
-              </a>
-            </div>
-          </div>
-        </div>
-      `;
-
-      sendEmail({
-        to: recipientUser.email,
-        subject: `Inspection Fee Paid (₦7,500): ${property.title}`,
-        html: agentHtml,
-        isInspectionMessage: true,
-      }).catch((err) => console.error("Agent bank transfer alert email failed:", err));
+      }).catch((err) => console.error("Student bank transfer acknowledgment email failed:", err));
     }
 
     return {
       success: true,
+      pendingApproval: true,
       payment: {
         id: payment.id,
         amount: payment.amount,
+        status: payment.status,
         paidAt: payment.paidAt.toISOString(),
         reference: payment.reference,
       },
+      message: "₦7,500 bank transfer submitted! Our admin team is verifying your payment with the bank.",
     };
   } catch (err: any) {
     console.error("submitBankTransferInspectionPayment error:", err);

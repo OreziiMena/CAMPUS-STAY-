@@ -28,19 +28,19 @@ button, input, select, textarea {
 .brand{
     display: flex;
     align-items: center;
-    gap: 15px; 
-    margin-left: 5%;
+    gap: 12px; 
 }
 .logo{
-    width: 10%;
-    height: 100%;  
+    width: 44px;
+    height: 44px;
+    object-fit: contain;
 }
 .logo-text{
     color: white;
     font-size: 18px;
     font-family: 'Poppins', sans-serif;
     font-weight: 700;
-    margin-left: -5%;
+    margin: 0;
     background: linear-gradient(to right, white, rgb(126, 107, 1));
     -webkit-background-clip: text;
     background-clip: text;
@@ -49,6 +49,22 @@ button, input, select, textarea {
 }
 .mobilebtn{
     display: none;
+    background: transparent;
+    border: none;
+    color: #ffffff;
+    font-size: 24px;
+    cursor: pointer;
+    position: relative;
+    z-index: 1005;
+    min-width: 44px;
+    min-height: 44px;
+    padding: 6px;
+    flex-shrink: 0;
+    outline: none;
+    transition: transform 0.2s ease, color 0.2s ease;
+}
+.mobilebtn:hover {
+    color: #f59e0b;
 }
 nav{
     position: fixed;
@@ -567,61 +583,34 @@ nav{
 @media (max-width: 1024px) {
     nav{
         height: 70px; 
+        padding: 0 4%;
     }
-    .navlinks ul {
-        gap: 20px;
+    .mobilebtn {
+        display: flex !important; 
+        align-items: center;
+        justify-content: center;
     }
-    .logo {
-        width: 15%;
-    }
-    .start-btn {
-        margin-right: 15px;
-        padding: 10px 15px;
-    }
-    .third-hero {
-        padding: 40px 5%;
-    }
-    .stat-group {
-        margin: 0;
-        padding: 0;
-        text-align: center;
-    }
-    .section-text {
-        font-size: 28px;
-        margin-left: 40px;
-    }
-    .section-text2{
-        margin-right: 20px;
-    }
-    .features-grid, .footer-grid {
-        grid-template-columns: repeat(2, 1fr);
-    }
-    .faq-section {
-        gap: 40px;
-    }
-}
-
-@media (max-width: 768px) {
     .navlinks {
         display: flex; 
         position: fixed;
         top: 0; 
-        right: -300px; 
-        width: 280px; 
+        right: -320px; 
+        width: min(300px, 85vw); 
         height: 100vh;  
+        height: 100dvh;
         background-color: #02351c;  
-        box-shadow: -5px 0 25px rgba(0, 0, 0, 0.25);
+        box-shadow: -5px 0 25px rgba(0, 0, 0, 0.35);
         align-items: stretch; 
-        padding: 90px 24px 40px 24px; 
+        padding: 85px 24px 40px 24px; 
         margin-right: 0;
         flex-direction: column;
-        transition: right 0.4s cubic-bezier(0.4, 0, 0.2, 1); 
-        z-index: 999;
+        transition: right 0.35s cubic-bezier(0.4, 0, 0.2, 1); 
+        z-index: 1004;
         overflow-y: auto; 
         gap: 20px;
     }
     .navlinks.active {
-        right: 0; 
+        right: 0 !important; 
     }
     .navlinks ul {
         flex-direction: column;
@@ -636,7 +625,7 @@ nav{
     .navlinks ul li a {
         display: block; 
         font-family: 'Poppins', sans-serif;
-        font-size: 17px;
+        font-size: 16px;
         font-weight: 600;
         color: rgba(255, 255, 255, 0.9);
         padding: 10px 0;
@@ -659,16 +648,26 @@ nav{
         text-align: center;
         padding: 12px;
     }
-    .mobilebtn {
-        display: block; 
-        background: none;
-        border: none;
-        color: white;
-        font-size: 25px;
+    .third-hero {
+        padding: 40px 5%;
+    }
+    .stat-group {
+        margin: 0;
+        padding: 0;
+        text-align: center;
+    }
+    .section-text {
+        font-size: 28px;
+        margin-left: 40px;
+    }
+    .section-text2{
         margin-right: 20px;
-        cursor: pointer;
-        position: relative; 
-        z-index: 1005;
+    }
+    .features-grid, .footer-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+    .faq-section {
+        gap: 40px;
     }
 
     .navlinks .explore-profile-dropdown {

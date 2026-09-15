@@ -1,7 +1,11 @@
 "use client";
-
 import React, { useState } from "react";
-import { disburseAgentPayout, refundInspectionPayment } from "@/app/actions/admin";
+import {
+  disburseAgentPayout,
+  refundInspectionPayment,
+  approveBankTransferPayment,
+  rejectBankTransferPayment,
+} from "@/app/actions/admin";
 
 export interface PaymentRecord {
   id: string;
@@ -57,6 +61,7 @@ export interface PaymentMetrics {
   agentEscrowLiability: number;
   totalTransactions: number;
   paidCount: number;
+  pendingApprovalCount?: number;
 }
 
 interface PaymentsTabProps {
@@ -76,11 +81,66 @@ export default function PaymentsTab({
   const [copiedRef, setCopiedRef] = useState<string | null>(null);
   const [actionLoading, setActionLoading] = useState(false);
   const [actionMsg, setActionMsg] = useState("");
+  const [activeFilter, setActiveFilter] = useState<"ALL" | "PENDING_APPROVAL" | "PAID" | "REFUNDED">("ALL");
 
   const handleCopyRef = (ref: string) => {
     navigator.clipboard.writeText(ref);
     setCopiedRef(ref);
     setTimeout(() => setCopiedRef(null), 2000);
+  };
+
+  const handleApproveBankTransfer = async (paymentId: string) => {
+    if (!window.confirm("Confirm that this ₦7,500 bank transfer has been received in the Campus Tent account? This will send confirmation emails to the student and agent and unlock physical tour booking.")) {
+      return;
+    }
+    setActionLoading(true);
+    setActionMsg("");
+    try {
+      const res = await approveBankTransferPayment(paymentId);
+      if (res.success) {
+        alert("Direct bank transfer successfully approved! Confirmation emails have been sent to both student and agent.");
+        if (selectedPayment && selectedPayment.id === paymentId) {
+          setSelectedPayment({
+            ...selectedPayment,
+            status: "PAID",
+          });
+        }
+        if (onRefresh) onRefresh();
+      } else {
+        alert(`Approval failed: ${res.error}`);
+      }
+    } catch (err: any) {
+      alert(`Error: ${err.message || "Failed to approve bank transfer."}`);
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  const handleRejectBankTransfer = async (paymentId: string) => {
+    const reason = window.prompt("Enter the rejection reason (e.g. Deposit not found in bank statement, incorrect amount, etc.):");
+    if (!reason || reason.trim() === "") return;
+
+    setActionLoading(true);
+    try {
+      const res = await rejectBankTransferPayment(paymentId, reason.trim());
+      if (res.success) {
+        alert("Bank transfer rejected. Student has been notified via email.");
+        if (selectedPayment && selectedPayment.id === paymentId) {
+          setSelectedPayment({
+            ...selectedPayment,
+            status: "REJECTED",
+            refundReason: reason.trim(),
+          });
+        }
+        if (onRefresh) onRefresh();
+      } else {
+        alert(`Rejection failed: ${res.error}`);
+      }
+    } catch (err: any) {
+      alert(`Error: ${err.message || "Failed to reject bank transfer."}`);
+    } finally {
+      setActionLoading(false);
+    }
   };
 
   const handleDisbursePayout = async (paymentId: string) => {
@@ -227,57 +287,94 @@ export default function PaymentsTab({
             </p>
           </div>
 
-          {/* Action Tools */}
-          <div className="activity-filter-group">
-            <span className="activity-filter-pill active payment-filter-pill-active">
-              All Paid Inspections ({payments.length})
-            </span>
+        {/* Action Tools & Filters */}
+        <div className="activity-filter-group" style={{ display: "flex", gap: "8px", flexWrap: "wrap", alignItems: "center" }}>
+          <button
+            type="button"
+            onClick={() => setActiveFilter("ALL")}
+            className={`activity-filter-pill ${activeFilter === "ALL" ? "active payment-filter-pill-active" : ""}`}
+          >
+            All Transactions ({payments.length})
+          </button>
 
-            {onRefresh && (
-              <button
-                onClick={onRefresh}
-                className="activity-filter-pill payment-refresh-btn"
-                title="Refresh payments"
-              >
-                <i className="fas fa-sync-alt"></i> Refresh
-              </button>
-            )}
-          </div>
+          <button
+            type="button"
+            onClick={() => setActiveFilter("PENDING_APPROVAL")}
+            className={`activity-filter-pill ${activeFilter === "PENDING_APPROVAL" ? "active payment-filter-pill-active" : ""}`}
+            style={metrics.pendingApprovalCount && metrics.pendingApprovalCount > 0 ? { borderColor: "#f59e0b", color: "#d97706", fontWeight: 700 } : {}}
+          >
+            <i className="fas fa-clock"></i> Pending Bank Transfers ({metrics.pendingApprovalCount || payments.filter((p) => p.status === "PENDING_ADMIN_APPROVAL").length})
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setActiveFilter("PAID")}
+            className={`activity-filter-pill ${activeFilter === "PAID" ? "active payment-filter-pill-active" : ""}`}
+          >
+            Confirmed Paid ({metrics.paidCount})
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setActiveFilter("REFUNDED")}
+            className={`activity-filter-pill ${activeFilter === "REFUNDED" ? "active payment-filter-pill-active" : ""}`}
+          >
+            Refunded / Disputed
+          </button>
+
+          {onRefresh && (
+            <button
+              onClick={onRefresh}
+              className="activity-filter-pill payment-refresh-btn"
+              title="Refresh payments"
+            >
+              <i className="fas fa-sync-alt"></i> Refresh
+            </button>
+          )}
         </div>
+      </div>
 
-        {filteredPayments.length === 0 ? (
-          <div className="no-data-text">
-            <i className="fas fa-receipt activity-empty-icon"></i>
-            {payments.length === 0
-              ? "No verified inspection payments recorded in the database yet."
-              : "No payments match your search query."}
-          </div>
-        ) : (
-          <div className="admin-table-container">
-            <table className="admin-table">
-              <thead>
-                <tr>
-                  <th>Date & Time</th>
-                  <th>Transaction Reference</th>
-                  <th>Property Listing</th>
-                  <th>Student (Payer)</th>
-                  <th>Agent (Host)</th>
-                  <th>Amount</th>
-                  <th>Split Breakdown</th>
-                  <th>Status</th>
-                  <th>Agent Payout</th>
-                  <th>Action</th>
-                </tr>
-              </thead>
-              <tbody>
-                {filteredPayments.map((payment) => {
-                  const feeAmount = payment.amount || 10000;
-                  const platformCut = feeAmount * 0.5;
-                  const agentCut = feeAmount * 0.5;
+      {filteredPayments.length === 0 ? (
+        <div className="no-data-text">
+          <i className="fas fa-receipt activity-empty-icon"></i>
+          {payments.length === 0
+            ? "No verified inspection payments recorded in the database yet."
+            : "No payments match your search query."}
+        </div>
+      ) : (
+        <div className="admin-table-container">
+          <table className="admin-table">
+            <thead>
+              <tr>
+                <th>Date & Time</th>
+                <th>Transaction Reference</th>
+                <th>Property Listing</th>
+                <th>Student (Payer)</th>
+                <th>Agent (Host)</th>
+                <th>Amount</th>
+                <th>Split Breakdown</th>
+                <th>Status</th>
+                <th>Agent Payout</th>
+                <th>Action</th>
+              </tr>
+            </thead>
+            <tbody>
+              {filteredPayments
+                .filter((p) => {
+                  if (activeFilter === "PENDING_APPROVAL") return p.status === "PENDING_ADMIN_APPROVAL";
+                  if (activeFilter === "PAID") return p.status === "PAID";
+                  if (activeFilter === "REFUNDED") return p.status === "REFUNDED" || p.status === "DISPUTED" || p.status === "REJECTED";
+                  return true;
+                })
+                .map((payment) => {
+                  const feeAmount = payment.amount || 7500;
+                  const platformCut = feeAmount === 7500 ? 2480 : feeAmount * 0.5;
+                  const agentCut = feeAmount === 7500 ? 5020 : feeAmount * 0.5;
                   const isDisbursed = payment.payoutStatus === "DISBURSED";
+                  const isPendingApproval = payment.status === "PENDING_ADMIN_APPROVAL";
 
                   return (
-                    <tr key={payment.id}>
+                    <tr key={payment.id} style={isPendingApproval ? { backgroundColor: "rgba(254, 243, 199, 0.25)" } : {}}>
                       {/* Date */}
                       <td className="activity-date-cell">
                         <div className="activity-date-main">
@@ -387,14 +484,14 @@ export default function PaymentsTab({
                         <span className="payment-currency-sub">{payment.currency}</span>
                       </td>
 
-                      {/* Split Breakdown (50-50) */}
+                      {/* Split Breakdown */}
                       <td>
                         <div className="payment-split-box">
                           <div className="payment-split-platform">
-                            50% Platform: ₦{platformCut.toLocaleString()}
+                            Platform: ₦{platformCut.toLocaleString()}
                           </div>
                           <div className="payment-split-agent">
-                            50% Agent: ₦{agentCut.toLocaleString()}
+                            Agent: ₦{agentCut.toLocaleString()}
                           </div>
                         </div>
                       </td>
@@ -403,62 +500,91 @@ export default function PaymentsTab({
                       <td>
                         <span
                           className={`activity-action-tag payment-status-tag ${
-                            payment.status === "REFUNDED"
+                            payment.status === "REFUNDED" || payment.status === "REJECTED"
                               ? "deleted"
-                              : payment.status === "DISPUTED"
+                              : payment.status === "DISPUTED" || payment.status === "PENDING_ADMIN_APPROVAL"
                               ? "pending"
                               : "created"
                           }`}
                         >
                           <i
                             className={
-                              payment.status === "REFUNDED"
+                              payment.status === "REFUNDED" || payment.status === "REJECTED"
                                 ? "fas fa-undo"
                                 : payment.status === "DISPUTED"
                                 ? "fas fa-exclamation-triangle"
+                                : payment.status === "PENDING_ADMIN_APPROVAL"
+                                ? "fas fa-clock"
                                 : "fas fa-check-circle"
                             }
                           ></i>
-                          {payment.status}
+                          {payment.status === "PENDING_ADMIN_APPROVAL" ? "PENDING APPROVAL" : payment.status}
                         </span>
                       </td>
 
                       {/* Payout Status */}
                       <td>
-                        {isDisbursed ? (
+                        {isPendingApproval ? (
+                          <span className="payment-payout-refunded">Awaiting Deposit Approval</span>
+                        ) : isDisbursed ? (
                           <span className="payment-payout-disbursed">
                             <i className="fas fa-check-double"></i> Disbursed
                           </span>
-                        ) : payment.status === "REFUNDED" ? (
-                          <span className="payment-payout-refunded">N/A (Refunded)</span>
+                        ) : payment.status === "REFUNDED" || payment.status === "REJECTED" ? (
+                          <span className="payment-payout-refunded">N/A</span>
                         ) : (
                           <button
                             onClick={() => handleDisbursePayout(payment.id)}
                             disabled={actionLoading}
                             className="payment-payout-action-btn"
-                            title="Disburse ₦5,000 to Agent"
+                            title="Disburse ₦5,020 to Agent"
                           >
-                            <i className="fas fa-paper-plane"></i> Disburse ₦5,000
+                            <i className="fas fa-paper-plane"></i> Disburse ₦5,020
                           </button>
                         )}
                       </td>
 
                       {/* Action */}
                       <td>
-                        <button
-                          onClick={() => setSelectedPayment(payment)}
-                          className="verify-btn payment-receipt-action-btn"
-                        >
-                          <i className="fas fa-file-invoice"></i> Receipt
-                        </button>
+                        <div style={{ display: "flex", gap: "6px", alignItems: "center" }}>
+                          {isPendingApproval && (
+                            <>
+                              <button
+                                onClick={() => handleApproveBankTransfer(payment.id)}
+                                disabled={actionLoading}
+                                className="verify-btn"
+                                title="Confirm bank deposit & send emails"
+                                style={{ padding: "4px 8px", fontSize: "11px" }}
+                              >
+                                <i className="fas fa-check"></i> Approve
+                              </button>
+                              <button
+                                onClick={() => handleRejectBankTransfer(payment.id)}
+                                disabled={actionLoading}
+                                className="delete-user-btn"
+                                title="Reject transfer"
+                                style={{ padding: "4px 8px", fontSize: "11px" }}
+                              >
+                                <i className="fas fa-times"></i>
+                              </button>
+                            </>
+                          )}
+                          <button
+                            onClick={() => setSelectedPayment(payment)}
+                            className="verify-btn payment-receipt-action-btn"
+                            style={isPendingApproval ? { background: "#f8fafc", color: "#334155", border: "1px solid #cbd5e1" } : {}}
+                          >
+                            <i className="fas fa-file-invoice"></i> Details
+                          </button>
+                        </div>
                       </td>
                     </tr>
                   );
                 })}
-              </tbody>
-            </table>
-          </div>
-        )}
+            </tbody>
+          </table>
+        </div>
+      )}
       </div>
 
       {/* 3. Detailed Receipt Modal */}
@@ -714,7 +840,28 @@ export default function PaymentsTab({
 
             {/* Modal Footer */}
             <div className="admin-modal-footer payment-modal-footer-custom">
-              <div className="payment-modal-actions-left">
+              <div className="payment-modal-actions-left" style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}>
+                {selectedPayment.status === "PENDING_ADMIN_APPROVAL" && (
+                  <>
+                    <button
+                      onClick={() => handleApproveBankTransfer(selectedPayment.id)}
+                      disabled={actionLoading}
+                      className="verify-btn"
+                      style={{ background: "#059669", color: "#fff", padding: "8px 16px", borderRadius: "8px", fontWeight: 700 }}
+                    >
+                      <i className="fas fa-check-circle"></i> Approve & Send Emails
+                    </button>
+                    <button
+                      onClick={() => handleRejectBankTransfer(selectedPayment.id)}
+                      disabled={actionLoading}
+                      className="delete-user-btn"
+                      style={{ padding: "8px 16px", borderRadius: "8px" }}
+                    >
+                      <i className="fas fa-times-circle"></i> Reject Transfer
+                    </button>
+                  </>
+                )}
+
                 {selectedPayment.status === "PAID" && selectedPayment.payoutStatus !== "DISBURSED" && (
                   <button
                     onClick={() => handleDisbursePayout(selectedPayment.id)}
@@ -725,7 +872,7 @@ export default function PaymentsTab({
                   </button>
                 )}
 
-                {selectedPayment.status !== "REFUNDED" && (
+                {selectedPayment.status === "PAID" && (
                   <button
                     onClick={() => handleRefund(selectedPayment.id)}
                     disabled={actionLoading}

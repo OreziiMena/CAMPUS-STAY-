@@ -116,3 +116,32 @@
   min-width: 110px;
   min-height: 38px;
 }
+
+.drawerOverlay {
+  display: none;
+}
+
+@media (max-width: 1024px) {
+  .drawerOverlay {
+    display: block;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    width: 100vw;
+    height: 100vh;
+    background: rgba(0, 0, 0, 0.6);
+    backdrop-filter: blur(2px);
+    z-index: 998;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s ease;
+  }
+
+  .drawerOverlayActive {
+    opacity: 1;
+    pointer-events: auto;
+  }
+}
+

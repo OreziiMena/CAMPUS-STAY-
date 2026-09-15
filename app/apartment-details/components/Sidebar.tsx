@@ -20,6 +20,7 @@ interface SidebarProps {
   rawTotal: number;
   inspectionStatus: {
     isPaid: boolean;
+    isPendingApproval?: boolean;
     availabilityStatus: string;
     isOwner: boolean;
   };
@@ -214,7 +215,17 @@ export default function Sidebar({
                   </div>
 
                   {/* Step 2: Bonus Copy and Payment CTA (Unlocked ONLY when availability is confirmed) */}
-                  {inspectionStatus.availabilityStatus === "AVAILABLE" ? (
+                  {inspectionStatus.isPendingApproval ? (
+                    <div className="availability-status-pill pending" style={{ marginTop: '12px', background: '#fffbeb', border: '1.5px solid #fde68a', padding: '14px', borderRadius: '10px' }}>
+                      <i className="fas fa-clock" style={{ color: '#d97706', fontSize: '18px' }}></i>
+                      <div>
+                        <strong style={{ color: '#92400e' }}>Bank Transfer Under Verification</strong>
+                        <div className="status-pill-desc" style={{ color: '#78350f', marginTop: '4px' }}>
+                          We have received your ₦7,500 bank transfer. Our admin team is verifying your deposit with the bank. Once confirmed, you will receive an approval email and tour scheduling will unlock automatically.
+                        </div>
+                      </div>
+                    </div>
+                  ) : inspectionStatus.availabilityStatus === "AVAILABLE" ? (
                     <>
                       <div className="inspection-bonus-card">
                         <div className="inspection-bonus-title">

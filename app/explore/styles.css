@@ -390,40 +390,35 @@ nav{
     
     @media (max-width: 1024px){
         nav{
-        height: 70px; 
+            height: 70px; 
+            padding: 0 4%;
         }
-        .navlinks ul {
-            gap: 20px;
+        .mobilebtn {
+            display: flex !important;
+            align-items: center;
+            justify-content: center;
         }
-        .logo {
-            width: 15%;
-        }
-        .start-btn {
-            margin-right: 15px;
-            padding: 10px 15px;
-        }
-    }
-    @media (max-width: 768px) {
         .navlinks {
             display: flex; 
             position: fixed;
             top: 0; 
-            right: -300px; 
-            width: 280px; 
+            right: -320px; 
+            width: min(300px, 85vw); 
             height: 100vh;  
+            height: 100dvh;
             background-color: #02351c;  
-            box-shadow: -5px 0 25px rgba(0, 0, 0, 0.25);
+            box-shadow: -5px 0 25px rgba(0, 0, 0, 0.35);
             align-items: stretch; 
-            padding: 90px 24px 40px 24px; 
+            padding: 85px 24px 40px 24px; 
             margin-right: 0;
             flex-direction: column;
-            transition: right 0.4s cubic-bezier(0.4, 0, 0.2, 1); 
-            z-index: 999;
+            transition: right 0.35s cubic-bezier(0.4, 0, 0.2, 1); 
+            z-index: 1004;
             overflow-y: auto; 
             gap: 20px;
         }
         .navlinks.active {
-            right: 0; 
+            right: 0 !important; 
         }
         .navlinks ul {
             flex-direction: column;
@@ -568,15 +563,21 @@ nav{
         }
         
         .mobilebtn {
-            display: block; 
+            display: flex !important; 
+            align-items: center;
+            justify-content: center;
             background: none;
             border: none;
             color: white;
-            font-size: 25px;
-            margin-right: 20px;
+            font-size: 24px;
             cursor: pointer;
             position: relative; 
             z-index: 1005;
+            min-width: 44px;
+            min-height: 44px;
+            padding: 6px;
+            flex-shrink: 0;
+            outline: none;
         }
         .logo {
             width: auto;
