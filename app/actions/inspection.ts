@@ -85,45 +85,90 @@ export async function queryPropertyAvailability(propertyId: string) {
       });
     }
 
-    const studentName = escapeHtml(user.studentProfile?.fullName || "Student");
+    const studentName = escapeHtml(user.studentProfile?.fullName || user.name || "Student");
     const propertyTitle = escapeHtml(property.title);
+    const hostelType = escapeHtml(property.hostelType || "Self-Contain");
+    const rentAmount = property.rentAmount || property.price || 0;
+    const locationArea = escapeHtml(property.location || "N/A");
+    const distanceToCampus = property.distance ? escapeHtml(property.distance) : "";
+    const listingUrl = `${BASE_URL}/apartment-details?id=${property.id}`;
     const availableUrl = `${BASE_URL}/property-availability?token=${query!.token}&response=available`;
     const unavailableUrl = `${BASE_URL}/property-availability?token=${query!.token}&response=unavailable`;
 
     if (recipientUser.email) {
       const emailHtml = `
-        <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 600px; margin: 0 auto; background: #ffffff; border: 1px solid #e2e8f0; border-radius: 12px; overflow: hidden;">
-          <div style="background-color: #02351c; padding: 24px; text-align: center;">
-            <h1 style="color: #ffffff; font-size: 22px; margin: 0; font-weight: 700;">Campus Tent</h1>
-            <p style="color: #cbd5e1; font-size: 14px; margin: 6px 0 0 0;">Live Property Availability Check</p>
+        <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; max-width: 600px; margin: 0 auto; background: #ffffff; border: 1px solid #e2e8f0; border-radius: 14px; overflow: hidden; box-shadow: 0 4px 20px rgba(0,0,0,0.05);">
+          <div style="background: linear-gradient(135deg, #02351c 0%, #064e3b 100%); padding: 26px 20px; text-align: center;">
+            <h1 style="color: #ffffff; font-size: 24px; margin: 0; font-weight: 800; letter-spacing: 0.5px;">Campus Tent</h1>
+            <p style="color: #a7f3d0; font-size: 13.5px; margin: 6px 0 0 0; text-transform: uppercase; letter-spacing: 1px; font-weight: 600;">Live Property Availability Check</p>
           </div>
-          <div style="padding: 24px;">
-            <h2 style="color: #02351c; font-size: 18px; margin-top: 0;"> Is this property available right now?</h2>
-            <p style="color: #4b5563; font-size: 14px; line-height: 1.6;">
-              <strong>${studentName}</strong> is ready to pay the <strong>₦10,000 inspection fee</strong> and book a physical viewing for your listing:
+          
+          <div style="padding: 26px 22px;">
+            <h2 style="color: #02351c; font-size: 19px; margin-top: 0; line-height: 1.4;">Is this property available right now?</h2>
+            
+            <p style="color: #334155; font-size: 14.5px; line-height: 1.6; margin: 0 0 16px 0;">
+              <strong>${studentName}</strong> is ready to pay the <strong>₦7,500 inspection fee</strong> and book a physical tour for your listing below:
             </p>
-            <div style="background-color: #f8fafc; border-left: 4px solid #02351c; padding: 16px; border-radius: 6px; margin: 18px 0;">
-              <p style="margin: 0; font-size: 15px; color: #1e293b; font-weight: 600;">${propertyTitle}</p>
-              <p style="margin: 6px 0 0 0; font-size: 13.5px; color: #64748b;">Location: ${escapeHtml(property.location)}</p>
+
+            <!-- Detailed Property Specs Card -->
+            <div style="background-color: #f8fafc; border: 1.5px solid #e2e8f0; border-left: 5px solid #02351c; border-radius: 10px; padding: 18px 20px; margin: 20px 0;">
+              <div style="font-size: 16px; font-weight: 800; color: #02351c; margin-bottom: 10px;">
+                ${propertyTitle}
+              </div>
+              
+              <table style="width: 100%; border-collapse: collapse; font-size: 13.5px; color: #334155;">
+                <tr>
+                  <td style="padding: 5px 0; color: #64748b; width: 130px; font-weight: 600;">🏢 Hostel Type:</td>
+                  <td style="padding: 5px 0; font-weight: 700; color: #0f172a;">${hostelType}</td>
+                </tr>
+                <tr>
+                  <td style="padding: 5px 0; color: #64748b; font-weight: 600;">💰 Annual Rent:</td>
+                  <td style="padding: 5px 0; font-weight: 800; color: #059669;">₦${rentAmount.toLocaleString()} / year</td>
+                </tr>
+                <tr>
+                  <td style="padding: 5px 0; color: #64748b; font-weight: 600;">📍 Specific Area:</td>
+                  <td style="padding: 5px 0; font-weight: 600; color: #0f172a;">${locationArea} ${distanceToCampus ? `(${distanceToCampus})` : ""}</td>
+                </tr>
+                <tr>
+                  <td style="padding: 5px 0; color: #64748b; font-weight: 600;">👤 Prospective Student:</td>
+                  <td style="padding: 5px 0; font-weight: 700; color: #02351c;">${studentName}</td>
+                </tr>
+              </table>
+
+              <div style="margin-top: 14px; padding-top: 12px; border-top: 1px dashed #cbd5e1; text-align: right;">
+                <a href="${listingUrl}" style="color: #02351c; font-size: 13px; font-weight: 700; text-decoration: underline;">
+                  View Property Listing on Campus Tent &rarr;
+                </a>
+              </div>
             </div>
-            <p style="color: #4b5563; font-size: 14px; line-height: 1.5;">
-              Before paying the inspection fee, the student is checking to make sure the accommodation hasn't been rented out. Please click one option below:
+
+            <p style="color: #475569; font-size: 14px; line-height: 1.5; margin: 16px 0;">
+              Before paying the inspection fee, the student is checking to confirm that this accommodation is still vacant and ready for inspection. Please confirm below:
             </p>
             
-            <div style="display: flex; gap: 14px; margin: 26px 0; justify-content: center; flex-wrap: wrap;">
-              <a href="${availableUrl}" style="background-color: #16a34a; color: #ffffff; padding: 14px 28px; border-radius: 8px; text-decoration: none; font-weight: 700; font-size: 15px; display: inline-block; margin-right: 10px;">
-                Yes, Available
+            <!-- 1-Click Action Buttons -->
+            <div style="display: flex; gap: 12px; margin: 24px 0; justify-content: center; flex-wrap: wrap;">
+              <a href="${availableUrl}" style="background-color: #16a34a; color: #ffffff; padding: 14px 26px; border-radius: 8px; text-decoration: none; font-weight: 700; font-size: 15px; display: inline-block; margin-right: 8px;">
+                ✓ Yes, Available
               </a>
-              <a href="${unavailableUrl}" style="background-color: #dc2626; color: #ffffff; padding: 14px 28px; border-radius: 8px; text-decoration: none; font-weight: 700; font-size: 15px; display: inline-block;">
-                No, Unavailable / Occupied
+              <a href="${unavailableUrl}" style="background-color: #dc2626; color: #ffffff; padding: 14px 26px; border-radius: 8px; text-decoration: none; font-weight: 700; font-size: 15px; display: inline-block;">
+                ✕ No, Unavailable / Occupied
               </a>
             </div>
+
+            <div style="background-color: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 8px; padding: 12px 16px; margin: 18px 0; text-align: center;">
+              <p style="margin: 0; color: #166534; font-size: 13px; font-weight: 600;">
+                💵 Your Payout: You will receive <strong>₦5,020</strong> automatically once this inspection tour is completed.
+              </p>
+            </div>
+
             <p style="color: #94a3b8; font-size: 12px; text-align: center; margin-top: 15px;">
               Clicking directly updates the student's screen in real-time so they can proceed with their inspection payment.
             </p>
           </div>
-          <div style="background-color: #f1f5f9; padding: 14px; text-align: center; font-size: 12px; color: #64748b;">
-            Campus Tent &bull; Safe Student Accommodation
+          
+          <div style="background-color: #f8fafc; padding: 16px; text-align: center; font-size: 12px; color: #64748b; border-top: 1px solid #f1f5f9;">
+            Campus Tent &bull; Connecting Students with Verified Accommodation
           </div>
         </div>
       `;
@@ -230,7 +275,7 @@ export async function respondPropertyAvailability(token: string, responseType: "
               ${
                 isAvailable
                   ? `<p style="margin: 8px 0 0 0; font-size: 13.5px; color: #047857;">
-                      You can now pay the ₦10,000 inspection fee to unlock direct messaging and schedule your physical inspection tour.
+                      You can now pay the ₦7,500 inspection fee to unlock direct messaging and schedule your physical inspection tour.
                     </p>`
                   : `<p style="margin: 8px 0 0 0; font-size: 13.5px; color: #b91c1c;">
                       Please explore other verified listings on Campus Tent.
@@ -243,7 +288,7 @@ export async function respondPropertyAvailability(token: string, responseType: "
                 ? `
               <div style="text-align: center; margin: 25px 0;">
                 <a href="${BASE_URL}/apartment-details?id=${query.propertyId}" style="background-color: #02351c; color: #ffffff; padding: 13px 26px; border-radius: 8px; text-decoration: none; font-weight: 700; font-size: 14px; display: inline-block;">
-                  Proceed to Pay ₦10,000 Inspection Fee
+                  Proceed to Pay ₦7,500 Inspection Fee
                 </a>
               </div>
             `
@@ -362,7 +407,357 @@ export async function getInspectionStatus(propertyId: string) {
 }
 
 /**
- * 4. Process Inspection Payment (₦10,000)
+ * 4. Initialize Paystack Inspection Payment Server-Side
+ * Pre-registers the transaction with Paystack to prevent "Transaction reference not found" errors
+ */
+export async function initializePaystackInspection(propertyId: string) {
+  try {
+    const user = await getCurrentUser();
+    if (!user) {
+      return { success: false, error: "Please log in to initialize payment." };
+    }
+
+    if (user.role === "AGENT") {
+      return {
+        success: false,
+        error: "Agents cannot pay inspection fees. Please use a student account.",
+      };
+    }
+
+    const property = await prisma.property.findUnique({
+      where: { id: propertyId },
+      include: {
+        agent: { include: { user: true } },
+        student: { include: { user: true } },
+      },
+    });
+
+    if (!property) {
+      return { success: false, error: "Property not found." };
+    }
+
+    const recipientUser = property.agent?.user || property.student?.user;
+    if (recipientUser?.id === user.id) {
+      return { success: false, error: "You cannot pay an inspection fee on your own listing." };
+    }
+
+    // Require agent/host to confirm property availability first (unless Admin)
+    if (user.role !== "ADMIN" && property.agentId) {
+      const confirmedAvailability = await prisma.availabilityQuery.findFirst({
+        where: {
+          studentId: user.id,
+          propertyId: propertyId,
+          status: "AVAILABLE",
+        },
+      });
+
+      if (!confirmedAvailability) {
+        return {
+          success: false,
+          error: "Property availability must be confirmed by the agent before paying.",
+        };
+      }
+    }
+
+    const reference = `INSP-PSK-${Math.random().toString(36).substring(2, 8).toUpperCase()}-${Date.now()}`;
+    const paystackSecret = process.env.PAYSTACK_SECRET_KEY;
+
+    if (
+      paystackSecret &&
+      !paystackSecret.includes("your-paystack-secret-key") &&
+      paystackSecret.startsWith("sk_")
+    ) {
+      try {
+        const initRes = await fetch("https://api.paystack.co/transaction/initialize", {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${paystackSecret.trim()}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            email: user.email || "student@campustent.com",
+            amount: 750000, // ₦7,500 in kobo
+            reference: reference,
+            callback_url: `${BASE_URL}/apartment-details?id=${propertyId}&paystack_callback=1`,
+            metadata: {
+              propertyId,
+              studentId: user.id,
+              propertyTitle: property.title,
+              custom_fields: [
+                {
+                  display_name: "Inspection Property",
+                  variable_name: "property_title",
+                  value: property.title,
+                },
+                {
+                  display_name: "Student Name",
+                  variable_name: "student_name",
+                  value: user.studentProfile?.fullName || user.name || "Student",
+                },
+              ],
+            },
+          }),
+        });
+
+        const initData = await initRes.json();
+        if (initRes.ok && initData.status && initData.data) {
+          return {
+            success: true,
+            reference: reference,
+            accessCode: initData.data.access_code,
+            authorizationUrl: initData.data.authorization_url,
+          };
+        } else {
+          console.warn("[Paystack Init] API responded with non-ok status:", initData);
+          // Return fallback reference so client can proceed
+          return {
+            success: true,
+            reference: reference,
+            fallback: true,
+            message: initData.message || "Paystack account pending activation.",
+          };
+        }
+      } catch (paystackInitErr: any) {
+        console.error("[Paystack Init] Network exception:", paystackInitErr);
+        return {
+          success: true,
+          reference: reference,
+          fallback: true,
+          message: "Network issue contacting Paystack.",
+        };
+      }
+    }
+
+    return {
+      success: true,
+      reference: reference,
+      fallback: true,
+    };
+  } catch (err: any) {
+    console.error("initializePaystackInspection error:", err);
+    return { success: false, error: err.message || "Failed to initialize payment." };
+  }
+}
+
+/**
+ * 5. Submit Direct Bank Transfer Inspection Payment (Alternative to Paystack)
+ */
+export async function submitBankTransferInspectionPayment(data: {
+  propertyId: string;
+  senderName: string;
+  bankName: string;
+  reference?: string;
+  receiptUrl?: string;
+  notes?: string;
+}) {
+  try {
+    const user = await getCurrentUser();
+    if (!user) {
+      return { success: false, error: "Please log in to submit payment." };
+    }
+
+    if (user.role === "AGENT") {
+      return {
+        success: false,
+        error: "Agents cannot pay inspection fees. Please use a student account.",
+      };
+    }
+
+    const { propertyId, senderName, bankName, receiptUrl, notes } = data;
+    if (!propertyId || !senderName || !bankName) {
+      return { success: false, error: "Please provide sender name and bank name." };
+    }
+
+    const property = await prisma.property.findUnique({
+      where: { id: propertyId },
+      include: {
+        agent: { include: { user: true } },
+        student: { include: { user: true } },
+      },
+    });
+
+    if (!property) {
+      return { success: false, error: "Property not found." };
+    }
+
+    const recipientUser = property.agent?.user || property.student?.user;
+    const recipientId = recipientUser?.id;
+    if (!recipientId) {
+      return { success: false, error: "Listing host not found." };
+    }
+
+    if (recipientId === user.id) {
+      return { success: false, error: "You cannot pay an inspection fee on your own listing." };
+    }
+
+    // Check if already paid
+    const existingPayment = await prisma.inspectionPayment.findFirst({
+      where: {
+        studentId: user.id,
+        propertyId: propertyId,
+        status: "PAID",
+      },
+    });
+
+    if (existingPayment) {
+      return {
+        success: true,
+        alreadyPaid: true,
+        payment: existingPayment,
+      };
+    }
+
+    // Require confirmed availability
+    if (user.role !== "ADMIN" && property.agentId) {
+      const confirmedAvailability = await prisma.availabilityQuery.findFirst({
+        where: {
+          studentId: user.id,
+          propertyId: propertyId,
+          status: "AVAILABLE",
+        },
+      });
+
+      if (!confirmedAvailability) {
+        return {
+          success: false,
+          error: "Property availability must be confirmed by the agent before payment.",
+        };
+      }
+    }
+
+    const paymentRef = data.reference?.trim() || `BT-${Math.random().toString(36).substring(2, 8).toUpperCase()}-${Date.now()}`;
+
+    const payment = await prisma.inspectionPayment.create({
+      data: {
+        studentId: user.id,
+        propertyId: property.id,
+        agentId: recipientId,
+        amount: 7500,
+        currency: "NGN",
+        status: "PAID",
+        reference: paymentRef,
+      },
+    });
+
+    // Record audit log for Admin review
+    await prisma.activityLog.create({
+      data: {
+        userId: user.id,
+        userName: senderName.trim(),
+        userEmail: user.email || "",
+        action: "BANK_TRANSFER_INSPECTION_PAYMENT",
+        description: `Direct Bank Transfer Inspection Payment (₦7,500). Sender: ${senderName.trim()} (${bankName.trim()}). Ref: ${paymentRef}${receiptUrl ? ` Receipt: ${receiptUrl}` : ""}${notes ? ` Notes: ${notes}` : ""}`,
+        propertyTitle: property.title,
+      },
+    }).catch((e) => console.warn("Failed to create activity log for bank transfer:", e));
+
+    const studentDisplayName = escapeHtml(user.studentProfile?.fullName || user.name || senderName || "Student");
+    const propertyTitle = escapeHtml(property.title);
+    const agentDisplayName = escapeHtml(property.agent?.fullName || property.student?.fullName || "Agent");
+
+    // Send confirmation email to student
+    if (user.email) {
+      const studentHtml = `
+        <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 600px; margin: 0 auto; background: #ffffff; border: 1px solid #e2e8f0; border-radius: 12px; overflow: hidden;">
+          <div style="background-color: #02351c; padding: 24px; text-align: center;">
+            <h1 style="color: #ffffff; font-size: 22px; margin: 0; font-weight: 700;">Campus Tent</h1>
+            <p style="color: #cbd5e1; font-size: 14px; margin: 6px 0 0 0;">Bank Transfer Inspection Confirmation</p>
+          </div>
+          <div style="padding: 24px;">
+            <h2 style="color: #02351c; font-size: 18px; margin-top: 0;">Inspection Payment Confirmed!</h2>
+            <p style="color: #4b5563; font-size: 14px; line-height: 1.6;">
+              Hi ${studentDisplayName}, your direct bank transfer payment of <strong>₦7,500</strong> for <strong>"${propertyTitle}"</strong> has been confirmed.
+            </p>
+            <div style="background-color: #ecfdf5; border-left: 4px solid #16a34a; padding: 16px; border-radius: 6px; margin: 20px 0;">
+              <p style="margin: 0 0 6px 0; font-size: 14px; color: #065f46;"><strong>Amount:</strong> ₦7,500</p>
+              <p style="margin: 0 0 6px 0; font-size: 14px; color: #065f46;"><strong>Method:</strong> Direct Bank Transfer (${escapeHtml(bankName)})</p>
+              <p style="margin: 0 0 6px 0; font-size: 14px; color: #065f46;"><strong>Reference:</strong> ${paymentRef}</p>
+              <p style="margin: 0; font-size: 14px; color: #065f46;"><strong>Agent:</strong> ${agentDisplayName}</p>
+            </div>
+            <div style="background-color: #f8fafc; border: 1px dashed #cbd5e1; padding: 16px; border-radius: 8px; margin: 20px 0;">
+              <p style="margin: 0; font-size: 13.5px; color: #334155; font-weight: 600;">Bonus Value Covered:</p>
+              <p style="margin: 6px 0 0 0; font-size: 13px; color: #64748b; line-height: 1.5;">
+                "Your ₦7,500 fee covers a physical inspection of this property, plus any alternative options the agent has available in the same area/budget."
+              </p>
+            </div>
+            <div style="text-align: center; margin: 25px 0;">
+              <a href="${BASE_URL}/apartment-details?id=${property.id}" style="background-color: #02351c; color: #ffffff; padding: 12px 24px; border-radius: 8px; text-decoration: none; font-weight: 700; font-size: 14px; display: inline-block;">
+                Book Physical Tour & Contact Agent
+              </a>
+            </div>
+          </div>
+          <div style="background-color: #f1f5f9; padding: 14px; text-align: center; font-size: 12px; color: #64748b;">
+            Campus Tent &bull; Safe Student Accommodation
+          </div>
+        </div>
+      `;
+
+      sendEmail({
+        to: user.email,
+        subject: `Inspection Payment Confirmed (Bank Transfer): ${property.title}`,
+        html: studentHtml,
+        isInspectionMessage: true,
+      }).catch((err) => console.error("Student bank transfer email failed:", err));
+    }
+
+    // Send notification email to Agent
+    if (recipientUser.email) {
+      const agentHtml = `
+        <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 600px; margin: 0 auto; background: #ffffff; border: 1px solid #e2e8f0; border-radius: 12px; overflow: hidden;">
+          <div style="background-color: #02351c; padding: 24px; text-align: center;">
+            <h1 style="color: #ffffff; font-size: 22px; margin: 0; font-weight: 700;">Campus Tent</h1>
+            <p style="color: #cbd5e1; font-size: 14px; margin: 6px 0 0 0;">New Inspection Fee Paid</p>
+          </div>
+          <div style="padding: 24px;">
+            <h2 style="color: #02351c; font-size: 18px; margin-top: 0;">Inspection Fee Received (₦7,500)</h2>
+            <p style="color: #4b5563; font-size: 14px; line-height: 1.6;">
+              <strong>${studentDisplayName}</strong> has paid the <strong>₦7,500 inspection fee</strong> for your property: <strong>"${propertyTitle}"</strong>.
+            </p>
+            <div style="background-color: #f8fafc; border-left: 4px solid #02351c; padding: 16px; border-radius: 6px; margin: 20px 0;">
+              <p style="margin: 0 0 6px 0; font-size: 14px; color: #1e293b;"><strong>Student:</strong> ${studentDisplayName}</p>
+              <p style="margin: 0 0 6px 0; font-size: 14px; color: #1e293b;"><strong>Phone:</strong> ${escapeHtml(user.phone || "Not provided")}</p>
+              <p style="margin: 0 0 6px 0; font-size: 14px; color: #1e293b;"><strong>Payment Method:</strong> Bank Transfer</p>
+              <p style="margin: 0; font-size: 14px; color: #1e293b;"><strong>Reference:</strong> ${paymentRef}</p>
+            </div>
+            <div style="background-color: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 8px; padding: 12px 16px; margin: 18px 0; text-align: center;">
+              <p style="margin: 0; color: #166534; font-size: 13.5px; font-weight: 600;">
+                💵 Your Payout: You will receive <strong>₦5,020</strong> automatically once this inspection tour is completed.
+              </p>
+            </div>
+            <div style="text-align: center; margin: 25px 0;">
+              <a href="${BASE_URL}/agent-dashboard" style="background-color: #02351c; color: #ffffff; padding: 12px 24px; border-radius: 8px; text-decoration: none; font-weight: 700; font-size: 14px; display: inline-block;">
+                View in Agent Dashboard
+              </a>
+            </div>
+          </div>
+        </div>
+      `;
+
+      sendEmail({
+        to: recipientUser.email,
+        subject: `Inspection Fee Paid (₦7,500): ${property.title}`,
+        html: agentHtml,
+        isInspectionMessage: true,
+      }).catch((err) => console.error("Agent bank transfer alert email failed:", err));
+    }
+
+    return {
+      success: true,
+      payment: {
+        id: payment.id,
+        amount: payment.amount,
+        paidAt: payment.paidAt.toISOString(),
+        reference: payment.reference,
+      },
+    };
+  } catch (err: any) {
+    console.error("submitBankTransferInspectionPayment error:", err);
+    return { success: false, error: err.message || "Failed to process bank transfer payment." };
+  }
+}
+
+/**
+ * 6. Process Inspection Payment (₦7,500)
  */
 export async function processInspectionPayment(propertyId: string, reference?: string) {
   try {
@@ -459,12 +854,12 @@ export async function processInspectionPayment(propertyId: string, reference?: s
           };
         }
 
-        // Verify amount matches ₦10,000 (1,000,000 kobo)
+        // Verify amount matches ₦7,500 (750,000 kobo)
         const amountPaidKobo = verifyData.data?.amount;
-        if (amountPaidKobo < 1000000) {
+        if (amountPaidKobo < 750000) {
           return {
             success: false,
-            error: "Payment amount does not match the ₦10,000 inspection fee.",
+            error: "Payment amount does not match the ₦7,500 inspection fee.",
           };
         }
       } catch (verifyErr: any) {
@@ -483,7 +878,7 @@ export async function processInspectionPayment(propertyId: string, reference?: s
         studentId: user.id,
         propertyId: property.id,
         agentId: recipientId,
-        amount: 10000,
+        amount: 7500,
         currency: "NGN",
         status: "PAID",
         reference: paymentRef,
@@ -505,10 +900,10 @@ export async function processInspectionPayment(propertyId: string, reference?: s
           <div style="padding: 24px;">
             <h2 style="color: #02351c; font-size: 18px; margin-top: 0;">Inspection Fee Confirmed!</h2>
             <p style="color: #4b5563; font-size: 14px; line-height: 1.6;">
-              Hi ${studentName}, your inspection fee of <strong>₦10,000</strong> for <strong>"${propertyTitle}"</strong> has been confirmed.
+              Hi ${studentName}, your inspection fee of <strong>₦7,500</strong> for <strong>"${propertyTitle}"</strong> has been confirmed.
             </p>
             <div style="background-color: #ecfdf5; border-left: 4px solid #16a34a; padding: 16px; border-radius: 6px; margin: 20px 0;">
-              <p style="margin: 0 0 6px 0; font-size: 14px; color: #065f46;"><strong>Amount Paid:</strong> ₦10,000</p>
+              <p style="margin: 0 0 6px 0; font-size: 14px; color: #065f46;"><strong>Amount Paid:</strong> ₦7,500</p>
               <p style="margin: 0 0 6px 0; font-size: 14px; color: #065f46;"><strong>Reference:</strong> ${paymentRef}</p>
               <p style="margin: 0; font-size: 14px; color: #065f46;"><strong>Agent:</strong> ${agentName}</p>
             </div>
@@ -517,7 +912,7 @@ export async function processInspectionPayment(propertyId: string, reference?: s
                 Bonus Value Covered:
               </p>
               <p style="margin: 6px 0 0 0; font-size: 13px; color: #64748b; line-height: 1.5;">
-                "Your ₦10,000 fee covers a physical inspection of this property, plus any alternative options the agent has available in the same area/budget."
+                "Your ₦7,500 fee covers a physical inspection of this property, plus any alternative options the agent has available in the same area/budget."
               </p>
             </div>
             <div style="text-align: center; margin: 25px 0;">
@@ -549,14 +944,19 @@ export async function processInspectionPayment(propertyId: string, reference?: s
             <p style="color: #cbd5e1; font-size: 14px; margin: 6px 0 0 0;">New Inspection Fee Paid</p>
           </div>
           <div style="padding: 24px;">
-            <h2 style="color: #02351c; font-size: 18px; margin-top: 0;">Inspection Fee Received</h2>
+            <h2 style="color: #02351c; font-size: 18px; margin-top: 0;">Inspection Fee Received (₦7,500)</h2>
             <p style="color: #4b5563; font-size: 14px; line-height: 1.6;">
-              <strong>${studentName}</strong> has paid the <strong>₦10,000 inspection fee</strong> for your property: <strong>"${propertyTitle}"</strong>.
+              <strong>${studentName}</strong> has paid the <strong>₦7,500 inspection fee</strong> for your property: <strong>"${propertyTitle}"</strong>.
             </p>
             <div style="background-color: #f8fafc; border-left: 4px solid #02351c; padding: 16px; border-radius: 6px; margin: 20px 0;">
               <p style="margin: 0 0 6px 0; font-size: 14px; color: #1e293b;"><strong>Student:</strong> ${studentName}</p>
               <p style="margin: 0 0 6px 0; font-size: 14px; color: #1e293b;"><strong>Phone:</strong> ${escapeHtml(user.phone || "Not provided")}</p>
-              <p style="margin: 0; font-size: 14px; color: #1e293b;"><strong>Reference:</strong> ${paymentRef}</p>
+              <p style="margin: 0 0 6px 0; font-size: 14px; color: #1e293b;"><strong>Reference:</strong> ${paymentRef}</p>
+            </div>
+            <div style="background-color: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 8px; padding: 12px 16px; margin: 18px 0; text-align: center;">
+              <p style="margin: 0; color: #166534; font-size: 13.5px; font-weight: 600;">
+                💵 Your Payout: You will receive <strong>₦5,020</strong> automatically once this inspection tour is completed.
+              </p>
             </div>
             <p style="color: #4b5563; font-size: 13.5px; line-height: 1.5;">
               The student can now message you directly and book an inspection appointment. Remember to showcase alternative units in the same area/budget during the tour if available.
@@ -572,7 +972,7 @@ export async function processInspectionPayment(propertyId: string, reference?: s
 
       sendEmail({
         to: recipientUser.email,
-        subject: `Inspection Fee Paid: ${property.title}`,
+        subject: `Inspection Fee Paid (₦7,500): ${property.title}`,
         html: agentHtml,
         isInspectionMessage: true,
       }).catch((err) => console.error("Agent payment alert email failed:", err));
@@ -594,7 +994,7 @@ export async function processInspectionPayment(propertyId: string, reference?: s
 }
 
 /**
- * Internal helper to automatically disburse the agent's 50% split (₦5,000)
+ * Internal helper to automatically disburse the agent's payout (₦5,020)
  * when both student and agent have confirmed the physical inspection tour.
  */
 async function checkAndTriggerAutomatedPayout(params: {
@@ -669,7 +1069,7 @@ async function checkAndTriggerAutomatedPayout(params: {
           },
           body: JSON.stringify({
             source: "balance",
-            amount: 500000, // ₦5,000 (50% split in kobo)
+            amount: 502000, // ₦5,020 in kobo
             recipient: agentProfile.recipientCode,
             reason: `Campus Tent Auto-Payout for ${payment.property.title}`,
           }),
@@ -713,7 +1113,7 @@ async function checkAndTriggerAutomatedPayout(params: {
               Hi ${agentName}, both you and the student (<strong>${studentName}</strong>) have confirmed the inspection tour for:
             </p>
             <div style="background-color: #f0fdf4; border-left: 4px solid #16a34a; padding: 16px; border-radius: 6px; margin: 20px 0;">
-              <p style="margin: 0; font-size: 16px; color: #166534; font-weight: 700;">Payout Amount: ₦5,000</p>
+              <p style="margin: 0; font-size: 16px; color: #166534; font-weight: 700;">Payout Amount: ₦5,020</p>
               <p style="margin: 6px 0 0 0; font-size: 13.5px; color: #334155;">Property: ${propTitle}</p>
               <p style="margin: 4px 0 0 0; font-size: 13px; color: #64748b;">Transfer Ref: ${payoutRef}</p>
             </div>
@@ -729,7 +1129,7 @@ async function checkAndTriggerAutomatedPayout(params: {
 
       sendEmail({
         to: payment.agent.email,
-        subject: `₦5,000 Inspection Payout Disbursed: ${payment.property.title}`,
+        subject: `₦5,020 Inspection Payout Disbursed: ${payment.property.title}`,
         html: emailHtml,
         isInspectionMessage: true,
       }).catch((e) => console.error("Agent auto-payout email error:", e));

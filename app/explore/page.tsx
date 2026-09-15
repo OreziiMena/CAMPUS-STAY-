@@ -2,6 +2,7 @@
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { getProperties } from "@/app/actions/properties";
+import { getCurrentUser } from "@/app/actions/auth";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import "./styles.css";
@@ -62,6 +63,20 @@ export default function Explore() {
     const timer = setTimeout(() => {
       setShowSafetyTip(false);
     }, 15000);
+
+    // Auto-tailor to student's university location
+    const loadUserCampus = async () => {
+      try {
+        const user = await getCurrentUser();
+        if (user && user.role === "STUDENT" && user.studentProfile?.university) {
+          setUniversity(user.studentProfile.university);
+        }
+      } catch (e) {
+        console.warn("Failed to load user campus:", e);
+      }
+    };
+    loadUserCampus();
+
     return () => clearTimeout(timer);
   }, []);
 

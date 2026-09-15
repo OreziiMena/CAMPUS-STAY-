@@ -21,88 +21,57 @@ export default function Terms() {
         <div className="content-card">
           <section className="content-section">
             <h2>1. Introduction</h2>
-            <p>Welcome to Campus Tent. By accessing our platform, you agree to these terms. We serve the university community by connecting students with verified landlords and agents.</p>
+            <p>Welcome to Campus Tent. By accessing our platform, you agree to these Terms of Service. Campus Tent connects Nigerian university students with verified accommodation, hostels, roommates, and trusted property agents.</p>
           </section>
 
           <section className="content-section">
-            <h2>2. User Accounts</h2>
-            <p>Whether you are registering as a Student or an Agent, you are responsible for maintaining the security of your account and password. Campus Tent is not liable for any loss or damage from your failure to comply with this security obligation.</p>
-          </section>
-
-          <section className="content-section">
-            <h2>3. Property Listings & Accuracy</h2>
-            <p>Agents must ensure all uploaded properties are accurate and currently available. Misrepresentation of properties (e.g., uploading fake images or incorrect pricing) will result in immediate account suspension.</p>
-          </section>
-
-          <section className="content-section">
-            <h2>4. The Information We Collect</h2>
-            <p>To provide a secure, reliable, and trustworthy marketplace for the university community, Campus Tent collects specific personal and verification data when you register and use our platform.</p>
-
-            <h3>A. Basic Account Information</h3>
-            <p>When you create an account, whether as a Student or an Agent, we collect standard profile information, including:</p>
+            <h2>2. User Accounts & Verification</h2>
+            <p>Whether you register as a Student or an Agent/Landlord, you are responsible for maintaining the confidentiality of your account credentials.</p>
             <ul>
-              <li>Your full name</li>
-              <li>Email address</li>
-              <li>Phone number</li>
-              <li>Account password</li>
-            </ul>
-
-            <h3>B. Identity & Verification Data</h3>
-            <p>Because Campus Tent facilitates real-world housing transactions, the safety of our community is our highest priority. To prevent fraud and ensure that users are who they claim to be, we require specific verification documents based on your account type:</p>
-            <ul>
-              <li><strong>For Students:</strong> To maintain Campus Tent as a dedicated student community, you may be required to provide proof of your active student status. This may include uploading a valid University ID card, an official admission letter, or relevant university portal documentation.</li>
-              <li><strong>For Agents & Landlords:</strong> To protect our students and verify the legitimacy of property managers on our platform, you will be required to undergo an identity verification process. This will require submitting a valid, government-issued identification document, which may specifically include your <strong>National Identification Number (NIN)</strong> or other approved statutory identification.</li>
-            </ul>
-
-            <h3>C. Platform Activity & Communication Data</h3>
-            <p>We collect data on how you interact with the platform to improve your experience. This includes:</p>
-            <ul>
-              <li>Properties you view, save, or inquire about.</li>
-              <li>Messages, inquiries, and communications sent through the Campus Tent platform between Students and Agents.</li>
-            </ul>
-
-            <h3>D. Why We Collect This Information</h3>
-            <p>Your verification documents (such as your NIN or Student ID) are strictly used for security, compliance, and identity authentication. We collect this data to:</p>
-            <ul>
-              <li>Verify that you are a legitimate student or a genuine property agent.</li>
-              <li>Prevent fraudulent listings, scams, and unauthorized access.</li>
-              <li>Resolve disputes and enforce our platform's safety guidelines.</li>
+              <li><strong>Open Student Access:</strong> Mandatory student ID or admission letter uploads are not required to browse listings, explore tailored campus feeds, or book inspection viewings.</li>
+              <li><strong>Agent Listings & Priority Verification:</strong> Agents and landlords may publish properties freely. To earn the <em>Verified Agent Badge</em> and top priority ranking on campus Explore feeds, agents may complete verification via government ID, live video walkthrough, utility bill/lease proof, student tenant vouching, BVN name match, or SUG/Landlords association endorsement.</li>
             </ul>
           </section>
 
           <section className="content-section">
-            <h2>5. How We Use Your Information</h2>
-            <p>Campus Tent uses the data we collect to operate, improve, and protect our platform. Specifically, your information allows us to:</p>
+            <h2>3. Physical Inspection Fee Policy (₦7,500)</h2>
+            <p>To prevent ghost visits, compensate agents for transit time, and protect students against property scams, Campus Tent operates an auditable inspection escrow service:</p>
             <ul>
-              <li><strong>Facilitate Connections:</strong> Enable students to seamlessly browse, save, and inquire about properties, and allow agents to manage and respond to these inquiries.</li>
-              <li><strong>Maintain Platform Safety:</strong> Authenticate accounts, verify NINs and Student IDs, and actively monitor for fraudulent or suspicious activity.</li>
-              <li><strong>Communicate with You:</strong> Send essential service updates, account notifications, password reset links, and responses to your support inquiries.</li>
-              <li><strong>Improve User Experience:</strong> Analyze how our platform is used to fix bugs, design better features, and optimize the overall Campus Tent experience.</li>
+              <li><strong>Inspection Fee Amount:</strong> The standard inspection fee is fixed at <strong>₦7,500</strong> per booking.</li>
+              <li><strong>Multi-Hostel Bonus Value:</strong> Your ₦7,500 fee covers a physical inspection of the primary property plus any alternative available accommodation options shown by the agent in the same campus vicinity and budget.</li>
+              <li><strong>Automated Agent Payout Split:</strong> Out of the ₦7,500 inspection fee, <strong>₦5,020</strong> is held in automated escrow and paid directly to the agent/landlord once both the student and agent confirm the inspection tour was completed. The remaining <strong>₦2,480</strong> is retained as the Campus Tent platform service fee.</li>
+              <li><strong>Supported Payment Methods:</strong> Payments can be processed securely online via Paystack (Debit Cards, USSD, Bank Transfer) or through direct bank transfer to verified Campus Tent corporate accounts.</li>
+              <li><strong>Refund Policy:</strong> Inspection fees are 100% refundable to the student if the agent fails to conduct the scheduled inspection or marks the property unavailable.</li>
             </ul>
           </section>
 
           <section className="content-section">
-            <h2>6. Sharing Your Information</h2>
-            <p>We do not sell, rent, or trade your personal information to third parties. We only share your information in the following limited circumstances:</p>
+            <h2>4. Property Listings & Accuracy</h2>
+            <p>Listing hosts are required to represent properties truthfully. Submitting deceptive media, fraudulent rent figures, or bait-and-switch listings is strictly prohibited and subject to immediate account termination and escrow forfeiture.</p>
+          </section>
+
+          <section className="content-section">
+            <h2>5. Limitation of Liability</h2>
+            <p>Campus Tent provides discovery and escrow technology tools. Users are advised to inspect all accommodations during daylight hours and only pay annual tenancy rent after physical verification of tenancy contracts.</p>
+          </section>
+
+          <section className="content-section">
+            <h2>6. Data Collection & Privacy</h2>
+            <p>To provide a secure, reliable marketplace for the university community, Campus Tent collects basic contact details, listing data, and voluntary agent verification documents.</p>
             <ul>
-              <li><strong>Between Students and Agents:</strong> When a student makes an inquiry on a property, we share necessary details (such as the student's name, university, and message) with the verified agent to facilitate communication.</li>
-              <li><strong>Service Providers:</strong> We may share data with trusted third-party services that help us operate our platform (e.g., secure cloud hosting providers, database management, and email delivery services). These providers are legally obligated to protect your data.</li>
-              <li><strong>Legal and Safety Requirements:</strong> We may disclose your information if required by Nigerian law, legal processes, or to protect the rights, property, and safety of Campus Tent, our users, or the public.</li>
+              <li><strong>Personal Data:</strong> Name, email address, phone number, and optional profile data.</li>
+              <li><strong>Voluntary Verification Documents:</strong> Documents voluntarily submitted by agents seeking verified badge status are securely stored and used strictly for identity authentication and anti-fraud monitoring.</li>
             </ul>
           </section>
 
           <section className="content-section">
-            <h2>7. Security</h2>
-            <p>We take the security of your personal information and verification documents seriously. Campus Tent implements industry-standard technical and organizational measures to protect your data.</p>
-            
-            <h3>A. Data Protection Measures</h3>
-            <ul>
-              <li><strong>Encryption:</strong> Sensitive data, including passwords and verification documents like your NIN or Student ID, are encrypted and stored securely within our database infrastructure.</li>
-              <li><strong>Access Control:</strong> Strict access controls are in place to ensure that only authorized system administrators can access verification documents solely for the purpose of account approval.</li>
-            </ul>
+            <h2>7. Sharing Your Information</h2>
+            <p>We do not sell, rent, or trade your personal information to third parties. Data is shared strictly between students and agents to facilitate accommodation tours and communications, or as required by law.</p>
+          </section>
 
-            <h3>B. Your Responsibilities</h3>
-            <p>While we strive to use commercially acceptable means to protect your personal information, no method of transmission over the internet or electronic storage is 100% secure. You are responsible for keeping your password confidential and for ensuring you log out of shared devices after using the Campus Tent platform.</p>
+          <section className="content-section">
+            <h2>8. Security & Dispute Resolution</h2>
+            <p>All sensitive transactions and messages are encrypted. In the event of an inspection dispute, Campus Tent administrators review audit logs and payment references to issue immediate refunds or resolve discrepancies fairly.</p>
           </section>
         </div>
       </main>

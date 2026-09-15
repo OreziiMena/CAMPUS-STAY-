@@ -767,10 +767,10 @@ export async function getAdminPaymentsData() {
 
     const paidPayments = payments.filter((p) => p.status === "PAID");
     const totalGross = paidPayments.reduce((sum, p) => sum + (p.amount || 0), 0);
-    // Platform model: 50-50 split (50% Platform fee = ₦5,000, 50% Agent escrow pool = ₦5,000 per ₦10,000 fee)
-    const platformShare = totalGross * 0.5;
-    const agentEscrowLiability = totalGross * 0.5;
+    // Platform fee model: ₦2,480 Platform service fee, ₦5,020 Agent escrow payout per ₦7,500 inspection fee
     const paidCount = paidPayments.length;
+    const platformShare = paidPayments.reduce((sum, p) => sum + (p.amount === 7500 ? 2480 : p.amount * (2480 / 7500)), 0);
+    const agentEscrowLiability = totalGross - platformShare;
 
     return {
       success: true,
@@ -1043,7 +1043,7 @@ export async function refundInspectionPayment(paymentId: string, reason: string)
       targetType: "PAYMENT",
       targetId: payment.id,
       targetLabel: payment.reference,
-      details: `Admin processed ₦10,000 refund to student ${payment.student.studentProfile?.fullName || payment.student.email} for property "${payment.property.title}". Reason: ${reason || "N/A"}`,
+      details: `Admin processed ₦${payment.amount.toLocaleString()} refund to student ${payment.student.studentProfile?.fullName || payment.student.email} for property "${payment.property.title}". Reason: ${reason || "N/A"}`,
       metadata: {
         paymentId: payment.id,
         amount: payment.amount,
@@ -1059,7 +1059,7 @@ export async function refundInspectionPayment(paymentId: string, reason: string)
 
       sendEmail({
         to: payment.student.email,
-        subject: `Refund Processed: ₦10,000 for ${payment.property.title}`,
+        subject: `Refund Processed: ₦${payment.amount.toLocaleString()} for ${payment.property.title}`,
         html: `
           <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 600px; margin: 0 auto; background: #ffffff; border: 1px solid #e2e8f0; border-radius: 12px; overflow: hidden;">
             <div style="background-color: #02351c; padding: 24px; text-align: center;">
@@ -1067,9 +1067,9 @@ export async function refundInspectionPayment(paymentId: string, reason: string)
               <p style="color: #cbd5e1; font-size: 14px; margin: 6px 0 0 0;">Inspection Fee Refund Confirmation</p>
             </div>
             <div style="padding: 24px;">
-              <h2 style="color: #02351c; font-size: 18px; margin-top: 0;">Refund Processed (₦10,000)</h2>
+              <h2 style="color: #02351c; font-size: 18px; margin-top: 0;">Refund Processed (₦${payment.amount.toLocaleString()})</h2>
               <p style="color: #4b5563; font-size: 14px; line-height: 1.6;">
-                Hi ${studentName}, your refund of <strong>₦10,000</strong> for <strong>"${propTitle}"</strong> has been processed to your original payment method.
+                Hi ${studentName}, your refund of <strong>₦${payment.amount.toLocaleString()}</strong> for <strong>"${propTitle}"</strong> has been processed to your original payment method.
               </p>
               <div style="background-color: #f8fafc; border-left: 4px solid #02351c; padding: 14px; border-radius: 6px; margin: 16px 0;">
                 <p style="margin: 0 0 4px 0; font-size: 13.5px; color: #1e293b;"><strong>Reason:</strong> ${escapeHtml(reason)}</p>

@@ -58,16 +58,16 @@ export default function SchedulerSection({
           <div className="scheduler-lock-icon-wrap">
             <i className="fas fa-lock"></i>
           </div>
-          <h4>₦10,000 Inspection Fee Required</h4>
+          <h4>₦7,500 Inspection Fee Required</h4>
           <p>
-            To protect students and verified agents against ghost visits, an inspection fee of ₦10,000 is required before booking in-person physical inspections. It is fully refundable if the inspection was cancelled by the agent.
+            To protect students and verified agents against ghost visits, an inspection fee of ₦7,500 is required before booking in-person physical inspections. It is fully refundable if the inspection was cancelled by the agent.
           </p>
           <div className="inspection-bonus-card inspection-bonus-card-adjusted">
             <div className="inspection-bonus-title">
               <i className="fas fa-sparkles"></i> Package Bonus
             </div>
             <p className="inspection-bonus-text">
-              "Your ₦10,000 fee covers a physical inspection of this property, plus any alternative options the agent has available in the same area/budget."
+              "Your ₦7,500 fee covers a physical inspection of this property, plus any alternative options the agent has available in the same area/budget."
             </p>
           </div>
           <button
@@ -75,7 +75,7 @@ export default function SchedulerSection({
             className="pay-inspection-btn pay-inspection-btn-adjusted"
             onClick={onUnlockClick}
           >
-            <i className="fas fa-bolt"></i> Check Availability & Pay ₦10,000
+            <i className="fas fa-bolt"></i> Check Availability & Pay ₦7,500
           </button>
         </div>
       ) : (

@@ -64,7 +64,7 @@ export async function POST(req: NextRequest) {
               studentId: metadata.studentId,
               propertyId: metadata.propertyId,
               agentId: metadata.agentId,
-              amount: 10000,
+              amount: 7500,
               currency: "NGN",
               status: "PAID",
               reference: reference,
@@ -95,10 +95,10 @@ export async function POST(req: NextRequest) {
                   <div style="padding: 24px;">
                     <h2 style="color: #02351c; font-size: 18px; margin-top: 0;">Inspection Fee Confirmed!</h2>
                     <p style="color: #4b5563; font-size: 14px; line-height: 1.6;">
-                      Hi ${studentName}, your inspection fee of <strong>₦10,000</strong> for <strong>"${propertyTitle}"</strong> has been confirmed.
+                      Hi ${studentName}, your inspection fee of <strong>₦7,500</strong> for <strong>"${propertyTitle}"</strong> has been confirmed.
                     </p>
                     <div style="background-color: #ecfdf5; border-left: 4px solid #16a34a; padding: 16px; border-radius: 6px; margin: 20px 0;">
-                      <p style="margin: 0 0 6px 0; font-size: 14px; color: #065f46;"><strong>Amount Paid:</strong> ₦10,000</p>
+                      <p style="margin: 0 0 6px 0; font-size: 14px; color: #065f46;"><strong>Amount Paid:</strong> ₦7,500</p>
                       <p style="margin: 0; font-size: 14px; color: #065f46;"><strong>Reference:</strong> ${reference}</p>
                     </div>
                   </div>
@@ -114,7 +114,7 @@ export async function POST(req: NextRequest) {
           if (agentEmail) {
             sendEmail({
               to: agentEmail,
-              subject: `Inspection Fee Received: ${newPayment.property.title}`,
+              subject: `Inspection Fee Received (₦7,500): ${newPayment.property.title}`,
               html: `
                 <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 600px; margin: 0 auto; background: #ffffff; border: 1px solid #e2e8f0; border-radius: 12px; overflow: hidden;">
                   <div style="background-color: #02351c; padding: 24px; text-align: center;">
@@ -122,9 +122,9 @@ export async function POST(req: NextRequest) {
                     <p style="color: #cbd5e1; font-size: 14px; margin: 6px 0 0 0;">New Inspection Fee Paid</p>
                   </div>
                   <div style="padding: 24px;">
-                    <h2 style="color: #02351c; font-size: 18px; margin-top: 0;">Inspection Fee Received</h2>
+                    <h2 style="color: #02351c; font-size: 18px; margin-top: 0;">Inspection Fee Received (₦7,500)</h2>
                     <p style="color: #4b5563; font-size: 14px; line-height: 1.6;">
-                      <strong>${studentName}</strong> has paid the <strong>₦10,000 inspection fee</strong> for your property: <strong>"${propertyTitle}"</strong>.
+                      <strong>${studentName}</strong> has paid the <strong>₦7,500 inspection fee</strong> for your property: <strong>"${propertyTitle}"</strong>.
                     </p>
                   </div>
                 </div>

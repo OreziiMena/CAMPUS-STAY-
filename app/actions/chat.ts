@@ -58,7 +58,7 @@ export async function getOrCreateChatRoom(propertyId: string) {
       if (!payment) {
         return {
           success: false,
-          error: "Inspection fee required. Please pay the ₦10,000 inspection fee before messaging the agent.",
+          error: "Inspection fee required. Please pay the ₦7,500 inspection fee before messaging the agent.",
           requiresPayment: true,
         };
       }

@@ -2,3 +2,32 @@
   width: auto;
   height: auto;
 }
+
+.socialIcons {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 16px;
+}
+
+.socialLink {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  color: #dddddd;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 15px;
+  transition: all 0.2s ease;
+  text-decoration: none;
+}
+
+.socialLink:hover {
+  background: goldenrod;
+  color: rgb(2, 53, 28);
+  transform: translateY(-2px);
+  border-color: goldenrod;
+}

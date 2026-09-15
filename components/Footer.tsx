@@ -28,6 +28,20 @@ export default function Footer() {
             className={`footer-logo ${styles.logoImg}`}
           />
           <p className="brand-tagline">Connecting Students with <br />Trusted Off-Campus Housing.</p>
+          <div className={styles.socialIcons}>
+            <a href="https://instagram.com/campustent" target="_blank" rel="noopener noreferrer" className={styles.socialLink} title="Follow us on Instagram">
+              <i className="fa-brands fa-instagram"></i>
+            </a>
+            <a href="https://x.com/campustent" target="_blank" rel="noopener noreferrer" className={styles.socialLink} title="Follow us on Twitter (X)">
+              <i className="fa-brands fa-x-twitter"></i>
+            </a>
+            <a href="https://tiktok.com/@campustent" target="_blank" rel="noopener noreferrer" className={styles.socialLink} title="Follow us on TikTok">
+              <i className="fa-brands fa-tiktok"></i>
+            </a>
+            <a href="https://wa.me/2349161863877" target="_blank" rel="noopener noreferrer" className={styles.socialLink} title="Contact on WhatsApp">
+              <i className="fa-brands fa-whatsapp"></i>
+            </a>
+          </div>
         </div>
 
         <div className="footer-links">

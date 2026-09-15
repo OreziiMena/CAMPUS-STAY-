@@ -137,14 +137,6 @@ export default function Sidebar({
                 </small>
               </div>
             )
-          ) : currentUser.role === "STUDENT" && !currentUser.studentProfile?.isVerified ? (
-            <div className="verification-lock-banner">
-              <p><i className="fas fa-lock"></i> Student ID Verification Required</p>
-              <small>Please upload your student document to message listing owners and book tours.</small>
-              <Link href="/student-dashboard/profile" className="verify-link-btn">
-                Verify Student Profile
-              </Link>
-            </div>
           ) : (
             <div className="inspection-flow-wrapper">
               {/* If not paid yet, show Availability Check & Payment Step */}
@@ -229,7 +221,7 @@ export default function Sidebar({
                           <i className="fas fa-sparkles"></i> Campus Tent Bonus Value
                         </div>
                         <p className="inspection-bonus-text">
-                          "Your ₦10,000 fee covers a physical inspection of this property, plus any alternative options the agent has available in the same area/budget.  It is fully refundable if the inspection was cancelled by the agent"
+                          "Your ₦7,500 fee covers a physical inspection of this property, plus any alternative options the agent has available in the same area/budget. It is fully refundable if the inspection was cancelled by the agent"
                         </p>
                       </div>
 
@@ -242,14 +234,14 @@ export default function Sidebar({
                         {isPayingInspection ? (
                           <><i className="fas fa-spinner fa-spin"></i> Processing Payment...</>
                         ) : (
-                          <><i className="fas fa-credit-card"></i> Pay ₦10,000 Inspection Fee</>
+                          <><i className="fas fa-credit-card"></i> Pay ₦7,500 Inspection Fee</>
                         )}
                       </button>
                     </>
                   ) : inspectionStatus.availabilityStatus === "PENDING" ? (
                     <div className="availability-prompt-pending">
                       <i className="fas fa-hourglass-half"></i>
-                      <span><strong>Waiting for Agent Confirmation:</strong> ₦10k payment unlocks immediately once the agent confirms availability.</span>
+                      <span><strong>Waiting for Agent Confirmation:</strong> ₦7,500 payment unlocks immediately once the agent confirms availability.</span>
                     </div>
                   ) : inspectionStatus.availabilityStatus === "UNAVAILABLE" ? (
                     <div className="availability-prompt-unavailable">
@@ -271,7 +263,7 @@ export default function Sidebar({
                   {inspectionStatus.isPaid && (
                     <div className="inspection-unlocked-banner">
                       <i className="fas fa-check-circle"></i>
-                      <span>₦10,000 Inspection Fee Paid &bull; Full Access Unlocked</span>
+                      <span>₦7,500 Inspection Fee Paid &bull; Full Access Unlocked</span>
                     </div>
                   )}
 
@@ -312,7 +304,7 @@ export default function Sidebar({
           <ul className="safety-tips-list">
             <li>Never pay full rent before inspecting the apartment physically in person.</li>
             <li>Always inspect properties during daylight hours.</li>
-            <li>Your ₦10,000 inspection fee covers this hostel plus alternative options shown by the verified agent. It is fully refundable if the inspection was cancelled by the agent</li>
+            <li>Your ₦7,500 inspection fee covers this hostel plus alternative options shown by the verified agent. It is fully refundable if the inspection was cancelled by the agent</li>
             <li>Keep negotiations and chats on Campus Tent to protect your tenancy records.</li>
             <li>Always inspect properties during daylight hours.</li>
           </ul>

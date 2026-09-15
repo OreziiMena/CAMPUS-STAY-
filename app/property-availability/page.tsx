@@ -65,7 +65,7 @@ function PropertyAvailabilityContent() {
               <p className="prop-avail-desc">
                 {result.status === "AVAILABLE" ? (
                   <>
-                    Thank you! We've notified the student that <strong>"{result.propertyTitle}"</strong> is available. They can now pay the ₦10,000 inspection fee and book an in-person tour.
+                    Thank you! We've notified the student that <strong>"{result.propertyTitle}"</strong> is available. They can now pay the ₦7,500 inspection fee and book an in-person tour.
                   </>
                 ) : (
                   <>

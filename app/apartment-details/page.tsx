@@ -13,6 +13,8 @@ import {
   getInspectionStatus,
   queryPropertyAvailability,
   processInspectionPayment,
+  initializePaystackInspection,
+  submitBankTransferInspectionPayment,
 } from "@/app/actions/inspection";
 import { pusherClient } from "@/lib/pusher-client";
 import "./styles.css";
@@ -99,6 +101,14 @@ function ApartmentDetailsContent() {
   });
   const [isCheckingAvailability, setIsCheckingAvailability] = useState(false);
   const [isPayingInspection, setIsPayingInspection] = useState(false);
+
+  // Dual Payment Modal States (Paystack + Direct Bank Transfer)
+  const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
+  const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<"paystack" | "bank_transfer">("paystack");
+  const [bankSenderName, setBankSenderName] = useState("");
+  const [bankSenderBank, setBankSenderBank] = useState("");
+  const [bankTransferRef, setBankTransferRef] = useState("");
+  const [isSubmittingBankTransfer, setIsSubmittingBankTransfer] = useState(false);
 
   // Listing Report States
   const [isReportModalOpen, setIsReportModalOpen] = useState(false);
@@ -324,7 +334,7 @@ function ApartmentDetailsContent() {
     });
   };
 
-  const handlePayInspectionFee = async () => {
+  const handlePayInspectionFee = () => {
     if (!property) return;
     if (!currentUser) {
       router.push(`/auth/login?redirect=/apartment-details?id=${property.id}`);
@@ -336,17 +346,16 @@ function ApartmentDetailsContent() {
       return;
     }
 
-    if (currentUser.role === "STUDENT" && !currentUser.studentProfile?.isVerified) {
-      alert("Please verify your student profile before paying inspection fees.");
-      router.push("/student-dashboard/profile");
-      return;
-    }
+    setBankSenderName(currentUser.studentProfile?.fullName || currentUser.name || "");
+    setIsPaymentModalOpen(true);
+  };
 
+  const handleLaunchPaystack = async () => {
+    if (!property || !currentUser) return;
     setIsPayingInspection(true);
 
     const studentEmail = currentUser.email || "student@campustent.com";
     const studentName = currentUser.studentProfile?.fullName || currentUser.name || "Student";
-    const txRef = `INSP-${Date.now()}-${Math.random().toString(36).substring(2, 7).toUpperCase()}`;
     const paystackKey = process.env.NEXT_PUBLIC_PAYSTACK_PUBLIC_KEY || "pk_test_6d1d6b2a82607cfb39ffeb9be11ae5e6913f7720";
 
     const onPaymentSuccess = async (reference: string) => {
@@ -358,7 +367,8 @@ function ApartmentDetailsContent() {
             ...prev,
             isPaid: true,
           }));
-          setToastMessage("Inspection fee of ₦10,000 paid! Direct chat & appointment booking unlocked.");
+          setIsPaymentModalOpen(false);
+          setToastMessage("Inspection fee of ₦7,500 paid! Direct chat & appointment booking unlocked.");
           setShowToast(true);
           setTimeout(() => setShowToast(false), 5000);
         } else {
@@ -372,6 +382,10 @@ function ApartmentDetailsContent() {
     };
 
     try {
+      // Pre-initialize on server to ensure reference is registered with Paystack
+      const initRes = await initializePaystackInspection(property.id);
+      const txRef = initRes?.reference || `INSP-${Date.now()}-${Math.random().toString(36).substring(2, 7).toUpperCase()}`;
+
       const isScriptLoaded = await loadPaystackScript();
 
       if (isScriptLoaded && typeof window !== "undefined" && (window as any).PaystackPop) {
@@ -382,7 +396,7 @@ function ApartmentDetailsContent() {
           const handler = PaystackPop.setup({
             key: paystackKey,
             email: studentEmail,
-            amount: 10000 * 100, // ₦10,000 in kobo
+            amount: 7500 * 100, // ₦7,500 in kobo
             currency: "NGN",
             ref: txRef,
             metadata: {
@@ -398,7 +412,7 @@ function ApartmentDetailsContent() {
                 {
                   display_name: "Inspection Coverage",
                   variable_name: "inspection_coverage",
-                  value: "₦10,000 Physical Tour & Alternative Options",
+                  value: "₦7,500 Physical Tour & Alternative Options",
                 },
               ],
             },
@@ -418,7 +432,7 @@ function ApartmentDetailsContent() {
           paystack.newTransaction({
             key: paystackKey,
             email: studentEmail,
-            amount: 10000 * 100,
+            amount: 7500 * 100,
             currency: "NGN",
             reference: txRef,
             onSuccess: function (transaction: any) {
@@ -438,6 +452,42 @@ function ApartmentDetailsContent() {
       console.error("Paystack popup error:", err);
       alert(err.message || "Payment process error.");
       setIsPayingInspection(false);
+    }
+  };
+
+  const handleConfirmBankTransfer = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!property || !currentUser) return;
+    if (!bankSenderName.trim() || !bankSenderBank.trim()) {
+      alert("Please enter both the sender's full name and the bank name used for transfer.");
+      return;
+    }
+
+    setIsSubmittingBankTransfer(true);
+    try {
+      const res = await submitBankTransferInspectionPayment({
+        propertyId: property.id,
+        senderName: bankSenderName.trim(),
+        bankName: bankSenderBank.trim(),
+        reference: bankTransferRef.trim() || undefined,
+      });
+
+      if (res.success) {
+        setInspectionStatus((prev) => ({
+          ...prev,
+          isPaid: true,
+        }));
+        setIsPaymentModalOpen(false);
+        setToastMessage("₦7,500 Bank Transfer confirmed! Direct chat & appointment booking unlocked.");
+        setShowToast(true);
+        setTimeout(() => setShowToast(false), 5000);
+      } else {
+        alert(res.error || "Failed to confirm bank transfer payment.");
+      }
+    } catch (err: any) {
+      alert(err.message || "Error finalizing bank transfer.");
+    } finally {
+      setIsSubmittingBankTransfer(false);
     }
   };
 
@@ -649,6 +699,150 @@ function ApartmentDetailsContent() {
           reportError={reportError}
           onReportSubmit={handleReportSubmit}
         />
+
+        {/* Dual Payment Options Modal */}
+        {isPaymentModalOpen && (
+          <div className="payment-modal-overlay" onClick={() => !isPayingInspection && !isSubmittingBankTransfer && setIsPaymentModalOpen(false)}>
+            <div className="payment-modal-container" onClick={(e) => e.stopPropagation()}>
+              <div className="payment-modal-header">
+                <div className="payment-modal-header-top">
+                  <div>
+                    <h3 className="payment-modal-title">
+                      <i className="fas fa-shield-alt"></i> Complete Inspection Payment
+                    </h3>
+                    <span className="payment-modal-amount-tag">Total Amount: ₦7,500</span>
+                  </div>
+                  <button
+                    type="button"
+                    className="payment-modal-close-icon"
+                    onClick={() => setIsPaymentModalOpen(false)}
+                    disabled={isPayingInspection || isSubmittingBankTransfer}
+                  >
+                    <i className="fas fa-times"></i>
+                  </button>
+                </div>
+              </div>
+
+              <div className="payment-modal-body">
+                {/* Tab selector */}
+                <div className="payment-method-selector-tabs">
+                  <button
+                    type="button"
+                    className={`payment-method-selector-tab ${selectedPaymentMethod === "paystack" ? "active" : ""}`}
+                    onClick={() => setSelectedPaymentMethod("paystack")}
+                  >
+                    <i className="fas fa-credit-card"></i> Online Paystack
+                  </button>
+                  <button
+                    type="button"
+                    className={`payment-method-selector-tab ${selectedPaymentMethod === "bank_transfer" ? "active" : ""}`}
+                    onClick={() => setSelectedPaymentMethod("bank_transfer")}
+                  >
+                    <i className="fas fa-university"></i> Direct Bank Transfer
+                  </button>
+                </div>
+
+                {selectedPaymentMethod === "paystack" ? (
+                  <div className="paystack-option-container">
+                    <p className="paystack-option-info">
+                      Pay securely online via Debit Cards (Mastercard, Visa, Verve), USSD, Apple Pay, or Internet Banking.
+                    </p>
+                    <div className="paystack-channels-badge">
+                      <span className="paystack-channel-pill"><i className="fas fa-credit-card"></i> ATM Cards</span>
+                      <span className="paystack-channel-pill"><i className="fas fa-mobile-alt"></i> USSD</span>
+                      <span className="paystack-channel-pill"><i className="fas fa-building"></i> Bank Transfer</span>
+                    </div>
+                    <button
+                      type="button"
+                      className="paystack-launch-btn"
+                      onClick={handleLaunchPaystack}
+                      disabled={isPayingInspection}
+                    >
+                      {isPayingInspection ? (
+                        <><i className="fas fa-spinner fa-spin"></i> Initializing Paystack...</>
+                      ) : (
+                        <><i className="fas fa-lock"></i> Proceed to Paystack (₦7,500)</>
+                      )}
+                    </button>
+                  </div>
+                ) : (
+                  <form onSubmit={handleConfirmBankTransfer} className="bank-transfer-form">
+                    <div className="bank-transfer-instructions">
+                      <div className="bank-transfer-instructions-title">
+                        <i className="fas fa-info-circle"></i> Campus Tent Bank Details
+                      </div>
+                      <div className="bank-account-details-list">
+                        <div className="bank-account-item">
+                          <span className="bank-account-label">Bank:</span>
+                          <span className="bank-account-val">Moniepoint MFB</span>
+                        </div>
+                        <div className="bank-account-item">
+                          <span className="bank-account-label">Account Number:</span>
+                          <span className="bank-account-val">6500123456</span>
+                        </div>
+                        <div className="bank-account-item">
+                          <span className="bank-account-label">Account Name:</span>
+                          <span className="bank-account-val">Campus Tent Services</span>
+                        </div>
+                        <div className="bank-account-item">
+                          <span className="bank-account-label">Amount:</span>
+                          <span className="bank-account-val">₦7,500</span>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className="filter-label">Sender Full Name *</label>
+                      <input
+                        type="text"
+                        className="bank-input-field"
+                        placeholder="e.g. John Doe (name on bank account)"
+                        value={bankSenderName}
+                        onChange={(e) => setBankSenderName(e.target.value)}
+                        required
+                      />
+                    </div>
+
+                    <div>
+                      <label className="filter-label">Your Bank Name *</label>
+                      <input
+                        type="text"
+                        className="bank-input-field"
+                        placeholder="e.g. GTBank, Kuda, OPay, Zenith, Palmpay"
+                        value={bankSenderBank}
+                        onChange={(e) => setBankSenderBank(e.target.value)}
+                        required
+                      />
+                    </div>
+
+                    <div>
+                      <label className="filter-label">Session ID / Transaction Reference (Optional)</label>
+                      <input
+                        type="text"
+                        className="bank-input-field"
+                        placeholder="e.g. 100004294829..."
+                        value={bankTransferRef}
+                        onChange={(e) => setBankTransferRef(e.target.value)}
+                      />
+                    </div>
+
+                    <button
+                      type="submit"
+                      className="bank-confirm-submit-btn"
+                      disabled={isSubmittingBankTransfer}
+                    >
+                      {isSubmittingBankTransfer ? (
+                        <><i className="fas fa-spinner fa-spin"></i> Confirming Transfer...</>
+                      ) : (
+                        <><i className="fas fa-check-circle"></i> I Have Paid ₦7,500 &bull; Unlock Tour</>
+                      )}
+                    </button>
+                  </form>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Toast Notification */}
         {showToast && (

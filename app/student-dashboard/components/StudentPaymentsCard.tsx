@@ -20,7 +20,7 @@ export default function StudentPaymentsCard({
             <i className="fas fa-file-invoice-dollar"></i> Inspection Payments & Receipts
           </h3>
           <p className="payments-subtitle">
-            Your official ₦10,000 inspection fee records, printable receipts, and tour protection.
+            Your official ₦7,500 inspection fee records, printable receipts, and tour protection.
           </p>
         </div>
         <span className="badge-count payments-badge-count">

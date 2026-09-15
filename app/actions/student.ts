@@ -422,7 +422,7 @@ export async function scheduleViewing(data: {
       if (!payment) {
         return {
           success: false,
-          error: "Inspection fee required. Please pay the ₦10,000 inspection fee on the listing page before scheduling your appointment.",
+          error: "Inspection fee required. Please pay the ₦7,500 inspection fee on the listing page before scheduling your appointment.",
           requiresPayment: true,
         };
       }

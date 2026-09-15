@@ -21,43 +21,31 @@ export default function Privacy() {
         <div className="content-card">
           <section className="content-section">
             <h2>1. Introduction</h2>
-            <p>Welcome to Campus Tent. By accessing our platform, you agree to these terms. 
-                We serve the university community by connecting students with verified landlords.</p>
+            <p>Welcome to Campus Tent. We value your privacy and are committed to safeguarding your personal information while providing an accessible, transparent housing marketplace for students and agents.</p>
           </section>
 
           <section className="content-section">
             <h2>2. The Information We Collect</h2>
-            <p>To provide a secure, reliable, and trustworthy marketplace for the university community, Campus Tent collects specific personal and verification data when you register and use our platform.</p>
+            <p>We collect information necessary to deliver our services, process inspection bookings, and protect against fraudulent activity.</p>
 
-            <h3>A. Basic Account Information</h3>
-            <p>When you create an account, whether as a Student or an Agent, we collect standard profile information, including:</p>
-            <ul>
-              <li>Your full name</li>
-              <li>Email address</li>
-              <li>Phone number</li>
-              <li>Account password</li>
-            </ul>
+            <h3>A. Basic Account Details</h3>
+            <p>When you register as a Student or Agent, we collect your name, email address, phone number, and account password.</p>
 
-            <h3>B. Identity & Verification Data</h3>
-            <p>Because Campus Tent facilitates real-world housing transactions, the safety of our community is our highest priority. To prevent fraud and ensure that users are who they claim to be, we require specific verification documents based on your account type:</p>
-            <ul>
-              <li><strong>For Students:</strong> To maintain Campus Tent as a dedicated student community, you may be required to provide proof of your active student status. This may include uploading a valid University ID card, an official admission letter, or relevant university portal documentation.</li>
-              <li><strong>For Agents & Landlords:</strong> To protect our students and verify the legitimacy of property managers on our platform, you will be required to undergo an identity verification process. This will require submitting a valid, government-issued identification document, which may specifically include your <strong>National Identification Number (NIN)</strong> or other approved statutory identification.</li>
-            </ul>
+            <h3>B. Optional Agent Verification Data</h3>
+            <p>To acquire the <em>Verified Agent Badge</em> and priority Explore ranking, agents may optionally provide verification credentials (such as video walkthroughs, utility/lease receipts, tenant references, BVN/Bank match, or identity documents). These credentials are used solely for authentication and safety scoring.</p>
 
-            <h3>C. Platform Activity & Communication Data</h3>
-            <p>We collect data on how you interact with the platform to improve your experience. This includes:</p>
-            <ul>
-              <li>Properties you view, save, or inquire about.</li>
-              <li>Messages, inquiries, and communications sent through the Campus Tent platform between Students and Agents.</li>
-            </ul>
+            <h3>C. Inspection Payment & Transaction Data</h3>
+            <p>When booking physical inspections, we record transaction identifiers, Paystack references, or bank transfer confirmations to manage the ₦7,500 inspection fee escrow (₦5,020 agent disbursement and ₦2,480 platform fee).</p>
+          </section>
 
-            <h3>D. Why We Collect This Information</h3>
-            <p>Your verification documents (such as your NIN or Student ID) are strictly used for security, compliance, and identity authentication. We collect this data to:</p>
+          <section className="content-section">
+            <h2>3. How We Use Your Information</h2>
+            <p>Your data is used strictly to:</p>
             <ul>
-              <li>Verify that you are a legitimate student or a genuine property agent.</li>
-              <li>Prevent fraudulent listings, scams, and unauthorized access.</li>
-              <li>Resolve disputes and enforce our platform’s safety guidelines.</li>
+              <li>Tailor explore feeds to your university location.</li>
+              <li>Connect students with hostel agents via real-time messaging and appointment scheduling.</li>
+              <li>Disburse escrow payments accurately upon mutual inspection confirmation.</li>
+              <li>Maintain platform integrity, prevent spam, and resolve disputes.</li>
             </ul>
           </section>
 

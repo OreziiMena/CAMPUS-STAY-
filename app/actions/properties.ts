@@ -163,6 +163,16 @@ export async function getProperties(filterParam?: string | {
       orderBy: { createdAt: "desc" },
     });
 
+    // Verified Agent listings always come first
+    properties.sort((a, b) => {
+      const aVerified = a.agent?.isVerified ? 1 : 0;
+      const bVerified = b.agent?.isVerified ? 1 : 0;
+      if (bVerified !== aVerified) {
+        return bVerified - aVerified; // Verified agent listings ranked first
+      }
+      return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+    });
+
     // 5. Proximity filter (in-memory walk time minutes comparison)
     if (isProximityFiltered) {
       properties = properties.filter((property) => {

@@ -84,7 +84,7 @@ export default function PaymentsTab({
   };
 
   const handleDisbursePayout = async (paymentId: string) => {
-    if (!window.confirm("Are you sure you want to disburse ₦5,000 (50% split) to the agent's verified bank account?")) {
+    if (!window.confirm("Are you sure you want to disburse ₦5,020 payout to the agent's verified bank account?")) {
       return;
     }
     setActionLoading(true);
@@ -92,7 +92,7 @@ export default function PaymentsTab({
     try {
       const res = await disburseAgentPayout(paymentId);
       if (res.success) {
-        alert("Agent payout of ₦5,000 successfully disbursed!");
+        alert("Agent payout of ₦5,020 successfully disbursed!");
         if (selectedPayment && selectedPayment.id === paymentId) {
           setSelectedPayment({
             ...selectedPayment,
@@ -113,14 +113,15 @@ export default function PaymentsTab({
   };
 
   const handleRefund = async (paymentId: string) => {
-    const reason = window.prompt("Please enter the reason for this ₦10,000 refund to the student:");
+    const amountLabel = selectedPayment ? `₦${selectedPayment.amount.toLocaleString()}` : "₦7,500";
+    const reason = window.prompt(`Please enter the reason for this ${amountLabel} refund to the student:`);
     if (!reason || reason.trim() === "") return;
 
     setActionLoading(true);
     try {
       const res = await refundInspectionPayment(paymentId, reason.trim());
       if (res.success) {
-        alert("Refund of ₦10,000 processed successfully! Student has been notified.");
+        alert(`Refund of ${amountLabel} processed successfully! Student has been notified.`);
         if (selectedPayment && selectedPayment.id === paymentId) {
           setSelectedPayment({
             ...selectedPayment,
@@ -171,9 +172,9 @@ export default function PaymentsTab({
                 ₦{metrics.platformShare.toLocaleString()}
               </span>
             </div>
-            <div className="stat-title">Platform Revenue (50%)</div>
+            <div className="stat-title">Platform Revenue (₦2,480/fee)</div>
             <span className="stat-subtext text-muted">
-              Campus Tent gross revenue
+              Campus Tent platform fee
             </span>
           </div>
         </div>
@@ -188,9 +189,9 @@ export default function PaymentsTab({
                 ₦{metrics.agentEscrowLiability.toLocaleString()}
               </span>
             </div>
-            <div className="stat-title">Agent Escrow Pool (50%)</div>
+            <div className="stat-title">Agent Escrow Pool (₦5,020/fee)</div>
             <span className="stat-subtext text-muted">
-              Allocated for agent payouts (50%)
+              Allocated for agent payouts
             </span>
           </div>
         </div>
@@ -208,7 +209,7 @@ export default function PaymentsTab({
             </div>
             <div className="stat-title">Confirmed Paid Tours</div>
             <span className="stat-subtext text-green">
-              100% verified Paystack
+              100% verified transactions
             </span>
           </div>
         </div>
@@ -222,7 +223,7 @@ export default function PaymentsTab({
               <i className="fas fa-credit-card activity-history-icon"></i> Inspection Payments Ledger
             </h4>
             <p className="activity-sub">
-              Auditable transaction logs for confirmed student inspection fees (₦10,000 each) with Paystack reference verification and automated 50-50 agent fee splits.
+              Auditable transaction logs for confirmed student inspection fees (₦7,500 each: ₦5,020 agent payout, ₦2,480 platform fee) with Paystack & Direct Transfer audit records.
             </p>
           </div>
 
@@ -720,7 +721,7 @@ export default function PaymentsTab({
                     disabled={actionLoading}
                     className="verify-btn payment-disburse-footer-btn"
                   >
-                    <i className="fas fa-paper-plane"></i> Disburse ₦5,000 Payout
+                    <i className="fas fa-paper-plane"></i> Disburse ₦5,020 Payout
                   </button>
                 )}
 
@@ -730,7 +731,7 @@ export default function PaymentsTab({
                     disabled={actionLoading}
                     className="delete-user-btn payment-refund-footer-btn"
                   >
-                    <i className="fas fa-undo"></i> Issue ₦10,000 Refund
+                    <i className="fas fa-undo"></i> Issue ₦{selectedPayment.amount.toLocaleString()} Refund
                   </button>
                 )}
               </div>

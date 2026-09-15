@@ -2307,3 +2307,310 @@ body {
   cursor: not-allowed;
 }
 
+/* Dual Payment Options Modal */
+.payment-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  height: 100dvh;
+  background: rgba(15, 23, 42, 0.7);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100000;
+  padding: 16px;
+  box-sizing: border-box;
+}
+
+.payment-modal-container {
+  background: #ffffff;
+  border-radius: 16px;
+  max-width: 520px;
+  width: 100%;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+  border: 1px solid #e2e8f0;
+  overflow: hidden;
+  animation: modalSlideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  display: flex;
+  flex-direction: column;
+}
+
+@keyframes modalSlideUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.payment-modal-header {
+  background: linear-gradient(135deg, rgb(2, 53, 28) 0%, #064e3b 100%);
+  padding: 22px 24px;
+  color: #ffffff;
+  position: relative;
+}
+
+.payment-modal-header-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+}
+
+.payment-modal-title {
+  margin: 0;
+  font-size: 19px;
+  font-weight: 700;
+  color: #ffffff;
+  font-family: 'Poppins', sans-serif;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.payment-modal-title i {
+  color: #a7f3d0;
+}
+
+.payment-modal-close-icon {
+  background: rgba(255, 255, 255, 0.15);
+  border: none;
+  color: #ffffff;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  transition: all 0.2s;
+}
+
+.payment-modal-close-icon:hover {
+  background: rgba(255, 255, 255, 0.3);
+  transform: rotate(90deg);
+}
+
+.payment-modal-amount-tag {
+  display: inline-block;
+  background: rgba(167, 243, 208, 0.2);
+  border: 1px solid rgba(167, 243, 208, 0.4);
+  color: #a7f3d0;
+  font-size: 13px;
+  font-weight: 700;
+  padding: 4px 12px;
+  border-radius: 20px;
+  margin-top: 8px;
+}
+
+.payment-modal-body {
+  padding: 22px 24px;
+  overflow-y: auto;
+  max-height: 75vh;
+}
+
+.payment-method-selector-tabs {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  background: #f1f5f9;
+  padding: 6px;
+  border-radius: 12px;
+  margin-bottom: 20px;
+}
+
+.payment-method-selector-tab {
+  padding: 10px 14px;
+  border: none;
+  background: transparent;
+  font-family: 'Poppins', sans-serif;
+  font-size: 13.5px;
+  font-weight: 600;
+  color: #64748b;
+  border-radius: 8px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  transition: all 0.2s ease;
+}
+
+.payment-method-selector-tab.active {
+  background: #ffffff;
+  color: rgb(2, 53, 28);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  font-weight: 700;
+}
+
+.paystack-option-container {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  text-align: center;
+  padding: 8px 0;
+}
+
+.paystack-option-info {
+  font-size: 14px;
+  color: #475569;
+  line-height: 1.6;
+  margin: 0;
+}
+
+.paystack-channels-badge {
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-top: 4px;
+}
+
+.paystack-channel-pill {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
+  padding: 6px 12px;
+  font-size: 12px;
+  color: #334155;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.paystack-launch-btn {
+  background: rgb(2, 53, 28);
+  color: #ffffff;
+  border: none;
+  padding: 14px 24px;
+  border-radius: 10px;
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  transition: all 0.2s;
+  box-shadow: 0 4px 14px rgba(2, 53, 28, 0.2);
+}
+
+.paystack-launch-btn:hover:not(:disabled) {
+  background: #034d28;
+  transform: translateY(-1px);
+}
+
+.paystack-launch-btn:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+.bank-transfer-instructions {
+  background: #f0fdf4;
+  border: 1.5px solid #bbf7d0;
+  border-radius: 12px;
+  padding: 16px;
+  margin-bottom: 18px;
+}
+
+.bank-transfer-instructions-title {
+  font-size: 14px;
+  font-weight: 700;
+  color: #166534;
+  margin: 0 0 10px 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.bank-account-details-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.bank-account-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 13.5px;
+  color: #1e293b;
+  padding: 6px 0;
+  border-bottom: 1px dashed #dcfce7;
+}
+
+.bank-account-item:last-child {
+  border-bottom: none;
+}
+
+.bank-account-label {
+  color: #4b5563;
+  font-weight: 500;
+}
+
+.bank-account-val {
+  font-weight: 700;
+  color: #064e3b;
+  font-family: monospace;
+  font-size: 14px;
+  user-select: all;
+}
+
+.bank-transfer-form {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.bank-input-field {
+  width: 100%;
+  padding: 11px 14px;
+  border: 1.5px solid #cbd5e1;
+  border-radius: 8px;
+  font-size: 14px;
+  font-family: inherit;
+  box-sizing: border-box;
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+.bank-input-field:focus {
+  border-color: rgb(2, 53, 28);
+  box-shadow: 0 0 0 3px rgba(2, 53, 28, 0.1);
+}
+
+.bank-confirm-submit-btn {
+  background: #059669;
+  color: #ffffff;
+  border: none;
+  padding: 14px;
+  border-radius: 10px;
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  transition: all 0.2s;
+  box-shadow: 0 4px 12px rgba(5, 150, 105, 0.25);
+  margin-top: 4px;
+}
+
+.bank-confirm-submit-btn:hover:not(:disabled) {
+  background: #047857;
+  transform: translateY(-1px);
+}
+
+.bank-confirm-submit-btn:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+

@@ -281,7 +281,7 @@ export default function InspectionsLeadsList({
           <div className="leads-empty-card">
             <i className="fas fa-receipt leads-empty-icon"></i>
             <p className="leads-empty-text">
-              No paid inspection fees recorded yet. When students pay ₦10,000 for your listings, the ₦5,000 escrow records will appear here.
+              No paid inspection fees recorded yet. When students pay ₦7,500 for your listings, your ₦5,020 payout records will appear here.
             </p>
           </div>
         ) : (

@@ -230,23 +230,23 @@ export default function AgentProfilePage() {
               <div className={`verification-banner success ${styles.displayFlex}`} id="banner-verified">
                 <i className="fas fa-check-circle"></i>
                 <div>
-                  <h4>Identity Verified</h4>
-                  <p>Your account is fully verified. Your listings are public and you bear the verified agent badge.</p>
+                  <h4>Verified Agent Badge Active</h4>
+                  <p>Your agent account is fully verified. Your listings are ranked first on the Explore feed and display the verified badge.</p>
                 </div>
               </div>
             ) : (
               <>
                 <div className={`verification-banner warning ${styles.displayFlex}`} id="banner-unverified">
-                  <i className="fas fa-exclamation-triangle"></i>
+                  <i className="fas fa-shield-alt"></i>
                   <div>
-                    <h4>Verification Required</h4>
-                    <p>Your account is unverified. You must upload your NIN or government ID before your property listings can go public.</p>
+                    <h4>Optional: Get Verified Agent Priority Status</h4>
+                    <p>You can publish properties immediately. Getting verified earns your listings top ranking on the Explore page and higher student trust.</p>
                   </div>
                 </div>
 
                 <form id="verification-form" onSubmit={handleFileUpload}>
-                  <h3 className="h-header">Document Upload</h3>
-                  <p className="p-header">Upload your National Identification Number (NIN) slip or government-issued ID.</p>
+                  <h3 className="h-header">Document Upload (Optional)</h3>
+                  <p className="p-header">Upload your National Identification Number (NIN) slip, driver's licence, or business registration certificate.</p>
 
                   <div className="file-upload">
                     <i className="fas fa-cloud-upload-alt"></i>
@@ -273,9 +273,82 @@ export default function AgentProfilePage() {
                   )}
 
                   <button type="submit" className={`primary-btn ${styles.btnMarginTop}`} disabled={!uploadFile || uploadLoading}>
-                    {uploadLoading ? "Uploading..." : "Submit for Review"}
+                    {uploadLoading ? "Uploading..." : "Submit for Verification Badge"}
                   </button>
                 </form>
+
+                {/* Alternative Verification Methods Guide */}
+                <div className={styles.vettingCard}>
+                  <div className={styles.vettingHeader}>
+                    <i className="fas fa-list-check"></i> Alternative Identity & Hostel Verification Methods
+                  </div>
+                  <p className={styles.vettingSubtitle}>
+                    Don't have a government ID handy? Campus Tent supports 6 alternative verification processes to grant your Verified Agent status:
+                  </p>
+
+                  <div className={styles.vettingGrid}>
+                    <div className={styles.vettingItem}>
+                      <div className={styles.vettingItemTitle}>
+                        <i className="fas fa-video"></i> 1. Live Video / Ambassador Walkthrough
+                      </div>
+                      <p className={styles.vettingItemDesc}>
+                        Record a live 60-second video walkthrough inside the hostel holding a note with today's date, or request a visit from a student ambassador.
+                      </p>
+                    </div>
+
+                    <div className={styles.vettingItem}>
+                      <div className={styles.vettingItemTitle}>
+                        <i className="fas fa-file-invoice"></i> 2. Utility Bill / Hostel Lease Proof
+                      </div>
+                      <p className={styles.vettingItemDesc}>
+                        Submit an electricity (NEPA/BEDC/EKEDC) meter bill, water bill, or tenement rate receipt in your name or property address.
+                      </p>
+                    </div>
+
+                    <div className={styles.vettingItem}>
+                      <div className={styles.vettingItemTitle}>
+                        <i className="fas fa-user-friends"></i> 3. Student / Caretaker Vouching
+                      </div>
+                      <p className={styles.vettingItemDesc}>
+                        Provide contact referrals from 2 current student tenants or the resident hostel caretaker confirming your stewardship.
+                      </p>
+                    </div>
+
+                    <div className={styles.vettingItem}>
+                      <div className={styles.vettingItemTitle}>
+                        <i className="fas fa-university"></i> 4. Bank Account & BVN Name Match
+                      </div>
+                      <p className={styles.vettingItemDesc}>
+                        Link a registered Nigerian commercial bank account in your name to automatically verify your business identity.
+                      </p>
+                    </div>
+
+                    <div className={styles.vettingItem}>
+                      <div className={styles.vettingItemTitle}>
+                        <i className="fas fa-graduation-cap"></i> 5. Campus SUG / Association Letter
+                      </div>
+                      <p className={styles.vettingItemDesc}>
+                        Provide an endorsement letter from the Student Union Government (SUG), Dean of Student Affairs, or Landlords Association.
+                      </p>
+                    </div>
+
+                    <div className={styles.vettingItem}>
+                      <div className={styles.vettingItemTitle}>
+                        <i className="fas fa-globe"></i> 6. Social & Business Footprint
+                      </div>
+                      <p className={styles.vettingItemDesc}>
+                        Submit your registered CAC business certificate or active WhatsApp Business page with historic campus rental reviews.
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className={styles.vettingContactCta}>
+                    <span>Need help with non-ID verification?</span>
+                    <a href="https://wa.me/2349161863877?text=Hello%20Campus%20Tent%20Support,%20I%20would%20like%20to%20verify%20my%20Agent%20account%20via%20alternative%20methods" target="_blank" rel="noopener noreferrer" className={styles.vettingContactLink}>
+                      <i className="fab fa-whatsapp"></i> Chat with Support
+                    </a>
+                  </div>
+                </div>
               </>
             )}
           </section>
