@@ -6,12 +6,12 @@
     --primary-green: rgb(2, 53, 28);
     --primary-green-hover: rgb(1, 38, 20);
     --accent-orange: #d35400;
-    --success-green: #28a745;
-    --success-bg: rgba(40, 167, 69, 0.05);
-    --success-bg-pill: rgba(40, 167, 69, 0.1);
-    --warning-orange: #f39c12;
-    --warning-bg: rgba(243, 156, 18, 0.05);
-    --warning-bg-pill: rgba(243, 156, 18, 0.1);
+    --success-green: #059669;
+    --success-bg: rgba(5, 150, 105, 0.05);
+    --success-bg-pill: rgba(5, 150, 105, 0.1);
+    --warning-orange: #d97706;
+    --warning-bg: rgba(217, 119, 6, 0.05);
+    --warning-bg-pill: rgba(217, 119, 6, 0.1);
     --text-dark: #333;
     --text-main: #444;
     --text-muted: #666;
@@ -73,7 +73,7 @@
 .profile-avatar-large {
     width: 90px;
     height: 90px;
-    background-color: var(--accent-orange);
+    background-color: var(--primary-green);
     color: var(--bg-white);
     font-family: var(--font-heading);
     font-size: 32px;

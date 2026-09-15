@@ -1,5 +1,5 @@
 "use client";
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 
 interface GuideModalProps {
   onClose?: () => void;
@@ -11,7 +11,7 @@ export default function GuideModal({ isOpen, onClose }: GuideModalProps) {
 
   const steps = [
     {
-      title: "Welcome to Campus Tent Onboarding! 🏠",
+      title: "Welcome to Campus Tent Onboarding!",
       icon: "fas fa-home",
       badge: "Welcome",
       content: (
@@ -25,7 +25,7 @@ export default function GuideModal({ isOpen, onClose }: GuideModalProps) {
       ),
     },
     {
-      title: "🗺️ How to Navigate to Add Property",
+      title: "How to Navigate to Add Property",
       icon: "fas fa-directions",
       badge: "Step 1",
       content: (
@@ -45,7 +45,7 @@ export default function GuideModal({ isOpen, onClose }: GuideModalProps) {
       ),
     },
     {
-      title: "📝 Fill Out Property Details",
+      title: "Fill Out Property Details",
       icon: "fas fa-edit",
       badge: "Step 2",
       content: (
@@ -62,14 +62,14 @@ export default function GuideModal({ isOpen, onClose }: GuideModalProps) {
             </li>
             <li>
               <i className="fas fa-check-circle"></i>
-              <span><strong>Amenities:</strong> Check boxes for compound features like Prepaid Meter, Borehole Water, and Gated Security.</span>
+              <span><strong>Amenities:</strong> Check boxes for compound features like Prepaid meter, running water, POP, and Gated compound.</span>
             </li>
           </ul>
         </>
       ),
     },
     {
-      title: "📸 Upload High-Quality Media",
+      title: "Upload High-Quality Media",
       icon: "fas fa-camera",
       badge: "Step 3",
       content: (
@@ -95,7 +95,7 @@ export default function GuideModal({ isOpen, onClose }: GuideModalProps) {
       ),
     },
     {
-      title: "💬 Receive Student Inquiries",
+      title: "Receive Student Inquiries",
       icon: "fas fa-comments",
       badge: "Step 4",
       content: (

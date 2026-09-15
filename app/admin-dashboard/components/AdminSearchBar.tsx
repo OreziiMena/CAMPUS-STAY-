@@ -29,6 +29,8 @@ export default function AdminSearchBar({
         return "Search activity logs by agent name, email, property title...";
       case "reports":
         return "Search flagged reports by reporter email, description, listing...";
+      case "payments":
+        return "Search payments by reference, student, agent, or property...";
       default:
         return "Search verification queues...";
     }

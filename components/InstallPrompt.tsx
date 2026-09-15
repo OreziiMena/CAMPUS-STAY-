@@ -49,11 +49,11 @@ export default function InstallPrompt() {
           <h4>Install Campus Tent</h4>
           {platform === "ios" ? (
             <p>
-              Tap the share icon <i className="fa-solid fa-arrow-up-from-bracket" style={{ color: "#d35400" }}></i> and select <strong>"Add to Home Screen"</strong> for a native app experience.
+              Tap the share icon <i className="fa-solid fa-arrow-up-from-bracket highlight-icon"></i> and select <strong>"Add to Home Screen"</strong> for a native app experience.
             </p>
           ) : (
             <p>
-              Tap the Chrome menu <i className="fas fa-ellipsis-v" style={{ color: "#d35400" }}></i> and select <strong>"Install App"</strong> or <strong>"Add to Home Screen"</strong>.
+              Tap the Chrome menu <i className="fas fa-ellipsis-v highlight-icon"></i> and select <strong>"Install App"</strong> or <strong>"Add to Home Screen"</strong>.
             </p>
           )}
         </div>
@@ -63,6 +63,9 @@ export default function InstallPrompt() {
       </div>
 
       <style jsx>{`
+        .highlight-icon {
+          color: #d35400;
+        }
         .pwa-prompt-banner {
           position: fixed;
           bottom: 20px;

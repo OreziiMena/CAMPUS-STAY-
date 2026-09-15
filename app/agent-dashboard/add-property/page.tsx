@@ -24,14 +24,13 @@ export default function AddProperty() {
   const [description, setDescription] = useState("");
 
   const [amenities, setAmenities] = useState({
-    bed: true,
-    bath: true,
-    prepaid: false,
-    water: true,
-    gated: false,
-    security: false,
+    fencedCompound: false,
+    gatedCompound: true,
     wardrobe: false,
-    kitchen: false
+    pvc: false,
+    pop: false,
+    prepaidMeter: false,
+    runningWater: true,
   });
 
   const [images, setImages] = useState<string[]>([]);
@@ -59,44 +58,41 @@ export default function AddProperty() {
   const MAX_VIDEO_SIZE_MB = 20;
 
   const handleMockUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setError("");
     if (e.target.files && e.target.files.length > 0) {
-      const selectedFiles = Array.from(e.target.files);
-      const validFiles: File[] = [];
-      const validUrls: string[] = [];
+      const filesArray = Array.from(e.target.files);
+      const newFiles: File[] = [];
+      const newUrls: string[] = [];
 
-      for (const file of selectedFiles) {
+      for (const file of filesArray) {
         const isVideo = file.type.startsWith("video/") || file.name.match(/\.(mp4|mov|webm|mkv|avi)$/i);
         const limitMb = isVideo ? MAX_VIDEO_SIZE_MB : MAX_IMAGE_SIZE_MB;
         const sizeMb = file.size / (1024 * 1024);
 
         if (sizeMb > limitMb) {
-          setError(`File "${file.name}" (${sizeMb.toFixed(1)} MB) has exceeded the ${limitMb} MB limit. Please choose a smaller or compressed file.`);
-          continue;
+          setError(`File "${file.name}" (${sizeMb.toFixed(1)} MB) exceeds the ${limitMb} MB limit. Please choose a smaller file.`);
+          return;
         }
 
-        validFiles.push(file);
-        validUrls.push(URL.createObjectURL(file));
+        newFiles.push(file);
+        newUrls.push(URL.createObjectURL(file));
       }
 
-      if (validFiles.length > 0) {
-        setImageFiles((prev) => [...prev, ...validFiles]);
-        setImages((prev) => [...prev, ...validUrls]);
-      }
+      setImageFiles((prev) => [...prev, ...newFiles]);
+      setImages((prev) => [...prev, ...newUrls]);
+      setError("");
     }
   };
 
   const removeImage = (index: number) => {
     setImages((prev) => prev.filter((_, i) => i !== index));
     setImageFiles((prev) => prev.filter((_, i) => i !== index));
-    setError("");
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
 
-    if (!title || !rentAmount || !agentFee || !location || !distance || !description) {
+    if (!title || !rentAmount || !location || !distance || !description) {
       setError("Please fill in all required fields (including house rent and agent fee).");
       return;
     }
@@ -104,17 +100,16 @@ export default function AddProperty() {
     setIsLoading(true);
 
     const activeAmenities: string[] = [];
-    if (amenities.bed) activeAmenities.push("Bed included");
-    if (amenities.bath) activeAmenities.push("Private Bathroom");
-    if (amenities.prepaid) activeAmenities.push("Prepaid Meter");
-    if (amenities.water) activeAmenities.push("Borehole Water");
-    if (amenities.gated) activeAmenities.push("Gated Compound");
-    if (amenities.security) activeAmenities.push("Security Guard");
+    if (amenities.fencedCompound) activeAmenities.push("Fenced compound");
+    if (amenities.gatedCompound) activeAmenities.push("Gated compound");
     if (amenities.wardrobe) activeAmenities.push("Wardrobe");
-    if (amenities.kitchen) activeAmenities.push("Kitchen");
+    if (amenities.pvc) activeAmenities.push("PVC");
+    if (amenities.pop) activeAmenities.push("POP");
+    if (amenities.prepaidMeter) activeAmenities.push("Prepaid meter");
+    if (amenities.runningWater) activeAmenities.push("running water");
 
     try {
-      let uploadedUrls: string[] = [];
+      const uploadedUrls: string[] = [];
       if (imageFiles.length > 0) {
         // Place video on Slide 1 and synthesized photo on Slide 2
         const filesToProcess: File[] = [];
@@ -291,7 +286,7 @@ export default function AddProperty() {
               <input
                 type="text"
                 id="title"
-                placeholder="e.g. Standard Self-Con near FUPRE Main Gate"
+                placeholder="Enter property title"
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
                 required
@@ -327,19 +322,12 @@ export default function AddProperty() {
 
             {/* Pricing Breakdown Section */}
             <div className="input-group pricing-breakdown-card">
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "8px" }}>
-                <label style={{ fontWeight: "700", color: "rgb(2, 53, 28)", margin: 0, display: "flex", alignItems: "center", gap: "6px" }}>
+              <div className="pricing-header-row">
+                <label className="pricing-header-label">
                   <i className="fas fa-tag"></i> Pricing & Fee Breakdown
                 </label>
                 {((parseFloat(rentAmount) || 0) + (parseFloat(agentFee) || 0) + (parseFloat(cautionFee) || 0)) > 0 && (
-                  <span style={{
-                    fontSize: "0.88rem",
-                    fontWeight: "700",
-                    color: "rgb(2, 53, 28)",
-                    background: "rgba(2, 53, 28, 0.08)",
-                    padding: "4px 12px",
-                    borderRadius: "20px"
-                  }}>
+                  <span className="pricing-total-badge">
                     Total Tenant Cost: ₦{((parseFloat(rentAmount) || 0) + (parseFloat(agentFee) || 0) + (parseFloat(cautionFee) || 0)).toLocaleString()} / yr
                   </span>
                 )}
@@ -347,59 +335,59 @@ export default function AddProperty() {
 
               <div className="pricing-inputs-grid">
                 <div>
-                  <label htmlFor="rentAmount" style={{ fontSize: "0.85rem", fontWeight: "600", marginBottom: "6px", display: "block" }}>
+                  <label htmlFor="rentAmount" className="pricing-input-label">
                     House Rent (₦ per year) *
                   </label>
                   <input
                     type="number"
                     id="rentAmount"
-                    placeholder="e.g. 150000"
+                    placeholder="Annual rent amount"
                     value={rentAmount}
                     onChange={(e) => setRentAmount(e.target.value)}
                     required
-                    style={{ width: "100%", padding: "10px 14px", borderRadius: "8px", border: "1px solid #d1d5db" }}
+                    className="pricing-input-field"
                   />
                 </div>
 
                 <div>
-                  <label htmlFor="agentFee" style={{ fontSize: "0.85rem", fontWeight: "600", marginBottom: "6px", display: "block" }}>
+                  <label htmlFor="agentFee" className="pricing-input-label">
                     Agent Fee (₦) *
                   </label>
                   <input
                     type="number"
                     id="agentFee"
-                    placeholder="e.g. 15000"
+                    placeholder="Agency fee"
                     value={agentFee}
                     onChange={(e) => setAgentFee(e.target.value)}
                     required
-                    style={{ width: "100%", padding: "10px 14px", borderRadius: "8px", border: "1px solid #d1d5db" }}
+                    className="pricing-input-field"
                   />
                 </div>
 
                 <div>
-                  <label htmlFor="cautionFee" style={{ fontSize: "0.85rem", fontWeight: "600", marginBottom: "6px", display: "block" }}>
-                    Caution Fee (₦) <span style={{ color: "#6b7280", fontWeight: "normal" }}>(Optional)</span>
+                  <label htmlFor="cautionFee" className="pricing-input-label">
+                    Caution Fee (₦) <span className="pricing-input-label-optional">(Optional)</span>
                   </label>
                   <input
                     type="number"
                     id="cautionFee"
-                    placeholder="e.g. 10000 (0 if none)"
+                    placeholder="Caution fee (0 if none)"
                     value={cautionFee}
                     onChange={(e) => setCautionFee(e.target.value)}
-                    style={{ width: "100%", padding: "10px 14px", borderRadius: "8px", border: "1px solid #d1d5db" }}
+                    className="pricing-input-field"
                   />
                 </div>
               </div>
 
-              <div style={{ display: "flex", alignItems: "center", gap: "10px", marginTop: "4px" }}>
+              <div className="negotiable-checkbox-row">
                 <input
                   type="checkbox"
                   id="isNegotiable"
                   checked={isNegotiable}
                   onChange={(e) => setIsNegotiable(e.target.checked)}
-                  style={{ width: "18px", height: "18px", accentColor: "rgb(2, 53, 28)", cursor: "pointer" }}
+                  className="negotiable-checkbox-input"
                 />
-                <label htmlFor="isNegotiable" style={{ fontSize: "0.9rem", fontWeight: "600", color: "#374151", cursor: "pointer", margin: 0 }}>
+                <label htmlFor="isNegotiable" className="negotiable-checkbox-label">
                   Agent fee is negotiable with student tenants
                 </label>
               </div>
@@ -410,7 +398,7 @@ export default function AddProperty() {
               <input
                 type="text"
                 id="location"
-                placeholder="e.g. FUPRE Road, Effurun"
+                placeholder="Property street address or area"
                 value={location}
                 onChange={(e) => setLocation(e.target.value)}
                 required
@@ -422,7 +410,7 @@ export default function AddProperty() {
               <input
                 type="text"
                 id="distance"
-                placeholder="e.g. 5 mins walk to campus, 10 mins drive to FUPRE gate"
+                placeholder="Distance or estimated walking time to campus"
                 value={distance}
                 onChange={(e) => setDistance(e.target.value)}
                 required
@@ -447,50 +435,18 @@ export default function AddProperty() {
             <label className="checkbox-item">
               <input
                 type="checkbox"
-                checked={amenities.bed}
-                onChange={() => handleCheckboxChange("bed")}
+                checked={amenities.fencedCompound}
+                onChange={() => handleCheckboxChange("fencedCompound")}
               />
-              <span>Bed included</span>
+              <span>Fenced compound</span>
             </label>
             <label className="checkbox-item">
               <input
                 type="checkbox"
-                checked={amenities.bath}
-                onChange={() => handleCheckboxChange("bath")}
+                checked={amenities.gatedCompound}
+                onChange={() => handleCheckboxChange("gatedCompound")}
               />
-              <span>Private Bathroom</span>
-            </label>
-            <label className="checkbox-item">
-              <input
-                type="checkbox"
-                checked={amenities.prepaid}
-                onChange={() => handleCheckboxChange("prepaid")}
-              />
-              <span>Prepaid Meter</span>
-            </label>
-            <label className="checkbox-item">
-              <input
-                type="checkbox"
-                checked={amenities.water}
-                onChange={() => handleCheckboxChange("water")}
-              />
-              <span>Borehole/Running Water</span>
-            </label>
-            <label className="checkbox-item">
-              <input
-                type="checkbox"
-                checked={amenities.gated}
-                onChange={() => handleCheckboxChange("gated")}
-              />
-              <span>Gated Compound</span>
-            </label>
-            <label className="checkbox-item">
-              <input
-                type="checkbox"
-                checked={amenities.security}
-                onChange={() => handleCheckboxChange("security")}
-              />
-              <span>Security Guard</span>
+              <span>Gated compound</span>
             </label>
             <label className="checkbox-item">
               <input
@@ -503,10 +459,34 @@ export default function AddProperty() {
             <label className="checkbox-item">
               <input
                 type="checkbox"
-                checked={amenities.kitchen}
-                onChange={() => handleCheckboxChange("kitchen")}
+                checked={amenities.pvc}
+                onChange={() => handleCheckboxChange("pvc")}
               />
-              <span>Kitchen</span>
+              <span>PVC</span>
+            </label>
+            <label className="checkbox-item">
+              <input
+                type="checkbox"
+                checked={amenities.pop}
+                onChange={() => handleCheckboxChange("pop")}
+              />
+              <span>POP</span>
+            </label>
+            <label className="checkbox-item">
+              <input
+                type="checkbox"
+                checked={amenities.prepaidMeter}
+                onChange={() => handleCheckboxChange("prepaidMeter")}
+              />
+              <span>Prepaid meter</span>
+            </label>
+            <label className="checkbox-item">
+              <input
+                type="checkbox"
+                checked={amenities.runningWater}
+                onChange={() => handleCheckboxChange("runningWater")}
+              />
+              <span>running water</span>
             </label>
           </div>
 
@@ -515,7 +495,7 @@ export default function AddProperty() {
             <div className="file-upload-zone">
               <i className="fas fa-cloud-upload-alt"></i>
               <p>Drag and drop property media or <span>Browse files</span></p>
-              <p style={{ fontSize: "0.78rem", color: "#666", marginTop: "5px" }}>
+              <p className="upload-hint-subtext">
                 Supports JPG, PNG, WEBP (Max 5MB each) & MP4, MOV, WebM videos (Max 20MB)
               </p>
               <input type="file" multiple accept="image/*,video/*" onChange={handleMockUpload} />
@@ -528,7 +508,7 @@ export default function AddProperty() {
                   return (
                     <div key={i} className="preview-img-wrapper">
                       {isVideo ? (
-                        <video src={url} className="w-full h-full object-cover" controls style={{ width: "100%", height: "100%", objectFit: "cover", borderRadius: "8px" }} />
+                        <video src={url} className="w-full h-full object-cover preview-video-element" controls />
                       ) : (
                         <img src={url} alt="preview" />
                       )}
@@ -547,24 +527,10 @@ export default function AddProperty() {
           </button>
 
           {error && (
-            <div style={{
-              marginTop: "16px",
-              backgroundColor: "#fef2f2",
-              border: "1.5px solid #f87171",
-              borderRadius: "10px",
-              padding: "14px 18px",
-              color: "#991b1b",
-              display: "flex",
-              alignItems: "flex-start",
-              gap: "12px",
-              fontSize: "0.9rem",
-              fontWeight: "600",
-              lineHeight: "1.5",
-              boxShadow: "0 4px 12px rgba(239, 68, 68, 0.08)"
-            }}>
-              <i className="fas fa-exclamation-triangle" style={{ fontSize: "1.2rem", marginTop: "2px", color: "#dc2626", flexShrink: 0 }}></i>
+            <div className="listing-error-banner">
+              <i className="fas fa-exclamation-triangle listing-error-icon"></i>
               <div>
-                <strong style={{ display: "block", marginBottom: "2px", color: "#7f1d1d" }}>Upload / Listing Error:</strong>
+                <strong className="listing-error-title">Upload / Listing Error:</strong>
                 <span>{error}</span>
               </div>
             </div>

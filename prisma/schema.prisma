@@ -21,6 +21,15 @@ model User {
   password          String
   role              Role            @default(STUDENT)
   isEmailVerified   Boolean         @default(false)
+  tokenVersion      Int             @default(1)
+  deletedAt         DateTime?
+  
+  // Two-Factor Authentication (2FA) for Admins & Agents
+  twoFactorEnabled     Boolean         @default(false)
+  twoFactorSecret      String?
+  twoFactorBackupCodes String[]        @default([])
+  twoFactorConfirmedAt DateTime?
+
   createdAt         DateTime        @default(now())
   updatedAt         DateTime        @updatedAt
   
@@ -29,9 +38,17 @@ model User {
   agentProfile      AgentProfile?
 
   // Inquiries sent (for students) and received (for agents)
-  inquiries         Inquiry[]       @relation(name: "StudentInquiries")
-  receivedInquiries Inquiry[]       @relation(name: "AgentReceivedInquiries")
-  viewings          Viewing[]
+  inquiries                   Inquiry[]           @relation(name: "StudentInquiries")
+  receivedInquiries           Inquiry[]           @relation(name: "AgentReceivedInquiries")
+  viewings                    Viewing[]
+
+  // Availability Queries
+  studentAvailabilityQueries  AvailabilityQuery[] @relation(name: "StudentAvailabilityQueries")
+  agentAvailabilityQueries    AvailabilityQuery[] @relation(name: "AgentAvailabilityQueries")
+
+  // Inspection Payments
+  inspectionPaymentsSent      InspectionPayment[] @relation(name: "StudentInspectionPayments")
+  inspectionPaymentsReceived  InspectionPayment[] @relation(name: "AgentInspectionPayments")
 
   // Chat Room Associations
   studentChatRooms  ChatRoom[]      @relation(name: "StudentChatRooms")
@@ -70,6 +87,14 @@ model AgentProfile {
   bio         String?
   ninDocument String?
   isVerified  Boolean    @default(false)
+  
+  // Paystack Bank & Transfer Details
+  bankCode      String?
+  bankName      String?
+  accountNumber String?
+  accountName   String?
+  recipientCode String?  // Paystack Transfer Recipient code (e.g. RCP_...)
+
   properties  Property[]
   createdAt   DateTime   @default(now())
   updatedAt   DateTime   @updatedAt
@@ -92,6 +117,7 @@ model Property {
   latitude     Float?
   longitude    Float?
   isAvailable  Boolean      @default(true)
+  statusChangedAt DateTime?
   isVerified   Boolean      @default(false)
   views        Int          @default(0)
   university   String       @default("FUPRE")
@@ -110,9 +136,12 @@ model Property {
   // Inquiries sent for this property
   inquiries           Inquiry[]
   viewings            Viewing[]
+  availabilityQueries AvailabilityQuery[]
+  inspectionPayments  InspectionPayment[]
   chatRooms           ChatRoom[]
   reports             Report[]
   
+  deletedAt           DateTime?
   createdAt           DateTime        @default(now())
   updatedAt           DateTime        @updatedAt
 }
@@ -137,15 +166,68 @@ model Inquiry {
 }
 
 model Viewing {
-  id          String   @id @default(uuid())
+  id                    String    @id @default(uuid())
+  studentId             String
+  student               User      @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  propertyId            String
+  property              Property  @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  dateTime              DateTime
+  status                String    @default("PENDING") // PENDING, CONFIRMED, CANCELLED
+  agentInspectionStatus String?   // INSPECTED, RESCHEDULED
+  agentInspectionNotes  String?
+  studentConfirmedTour  Boolean   @default(false)
+  studentConfirmedAt    DateTime?
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+}
+
+model AvailabilityQuery {
+  id           String    @id @default(uuid())
+  studentId    String
+  student      User      @relation(name: "StudentAvailabilityQueries", fields: [studentId], references: [id], onDelete: Cascade)
+  propertyId   String
+  property     Property  @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  agentId      String
+  agent        User      @relation(name: "AgentAvailabilityQueries", fields: [agentId], references: [id], onDelete: Cascade)
+  status       String    @default("PENDING") // PENDING, AVAILABLE, UNAVAILABLE
+  token        String    @unique @default(uuid())
+  respondedAt  DateTime?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  @@index([studentId, propertyId])
+  @@index([token])
+}
+
+model InspectionPayment {
+  id          String    @id @default(uuid())
   studentId   String
-  student     User     @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  student     User      @relation(name: "StudentInspectionPayments", fields: [studentId], references: [id], onDelete: Cascade)
   propertyId  String
-  property    Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
-  dateTime    DateTime
-  status      String   @default("PENDING") // PENDING, CONFIRMED, CANCELLED
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  property    Property  @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  agentId     String
+  agent       User      @relation(name: "AgentInspectionPayments", fields: [agentId], references: [id], onDelete: Cascade)
+  amount      Float     @default(10000)
+  currency    String    @default("NGN")
+  status      String    @default("PAID") // PENDING, PAID, REFUNDED, DISPUTED
+  reference   String    @unique
+  paidAt      DateTime  @default(now())
+  
+  // Agent Payout Tracking (50-50 Escrow)
+  payoutStatus      String    @default("PENDING") // PENDING, DISBURSED, FAILED
+  payoutReference   String?
+  payoutDisbursedAt DateTime?
+
+  // Refund & Dispute Tracking
+  refundReason      String?
+  refundedAt        DateTime?
+  disputeReason     String?
+  disputedAt        DateTime?
+
+  createdAt   DateTime  @default(now())
+
+  @@index([studentId, propertyId])
+  @@index([reference])
 }
 
 model ChatRoom {
@@ -174,12 +256,14 @@ model Message {
 }
 
 model OTP {
-  id        String     @id @default(uuid())
-  email     String
-  code      String     // 6-digit number string
-  purpose   OTPPurpose
-  expiresAt DateTime
-  createdAt DateTime   @default(now())
+  id          String     @id @default(uuid())
+  email       String
+  code        String     // 6-digit number string
+  purpose     OTPPurpose
+  attempts    Int        @default(0)
+  maxAttempts Int        @default(3)
+  expiresAt   DateTime
+  createdAt   DateTime   @default(now())
 
   @@index([email])
 }
@@ -187,6 +271,7 @@ model OTP {
 enum OTPPurpose {
   EMAIL_VERIFICATION
   PASSWORD_RESET
+  TWO_FACTOR_AUTH
 }
 
 model Report {
@@ -249,5 +334,54 @@ model ActivityLog {
   @@index([userId])
   @@index([action])
   @@index([createdAt])
+}
+
+model AuditLog {
+  id          String   @id @default(uuid())
+  actorId     String?
+  actorEmail  String
+  actorName   String
+  actorRole   String   // ADMIN, AGENT, SYSTEM
+  action      String   // e.g. PAYOUT_DISBURSED, USER_VERIFIED, REFUND_ISSUED, 2FA_ENABLED, PROPERTY_DELETED, USER_ROLE_UPDATED
+  targetType  String   // USER, PROPERTY, PAYMENT, REPORT, BROADCAST, AUTH, SETTINGS
+  targetId    String?
+  targetLabel String?  // e.g. Student Name, Property Title, Payment Ref
+  details     String   // Human-readable summary
+  metadata    Json?    // Context payload (amount, bank info, diffs, IP, headers)
+  ipAddress   String?
+  userAgent   String?
+  createdAt   DateTime @default(now())
+
+  @@index([actorId])
+  @@index([action])
+  @@index([targetType])
+  @@index([createdAt])
+}
+
+model AmbassadorApplication {
+  id            String    @id @default(uuid())
+  userId        String?
+  fullName      String
+  email         String    @unique
+  phone         String
+  university    String
+  department    String
+  level         String
+  socialHandle  String?
+  pitch         String
+  referralCode  String    @unique
+  status        String    @default("PENDING") // PENDING, APPROVED, REJECTED
+  referralCount Int       @default(0)
+  earnings      Float     @default(0.0)
+  payoutInfo    String?
+  reviewedAt    DateTime?
+  reviewedBy    String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  @@index([email])
+  @@index([referralCode])
+  @@index([status])
+  @@index([university])
 }
 

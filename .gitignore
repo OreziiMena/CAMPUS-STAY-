@@ -44,4 +44,5 @@ next-env.d.ts
 /private_uploads
 /public/uploads/student_verification
 /public/uploads/verification
+scratch/
 

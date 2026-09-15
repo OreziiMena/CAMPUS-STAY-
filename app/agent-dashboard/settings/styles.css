@@ -323,3 +323,170 @@
     color: #5f6368;
     z-index: 10;
 }
+
+/* Region, Bank & Payout Helpers */
+.region-select-wrapper {
+    width: 200px;
+}
+
+.payout-desc-text {
+    font-size: 13.5px;
+    color: #64748b;
+    margin-top: -6px;
+    margin-bottom: 20px;
+}
+
+.payout-configured-box {
+    background-color: #ecfdf5;
+    border: 1px solid #a7f3d0;
+    border-radius: 10px;
+    padding: 14px 18px;
+    margin-bottom: 22px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.payout-configured-icon {
+    color: #059669;
+    font-size: 20px;
+}
+
+.payout-configured-title {
+    font-weight: 700;
+    color: #065f46;
+    font-size: 14px;
+}
+
+.payout-configured-sub {
+    font-size: 12.5px;
+    color: #047857;
+}
+
+.payout-form-group {
+    margin-bottom: 18px;
+}
+
+.payout-select-wrapper {
+    margin-top: 6px;
+}
+
+.payout-input {
+    width: 100%;
+    padding: 10px 14px;
+    border-radius: 8px;
+    border: 1px solid #d1d5db;
+    font-size: 14px;
+    margin-top: 6px;
+    box-sizing: border-box;
+}
+
+.payout-input:focus {
+    outline: none;
+    border-color: var(--primary-green);
+    box-shadow: 0 0 0 3px rgba(2, 53, 28, 0.1);
+}
+
+.payout-input-verified {
+    width: 100%;
+    padding: 10px 14px;
+    border-radius: 8px;
+    border: 1px solid #a7f3d0;
+    background-color: #f0fdf4;
+    color: #065f46;
+    font-weight: 700;
+    font-size: 14px;
+    margin-top: 6px;
+    box-sizing: border-box;
+}
+
+.payout-verifying-notice {
+    font-size: 13px;
+    color: #2563eb;
+    margin-bottom: 14px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.payout-status-msg {
+    margin-top: 10px;
+    margin-bottom: 15px;
+}
+
+.payout-save-btn {
+    margin-top: 10px;
+}
+
+/* 2FA Card Classes */
+.security-2fa-card {
+    background-color: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 10px;
+    padding: 18px 20px;
+    margin-bottom: 28px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 14px;
+}
+
+.security-2fa-left {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+}
+
+.security-2fa-icon-box {
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    background-color: rgba(2, 53, 28, 0.1);
+    color: #02351c;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.3rem;
+    flex-shrink: 0;
+}
+
+.security-2fa-title {
+    margin: 0 0 4px 0;
+    font-size: 1rem;
+    color: #0f172a;
+}
+
+.security-2fa-sub {
+    margin: 0;
+    font-size: 0.82rem;
+    color: #64748b;
+}
+
+.security-2fa-btn {
+    background-color: #02351c;
+    color: #ffffff;
+    border: none;
+    padding: 9px 18px;
+    border-radius: 6px;
+    font-weight: 600;
+    font-size: 0.85rem;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    transition: background-color 0.2s;
+}
+
+.security-2fa-btn:hover {
+    background-color: #034827;
+}
+
+.pass-status-msg {
+    margin-top: 15px;
+}
+
+.pass-submit-btn {
+    margin-top: 20px;
+}
+

@@ -93,11 +93,29 @@ function AdminSidebarWrapper({
           </li>
           <li>
             <Link 
+              href="/admin-dashboard?tab=payments" 
+              className={activeTab === "payments" ? "active" : ""}
+              onClick={() => setIsSidebarOpen(false)}
+            >
+              <i className="fas fa-credit-card"></i> Inspection Payments
+            </Link>
+          </li>
+          <li>
+            <Link 
               href="/admin-dashboard?tab=broadcast" 
               className={activeTab === "broadcast" ? "active" : ""}
               onClick={() => setIsSidebarOpen(false)}
             >
               <i className="fas fa-paper-plane"></i> Broadcast Emails
+            </Link>
+          </li>
+          <li>
+            <Link 
+              href="/admin-dashboard?tab=ambassadors" 
+              className={activeTab === "ambassadors" ? "active" : ""}
+              onClick={() => setIsSidebarOpen(false)}
+            >
+              <i className="fas fa-bullhorn"></i> Campus Ambassadors
             </Link>
           </li>
           <li>

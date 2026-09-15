@@ -334,6 +334,30 @@
     transition: background-color var(--transition);
 }
 
+.upload-icon-green {
+    font-size: 2rem;
+    color: #10b981;
+    margin-bottom: 8px;
+}
+
+.upload-browse-highlight {
+    color: rgb(2, 53, 28);
+    font-weight: 700;
+}
+
+.upload-subtext {
+    font-size: 0.78rem;
+    color: #64748b;
+    margin: 4px 0 0 0;
+}
+
+.preview-video {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: 8px;
+}
+
 .delete-preview-btn:hover {
     background-color: #c82333;
 }

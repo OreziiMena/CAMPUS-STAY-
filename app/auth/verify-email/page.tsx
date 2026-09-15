@@ -170,41 +170,41 @@ function VerifyEmailContent() {
   };
 
   return (
-    <div className="auth-page" style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "'Poppins', sans-serif" }}>
+    <div className="auth-page">
       <Link href="/auth/login" className="back-link">
         <i className="fas fa-arrow-left"></i> Back to Login
       </Link>
 
-      <section className="auth-container" style={{ width: "100%", maxWidth: "450px" }}>
-        <div className="auth-card" style={{ padding: "35px 20px", borderRadius: "20px", boxShadow: "0 10px 35px rgba(0,0,0,0.06)", border: "1px solid #eaeaea", background: "white", width: "100%", boxSizing: "border-box" }}>
-          <div className="auth-header" style={{ textAlign: "center", marginBottom: "30px" }}>
-            <h2 style={{ fontSize: "1.6rem", fontWeight: "800", color: "rgb(2, 53, 28)", margin: "0 0 10px 0" }}>Verify Email</h2>
-            <p style={{ fontSize: "0.9rem", color: "#666", margin: 0 }}>
+      <section className="auth-container auth-container-narrow">
+        <div className="auth-card auth-card-verify">
+          <div className="auth-header">
+            <h2>Verify Email</h2>
+            <p>
               We sent a 6-digit OTP verification code to <br />
-              <strong style={{ color: "#333" }}>{email || "your registered email"}</strong>
+              <strong>{email || "your registered email"}</strong>
             </p>
           </div>
 
-          <form onSubmit={handleSubmit} className="auth-form" style={{ width: "100%" }}>
+          <form onSubmit={handleSubmit} className="auth-form">
             {error && (
-              <div style={{ backgroundColor: "#fde8e8", border: "1px solid #f8b4b4", color: "#9b1c1c", padding: "12px", borderRadius: "8px", marginBottom: "20px", fontSize: "0.85rem", display: "flex", alignItems: "center", gap: "8px" }}>
+              <div className="verify-alert-error">
                 <i className="fas fa-exclamation-circle"></i> {error}
               </div>
             )}
 
             {success && (
-              <div style={{ backgroundColor: "#e6f4ea", border: "1px solid #c4eed0", color: "#137333", padding: "12px", borderRadius: "8px", marginBottom: "20px", fontSize: "0.85rem", display: "flex", alignItems: "center", gap: "8px" }}>
+              <div className="verify-alert-success">
                 <i className="fas fa-check-circle"></i> {success}
               </div>
             )}
 
             {isDebugMsg && (
-              <div style={{ backgroundColor: "#e8f0fe", border: "1px solid #d2e3fc", color: "#1967d2", padding: "12px", borderRadius: "8px", marginBottom: "20px", fontSize: "0.8rem" }}>
+              <div className="verify-alert-debug">
                 <i className="fas fa-info-circle"></i> <strong>Developer Notice:</strong> Since no `RESEND_API_KEY` env variable is set, the code has been written to the server CLI console logs!
               </div>
             )}
 
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(6, 1fr)", gap: "8px", margin: "24px 0", width: "100%" }}>
+            <div className="otp-grid">
               {otp.map((digit, index) => (
                 <input
                   key={index}
@@ -219,31 +219,7 @@ function VerifyEmailContent() {
                   onChange={(e) => handleChange(e.target, index)}
                   onKeyDown={(e) => handleKeyDown(e, index)}
                   onPaste={handlePaste}
-                  style={{
-                    width: "100%",
-                    minWidth: "0",
-                    height: "52px",
-                    borderRadius: "10px",
-                    border: "1.5px solid #ddd",
-                    textAlign: "center",
-                    fontSize: "1.3rem",
-                    fontWeight: "800",
-                    backgroundColor: "#fafafa",
-                    outline: "none",
-                    transition: "all 0.2s",
-                    color: "rgb(2, 53, 28)",
-                    boxSizing: "border-box",
-                  }}
-                  onFocus={(e) => {
-                    e.target.style.borderColor = "rgb(2, 53, 28)";
-                    e.target.style.boxShadow = "0 0 0 3px rgba(2, 53, 28, 0.1)";
-                    e.target.style.backgroundColor = "white";
-                  }}
-                  onBlur={(e) => {
-                    e.target.style.borderColor = "#ddd";
-                    e.target.style.boxShadow = "none";
-                    e.target.style.backgroundColor = "#fafafa";
-                  }}
+                  className="otp-input"
                 />
               ))}
             </div>
@@ -251,22 +227,7 @@ function VerifyEmailContent() {
             <button
               type="submit"
               disabled={isLoading}
-              style={{
-                width: "100%",
-                padding: "14px",
-                backgroundColor: "rgb(2, 53, 28)",
-                color: "white",
-                border: "none",
-                borderRadius: "10px",
-                fontSize: "1rem",
-                fontWeight: "700",
-                cursor: "pointer",
-                transition: "all 0.3s",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                gap: "8px",
-              }}
+              className="verify-btn"
             >
               {isLoading ? (
                 <><i className="fas fa-spinner fa-spin"></i> Verifying...</>
@@ -275,24 +236,15 @@ function VerifyEmailContent() {
               )}
             </button>
 
-            <div style={{ textAlign: "center", marginTop: "24px", fontSize: "0.85rem", color: "#666" }}>
+            <div className="verify-footer">
               Didn't receive the email?{" "}
               {resendCountdown > 0 ? (
-                <span style={{ color: "#999" }}>Resend code in {resendCountdown}s</span>
+                <span className="countdown-text">Resend code in {resendCountdown}s</span>
               ) : (
                 <button
                   type="button"
                   onClick={handleResend}
-                  style={{
-                    background: "none",
-                    border: "none",
-                    color: "rgb(2, 53, 28)",
-                    fontWeight: "700",
-                    cursor: "pointer",
-                    padding: 0,
-                    textDecoration: "underline",
-                    fontFamily: "inherit",
-                  }}
+                  className="resend-btn"
                 >
                   Resend Code
                 </button>
@@ -308,8 +260,8 @@ function VerifyEmailContent() {
 export default function VerifyEmail() {
   return (
     <Suspense fallback={
-      <div className="auth-page" style={{ display: "flex", justifyContent: "center", alignItems: "center", minHeight: "100vh", fontFamily: "'Poppins', sans-serif" }}>
-        <div style={{ color: "rgb(2, 53, 28)", fontSize: "1.2rem", fontWeight: "600" }}>
+      <div className="auth-page">
+        <div className="loading-fallback-container">
           <i className="fas fa-spinner fa-spin"></i> Loading...
         </div>
       </div>

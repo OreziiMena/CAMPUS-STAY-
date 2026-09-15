@@ -6,7 +6,7 @@
   background: #fff;
   padding: 25px;
   border-radius: 12px;
-  border-left: 5px solid #d35400;
+  border-left: 5px solid rgb(2, 53, 28);
   box-shadow: 0 4px 15px rgba(0, 0, 0, 0.02);
 }
 
@@ -23,7 +23,7 @@
 }
 
 .add-prop-btn {
-  background: #d35400;
+  background: rgb(2, 53, 28);
   color: white;
   border: none;
   padding: 12px 24px;
@@ -34,12 +34,13 @@
   display: flex;
   align-items: center;
   gap: 8px;
-  transition: background 0.3s;
+  transition: all 0.3s;
   cursor: pointer;
 }
 
 .add-prop-btn:hover {
-  background: #b24700;
+  background: rgb(1, 38, 20);
+  box-shadow: 0 4px 12px rgba(2, 53, 28, 0.2);
 }
 
 .loader {
@@ -152,7 +153,7 @@
   font-family: 'Poppins', sans-serif;
   font-size: 20px;
   font-weight: 700;
-  color: #d35400;
+  color: #02351c;
   margin-right: 30px;
   white-space: nowrap;
 }
@@ -218,7 +219,7 @@
 }
 
 input:checked + .slider {
-  background-color: #2e7d32;
+  background-color: #059669;
 }
 
 input:checked + .slider:before {
@@ -232,11 +233,11 @@ input:checked + .slider:before {
 }
 
 .status-label.available {
-  color: #2e7d32;
+  color: #059669;
 }
 
 .status-label.taken {
-  color: #c62828;
+  color: #dc2626;
 }
 
 .action-buttons {
@@ -246,8 +247,8 @@ input:checked + .slider:before {
 
 .edit-btn {
   background: white;
-  border: 1px solid #d35400;
-  color: #d35400;
+  border: 1px solid rgb(2, 53, 28);
+  color: rgb(2, 53, 28);
   padding: 8px 16px;
   border-radius: 6px;
   text-decoration: none;
@@ -262,14 +263,14 @@ input:checked + .slider:before {
 }
 
 .edit-btn:hover {
-  background: #d35400;
+  background: rgb(2, 53, 28);
   color: white;
 }
 
 .delete-btn {
   background: white;
-  border: 1px solid #d32f2f;
-  color: #d32f2f;
+  border: 1px solid #dc2626;
+  color: #dc2626;
   padding: 8px 16px;
   border-radius: 6px;
   font-family: 'Poppins', sans-serif;
@@ -283,7 +284,7 @@ input:checked + .slider:before {
 }
 
 .delete-btn:hover {
-  background: #d32f2f;
+  background: #dc2626;
   color: white;
 }
 
@@ -306,3 +307,105 @@ input:checked + .slider:before {
     border-top: 1px solid #eaeaea;
   }
 }
+
+.add-prop-btn-inline {
+  display: inline-flex;
+}
+
+.property-media-thumbnail-box {
+  position: relative;
+  width: 100px;
+  height: 80px;
+  border-radius: 8px;
+  overflow: hidden;
+  flex-shrink: 0;
+  background-color: #0f172a;
+}
+
+.property-media-element {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.property-video-badge {
+  position: absolute;
+  bottom: 4px;
+  right: 4px;
+  background: rgba(0, 0, 0, 0.75);
+  color: #fff;
+  font-size: 9px;
+  font-weight: 700;
+  border-radius: 3px;
+  padding: 2px 5px;
+  line-height: 1;
+}
+
+.property-title-flex {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.verified-status-tag {
+  color: #2e7d32;
+  background: rgba(46, 125, 50, 0.08);
+  padding: 3px 8px;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: bold;
+}
+
+.pending-status-tag {
+  color: #d35400;
+  background: rgba(211, 84, 0, 0.08);
+  padding: 3px 8px;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: bold;
+}
+
+.property-price-box {
+  min-width: 160px;
+}
+
+.property-price-main {
+  font-size: 1.15rem;
+  font-weight: 800;
+  color: rgb(2, 53, 28);
+}
+
+.property-price-unit {
+  font-size: 0.75rem;
+  color: #666;
+  font-weight: normal;
+}
+
+.property-price-breakdown {
+  font-size: 0.75rem;
+  color: #4b5563;
+  line-height: 1.35;
+  margin-top: 4px;
+  background-color: #f9fafb;
+  padding: 4px 8px;
+  border-radius: 6px;
+  border: 1px solid #e5e7eb;
+}
+
+.breakdown-label {
+  color: #6b7280;
+}
+
+.fee-negotiable-tag {
+  color: #047857;
+  font-weight: 700;
+  font-size: 0.68rem;
+}
+
+.fee-fixed-tag {
+  color: #6b7280;
+  font-size: 0.68rem;
+}
+

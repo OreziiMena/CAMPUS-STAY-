@@ -23,6 +23,14 @@ const PROXIMITIES = [
   { code: "over_10", name: "> 10 mins walk" }
 ];
 
+const AGENT_FEE_OPTIONS = [
+  { code: "All", name: "All Agent Fees" },
+  { code: "zero", name: "No Agent Fee (₦0)" },
+  { code: "under_20k", name: "Under ₦20,000" },
+  { code: "under_50k", name: "Under ₦50,000" },
+  { code: "above_50k", name: "₦50,000+" },
+];
+
 const CAMPUS_OPTIONS = [
   { code: "All", name: "All Universities" },
   ...NIGERIAN_UNIVERSITIES
@@ -38,14 +46,16 @@ export default function Explore() {
   const [university, setUniversity] = useState("All");
   const [hostelType, setHostelType] = useState("All");
   const [proximity, setProximity] = useState("Any");
+  const [agentFee, setAgentFee] = useState("All");
   const [minPrice, setMinPrice] = useState("");
   const [maxPrice, setMaxPrice] = useState("");
 
   // Pagination states
   const [page, setPage] = useState(1);
-  const [hasMore, setHasMore] = useState(true);
+  const [totalPages, setTotalPages] = useState(1);
+  const [totalCount, setTotalCount] = useState(0);
   const [lastFilters, setLastFilters] = useState("");
-  const LIMIT = 10;
+  const LIMIT = 9;
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -56,7 +66,7 @@ export default function Explore() {
 
   // Dynamic filter watcher with a 300ms debounce
   useEffect(() => {
-    const currentFiltersKey = JSON.stringify({ university, hostelType, proximity, minPrice, maxPrice, searchQuery });
+    const currentFiltersKey = JSON.stringify({ university, hostelType, proximity, agentFee, minPrice, maxPrice, searchQuery });
     if (lastFilters !== currentFiltersKey) {
       setLastFilters(currentFiltersKey);
       setPage(1);
@@ -75,17 +85,15 @@ export default function Explore() {
         minPrice: parsedMinPrice,
         maxPrice: parsedMaxPrice,
         proximity: proximity !== "Any" ? proximity : undefined,
+        agentFeeFilter: agentFee !== "All" ? agentFee : undefined,
         page: page,
         limit: LIMIT,
       });
 
       if (res.success && res.properties) {
-        if (page === 1) {
-          setProperties(res.properties);
-        } else {
-          setProperties((prev) => [...prev, ...res.properties]);
-        }
-        setHasMore(res.properties.length === LIMIT);
+        setProperties(res.properties);
+        setTotalPages(res.totalPages || 1);
+        setTotalCount(res.totalCount || 0);
       }
       setLoading(false);
     };
@@ -95,18 +103,29 @@ export default function Explore() {
     }, 300);
 
     return () => clearTimeout(timer);
-  }, [university, hostelType, proximity, minPrice, maxPrice, searchQuery, page, lastFilters]);
+  }, [university, hostelType, proximity, agentFee, minPrice, maxPrice, searchQuery, page, lastFilters]);
+
+  const handlePageChange = (newPage: number) => {
+    setPage(newPage);
+    const element = document.getElementById("explore-listings-section") || document.querySelector(".apartment-listings");
+    if (element) {
+      element.scrollIntoView({ behavior: "smooth" });
+    } else {
+      window.scrollTo({ top: 350, behavior: "smooth" });
+    }
+  };
 
   const handleClearFilters = () => {
     setUniversity("All");
     setHostelType("All");
     setProximity("Any");
+    setAgentFee("All");
     setMinPrice("");
     setMaxPrice("");
     setSearchQuery("");
   };
 
-  const hasActiveFilters = searchQuery !== "" || university !== "All" || hostelType !== "All" || proximity !== "Any" || minPrice !== "" || maxPrice !== "";
+  const hasActiveFilters = searchQuery !== "" || university !== "All" || hostelType !== "All" || proximity !== "Any" || agentFee !== "All" || minPrice !== "" || maxPrice !== "";
   const displayProperties = properties;
 
   return (
@@ -146,6 +165,12 @@ export default function Explore() {
                     <button type="button" onClick={() => setProximity("Any")}>&times;</button>
                   </span>
                 )}
+                {agentFee !== "All" && (
+                  <span className="filter-chip">
+                    Fee: {agentFee === "zero" ? "₦0 (No Fee)" : agentFee === "under_20k" ? "< ₦20k" : agentFee === "under_50k" ? "< ₦50k" : "₦50k+"}
+                    <button type="button" onClick={() => setAgentFee("All")}>&times;</button>
+                  </span>
+                )}
                 {minPrice !== "" && (
                   <span className="filter-chip">
                     Min: ₦{parseFloat(minPrice).toLocaleString()}
@@ -168,7 +193,7 @@ export default function Explore() {
                 />
 
                 {/* Clear button if search or filters active */}
-                {(searchQuery || university !== "All" || hostelType !== "All" || proximity !== "Any" || minPrice || maxPrice) && (
+                {(searchQuery || university !== "All" || hostelType !== "All" || proximity !== "Any" || agentFee !== "All" || minPrice || maxPrice) && (
                   <button type="button" className="clear-filters-btn-custom" onClick={handleClearFilters}>
                     Clear All
                   </button>
@@ -204,6 +229,16 @@ export default function Explore() {
                     options={PROXIMITIES}
                     value={proximity}
                     onChange={(val) => setProximity(val)}
+                  />
+                </div>
+
+                {/* Agent Fee Selection */}
+                <div className="filter-select-col">
+                  <label htmlFor="filter-agent-fee" className="filter-select-label">Agent Fee</label>
+                  <SearchableSelect
+                    options={AGENT_FEE_OPTIONS}
+                    value={agentFee}
+                    onChange={(val) => setAgentFee(val)}
                   />
                 </div>
 
@@ -261,12 +296,12 @@ export default function Explore() {
         ) : (
           <>
             {displayProperties.length === 0 ? (
-              <div className="no-properties-found" style={{ textAlign: "center", padding: "50px 20px", background: "white", borderRadius: "12px", width: "100%", border: "1px solid #eaeaea", fontFamily: "'Poppins', sans-serif" }}>
-                <i className="fas fa-search" style={{ fontSize: "40px", color: "#ccc", marginBottom: "15px" }}></i>
-                <h3 style={{ color: "rgb(2, 53, 28)", marginBottom: "10px" }}>
+              <div className="no-properties-found explore-no-properties-box">
+                <i className="fas fa-search explore-no-properties-icon"></i>
+                <h3 className="explore-no-properties-title">
                   {hasActiveFilters ? "No properties found" : "No available properties"}
                 </h3>
-                <p style={{ color: "#666", fontSize: "15px" }}>
+                <p className="explore-no-properties-text">
                   {hasActiveFilters 
                     ? "We couldn't find any hostels matching your criteria. Try widening your filters or clearing your search." 
                     : "There are currently no hostels listed on the platform. Please check back later!"}
@@ -286,51 +321,30 @@ export default function Explore() {
                     : (property.student ? (property.student.fullName?.charAt(0) || "S") : "C");
 
                   return (
-                    <div key={property.id} className="property-card" style={{ display: "flex", flexDirection: "column", justifyContent: "space-between", background: "white", borderRadius: "16px", padding: "16px", boxShadow: "0 4px 20px rgba(0,0,0,0.06)", border: "1px solid #f0f0f0", fontFamily: "'Poppins', sans-serif" }}>
+                    <div key={property.id} className="property-card explore-card-custom">
                       <div>
                         {/* Owner Header on top */}
-                        <div style={{ display: "flex", alignItems: "center", gap: "10px", margin: "0 0 12px 0" }}>
-                          <div style={{ 
-                            width: "36px", 
-                            height: "36px", 
-                            borderRadius: "50%", 
-                            backgroundColor: "#e8f0fe", 
-                            color: "#1a73e8", 
-                            display: "flex", 
-                            alignItems: "center", 
-                            justifyContent: "center", 
-                            fontSize: "0.85rem", 
-                            fontWeight: "bold",
-                            border: "1px solid rgba(26, 115, 232, 0.15)",
-                            fontFamily: "'Poppins', sans-serif"
-                          }}>
+                        <div className="explore-owner-header">
+                          <div className="explore-owner-avatar">
                             {initial.toUpperCase()}
                           </div>
-                          <div style={{ display: "flex", flexDirection: "column" }}>
-                            <h3 style={{ fontSize: "0.95rem", fontWeight: "700", color: "#333", margin: 0, display: "flex", alignItems: "center", gap: "4px", fontFamily: "'Poppins', sans-serif" }}>
+                          <div className="explore-owner-details">
+                            <h3 className="explore-owner-name">
                               {ownerName}
                               {isVerified && (
-                                <i className="fas fa-check-circle verified-icon" style={{ color: "#2e7d32", fontSize: "0.9rem", marginLeft: "4px" }} title="Verified Owner"></i>
+                                <i className="fas fa-check-circle verified-icon explore-owner-verified-icon" title="Verified Owner"></i>
                               )}
                             </h3>
-                            <span style={{ fontSize: "0.75rem", color: "#666", fontFamily: "'Poppins', sans-serif" }}>
+                            <span className="explore-owner-type">
                               {property.agent ? "Agent / Landlord" : "Student Roommate"}
                             </span>
                           </div>
-                          <div style={{ marginLeft: "auto", display: "flex", flexDirection: "column", alignItems: "flex-end", gap: "4px" }}>
-                            <span style={{ 
-                              background: property.isAvailable ? "#e6f4ea" : "#fce8e6", 
-                              color: property.isAvailable ? "#137333" : "#c5221f", 
-                              padding: "2px 6px", 
-                              borderRadius: "4px", 
-                              fontSize: "0.65rem", 
-                              fontWeight: "bold",
-                              fontFamily: "'Poppins', sans-serif"
-                            }}>
+                          <div className="explore-badges-col">
+                            <span className={`explore-availability-badge ${property.isAvailable ? "available" : "taken"}`}>
                               {property.isAvailable ? "AVAILABLE" : "TAKEN"}
                             </span>
                             {property.isRoommateOption && (
-                              <span style={{ background: "#e8f0fe", color: "#1a73e8", padding: "2px 6px", borderRadius: "4px", fontSize: "0.65rem", fontWeight: "bold", fontFamily: "'Poppins', sans-serif" }}>
+                              <span className="explore-roommate-badge">
                                 ROOMMATE
                               </span>
                             )}
@@ -338,7 +352,7 @@ export default function Explore() {
                         </div>
 
                         {/* Property Media in middle */}
-                        <div style={{ position: "relative", width: "100%", height: "160px", borderRadius: "12px", overflow: "hidden", marginBottom: "12px", backgroundColor: "#0f172a" }}>
+                        <div className="explore-media-container">
                           {(() => {
                             const videoUrl = property.images?.find((img: string) => img.match(/\.(mp4|webm|ogg|mov|mkv)(\?.*)?$/i));
                             const posterUrl = property.images?.find((img: string) => !img.match(/\.(mp4|webm|ogg|mov|mkv)(\?.*)?$/i));
@@ -356,73 +370,67 @@ export default function Explore() {
                                   }}
                                   src={videoUrl} 
                                   poster={posterUrl}
-                                  style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} 
+                                  className="explore-media-element" 
                                   muted 
                                   loop 
                                   playsInline 
                                   autoPlay
                                   preload="auto"
                                 />
-                                <div style={{
-                                  position: "absolute",
-                                  top: "8px",
-                                  right: "8px",
-                                  background: "rgba(0, 0, 0, 0.7)",
-                                  backdropFilter: "blur(4px)",
-                                  color: "#fff",
-                                  fontSize: "0.68rem",
-                                  fontWeight: "700",
-                                  padding: "3px 8px",
-                                  borderRadius: "6px",
-                                  display: "flex",
-                                  alignItems: "center",
-                                  gap: "4px",
-                                  zIndex: 2,
-                                  fontFamily: "'Poppins', sans-serif"
-                                }}>
-                                  <i className="fas fa-play" style={{ fontSize: "0.6rem", color: "#10b981" }}></i> Video Tour
+                                <div className="explore-video-tour-badge">
+                                  <i className="fas fa-play explore-video-play-icon"></i> Video Tour
                                 </div>
                               </>
                             ) : (
                               <img 
                                 src={posterUrl || property.images?.[0] || defaultImg} 
                                 alt={property.title} 
-                                style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} 
+                                className="explore-media-element" 
                               />
                             );
                           })()}
                         </div>
 
                         {/* Price large and bold + Negotiable badge */}
-                        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: "6px", margin: "0 0 6px 0" }}>
-                          <h3 style={{ fontSize: "1.3rem", fontWeight: "800", color: "#000", margin: 0, fontFamily: "'Poppins', sans-serif" }}>
-                            ₦{property.price.toLocaleString()} <span style={{ fontSize: "0.8rem", color: "#666", fontWeight: "normal", fontFamily: "'Poppins', sans-serif" }}>/ year</span>
+                        <div className="explore-price-row">
+                          <h3 className="explore-price-value">
+                            ₦{property.price.toLocaleString()} <span className="explore-price-period">/ year</span>
                           </h3>
                           {property.isNegotiable && (
-                            <span style={{
-                              background: "rgba(16, 185, 129, 0.12)",
-                              color: "#047857",
-                              padding: "2px 8px",
-                              borderRadius: "12px",
-                              fontSize: "0.68rem",
-                              fontWeight: "700",
-                              display: "inline-flex",
-                              alignItems: "center",
-                              gap: "3px"
-                            }}>
+                            <span className="explore-negotiable-badge">
                               <i className="fas fa-handshake"></i> Fee Negotiable
                             </span>
                           )}
                         </div>
 
+                        {/* Agent Fee & Pricing Breakdown Badges */}
+                        <div className="explore-fees-row">
+                          {property.agentFee && property.agentFee > 0 ? (
+                            <span className="explore-agent-fee-badge">
+                              <i className="fas fa-user-tie explore-fee-icon"></i>
+                              Agent Fee: ₦{property.agentFee.toLocaleString()}
+                            </span>
+                          ) : (
+                            <span className="explore-zero-agent-fee-badge">
+                              <i className="fas fa-tag explore-fee-icon"></i>
+                              0% Agent Fee (Direct Host)
+                            </span>
+                          )}
+                          {property.cautionFee && property.cautionFee > 0 ? (
+                            <span className="explore-caution-fee-badge">
+                              Caution: ₦{property.cautionFee.toLocaleString()}
+                            </span>
+                          ) : null}
+                        </div>
+
                         {/* Title */}
-                        <p style={{ fontSize: "0.85rem", color: "#333", fontWeight: "600", margin: "0 0 8px 0", fontFamily: "'Poppins', sans-serif" }}>
+                        <p className="explore-property-title-text">
                           {property.title}
                         </p>
 
                         {/* Location Pill */}
-                        <div style={{ display: "inline-flex", alignItems: "center", gap: "5px", backgroundColor: "#f1f3f4", padding: "4px 10px", borderRadius: "20px", fontSize: "0.75rem", color: "#444", margin: "0 0 12px 0", fontFamily: "'Poppins', sans-serif" }}>
-                          <i className="fas fa-map-marker-alt" style={{ color: "#7e6b01" }}></i>
+                        <div className="explore-location-pill">
+                          <i className="fas fa-map-marker-alt explore-map-icon"></i>
                           <span>{property.location} ({property.distance})</span>
                         </div>
                         
@@ -431,19 +439,7 @@ export default function Explore() {
                       <div>
                         <Link 
                           href={`/apartment-details?id=${property.id}`} 
-                          className="view-btn"
-                          style={{ 
-                            display: "block", 
-                            textAlign: "center", 
-                            textDecoration: "none", 
-                            padding: "10px", 
-                            borderRadius: "8px", 
-                            background: "#02351c", 
-                            color: "white", 
-                            fontWeight: "bold",
-                            fontSize: "0.85rem",
-                            fontFamily: "'Poppins', sans-serif"
-                          }}
+                          className="view-btn explore-view-details-btn"
                         >
                           View Details
                         </Link>
@@ -454,32 +450,41 @@ export default function Explore() {
               </div>
             )}
 
-            {hasMore && properties.length > 0 && (
-              <div style={{ display: "flex", justifyContent: "center", margin: "40px 0" }}>
+            {totalPages > 1 && properties.length > 0 && (
+              <div className="explore-pagination-wrapper">
+                {/* Previous Button */}
                 <button
                   type="button"
-                  onClick={() => setPage((prev) => prev + 1)}
-                  style={{
-                    padding: "12px 30px",
-                    borderRadius: "30px",
-                    backgroundColor: "white",
-                    border: "2px solid rgb(2, 53, 28)",
-                    color: "rgb(2, 53, 28)",
-                    fontWeight: "700",
-                    fontFamily: "'Poppins', sans-serif",
-                    cursor: "pointer",
-                    transition: "all 0.2s ease",
-                  }}
-                  onMouseOver={(e) => {
-                    e.currentTarget.style.backgroundColor = "rgb(2, 53, 28)";
-                    e.currentTarget.style.color = "white";
-                  }}
-                  onMouseOut={(e) => {
-                    e.currentTarget.style.backgroundColor = "white";
-                    e.currentTarget.style.color = "rgb(2, 53, 28)";
-                  }}
+                  onClick={() => handlePageChange(Math.max(page - 1, 1))}
+                  disabled={page === 1}
+                  className="explore-page-nav-btn"
                 >
-                  Load More Listings
+                  <i className="fas fa-chevron-left explore-page-nav-icon"></i> Prev
+                </button>
+
+                {/* Page Numbers */}
+                {Array.from({ length: totalPages }, (_, i) => i + 1).map((p) => {
+                  const isActive = p === page;
+                  return (
+                    <button
+                      key={p}
+                      type="button"
+                      onClick={() => handlePageChange(p)}
+                      className={`explore-page-num-btn ${isActive ? "active" : ""}`}
+                    >
+                      {p}
+                    </button>
+                  );
+                })}
+
+                {/* Next Button */}
+                <button
+                  type="button"
+                  onClick={() => handlePageChange(Math.min(page + 1, totalPages))}
+                  disabled={page === totalPages}
+                  className="explore-page-nav-btn"
+                >
+                  Next <i className="fas fa-chevron-right explore-page-nav-icon"></i>
                 </button>
               </div>
             )}
@@ -602,9 +607,9 @@ export default function Explore() {
             <div className="safety-tip-content">
               <h4 className="safety-tip-title">Safety Tip</h4>
               <p className="safety-tip-text">
-                For your safety, always check for the <span style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", position: "relative", verticalAlign: "middle", margin: "0 2px" }}>
-                  <i className="fas fa-certificate" style={{ color: "rgb(2, 53, 28)", fontSize: "1.1rem" }}></i>
-                  <i className="fas fa-check" style={{ position: "absolute", color: "white", fontSize: "0.45rem" }}></i>
+                For your safety, always check for the <span className="explore-safety-badge-wrap">
+                  <i className="fas fa-certificate explore-safety-cert-icon"></i>
+                  <i className="fas fa-check explore-safety-check-icon"></i>
                 </span> verification badge, it means the agent has completed ID verification.
               </p>
               <Link href="/student-dashboard/profile" className="safety-tip-link">
@@ -614,16 +619,7 @@ export default function Explore() {
 
             <button 
               onClick={() => setShowSafetyTip(false)} 
-              style={{ 
-                position: "absolute", 
-                top: "10px", 
-                right: "10px", 
-                border: "none", 
-                background: "none", 
-                cursor: "pointer", 
-                color: "#888", 
-                fontSize: "1rem" 
-              }}
+              className="explore-safety-close-btn"
             >
               &times;
             </button>

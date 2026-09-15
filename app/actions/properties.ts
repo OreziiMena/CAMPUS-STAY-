@@ -18,6 +18,8 @@ export async function getProperties(filterParam?: string | {
   minPrice?: number;
   maxPrice?: number;
   proximity?: string;
+  agentFeeFilter?: string;
+  maxAgentFee?: number;
   page?: number;
   limit?: number;
 }) {
@@ -28,9 +30,11 @@ export async function getProperties(filterParam?: string | {
     let minPrice: number | undefined;
     let maxPrice: number | undefined;
     let proximity: string | undefined;
+    let agentFeeFilter: string | undefined;
+    let maxAgentFee: number | undefined;
 
     let page = 1;
-    let limit = 10;
+    let limit = 9;
 
     if (typeof filterParam === "string") {
       searchQuery = filterParam;
@@ -41,20 +45,36 @@ export async function getProperties(filterParam?: string | {
       minPrice = filterParam.minPrice;
       maxPrice = filterParam.maxPrice;
       proximity = filterParam.proximity;
+      agentFeeFilter = filterParam.agentFeeFilter;
+      maxAgentFee = filterParam.maxAgentFee;
       page = filterParam.page || 1;
-      limit = filterParam.limit || 10;
+      limit = filterParam.limit || 9;
     }
 
     const skip = (page - 1) * limit;
     const isProximityFiltered = proximity && proximity !== "Any";
 
     const whereClause: any = {
-      isAvailable: true,
       isVerified: true,
       isRoommateOption: false,
+      deletedAt: null,
     };
 
     const andConditions: any[] = [];
+
+    // 0. 30-Minute Status Filter:
+    // Available properties are always shown.
+    // If marked unavailable/taken, keep visible on Explore for 30 mins, then auto-remove.
+    const thirtyMinutesAgo = new Date(Date.now() - 30 * 60 * 1000);
+    andConditions.push({
+      OR: [
+        { isAvailable: true },
+        {
+          isAvailable: false,
+          statusChangedAt: { gte: thirtyMinutesAgo },
+        },
+      ],
+    });
 
     // 1. Base Search Query
     if (searchQuery) {
@@ -99,6 +119,37 @@ export async function getProperties(filterParam?: string | {
       });
     }
 
+    // 5. Agent Fee filter
+    if (agentFeeFilter && agentFeeFilter !== "All") {
+      if (agentFeeFilter === "zero") {
+        andConditions.push({
+          OR: [
+            { agentFee: { equals: 0 } },
+            { agentFee: null }
+          ]
+        });
+      } else if (agentFeeFilter === "under_20k") {
+        andConditions.push({
+          agentFee: { lte: 20000, gt: 0 }
+        });
+      } else if (agentFeeFilter === "under_50k") {
+        andConditions.push({
+          agentFee: { lte: 50000, gt: 0 }
+        });
+      } else if (agentFeeFilter === "above_50k") {
+        andConditions.push({
+          agentFee: { gte: 50000 }
+        });
+      }
+    } else if (maxAgentFee !== undefined && !isNaN(maxAgentFee)) {
+      andConditions.push({
+        OR: [
+          { agentFee: { lte: maxAgentFee } },
+          { agentFee: null }
+        ]
+      });
+    }
+
     if (andConditions.length > 0) {
       whereClause.AND = andConditions;
     }
@@ -109,6 +160,7 @@ export async function getProperties(filterParam?: string | {
         agent: true,
         student: true,
       },
+      orderBy: { createdAt: "desc" },
     });
 
     // 5. Proximity filter (in-memory walk time minutes comparison)
@@ -130,16 +182,19 @@ export async function getProperties(filterParam?: string | {
       });
     }
 
-    // Randomly shuffle listings so users discover varied properties across campus on each visit
-    for (let i = properties.length - 1; i > 0; i--) {
-      const j = Math.floor(Math.random() * (i + 1));
-      [properties[i], properties[j]] = [properties[j], properties[i]];
-    }
+    const totalCount = properties.length;
+    const totalPages = Math.ceil(totalCount / limit) || 1;
 
     // Apply pagination slice
     const paginatedProperties = properties.slice(skip, skip + limit);
 
-    return { success: true, properties: paginatedProperties };
+    return {
+      success: true,
+      properties: paginatedProperties,
+      totalCount,
+      totalPages,
+      currentPage: page,
+    };
   } catch (err: any) {
     return { success: false, error: err.message || "Failed to fetch properties." };
   }
@@ -184,7 +239,7 @@ export async function getPropertyDetails(id: string) {
       },
     });
 
-    if (!property) {
+    if (!property || property.deletedAt) {
       return { success: false, error: "Property not found." };
     }
 
@@ -321,6 +376,13 @@ export async function createInquiry(data: { propertyId: string; message: string 
       return { success: false, error: "You must be logged in to send inquiries." };
     }
 
+    if (user.role === "AGENT") {
+      return {
+        success: false,
+        error: "Agents cannot submit inquiries on listings. This feature is for students.",
+      };
+    }
+
     if (user.role === "STUDENT" && !user.studentProfile?.isVerified) {
       return { success: false, error: "Verification required. You must verify your student profile to contact agents." };
     }
@@ -388,7 +450,7 @@ export async function createInquiry(data: { propertyId: string; message: string 
     if (recipientEmail) {
       await sendEmail({
         to: recipientEmail,
-        subject: "🏠 New Inquiry on Your Listing - Campus Tent",
+        subject: "New Inquiry on Your Listing - Campus Tent",
         html: `
           <div style="font-family: Arial, sans-serif; max-width: 600px; padding: 20px; border: 1px solid #eaeaea; border-radius: 8px;">
             <h2 style="color: rgb(2, 53, 28);">New Inquiry Received!</h2>
@@ -452,12 +514,41 @@ export async function getAgentDashboardData() {
       take: 5,
     });
 
+    // Query inspection payments for this agent (50% escrow earnings)
+    const inspectionPayments = await prisma.inspectionPayment.findMany({
+      where: { agentId: user.id, status: "PAID" },
+    });
+
+    const disbursedPayments = inspectionPayments.filter((p) => p.payoutStatus === "DISBURSED");
+    const pendingPayments = inspectionPayments.filter((p) => p.payoutStatus === "PENDING");
+
+    const disbursedEarnings = disbursedPayments.length * 5000;
+    const pendingEscrow = pendingPayments.length * 5000;
+    const totalEarnings = inspectionPayments.length * 5000;
+
+    const bankConfigured = Boolean(user.agentProfile?.recipientCode || user.agentProfile?.accountNumber);
+    const bankInfo = {
+      bankName: user.agentProfile?.bankName || null,
+      accountNumber: user.agentProfile?.accountNumber || null,
+      accountName: user.agentProfile?.accountName || null,
+    };
+
     return {
       success: true,
       stats: {
         totalProperties,
         activeListings,
         newInquiries,
+      },
+      earnings: {
+        disbursedEarnings,
+        pendingEscrow,
+        totalEarnings,
+        totalInspections: inspectionPayments.length,
+        disbursedCount: disbursedPayments.length,
+        pendingCount: pendingPayments.length,
+        bankConfigured,
+        bankInfo,
       },
       recentInquiries: recentChatRooms.map((room) => ({
         id: room.id,
@@ -667,6 +758,7 @@ export async function getAgentProperties() {
     const properties = await prisma.property.findMany({
       where: {
         agentId: user.agentProfile.id,
+        deletedAt: null,
       },
       orderBy: {
         createdAt: "desc",
@@ -690,7 +782,7 @@ export async function togglePropertyAvailability(propertyId: string) {
       where: { id: propertyId },
     });
 
-    if (!property) {
+    if (!property || property.deletedAt) {
       return { success: false, error: "Property not found." };
     }
 
@@ -706,9 +798,13 @@ export async function togglePropertyAvailability(propertyId: string) {
       return { success: false, error: "Unauthorized." };
     }
 
+    const newAvailability = !property.isAvailable;
     const updated = await prisma.property.update({
       where: { id: propertyId },
-      data: { isAvailable: !property.isAvailable },
+      data: { 
+        isAvailable: newAvailability,
+        statusChangedAt: new Date(),
+      },
     });
 
     // Record audit activity log
@@ -744,7 +840,7 @@ export async function updateProperty(propertyId: string, data: any) {
       where: { id: propertyId },
     });
 
-    if (!existingProperty) {
+    if (!existingProperty || existingProperty.deletedAt) {
       return { success: false, error: "Property not found." };
     }
 
@@ -853,7 +949,7 @@ export async function deleteProperty(propertyId: string) {
       where: { id: propertyId },
     });
 
-    if (!property) {
+    if (!property || property.deletedAt) {
       return { success: false, error: "Property not found." };
     }
 
@@ -869,8 +965,12 @@ export async function deleteProperty(propertyId: string) {
       return { success: false, error: "Unauthorized." };
     }
 
-    await prisma.property.delete({
+    await prisma.property.update({
       where: { id: propertyId },
+      data: {
+        deletedAt: new Date(),
+        isAvailable: false,
+      },
     });
 
     // Record audit activity log

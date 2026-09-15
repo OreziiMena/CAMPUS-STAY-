@@ -20,10 +20,10 @@ export default function RentSplitter({
     <section id="splitter" className="content-card rent-splitter-card">
       <div className="splitter-header">
         <div>
-          <h3 className="card-title-heading" style={{ margin: "0 0 4px 0" }}>
+          <h3 className="card-title-heading">
              Split Rent with Roommates
           </h3>
-          <p style={{ margin: 0, fontSize: "0.85rem", color: "#4b5563" }}>
+          <p className="splitter-subheading">
             Calculate exactly how much each person pays when sharing this hostel.
           </p>
         </div>
@@ -51,7 +51,7 @@ export default function RentSplitter({
           <div className="splitter-result-label">Your Rent Share</div>
           <div className="splitter-result-amount">
             ₦{rentPerPerson.toLocaleString()}
-            <span style={{ fontSize: "0.75rem", fontWeight: "400", color: "#64748b" }}> / yr</span>
+            <span className="splitter-per-year"> / yr</span>
           </div>
         </div>
 
@@ -64,7 +64,7 @@ export default function RentSplitter({
 
         <div className="splitter-result-box highlight">
           <div className="splitter-result-label">Your Total Initial Outlay</div>
-          <div className="splitter-result-amount" style={{ color: "rgb(2, 53, 28)" }}>
+          <div className="splitter-result-amount">
             ₦{totalPerPerson.toLocaleString()}
           </div>
         </div>
@@ -73,7 +73,7 @@ export default function RentSplitter({
       {/* Find Roommate Link */}
       <div className="find-roommate-callout">
         <p className="find-roommate-text">
-          <i className="fas fa-handshake" style={{ marginRight: "6px" }}></i>
+          <i className="fas fa-handshake"></i>
           Need someone to split this exact room with? Connect with verified students looking for roommates.
         </p>
         <Link href="/roommates" className="find-roommate-link">

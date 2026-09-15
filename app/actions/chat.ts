@@ -13,6 +13,13 @@ export async function getOrCreateChatRoom(propertyId: string) {
       return { success: false, error: "Please log in to contact listing owner." };
     }
 
+    if (user.role === "AGENT") {
+      return {
+        success: false,
+        error: "Agents cannot initiate chats or inquire about listings. Messaging is reserved for students.",
+      };
+    }
+
     if (user.role === "STUDENT" && !user.studentProfile?.isVerified) {
       return { success: false, error: "Verification required. You must verify your student profile to message listing owners." };
     }
@@ -36,6 +43,25 @@ export async function getOrCreateChatRoom(propertyId: string) {
 
     if (recipientUserId === user.id) {
       return { success: false, error: "You cannot message yourself about your own listing." };
+    }
+
+    // If this is an agent listing and the current user is a student, verify inspection payment
+    if (property.agentId && user.role === "STUDENT") {
+      const payment = await prisma.inspectionPayment.findFirst({
+        where: {
+          studentId: user.id,
+          propertyId: propertyId,
+          status: "PAID",
+        },
+      });
+
+      if (!payment) {
+        return {
+          success: false,
+          error: "Inspection fee required. Please pay the ₦10,000 inspection fee before messaging the agent.",
+          requiresPayment: true,
+        };
+      }
     }
 
     // Find or create chat room between student initiator and agent recipient for this property
@@ -104,27 +130,44 @@ export async function getChatRooms() {
       
       let targetName = "Campus Tent User";
       let targetRoleLabel = "User";
+      let targetRole: "AGENT" | "STUDENT" = "STUDENT";
+      let targetAvatarText = "U";
       let targetVerified = false;
 
       if (isInitiator) {
         // Recipient is room.agent
         if (room.agent.studentProfile) {
+          const username = room.agent.studentProfile.username || room.agent.email.split("@")[0] || "student";
           targetName = room.agent.studentProfile.username 
             ? `@${room.agent.studentProfile.username}` 
-            : "Student";
+            : (room.agent.studentProfile.fullName || "Student");
           targetRoleLabel = "Student Partner";
+          targetRole = "STUDENT";
+          targetAvatarText = (username.replace(/^@/, "")[0] || "S").toUpperCase();
           targetVerified = room.agent.studentProfile.isVerified;
         } else {
-          targetName = room.agent.agentProfile?.fullName || "Agent";
+          const agentName = room.agent.agentProfile?.fullName || "Agent";
+          targetName = agentName;
           targetRoleLabel = "Agent";
+          targetRole = "AGENT";
+          targetAvatarText = agentName
+            .trim()
+            .split(/\s+/)
+            .filter(Boolean)
+            .map((n) => n[0].toUpperCase())
+            .slice(0, 2)
+            .join("") || "A";
           targetVerified = room.agent.agentProfile?.isVerified || false;
         }
       } else {
         // Recipient is room.student
+        const username = room.student.studentProfile?.username || room.student.email.split("@")[0] || "student";
         targetName = room.student.studentProfile?.username 
           ? `@${room.student.studentProfile.username}` 
-          : "Student";
+          : (room.student.studentProfile?.fullName || "Student");
         targetRoleLabel = "Student";
+        targetRole = "STUDENT";
+        targetAvatarText = (username.replace(/^@/, "")[0] || "S").toUpperCase();
         targetVerified = room.student.studentProfile?.isVerified || false;
       }
 
@@ -135,6 +178,8 @@ export async function getChatRooms() {
         propertyImage: room.property.images?.[0] || "https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?ixlib=rb-4.0.3",
         targetName,
         targetRoleLabel,
+        targetRole,
+        targetAvatarText,
         targetVerified,
         lastMessage: room.messages?.[0]?.text || "No messages yet",
         lastMessageAt: room.messages?.[0]?.createdAt || room.createdAt,

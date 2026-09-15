@@ -166,7 +166,7 @@ export default function BroadcastTab({
           </div>
           <div className="broadcast-alert-content">
             <h4 className={`broadcast-alert-heading ${broadcastResult.success ? "success" : "error"}`}>
-              {broadcastResult.isTest ? "Test Email Delivered Successfully! 🎉" : "Broadcast Completed!"}
+              {broadcastResult.isTest ? "Test Email Delivered Successfully!" : "Broadcast Completed!"}
             </h4>
             <p className={`broadcast-alert-body ${broadcastResult.success ? "success" : "error"}`}>
               {broadcastResult.message || (
@@ -269,7 +269,7 @@ export default function BroadcastTab({
           </label>
           <input
             type="text"
-            placeholder="e.g. Verified Hostels & Bedsitters Live for New Academic Session!"
+            placeholder="Enter broadcast subject line..."
             value={broadcastSubject}
             onChange={(e) => setBroadcastSubject(e.target.value)}
             className="broadcast-text-input"
@@ -283,7 +283,7 @@ export default function BroadcastTab({
           </label>
           <input
             type="text"
-            placeholder="e.g. Secure verified accommodation near campus today"
+            placeholder="Enter announcement headline or banner subtitle..."
             value={broadcastHeadline}
             onChange={(e) => setBroadcastHeadline(e.target.value)}
             className="broadcast-text-input-sub"
@@ -317,7 +317,7 @@ export default function BroadcastTab({
               <label className="broadcast-cta-sublabel">Button Text</label>
               <input
                 type="text"
-                placeholder="e.g. Explore Hostels"
+                placeholder="Button label text"
                 value={broadcastCtaText}
                 onChange={(e) => setBroadcastCtaText(e.target.value)}
                 className="broadcast-cta-field"
@@ -327,7 +327,7 @@ export default function BroadcastTab({
               <label className="broadcast-cta-sublabel">Destination URL</label>
               <input
                 type="text"
-                placeholder="https://campustent.com/explore"
+                placeholder="https://..."
                 value={broadcastCtaUrl}
                 onChange={(e) => setBroadcastCtaUrl(e.target.value)}
                 className="broadcast-cta-field"

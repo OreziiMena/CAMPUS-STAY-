@@ -11,14 +11,19 @@ export default function Navbar() {
   const router = useRouter();
   const pathname = usePathname();
   const [user, setUser] = useState<any>(null);
+  const [isAuthChecking, setIsAuthChecking] = useState(true);
   const [isProfileDropdownOpen, setIsProfileDropdownOpen] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
 
   useEffect(() => {
     const checkUser = async () => {
-      const currentUser = await getCurrentUser();
-      setUser(currentUser);
+      try {
+        const currentUser = await getCurrentUser();
+        setUser(currentUser);
+      } finally {
+        setIsAuthChecking(false);
+      }
     };
     checkUser();
   }, [pathname]);
@@ -87,9 +92,10 @@ export default function Navbar() {
         <ul>
           <li><Link className={isActive("/landing")} href="/landing">Home</Link></li>
           <li><Link className={isActive("/about")} href="/about">About</Link></li>
-          <li><Link className={isActive("/")} href="/">Find Apartment</Link></li>
+          <li><Link className={isActive("/")} href="/">Find Apartment</Link></li> 
           <li><Link className={isActive("/roommates")} href="/roommates">Find Roommate</Link></li>
           <li><Link className={isActive("/support")} href="/support">Support</Link></li>
+          <li><Link className={isActive("/ambassador")} href="/ambassador">Ambassadors</Link></li>
         </ul>
         <div className={styles.userDropdownWrapper}>
           {user ? (
@@ -100,21 +106,21 @@ export default function Navbar() {
                 e.stopPropagation();
               }}
             >
-              <div className="explore-profile-info" style={{ position: "relative" }}>
+              <div className={`explore-profile-info ${styles.profileInfoWrap}`}>
                 <img 
                   src={`https://ui-avatars.com/api/?name=${encodeURIComponent(user.name || "Student")}&background=02351c&color=fff`} 
                   alt="Profile" 
                   className="explore-profile-pic" 
                 />
                 {unreadCount > 0 && (
-                  <span style={{ position: "absolute", top: "-2px", left: "26px", width: "10px", height: "10px", backgroundColor: "#d32f2f", borderRadius: "50%", border: "2px solid white" }}></span>
+                  <span className={styles.unreadDot}></span>
                 )}
-                <span className={`explore-profile-name ${styles.profileName}`} style={{ display: "inline-flex", alignItems: "center", gap: "4px" }}>
+                <span className={`explore-profile-name ${styles.profileName} ${styles.profileNameWrap}`}>
                   {user.name ? user.name.split(" ")[0] : "Student"}
                   {((user.role === "STUDENT" && user.studentProfile?.isVerified) || 
                     (user.role === "AGENT" && user.agentProfile?.isVerified) || 
                     (user.role === "ADMIN")) && (
-                    <i className="fas fa-check-circle verified-icon" style={{ color: "#2e7d32", fontSize: "0.8rem" }} title="Verified User"></i>
+                    <i className={`fas fa-check-circle verified-icon ${styles.verifiedUserIcon}`} title="Verified User"></i>
                   )}
                 </span>
                 <i className={`fas fa-chevron-down ${styles.chevronIcon}`}></i>
@@ -124,12 +130,12 @@ export default function Navbar() {
                 <Link href={user.role === "AGENT" ? "/agent-dashboard/profile" : (user.role === "ADMIN" ? "/admin-dashboard" : "/student-dashboard/profile")} className="explore-dropdown-item">
                   <i className={`fas fa-user ${styles.icon16}`}></i> PROFILE
                 </Link>
-                 <Link href="/chat" className="explore-dropdown-item" style={{ display: "flex", justifyContent: "space-between", alignItems: "center", width: "100%" }}>
-                  <span style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                 <Link href="/chat" className={`explore-dropdown-item ${styles.chatDropdownLink}`}>
+                  <span className={styles.chatLabelWrap}>
                     <i className={`fas fa-comments ${styles.icon16}`}></i> INBOX CHAT
                   </span>
                   {unreadCount > 0 && (
-                    <span style={{ backgroundColor: "#d32f2f", color: "white", borderRadius: "50%", padding: "2px 6px", fontSize: "10px", fontWeight: "bold" }}>
+                    <span className={styles.unreadBadge}>
                       {unreadCount}
                     </span>
                   )}
@@ -161,10 +167,11 @@ export default function Navbar() {
                 </button>
               </div>
             </div>
+          ) : isAuthChecking ? (
+            <div className={`nav-auth-group ${styles.authGroup} ${styles.authGroupPlaceholder}`}></div>
           ) : (
             <div className={`nav-auth-group ${styles.authGroup}`}>
-              <Link href="/auth/rolepick" className={`start-btn nav-btn ${styles.authBtnLink}`}>Sign up</Link>
-              <Link href="/auth/login" className={`start-btn nav-btn ${styles.authBtnLink}`}>Log in</Link>
+              <Link href="/auth/rolepick" className={`start-btn nav-btn ${styles.authBtnLink}`}>Get started</Link>
             </div>
           )}
         </div>

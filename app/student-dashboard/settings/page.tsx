@@ -205,7 +205,6 @@ export default function StudentSettings() {
                       <i 
                         className={`fas ${showCurrentPassword ? "fa-eye-slash" : "fa-eye"} toggle-password`} 
                         onClick={() => setShowCurrentPassword(!showCurrentPassword)}
-                        style={{ cursor: "pointer" }}
                       ></i>
                     </div>
                   </div>
@@ -221,7 +220,6 @@ export default function StudentSettings() {
                       <i 
                         className={`fas ${showNewPassword ? "fa-eye-slash" : "fa-eye"} toggle-password`} 
                         onClick={() => setShowNewPassword(!showNewPassword)}
-                        style={{ cursor: "pointer" }}
                       ></i>
                     </div>
                   </div>

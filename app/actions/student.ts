@@ -9,6 +9,7 @@ import { validateFileBuffer, generateSecureFilename } from "@/lib/upload-validat
 import { sendEmail } from "@/lib/email";
 import { checkRateLimit } from "@/lib/rate-limit";
 import { escapeHtml } from "@/lib/email-sanitizer";
+import { triggerPusherEvent } from "@/lib/pusher";
 
 function getFriendlyErrorMessage(err: any, defaultMsg: string): string {
   console.error("Student server action error:", err);
@@ -172,6 +173,10 @@ export async function getStudentDashboardData() {
           propertyId: v.property.id,
           agentName: agentName,
           agentVerified: agentVerified,
+          agentInspectionStatus: v.agentInspectionStatus,
+          agentInspectionNotes: v.agentInspectionNotes,
+          studentConfirmedTour: v.studentConfirmedTour,
+          studentConfirmedAt: v.studentConfirmedAt,
         };
       }),
     };
@@ -342,6 +347,13 @@ export async function scheduleViewing(data: {
       return { success: false, error: "Please log in to schedule a viewing appointment." };
     }
 
+    if (user.role === "AGENT") {
+      return {
+        success: false,
+        error: "Agents cannot book or schedule inspections on listings. Only student accounts can book inspections.",
+      };
+    }
+
     const { propertyId, dateTime, note } = data;
     const appointmentDate = new Date(dateTime);
 
@@ -393,6 +405,29 @@ export async function scheduleViewing(data: {
       return { success: false, error: "Listing host not found." };
     }
 
+    if (recipientId === user.id) {
+      return { success: false, error: "You cannot schedule an inspection on your own property." };
+    }
+
+    // Check inspection payment if this is an agent listing
+    if (property.agentId && user.role === "STUDENT") {
+      const payment = await prisma.inspectionPayment.findFirst({
+        where: {
+          studentId: user.id,
+          propertyId: propertyId,
+          status: "PAID",
+        },
+      });
+
+      if (!payment) {
+        return {
+          success: false,
+          error: "Inspection fee required. Please pay the ₦10,000 inspection fee on the listing page before scheduling your appointment.",
+          requiresPayment: true,
+        };
+      }
+    }
+
     const viewing = await prisma.viewing.create({
       data: {
         studentId: user.id,
@@ -416,15 +451,69 @@ export async function scheduleViewing(data: {
       minute: "2-digit",
     });
 
-    // 1. Create simulated chat inquiry in system
+    // 1. Post inspection booking directly to the Agent in ChatRoom & broadcast via Pusher
+    const chatMessageText = `📅 [INSPECTION APPOINTMENT BOOKED]\nI have scheduled an in-person inspection tour for "${property.title}".\n• Date & Time: ${formattedTime}\n• Student Phone: ${studentPhone}${note ? `\n• Note: "${note}"` : ""}`;
+
+    let chatRoom = await prisma.chatRoom.findFirst({
+      where: {
+        studentId: user.id,
+        agentId: recipientId,
+        propertyId: property.id,
+      },
+    });
+
+    if (!chatRoom) {
+      chatRoom = await prisma.chatRoom.create({
+        data: {
+          studentId: user.id,
+          agentId: recipientId,
+          propertyId: property.id,
+        },
+      });
+    }
+
+    const chatMsg = await prisma.message.create({
+      data: {
+        chatRoomId: chatRoom.id,
+        senderId: user.id,
+        text: chatMessageText,
+      },
+      include: {
+        sender: {
+          select: {
+            id: true,
+            role: true,
+          },
+        },
+      },
+    });
+
+    // Real-time broadcast to ChatRoom & Agent
+    await triggerPusherEvent(`chat-${chatRoom.id}`, "new-message", {
+      id: chatMsg.id,
+      chatRoomId: chatRoom.id,
+      senderId: chatMsg.senderId,
+      text: chatMsg.text,
+      createdAt: chatMsg.createdAt.toISOString(),
+      senderName: studentName,
+    }).catch((e) => console.warn("Pusher chat broadcast failed:", e));
+
+    await triggerPusherEvent(`user-${recipientId}`, "new-unread-message", {
+      chatRoomId: chatRoom.id,
+      propertyTitle: property.title,
+      senderName: studentName,
+      messageText: chatMessageText,
+    }).catch((e) => console.warn("Pusher agent alert broadcast failed:", e));
+
+    // Also record Inquiry for system logging
     await prisma.inquiry.create({
       data: {
         studentId: user.id,
         propertyId,
         agentId: recipientId,
-        message: `Hi, I have requested an in-person viewing appointment for your property "${property.title}" on ${formattedTime}.${note ? ` Note: "${note}"` : ""}`,
+        message: chatMessageText,
       },
-    });
+    }).catch(() => null);
 
     // 2. Send instant Email Notification to the Agent / Landlord via Resend
     if (recipientUser?.email) {
@@ -435,16 +524,16 @@ export async function scheduleViewing(data: {
             <p style="color: #cbd5e1; font-size: 14px; margin: 6px 0 0 0;">New Physical Viewing Request</p>
           </div>
           <div style="padding: 24px;">
-            <h2 style="color: #02351c; font-size: 18px; margin-top: 0;">📅 Viewing Requested</h2>
+            <h2 style="color: #02351c; font-size: 18px; margin-top: 0;">Viewing Requested</h2>
             <p style="color: #4b5563; font-size: 14px; line-height: 1.6;">
               A student has requested to inspect your hostel listing in person.
             </p>
             <div style="background-color: #f8fafc; border-left: 4px solid #d35400; padding: 16px; border-radius: 6px; margin: 20px 0;">
-              <p style="margin: 0 0 8px 0; font-size: 14px; color: #1e293b;"><strong>🏠 Property:</strong> ${propertyTitle}</p>
-              <p style="margin: 0 0 8px 0; font-size: 14px; color: #1e293b;"><strong>🕒 Date & Time:</strong> ${formattedTime}</p>
-              <p style="margin: 0 0 8px 0; font-size: 14px; color: #1e293b;"><strong>👤 Student:</strong> ${studentName}</p>
-              <p style="margin: 0 0 8px 0; font-size: 14px; color: #1e293b;"><strong>📞 Phone:</strong> ${studentPhone}</p>
-              <p style="margin: 0; font-size: 14px; color: #1e293b;"><strong>📧 Email:</strong> ${safeUserEmail}</p>
+              <p style="margin: 0 0 8px 0; font-size: 14px; color: #1e293b;"><strong>Property:</strong> ${propertyTitle}</p>
+              <p style="margin: 0 0 8px 0; font-size: 14px; color: #1e293b;"><strong>Date & Time:</strong> ${formattedTime}</p>
+              <p style="margin: 0 0 8px 0; font-size: 14px; color: #1e293b;"><strong>Student:</strong> ${studentName}</p>
+              <p style="margin: 0 0 8px 0; font-size: 14px; color: #1e293b;"><strong>Phone:</strong> ${studentPhone}</p>
+              <p style="margin: 0; font-size: 14px; color: #1e293b;"><strong>Email:</strong> ${safeUserEmail}</p>
             </div>
             <div style="text-align: center; margin-top: 24px;">
               <a href="https://campustent.com/chat" style="background-color: #02351c; color: #ffffff; padding: 12px 24px; border-radius: 8px; text-decoration: none; font-weight: 600; font-size: 14px; display: inline-block;">
@@ -460,8 +549,9 @@ export async function scheduleViewing(data: {
 
       sendEmail({
         to: recipientUser.email,
-        subject: `📅 New Viewing Request: ${property.title}`,
+        subject: `New Viewing Request: ${property.title}`,
         html: agentHtml,
+        isInspectionMessage: true,
       }).catch((e) => console.error("Agent viewing email notification failed:", e));
     }
 
@@ -474,13 +564,13 @@ export async function scheduleViewing(data: {
             <p style="color: #cbd5e1; font-size: 14px; margin: 6px 0 0 0;">Viewing Request Received</p>
           </div>
           <div style="padding: 24px;">
-            <h2 style="color: #02351c; font-size: 18px; margin-top: 0;">✅ Viewing Request Sent</h2>
+            <h2 style="color: #02351c; font-size: 18px; margin-top: 0;">Viewing Request Sent</h2>
             <p style="color: #4b5563; font-size: 14px; line-height: 1.6;">
               Hi ${studentName}, your inspection request for <strong>"${propertyTitle}"</strong> has been sent to the agent.
             </p>
             <div style="background-color: #ecfdf5; border-left: 4px solid #10b981; padding: 16px; border-radius: 6px; margin: 20px 0;">
-              <p style="margin: 0 0 8px 0; font-size: 14px; color: #065f46;"><strong>🕒 Scheduled Time:</strong> ${formattedTime}</p>
-              <p style="margin: 0; font-size: 14px; color: #065f46;"><strong>📍 Location:</strong> ${propertyLocation}</p>
+              <p style="margin: 0 0 8px 0; font-size: 14px; color: #065f46;"><strong>Scheduled Time:</strong> ${formattedTime}</p>
+              <p style="margin: 0; font-size: 14px; color: #065f46;"><strong>Location:</strong> ${propertyLocation}</p>
             </div>
             <p style="color: #4b5563; font-size: 13.5px;">
               The agent will contact you shortly or reply via Campus Tent Chat to confirm details.
@@ -491,8 +581,9 @@ export async function scheduleViewing(data: {
 
       sendEmail({
         to: user.email,
-        subject: `✅ Viewing Request Sent: ${property.title}`,
+        subject: `Viewing Request Sent: ${property.title}`,
         html: studentHtml,
+        isInspectionMessage: true,
       }).catch((e) => console.error("Student viewing confirmation email failed:", e));
     }
 
@@ -510,6 +601,7 @@ export async function getRoommateProfiles() {
     const roommateProfiles = await prisma.studentProfile.findMany({
       where: {
         isVerified: true,
+        user: { deletedAt: null },
       },
       include: {
         user: {
@@ -561,6 +653,7 @@ export async function getRoommateListings() {
     const listings = await prisma.property.findMany({
       where: {
         isRoommateOption: true,
+        deletedAt: null,
       },
       include: {
         student: {
@@ -615,6 +708,80 @@ export async function getRoommateListings() {
     };
   } catch (err: any) {
     return { success: false, error: getFriendlyErrorMessage(err, "Failed to load roommate listings.") };
+  }
+}
+
+export async function getStudentPaymentHistory() {
+  try {
+    const user = await getCurrentUser();
+    if (!user || user.role !== "STUDENT") {
+      return { success: false, error: "Unauthorized. Student access required." };
+    }
+
+    const payments = await prisma.inspectionPayment.findMany({
+      where: {
+        studentId: user.id,
+      },
+      include: {
+        property: true,
+        agent: {
+          include: {
+            agentProfile: true,
+            studentProfile: true,
+          },
+        },
+      },
+      orderBy: { paidAt: "desc" },
+    });
+
+    return {
+      success: true,
+      payments: payments.map((p) => {
+        let agentName = "Campus Tent Agent";
+        let agentPhone = p.agent.phone || "Not provided";
+        let agentEmail = p.agent.email;
+        let agencyName = p.agent.agentProfile?.agencyName || undefined;
+
+        if (p.agent.agentProfile?.fullName) {
+          agentName = p.agent.agentProfile.fullName;
+        } else if (p.agent.studentProfile?.fullName) {
+          agentName = p.agent.studentProfile.fullName;
+        }
+
+        return {
+          id: p.id,
+          amount: p.amount,
+          currency: p.currency,
+          status: p.status,
+          reference: p.reference,
+          paidAt: p.paidAt.toISOString(),
+          createdAt: p.createdAt.toISOString(),
+          disputeReason: p.disputeReason,
+          disputedAt: p.disputedAt?.toISOString() || null,
+          refundReason: p.refundReason,
+          refundedAt: p.refundedAt?.toISOString() || null,
+          payoutStatus: p.payoutStatus,
+          property: {
+            id: p.property.id,
+            title: p.property.title,
+            location: p.property.location,
+            university: p.property.university,
+            price: p.property.price,
+            thumbnail: p.property.images?.[0] || null,
+          },
+          agent: {
+            id: p.agent.id,
+            name: agentName,
+            agencyName: agencyName,
+            email: agentEmail,
+            phone: agentPhone,
+          },
+        };
+      }),
+    };
+  } catch (err: any) {
+    console.error("getStudentPaymentHistory error:", err);
+    return { success: false, error: getFriendlyErrorMessage(err, "Failed to load payment history.") };
   }
 }
 

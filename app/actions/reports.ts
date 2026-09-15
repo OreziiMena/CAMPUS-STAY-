@@ -128,23 +128,30 @@ export async function moderateReport(
 
       if (deleteListing) {
         if (report.propertyId) {
-          // Delete flagged property listing
-          await prisma.property.delete({
+          // Soft-delete flagged property listing
+          await prisma.property.update({
             where: { id: report.propertyId },
+            data: {
+              deletedAt: new Date(),
+              isAvailable: false,
+            },
           });
         } else if (report.roommateId) {
-          // Reset roommate profile verification or disable roommate option
-          // (Instead of deleting the entire student profile, we delete the roommate property listing)
-          // Let's find roommate property listings matching this student profile id
+          // Find and soft-delete roommate listing matching this student profile id
           const roommateListing = await prisma.property.findFirst({
             where: {
               studentId: report.roommateId,
               isRoommateOption: true,
+              deletedAt: null,
             },
           });
           if (roommateListing) {
-            await prisma.property.delete({
+            await prisma.property.update({
               where: { id: roommateListing.id },
+              data: {
+                deletedAt: new Date(),
+                isAvailable: false,
+              },
             });
           }
         }

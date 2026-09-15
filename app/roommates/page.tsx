@@ -64,12 +64,23 @@ export default function RoommatesDirectory() {
   const [maxBudget, setMaxBudget] = useState("");
 
   // Pagination state
-  const [visibleCount, setVisibleCount] = useState(10);
+  const [currentPage, setCurrentPage] = useState(1);
+  const PAGE_SIZE = 9;
 
   // Reset pagination when filters change
   useEffect(() => {
-    setVisibleCount(10);
+    setCurrentPage(1);
   }, [searchQuery, university, gender, maxBudget]);
+
+  const handlePageChange = (newPage: number) => {
+    setCurrentPage(newPage);
+    const element = document.querySelector(".roommates-container");
+    if (element) {
+      element.scrollIntoView({ behavior: "smooth" });
+    } else {
+      window.scrollTo({ top: 350, behavior: "smooth" });
+    }
+  };
 
   // Upload Roommate Listing Form State
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -80,12 +91,13 @@ export default function RoommatesDirectory() {
   const [formDistance, setFormDistance] = useState("");
   const [formDescription, setFormDescription] = useState("");
   const [formAmenities, setFormAmenities] = useState({
-    bed: true,
-    bath: false,
-    prepaid: true,
-    water: true,
-    gated: true,
-    security: false
+    fencedCompound: false,
+    gatedCompound: true,
+    wardrobe: false,
+    pvc: false,
+    pop: false,
+    prepaidMeter: false,
+    runningWater: true,
   });
   const [formImages, setFormImages] = useState<string[]>([]);
   const [formImageFiles, setFormImageFiles] = useState<File[]>([]);
@@ -200,12 +212,13 @@ export default function RoommatesDirectory() {
     setIsSubmitting(true);
 
     const activeAmenities: string[] = [];
-    if (formAmenities.bed) activeAmenities.push("Shared Bedspace");
-    if (formAmenities.bath) activeAmenities.push("Shared Bathroom");
-    if (formAmenities.prepaid) activeAmenities.push("Prepaid Meter");
-    if (formAmenities.water) activeAmenities.push("Borehole Water");
-    if (formAmenities.gated) activeAmenities.push("Gated Compound");
-    if (formAmenities.security) activeAmenities.push("Security Guard");
+    if (formAmenities.fencedCompound) activeAmenities.push("Fenced compound");
+    if (formAmenities.gatedCompound) activeAmenities.push("Gated compound");
+    if (formAmenities.wardrobe) activeAmenities.push("Wardrobe");
+    if (formAmenities.pvc) activeAmenities.push("PVC");
+    if (formAmenities.pop) activeAmenities.push("POP");
+    if (formAmenities.prepaidMeter) activeAmenities.push("Prepaid meter");
+    if (formAmenities.runningWater) activeAmenities.push("running water");
 
     try {
       let uploadedUrls: string[] = [];
@@ -397,7 +410,7 @@ export default function RoommatesDirectory() {
                 <label>Max Rent (₦)</label>
                 <input
                   type="number"
-                  placeholder="e.g. 150000"
+                  placeholder="Max budget (₦)"
                   value={maxBudget}
                   onChange={(e) => setMaxBudget(e.target.value)}
                   className="filter-input"
@@ -424,7 +437,9 @@ export default function RoommatesDirectory() {
             </div>
           ) : (
             <div className="roommates-grid">
-              {filteredListings.slice(0, visibleCount).map((listing) => {
+              {filteredListings
+                .slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE)
+                .map((listing) => {
                 const student = listing.student;
                 const initials = student?.fullName
                   ? (student.fullName.split(" ")[0]?.charAt(0) || "") +
@@ -432,51 +447,40 @@ export default function RoommatesDirectory() {
                   : "ST";
 
                 return (
-                  <div key={listing.id} className="roommate-card" style={{ display: "flex", flexDirection: "column", justifyContent: "space-between", background: "white", borderRadius: "16px", padding: "16px", boxShadow: "0 4px 20px rgba(0,0,0,0.06)", border: "1px solid #f0f0f0" }}>
+                  <div key={listing.id} className="roommate-card roommate-card-custom">
                     <div>
                       {/* Roommate Header on top */}
-                      <div className="roommate-card-header" style={{ display: "flex", alignItems: "center", gap: "10px", margin: "0 0 12px 0" }}>
-                        <div className="roommate-avatar" style={{ 
-                          width: "36px", 
-                          height: "36px", 
-                          borderRadius: "50%", 
-                          backgroundColor: "#e8f0fe", 
-                          color: "#1a73e8", 
-                          display: "flex", 
-                          alignItems: "center", 
-                          justifyContent: "center", 
-                          fontSize: "0.85rem", 
-                          fontWeight: "bold" 
-                        }}>
+                      <div className="roommate-card-header roommate-card-header-row">
+                        <div className="roommate-avatar roommate-avatar-custom">
                           {initials.toUpperCase()}
                         </div>
-                        <div className="roommate-header-info" style={{ display: "flex", flexDirection: "column" }}>
-                          <h3 style={{ fontSize: "0.95rem", fontWeight: "700", color: "#333", margin: 0, display: "flex", alignItems: "center", gap: "4px" }}>
+                        <div className="roommate-header-info roommate-header-info-col">
+                          <h3 className="roommate-owner-name">
                             {student ? `@${student.username}` : "Student"}
                             {student?.isVerified && (
-                              <i className="fas fa-check-circle verified-badge" style={{ color: "#2e7d32", fontSize: "0.85rem" }} title="Verified Student"></i>
+                              <i className="fas fa-check-circle verified-badge roommate-verified-badge" title="Verified Student"></i>
                             )}
                           </h3>
-                          <span style={{ fontSize: "0.75rem", color: "#666" }}>
+                          <span className="roommate-gender-dept">
                             <i className="fas fa-graduation-cap"></i> {listing.university}
                           </span>
                         </div>
-                        <div style={{ marginLeft: "auto", display: "flex", gap: "4px" }}>
-                          <span style={{ background: "#e6f4ea", color: "#137333", padding: "2px 6px", borderRadius: "4px", fontSize: "0.65rem", fontWeight: "bold" }}>ACTIVE</span>
-                          <span style={{ background: "#f1f3f4", color: "#3c4043", padding: "2px 6px", borderRadius: "4px", fontSize: "0.65rem", fontWeight: "bold" }}>ROOMMATE</span>
+                        <div className="roommate-badges-right">
+                          <span className="roommate-badge-active">ACTIVE</span>
+                          <span className="roommate-badge-tag">ROOMMATE</span>
                         </div>
                       </div>
 
                       {/* Image / Video in middle */}
                       {listing.images && listing.images.length > 0 && (
-                        <div style={{ position: "relative", width: "100%", height: "160px", borderRadius: "12px", overflow: "hidden", marginBottom: "12px" }}>
+                        <div className="roommate-media-box">
                           {(() => {
                             const mediaUrl = listing.images[0];
                             const isVideo = mediaUrl.match(/\.(mp4|webm|ogg|mov|mkv)(\?.*)?$/i);
                             return isVideo ? (
                               <video 
                                 src={mediaUrl} 
-                                style={{ width: "100%", height: "100%", objectFit: "cover" }} 
+                                className="roommate-media-img" 
                                 muted 
                                 loop 
                                 playsInline 
@@ -486,49 +490,49 @@ export default function RoommatesDirectory() {
                               <img 
                                 src={mediaUrl} 
                                 alt={listing.title} 
-                                style={{ width: "100%", height: "100%", objectFit: "cover" }} 
+                                className="roommate-media-img" 
                               />
                             );
                           })()}
-                          <span style={{ position: "absolute", bottom: "8px", left: "8px", background: "rgba(2, 53, 28, 0.85)", color: "white", padding: "4px 8px", borderRadius: "6px", fontSize: "0.7rem", fontWeight: "bold" }}>
+                          <span className="roommate-media-type-badge">
                             {listing.hostelType}
                           </span>
                         </div>
                       )}
 
                       {/* Price large and bold */}
-                      <h3 style={{ fontSize: "1.3rem", fontWeight: "800", color: "#000", margin: "0 0 6px 0" }}>
+                      <h3 className="roommate-price-title">
                         ₦{listing.price.toLocaleString()}
                       </h3>
 
                       {/* Title & Duration */}
-                      <p style={{ fontSize: "0.85rem", color: "#333", fontWeight: "600", margin: "0 0 4px 0", lineBreak: "anywhere" }}>
+                      <p className="roommate-listing-title">
                         {listing.title}
                       </p>
 
-                      <p style={{ fontSize: "0.75rem", color: "#777", margin: "0 0 10px 0" }}>
+                      <p className="roommate-desc-snippet">
                         {new Date(listing.createdAt).toLocaleDateString()} - 12 Months
                       </p>
 
                       {/* Location Pill Container */}
-                      <div style={{ display: "inline-flex", alignItems: "center", gap: "5px", backgroundColor: "#f1f3f4", padding: "4px 10px", borderRadius: "20px", fontSize: "0.75rem", color: "#444", margin: "0 0 12px 0" }}>
-                        <i className="fas fa-map-marker-alt" style={{ color: "#7e6b01" }}></i>
+                      <div className="roommate-location-pill">
+                        <i className="fas fa-map-marker-alt roommate-map-icon"></i>
                         <span>{listing.location} ({listing.distance})</span>
                       </div>
 
                       {student && (
-                         <div className="roommate-compatibility-section" style={{ padding: "5px 0", margin: "0 0 15px 0" }}>
-                           <div className="compatibility-tags" style={{ display: "flex", flexWrap: "wrap", gap: "4px" }}>
-                             <span className="comp-tag" style={{ fontSize: "0.7rem", padding: "2px 6px" }}>
+                         <div className="roommate-compatibility-section roommate-compat-section">
+                           <div className="compatibility-tags roommate-compat-tags">
+                             <span className="comp-tag roommate-comp-tag">
                                <i className="fas fa-venus-mars"></i> Gender: {student.gender}
                              </span>
-                             <span className="comp-tag" style={{ fontSize: "0.7rem", padding: "2px 6px", backgroundColor: "#fdf2f2", color: "#9b1c1c", borderColor: "#f8b4b4" }}>
+                             <span className="comp-tag roommate-comp-tag danger">
                                <i className="fas fa-heart"></i> Prefers: {listing.genderPreference}
                              </span>
-                             <span className="comp-tag" style={{ fontSize: "0.7rem", padding: "2px 6px" }}>
+                             <span className="comp-tag roommate-comp-tag">
                                <i className="fas fa-sparkles"></i> {student.cleanliness}
                              </span>
-                             <span className="comp-tag" style={{ fontSize: "0.7rem", padding: "2px 6px" }}>
+                             <span className="comp-tag roommate-comp-tag">
                                <i className="fas fa-moon"></i> {student.sleepSchedule}
                              </span>
                            </div>
@@ -536,11 +540,10 @@ export default function RoommatesDirectory() {
                       )}
                     </div>
 
-                    <div className="roommate-card-footer" style={{ display: "flex", gap: "10px", marginTop: "12px" }}>
+                    <div className="roommate-card-footer roommate-card-footer-row">
                       <button
                         onClick={() => setSelectedRoommateDetails(listing)}
-                        className="message-roommate-btn"
-                        style={{ backgroundColor: "#f1f3f4", color: "#333", border: "1px solid #ddd", width: "50%" }}
+                        className="message-roommate-btn roommate-chat-btn-custom"
                       >
                         <i className="fas fa-info-circle"></i> View Details
                       </button>
@@ -548,9 +551,8 @@ export default function RoommatesDirectory() {
                         onClick={() =>
                           student && handleMessageRoommate(student.userId)
                         }
-                        className="message-roommate-btn"
+                        className="message-roommate-btn roommate-view-btn-custom"
                         disabled={!student}
-                        style={{ width: "50%" }}
                       >
                         <i className="fas fa-comments"></i> Message
                       </button>
@@ -561,35 +563,45 @@ export default function RoommatesDirectory() {
             </div>
           )}
 
-            {filteredListings.length > visibleCount && (
-              <div style={{ display: "flex", justifyContent: "center", margin: "40px 0" }}>
-                <button
-                  type="button"
-                  onClick={() => setVisibleCount((prev) => prev + 10)}
-                  style={{
-                    padding: "12px 30px",
-                    borderRadius: "30px",
-                    backgroundColor: "white",
-                    border: "2px solid rgb(2, 53, 28)",
-                    color: "rgb(2, 53, 28)",
-                    fontWeight: "700",
-                    fontFamily: "'Poppins', sans-serif",
-                    cursor: "pointer",
-                    transition: "all 0.2s ease",
-                  }}
-                  onMouseOver={(e) => {
-                    e.currentTarget.style.backgroundColor = "rgb(2, 53, 28)";
-                    e.currentTarget.style.color = "white";
-                  }}
-                  onMouseOut={(e) => {
-                    e.currentTarget.style.backgroundColor = "white";
-                    e.currentTarget.style.color = "rgb(2, 53, 28)";
-                  }}
-                >
-                  Load More Listings
-                </button>
-              </div>
-            )}
+          {/* Numbered Pagination (9 per page) */}
+          {Math.ceil(filteredListings.length / PAGE_SIZE) > 1 && (
+            <div className="roommate-pagination-wrapper">
+              {/* Previous Button */}
+              <button
+                type="button"
+                onClick={() => handlePageChange(Math.max(currentPage - 1, 1))}
+                disabled={currentPage === 1}
+                className="roommate-page-nav-btn"
+              >
+                <i className="fas fa-chevron-left roommate-page-nav-icon"></i> Prev
+              </button>
+
+              {/* Page Numbers */}
+              {Array.from({ length: Math.ceil(filteredListings.length / PAGE_SIZE) }, (_, i) => i + 1).map((p) => {
+                const isActive = p === currentPage;
+                return (
+                  <button
+                    key={p}
+                    type="button"
+                    onClick={() => handlePageChange(p)}
+                    className={`roommate-page-num-btn ${isActive ? "active" : ""}`}
+                  >
+                    {p}
+                  </button>
+                );
+              })}
+
+              {/* Next Button */}
+              <button
+                type="button"
+                onClick={() => handlePageChange(Math.min(currentPage + 1, Math.ceil(filteredListings.length / PAGE_SIZE)))}
+                disabled={currentPage === Math.ceil(filteredListings.length / PAGE_SIZE)}
+                className="roommate-page-nav-btn"
+              >
+                Next <i className="fas fa-chevron-right roommate-page-nav-icon"></i>
+              </button>
+            </div>
+          )}
         </section>
       </main>
 
@@ -708,9 +720,9 @@ export default function RoommatesDirectory() {
             <div className="safety-tip-content">
               <h4 className="safety-tip-title">Safety Tip</h4>
               <p className="safety-tip-text">
-                For your safety, always check for the <span style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", position: "relative", verticalAlign: "middle", margin: "0 2px" }}>
-                  <i className="fas fa-certificate" style={{ color: "rgb(2, 53, 28)", fontSize: "1.1rem" }}></i>
-                  <i className="fas fa-check" style={{ position: "absolute", color: "white", fontSize: "0.45rem" }}></i>
+                For your safety, always check for the <span className="roommate-safety-badge-wrap">
+                  <i className="fas fa-certificate roommate-safety-cert-icon"></i>
+                  <i className="fas fa-check roommate-safety-check-icon"></i>
                 </span> verification badge, it means the student has completed ID verification.
               </p>
               <Link href="/student-dashboard/profile" className="safety-tip-link">
@@ -720,16 +732,7 @@ export default function RoommatesDirectory() {
 
             <button 
               onClick={() => setShowSafetyTip(false)} 
-              style={{ 
-                position: "absolute", 
-                top: "10px", 
-                right: "10px", 
-                border: "none", 
-                background: "none", 
-                cursor: "pointer", 
-                color: "#888", 
-                fontSize: "1rem" 
-              }}
+              className="roommate-safety-close-btn"
             >
               &times;
             </button>
@@ -747,23 +750,23 @@ export default function RoommatesDirectory() {
             
             <div className="modal-body">
               {formSuccess ? (
-                <div style={{ textAlign: "center", padding: "40px 20px" }}>
-                  <i className="fas fa-check-circle" style={{ color: "#2e7d32", fontSize: "3.5rem", marginBottom: "15px" }}></i>
-                  <h3 style={{ color: "rgb(2, 53, 28)", margin: "0 0 10px 0" }}>Listing Posted Successfully!</h3>
-                  <p style={{ color: "#666", margin: 0 }}>Your roommate listing is now active in the directory.</p>
+                <div className="roommate-form-success-box">
+                  <i className="fas fa-check-circle roommate-form-success-icon"></i>
+                  <h3 className="roommate-form-success-title">Listing Posted Successfully!</h3>
+                  <p className="roommate-form-success-sub">Your roommate listing is now active in the directory.</p>
                 </div>
               ) : (
                 <form onSubmit={handleFormSubmit}>
                   {formError && (
-                    <div style={{ backgroundColor: "#fde8e8", border: "1px solid #f8b4b4", color: "#9b1c1c", padding: "12px", borderRadius: "8px", marginBottom: "20px", fontSize: "0.85rem", display: "flex", alignItems: "center", gap: "8px" }}>
+                    <div className="roommate-form-error-banner">
                       <i className="fas fa-exclamation-circle"></i> {formError}
                     </div>
                   )}
 
                   {currentUser && !currentUser.studentProfile?.isVerified && (
-                    <div style={{ backgroundColor: "#fff8e1", border: "1px solid #ffe082", color: "#b78103", padding: "12px", borderRadius: "8px", marginBottom: "20px", fontSize: "0.85rem", display: "flex", alignItems: "flex-start", gap: "8px" }}>
-                      <i className="fas fa-exclamation-triangle" style={{ marginTop: "3px" }}></i>
-                      <p style={{ margin: 0 }}>
+                    <div className="roommate-form-unverified-banner">
+                      <i className="fas fa-exclamation-triangle roommate-unverified-icon"></i>
+                      <p className="roommate-unverified-p">
                         <strong>Note:</strong> Your student profile is currently unverified. While you can post listings, you must verify your profile in settings before other students can message you.
                       </p>
                     </div>
@@ -774,7 +777,7 @@ export default function RoommatesDirectory() {
                     <input 
                       type="text" 
                       id="form-title" 
-                      placeholder="e.g. Need a neat roommate to split rent at Ugbomro" 
+                      placeholder="Enter roommate listing title" 
                       value={formTitle}
                       onChange={(e) => setFormTitle(e.target.value)}
                       className="form-input-custom"
@@ -799,7 +802,7 @@ export default function RoommatesDirectory() {
                       <input 
                         type="number" 
                         id="form-price" 
-                        placeholder="e.g. 75000" 
+                        placeholder="Shared rent amount" 
                         value={formPrice}
                         onChange={(e) => setFormPrice(e.target.value)}
                         className="form-input-custom"
@@ -814,7 +817,7 @@ export default function RoommatesDirectory() {
                       <input 
                         type="text" 
                         id="form-location" 
-                        placeholder="e.g. FUPRE Road, Effurun" 
+                        placeholder="Apartment street address or area" 
                         value={formLocation}
                         onChange={(e) => setFormLocation(e.target.value)}
                         className="form-input-custom"
@@ -827,7 +830,7 @@ export default function RoommatesDirectory() {
                       <input 
                         type="text" 
                         id="form-distance" 
-                        placeholder="e.g. 5 mins walk to campus" 
+                        placeholder="Estimated walking time to campus gate" 
                         value={formDistance}
                         onChange={(e) => setFormDistance(e.target.value)}
                         className="form-input-custom"
@@ -869,28 +872,32 @@ export default function RoommatesDirectory() {
                     <label>Included Features & Amenities</label>
                     <div className="checkbox-grid-custom">
                       <label className="checkbox-label-custom">
-                        <input type="checkbox" checked={formAmenities.bed} onChange={() => handleFormCheckboxChange("bed")} />
-                        Shared Bedspace
+                        <input type="checkbox" checked={formAmenities.fencedCompound} onChange={() => handleFormCheckboxChange("fencedCompound")} />
+                        Fenced compound
                       </label>
                       <label className="checkbox-label-custom">
-                        <input type="checkbox" checked={formAmenities.bath} onChange={() => handleFormCheckboxChange("bath")} />
-                        Shared Bath
+                        <input type="checkbox" checked={formAmenities.gatedCompound} onChange={() => handleFormCheckboxChange("gatedCompound")} />
+                        Gated compound
                       </label>
                       <label className="checkbox-label-custom">
-                        <input type="checkbox" checked={formAmenities.prepaid} onChange={() => handleFormCheckboxChange("prepaid")} />
-                        Prepaid Meter
+                        <input type="checkbox" checked={formAmenities.wardrobe} onChange={() => handleFormCheckboxChange("wardrobe")} />
+                        Wardrobe
                       </label>
                       <label className="checkbox-label-custom">
-                        <input type="checkbox" checked={formAmenities.water} onChange={() => handleFormCheckboxChange("water")} />
-                        Running Water
+                        <input type="checkbox" checked={formAmenities.pvc} onChange={() => handleFormCheckboxChange("pvc")} />
+                        PVC
                       </label>
                       <label className="checkbox-label-custom">
-                        <input type="checkbox" checked={formAmenities.gated} onChange={() => handleFormCheckboxChange("gated")} />
-                        Gated Compound
+                        <input type="checkbox" checked={formAmenities.pop} onChange={() => handleFormCheckboxChange("pop")} />
+                        POP
                       </label>
                       <label className="checkbox-label-custom">
-                        <input type="checkbox" checked={formAmenities.security} onChange={() => handleFormCheckboxChange("security")} />
-                        Security Guard
+                        <input type="checkbox" checked={formAmenities.prepaidMeter} onChange={() => handleFormCheckboxChange("prepaidMeter")} />
+                        Prepaid meter
+                      </label>
+                      <label className="checkbox-label-custom">
+                        <input type="checkbox" checked={formAmenities.runningWater} onChange={() => handleFormCheckboxChange("runningWater")} />
+                        running water
                       </label>
                     </div>
                   </div>
@@ -902,18 +909,18 @@ export default function RoommatesDirectory() {
                       multiple 
                       accept="image/*"
                       onChange={handleFormUpload}
-                      style={{ fontSize: "0.85rem", color: "#666" }}
+                      className="roommate-file-input"
                     />
                     
                     {formImages.length > 0 && (
-                      <div style={{ display: "flex", gap: "10px", flexWrap: "wrap", marginTop: "12px" }}>
+                      <div className="roommate-preview-grid">
                         {formImages.map((src, i) => (
-                          <div key={i} style={{ position: "relative", width: "70px", height: "70px", borderRadius: "6px", overflow: "hidden", border: "1px solid #ddd" }}>
-                            <img src={src} alt="Preview" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                          <div key={i} className="roommate-preview-wrap">
+                            <img src={src} alt="Preview" className="roommate-preview-img" />
                             <button 
                               type="button" 
                               onClick={() => removeFormImage(i)}
-                              style={{ position: "absolute", top: "2px", right: "2px", backgroundColor: "rgba(0,0,0,0.6)", color: "white", border: "none", borderRadius: "50%", width: "16px", height: "16px", fontSize: "10px", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}
+                              className="roommate-preview-del-btn"
                             >
                               &times;
                             </button>
@@ -942,16 +949,16 @@ export default function RoommatesDirectory() {
 
       {selectedRoommateDetails && (
         <div className="modal-overlay" onClick={() => setSelectedRoommateDetails(null)}>
-          <div className="modal-card" onClick={(e) => e.stopPropagation()} style={{ maxWidth: "600px" }}>
+          <div className="modal-card roommate-details-modal-card" onClick={(e) => e.stopPropagation()}>
             <div className="modal-header">
               <h2>
                 <i className="fas fa-user-circle"></i> Roommate & Space Details
               </h2>
-              <div style={{ display: "flex", alignItems: "center", gap: "16px" }}>
+              <div className="roommate-header-actions">
                 <button 
                   title="Report Listing" 
                   onClick={() => setIsReportModalOpen(true)}
-                  style={{ background: "none", border: "none", color: "#d9534f", cursor: "pointer", fontSize: "1.15rem", display: "flex", alignItems: "center" }}
+                  className="roommate-report-trigger-btn"
                 >
                   <i className="fas fa-flag"></i>
                 </button>
@@ -960,48 +967,37 @@ export default function RoommatesDirectory() {
                 </button>
               </div>
             </div>
-            <div className="modal-body" style={{ padding: "24px" }}>
+            <div className="modal-body roommate-details-body">
               {/* Profile Card Header */}
-              <div style={{ display: "flex", alignItems: "center", gap: "16px", marginBottom: "20px" }}>
-                <div style={{
-                  width: "50px",
-                  height: "50px",
-                  borderRadius: "50%",
-                  backgroundColor: "#e8f0fe",
-                  color: "#1a73e8",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  fontSize: "1.2rem",
-                  fontWeight: "bold"
-                }}>
+              <div className="roommate-details-header-row">
+                <div className="roommate-details-avatar">
                   {((selectedRoommateDetails.student?.fullName?.split(" ")[0]?.charAt(0) || "") +
                     (selectedRoommateDetails.student?.fullName?.split(" ")[1]?.charAt(0) || "") || "ST").toUpperCase()}
                 </div>
                 <div>
-                  <h3 style={{ margin: 0, fontSize: "1.1rem", fontWeight: "700", display: "flex", alignItems: "center", gap: "6px" }}>
+                  <h3 className="roommate-details-name">
                     {selectedRoommateDetails.student?.fullName || "Student"}
                     {selectedRoommateDetails.student?.isVerified && (
-                      <i className="fas fa-check-circle verified-badge" style={{ color: "#2e7d32", fontSize: "0.95rem" }}></i>
+                      <i className="fas fa-check-circle verified-badge roommate-verified-badge"></i>
                     )}
                   </h3>
-                  <p style={{ margin: "2px 0 0 0", fontSize: "0.8rem", color: "#666" }}>
+                  <p className="roommate-details-handle">
                     @{selectedRoommateDetails.student?.username || "student"} &bull; {selectedRoommateDetails.university}
                   </p>
                 </div>
               </div>
 
               {/* Space details */}
-              <div style={{ marginBottom: "20px" }}>
+              <div className="roommate-details-amenities-wrap">
                 {selectedRoommateDetails.images && selectedRoommateDetails.images.length > 0 && (
-                  <div style={{ width: "100%", height: "220px", borderRadius: "12px", overflow: "hidden", marginBottom: "16px" }}>
+                  <div className="roommate-details-media-box">
                     {(() => {
                       const mediaUrl = selectedRoommateDetails.images[0];
                       const isVideo = mediaUrl.match(/\.(mp4|webm|ogg|mov|mkv)(\?.*)?$/i);
                       return isVideo ? (
                         <video 
                           src={mediaUrl} 
-                          style={{ width: "100%", height: "100%", objectFit: "cover" }} 
+                          className="roommate-details-media-el" 
                           controls
                           playsInline 
                         />
@@ -1009,55 +1005,55 @@ export default function RoommatesDirectory() {
                         <img 
                           src={mediaUrl} 
                           alt={selectedRoommateDetails.title} 
-                          style={{ width: "100%", height: "100%", objectFit: "cover" }} 
+                          className="roommate-details-media-el" 
                         />
                       );
                     })()}
                   </div>
                 )}
                 
-                <span style={{ background: "#e8f7f5", color: "rgb(2, 53, 28)", padding: "4px 8px", borderRadius: "6px", fontSize: "0.75rem", fontWeight: "bold" }}>
+                <span className="roommate-details-hostel-tag">
                   {selectedRoommateDetails.hostelType}
                 </span>
                 
-                <h4 style={{ margin: "8px 0 4px 0", fontSize: "1.15rem", fontWeight: "700", color: "#333" }}>
+                <h4 className="roommate-details-title">
                   {selectedRoommateDetails.title}
                 </h4>
                 
-                <h3 style={{ margin: "0 0 12px 0", fontSize: "1.4rem", fontWeight: "800", color: "rgb(2, 53, 28)" }}>
-                  ₦{selectedRoommateDetails.price.toLocaleString()} <span style={{ fontSize: "0.85rem", fontWeight: "normal", color: "#666" }}>/ year</span>
+                <h3 className="roommate-details-price">
+                  ₦{selectedRoommateDetails.price.toLocaleString()} <span className="roommate-details-price-unit">/ year</span>
                 </h3>
 
-                <div style={{ display: "flex", flexWrap: "wrap", gap: "8px", marginBottom: "16px" }}>
-                  <div style={{ display: "inline-flex", alignItems: "center", gap: "6px", backgroundColor: "#f1f3f4", padding: "6px 12px", borderRadius: "20px", fontSize: "0.8rem", color: "#444" }}>
-                    <i className="fas fa-map-marker-alt" style={{ color: "#7e6b01" }}></i>
+                <div className="roommate-details-pill-row">
+                  <div className="roommate-details-pill">
+                    <i className="fas fa-map-marker-alt roommate-details-pill-icon-loc"></i>
                     <span>{selectedRoommateDetails.location}</span>
                   </div>
-                  <div style={{ display: "inline-flex", alignItems: "center", gap: "6px", backgroundColor: "#f1f3f4", padding: "6px 12px", borderRadius: "20px", fontSize: "0.8rem", color: "#444" }}>
-                    <i className="far fa-clock" style={{ color: "#1a73e8" }}></i>
+                  <div className="roommate-details-pill">
+                    <i className="far fa-clock roommate-details-pill-icon-clock"></i>
                     <span>{selectedRoommateDetails.distance}</span>
                   </div>
                 </div>
 
-                <h5 style={{ margin: "0 0 6px 0", fontSize: "0.85rem", textTransform: "uppercase", color: "#888", letterSpacing: "0.5px" }}>Description</h5>
-                <p style={{ margin: "0 0 20px 0", fontSize: "0.9rem", color: "#444", lineHeight: "1.5", whiteSpace: "pre-wrap" }}>
+                <h5 className="roommate-details-sec-heading">Description</h5>
+                <p className="roommate-details-desc-text">
                   {selectedRoommateDetails.description}
                 </p>
               </div>
 
               {/* Roommate compatibility preferences */}
               {selectedRoommateDetails.student && (
-                <div style={{ backgroundColor: "#fcfcfc", border: "1px solid #f0f0f0", borderRadius: "12px", padding: "16px", marginBottom: "20px" }}>
-                  <h5 style={{ margin: "0 0 10px 0", fontSize: "0.8rem", textTransform: "uppercase", color: "#888", letterSpacing: "0.5px" }}>Roommate Preference</h5>
-                  <div style={{ display: "flex", flexWrap: "wrap", gap: "8px" }}>
-                    <span style={{ backgroundColor: "white", border: "1px solid #e0e0e0", color: "#444", padding: "6px 12px", borderRadius: "8px", fontSize: "0.8rem", display: "inline-flex", alignItems: "center", gap: "6px" }}>
-                      <i className="fas fa-venus-mars" style={{ color: "rgb(2, 53, 28)" }}></i> Gender: {selectedRoommateDetails.student.gender}
+                <div className="roommate-details-pref-box">
+                  <h5 className="roommate-details-pref-heading">Roommate Preference</h5>
+                  <div className="roommate-details-pref-wrap">
+                    <span className="roommate-details-pref-tag">
+                      <i className="fas fa-venus-mars"></i> Gender: {selectedRoommateDetails.student.gender}
                     </span>
-                    <span style={{ backgroundColor: "white", border: "1px solid #e0e0e0", color: "#444", padding: "6px 12px", borderRadius: "8px", fontSize: "0.8rem", display: "inline-flex", alignItems: "center", gap: "6px" }}>
-                      <i className="fas fa-sparkles" style={{ color: "rgb(2, 53, 28)" }}></i> Cleanliness: {selectedRoommateDetails.student.cleanliness}
+                    <span className="roommate-details-pref-tag">
+                      <i className="fas fa-sparkles"></i> Cleanliness: {selectedRoommateDetails.student.cleanliness}
                     </span>
-                    <span style={{ backgroundColor: "white", border: "1px solid #e0e0e0", color: "#444", padding: "6px 12px", borderRadius: "8px", fontSize: "0.8rem", display: "inline-flex", alignItems: "center", gap: "6px" }}>
-                      <i className="fas fa-moon" style={{ color: "rgb(2, 53, 28)" }}></i> Sleep: {selectedRoommateDetails.student.sleepSchedule}
+                    <span className="roommate-details-pref-tag">
+                      <i className="fas fa-moon"></i> Sleep: {selectedRoommateDetails.student.sleepSchedule}
                     </span>
                   </div>
                 </div>
@@ -1065,11 +1061,11 @@ export default function RoommatesDirectory() {
 
               {/* Included Amenities */}
               {selectedRoommateDetails.amenities && selectedRoommateDetails.amenities.length > 0 && (
-                <div style={{ marginBottom: "24px" }}>
-                  <h5 style={{ margin: "0 0 8px 0", fontSize: "0.85rem", textTransform: "uppercase", color: "#888", letterSpacing: "0.5px" }}>Included Amenities</h5>
-                  <div style={{ display: "flex", flexWrap: "wrap", gap: "8px" }}>
+                <div className="roommate-details-amenities-wrap">
+                  <h5 className="roommate-details-amenities-heading">Included Amenities</h5>
+                  <div className="roommate-details-pref-wrap">
                     {selectedRoommateDetails.amenities.map((amenity: string, idx: number) => (
-                      <span key={idx} style={{ backgroundColor: "#f8f9fa", border: "1px solid #eef0f2", color: "#555", padding: "4px 10px", borderRadius: "6px", fontSize: "0.78rem" }}>
+                      <span key={idx} className="roommate-details-amenity-pill">
                         {amenity}
                       </span>
                     ))}
@@ -1078,11 +1074,11 @@ export default function RoommatesDirectory() {
               )}
 
               {/* Footer action buttons */}
-              <div style={{ display: "flex", gap: "12px", marginTop: "24px" }}>
+              <div className="roommate-details-footer">
                 <button 
                   type="button" 
                   onClick={() => setSelectedRoommateDetails(null)} 
-                  style={{ flex: 1, backgroundColor: "#f1f3f4", color: "#3c4043", border: "none", padding: "12px", borderRadius: "8px", fontWeight: "600", cursor: "pointer" }}
+                  className="roommate-details-close-btn"
                 >
                   Close Details
                 </button>
@@ -1095,7 +1091,7 @@ export default function RoommatesDirectory() {
                     }
                   }} 
                   disabled={!selectedRoommateDetails.student}
-                  style={{ flex: 2, backgroundColor: "rgb(2, 53, 28)", color: "white", border: "none", padding: "12px", borderRadius: "8px", fontWeight: "600", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: "8px" }}
+                  className="roommate-details-msg-btn"
                 >
                   <i className="fas fa-comments"></i> Message Roommate
                 </button>
@@ -1105,63 +1101,31 @@ export default function RoommatesDirectory() {
         </div>
       )}
       {isReportModalOpen && (
-        <div style={{
-          position: "fixed",
-          top: 0,
-          left: 0,
-          right: 0,
-          bottom: 0,
-          backgroundColor: "rgba(0, 0, 0, 0.5)",
-          backdropFilter: "blur(4px)",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          zIndex: 1200,
-          padding: "20px",
-          fontFamily: "'Poppins', sans-serif"
-        }} onClick={() => setIsReportModalOpen(false)}>
-          <div style={{
-            background: "white",
-            borderRadius: "20px",
-            width: "100%",
-            maxWidth: "500px",
-            boxShadow: "0 15px 40px rgba(0, 0, 0, 0.15)",
-            border: "1px solid #eaeaea",
-            overflow: "hidden"
-          }} onClick={(e) => e.stopPropagation()}>
-            <div style={{
-              padding: "20px 24px",
-              borderBottom: "1px solid #eaeaea",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "space-between",
-              position: "sticky",
-              top: 0,
-              backgroundColor: "white",
-              zIndex: 10
-            }}>
-              <h2 style={{ fontSize: "1.3rem", fontWeight: "700", color: "#d9534f", margin: 0, display: "flex", alignItems: "center", gap: "10px" }}>
+        <div className="roommate-report-overlay" onClick={() => setIsReportModalOpen(false)}>
+          <div className="roommate-report-card" onClick={(e) => e.stopPropagation()}>
+            <div className="roommate-report-header">
+              <h2 className="roommate-report-title">
                 <i className="fas fa-flag"></i> Report Roommate
               </h2>
-              <button style={{ background: "none", border: "none", fontSize: "1.5rem", color: "#888", cursor: "pointer" }} onClick={() => setIsReportModalOpen(false)}>&times;</button>
+              <button className="roommate-report-close-btn" onClick={() => setIsReportModalOpen(false)}>&times;</button>
             </div>
 
-            <div style={{ padding: "24px" }}>
+            <div className="roommate-report-body">
               {reportSuccess ? (
-                <div style={{ textAlign: "center", padding: "20px 0" }}>
-                  <i className="fas fa-check-circle" style={{ color: "#2e7d32", fontSize: "3rem", marginBottom: "15px" }}></i>
-                  <p style={{ margin: 0, color: "#2e7d32", fontWeight: "bold" }}>{reportSuccess}</p>
+                <div className="roommate-report-success-box">
+                  <i className="fas fa-check-circle roommate-report-success-icon"></i>
+                  <p className="roommate-report-success-msg">{reportSuccess}</p>
                 </div>
               ) : (
-                <form onSubmit={handleReportSubmit} style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
+                <form onSubmit={handleReportSubmit} className="roommate-report-form">
                   {reportError && (
-                    <div style={{ backgroundColor: "#fde8e8", border: "1px solid #f8b4b4", color: "#9b1c1c", padding: "12px", borderRadius: "8px", fontSize: "0.85rem" }}>
+                    <div className="roommate-report-error">
                       {reportError}
                     </div>
                   )}
 
-                  <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
-                    <label style={{ fontSize: "0.85rem", fontWeight: "600", color: "#444" }}>Reason for Flagging *</label>
+                  <div className="roommate-report-field">
+                    <label className="roommate-report-label">Reason for Flagging *</label>
                     <SearchableSelect
                       options={REPORT_REASONS}
                       value={reportReason}
@@ -1172,33 +1136,33 @@ export default function RoommatesDirectory() {
                   </div>
 
                   {reportReason === "OTHER" && (
-                    <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
-                      <label style={{ fontSize: "0.85rem", fontWeight: "600", color: "#444" }}>Specify Reason *</label>
+                    <div className="roommate-report-field">
+                      <label className="roommate-report-label">Specify Reason *</label>
                       <input
                         type="text"
                         placeholder="Specify the reason..."
                         value={reportCustomReason}
                         onChange={(e) => setReportCustomReason(e.target.value)}
-                        style={{ padding: "12px", borderRadius: "8px", border: "1px solid #ddd", outline: "none" }}
+                        className="roommate-report-input"
                         required
                       />
                     </div>
                   )}
 
-                  <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
-                    <label style={{ fontSize: "0.85rem", fontWeight: "600", color: "#444" }}>Describe the issue *</label>
+                  <div className="roommate-report-field">
+                    <label className="roommate-report-label">Describe the issue *</label>
                     <textarea
                       placeholder="Please describe why you are reporting this roommate profile..."
                       value={reportDescription}
                       onChange={(e) => setReportDescription(e.target.value)}
-                      style={{ padding: "12px", borderRadius: "8px", border: "1px solid #ddd", minHeight: "100px", resize: "vertical", outline: "none" }}
+                      className="roommate-report-textarea"
                       required
                     />
                   </div>
 
-                  <div style={{ display: "flex", gap: "12px", marginTop: "12px" }}>
-                    <button type="button" style={{ flex: 1, backgroundColor: "#f1f3f4", color: "#3c4043", border: "none", padding: "12px", borderRadius: "8px", fontWeight: "600", cursor: "pointer" }} onClick={() => setIsReportModalOpen(false)}>Cancel</button>
-                    <button type="submit" disabled={isSubmittingReport} style={{ flex: 2, backgroundColor: "#d9534f", color: "white", border: "none", padding: "12px", borderRadius: "8px", fontWeight: "600", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: "8px" }}>
+                  <div className="roommate-report-actions">
+                    <button type="button" className="roommate-report-cancel-btn" onClick={() => setIsReportModalOpen(false)}>Cancel</button>
+                    <button type="submit" disabled={isSubmittingReport} className="roommate-report-submit-btn">
                       {isSubmittingReport ? <><i className="fas fa-spinner fa-spin"></i> Submitting...</> : "Submit Report"}
                     </button>
                   </div>

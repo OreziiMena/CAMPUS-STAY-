@@ -27,25 +27,25 @@ export default function WelcomeTour({ isOpen, onClose }: WelcomeTourProps) {
     {
       badge: "Welcome",
       icon: "fa-solid fa-house-chimney",
-      title: "Welcome to Campus Tent! 🏠",
+      title: "Welcome to Campus Tent!",
       text: "Finding secure, close-to-campus student housing and vetted roommates has never been this simple. Let us take you on a quick tour of our features!"
     },
     {
       badge: "Smart Distance",
       icon: "fa-solid fa-walking",
-      title: "Proximity First 📍",
+      title: "Proximity First",
       text: "No more long, stressful walks. Search student hostels filtered and sorted by their exact walking distance (minutes) from your school's gate!"
     },
     {
       badge: "Vetted Listings",
       icon: "fa-solid fa-user-shield",
-      title: "No Scams, Verified Hosts 🔒",
+      title: "No Scams, Verified Hosts",
       text: "Student safety is our top priority. We verify Identification documents to eliminate fraudulent listings completely."
     },
     {
       badge: "Roommates",
       icon: "fa-solid fa-user-group",
-      title: "Find Roommates & Split Rent 👥",
+      title: "Find Roommates & Split Rent",
       text: "Connect and split bills with fellow students. Match based on department, clean habits, sleeping cycles, and budget preferences!"
     }
   ];
@@ -78,7 +78,7 @@ export default function WelcomeTour({ isOpen, onClose }: WelcomeTourProps) {
         <div className="tour-header">
           <span className="tour-badge">{stepData.badge}</span>
           <button className="tour-skip-btn" onClick={handleComplete}>
-            Skip Tour <i className="fas fa-chevron-right" style={{ fontSize: "0.75rem", marginLeft: "2px" }}></i>
+            Skip Tour <i className="fas fa-chevron-right"></i>
           </button>
         </div>
 

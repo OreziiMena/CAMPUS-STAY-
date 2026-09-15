@@ -79,7 +79,6 @@ export async function proxy(request: NextRequest) {
   const isStudentRoute = pathname.startsWith("/student-dashboard");
   const isAdminRoute = pathname.startsWith("/admin-dashboard");
   const isChatRoute = pathname.startsWith("/chat");
-  const isAuthRoute = ["/auth/login", "/auth/student-signup", "/auth/agent-signup", "/auth/rolepick"].includes(pathname);
 
   const sessionCookie = request.cookies.get(SESSION_COOKIE_NAME);
   const payload = sessionCookie?.value ? await verifySessionInEdge(sessionCookie.value) : null;
@@ -113,17 +112,6 @@ export async function proxy(request: NextRequest) {
     }
   }
 
-  // 2. Auth Routes: Redirect already logged-in users to their dashboard
-  if (isAuthRoute && payload && payload.userId) {
-    if (payload.role === "ADMIN") {
-      return NextResponse.redirect(new URL("/admin-dashboard", request.url));
-    } else if (payload.role === "AGENT") {
-      return NextResponse.redirect(new URL("/agent-dashboard", request.url));
-    } else if (payload.role === "STUDENT") {
-      return NextResponse.redirect(new URL("/student-dashboard", request.url));
-    }
-  }
-
   return NextResponse.next();
 }
 
@@ -133,10 +121,6 @@ export const config = {
     "/student-dashboard/:path*",
     "/admin-dashboard/:path*",
     "/chat/:path*",
-    "/auth/login",
-    "/auth/student-signup",
-    "/auth/agent-signup",
-    "/auth/rolepick",
     "/login",
     "/signup",
   ],

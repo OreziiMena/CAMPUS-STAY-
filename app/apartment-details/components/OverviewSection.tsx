@@ -18,9 +18,6 @@ export default function OverviewSection({
   return (
     <section id="overview" className="content-card">
       <div className="badge-chips-row">
-        <span className="badge-chip verified">
-          <i className="fas fa-shield-alt"></i> Physically Verified Hostel
-        </span>
         <span className="badge-chip type">
           <i className="fas fa-door-open"></i> {property.hostelType || "Self-Contain"}
         </span>
@@ -46,7 +43,7 @@ export default function OverviewSection({
         <strong>Proximity:</strong> {property.distance}
       </div>
 
-      <h4 style={{ margin: "20px 0 6px 0", fontSize: "1.05rem", fontWeight: "700", color: "rgb(2, 53, 28)", fontFamily: "'Poppins', sans-serif" }}>
+      <h4 className="about-accommodation-heading">
         About this Accommodation
       </h4>
       <p className="description-body">{property.description}</p>

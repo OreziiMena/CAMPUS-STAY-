@@ -126,7 +126,7 @@ export default function AgentSignup() {
                   <input
                     type="text"
                     id="fullname"
-                    placeholder="E.g. Abed Jason"
+                    placeholder="Full Legal Name"
                     value={fullname}
                     onChange={(e) => setFullname(e.target.value)}
                     disabled={isLoading}
@@ -143,7 +143,7 @@ export default function AgentSignup() {
                     <input
                       type="email"
                       id="email"
-                      placeholder="agent@example.com"
+                      placeholder="Email address"
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
                       disabled={isLoading}
@@ -155,7 +155,7 @@ export default function AgentSignup() {
                     <input
                       type="tel"
                       id="phone"
-                      placeholder="08012345678"
+                      placeholder="Phone number"
                       value={phone}
                       onChange={(e) => setPhone(e.target.value)}
                       disabled={isLoading}
@@ -169,7 +169,7 @@ export default function AgentSignup() {
                   <input
                     type="text"
                     id="address"
-                    placeholder="E.g. 15 PTI Road, Effurun"
+                    placeholder="Office / Business address"
                     value={address}
                     onChange={(e) => setAddress(e.target.value)}
                     disabled={isLoading}

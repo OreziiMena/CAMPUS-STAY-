@@ -10,10 +10,13 @@ import {
   deleteUserByAdmin,
   getAdminAnalyticsData,
   getAgentActivityLogs,
+  getAdminAuditLogs,
   getBroadcastAudienceStats,
-  sendBroadcastEmailAction
+  sendBroadcastEmailAction,
+  getAdminPaymentsData
 } from "@/app/actions/admin";
 import { getPendingReports, moderateReport } from "@/app/actions/reports";
+import { adminGetAmbassadors } from "@/app/actions/ambassador";
 import "./admin-dashboard.css";
 
 // Modular Components
@@ -25,11 +28,14 @@ import AnalyticsTab from "./components/AnalyticsTab";
 import ReportsTab from "./components/ReportsTab";
 import ActivityLogsTab from "./components/ActivityLogsTab";
 import BroadcastTab, { BROADCAST_TEMPLATES } from "./components/BroadcastTab";
+import PaymentsTab, { PaymentRecord, PaymentMetrics } from "./components/PaymentsTab";
+import AmbassadorsTab from "./components/AmbassadorsTab";
 
 // Modals
 import DocViewerModal from "./components/modals/DocViewerModal";
 import EmailPreviewModal from "./components/modals/EmailPreviewModal";
 import BroadcastConfirmModal from "./components/modals/BroadcastConfirmModal";
+import TwoFactorSettingsModal from "@/components/TwoFactorSettingsModal";
 
 function AdminDashboardContent() {
   const searchParams = useSearchParams();
@@ -49,6 +55,8 @@ function AdminDashboardContent() {
   const [reports, setReports] = useState<any[]>([]);
   const [activityLogs, setActivityLogs] = useState<any[]>([]);
   const [activityFilter, setActivityFilter] = useState<string>("ALL");
+  const [adminAuditLogs, setAdminAuditLogs] = useState<any[]>([]);
+  const [show2FAModal, setShow2FAModal] = useState(false);
   
   // Tab control
   const [activeTab, setActiveTab] = useState("verifications");
@@ -91,6 +99,17 @@ function AdminDashboardContent() {
   const [showPreviewModal, setShowPreviewModal] = useState(false);
   const [showConfirmModal, setShowConfirmModal] = useState(false);
 
+  // Payments & Financial Monitoring States
+  const [payments, setPayments] = useState<PaymentRecord[]>([]);
+  const [paymentsMetrics, setPaymentsMetrics] = useState<PaymentMetrics>({
+    totalGross: 0,
+    platformShare: 0,
+    agentEscrowLiability: 0,
+    totalTransactions: 0,
+    paidCount: 0,
+  });
+  const [ambassadors, setAmbassadors] = useState<any[]>([]);
+
   const fetchQueues = async () => {
     setLoading(true);
     setError("");
@@ -120,12 +139,30 @@ function AdminDashboardContent() {
       setActivityLogs(activityRes.logs || []);
     }
 
+    const auditRes = await getAdminAuditLogs();
+    if (auditRes.success) {
+      setAdminAuditLogs(auditRes.logs || []);
+    }
+
     const broadcastStatsRes = await getBroadcastAudienceStats();
     if (broadcastStatsRes.success && broadcastStatsRes.stats) {
       setBroadcastStats(broadcastStatsRes.stats);
       if (broadcastStatsRes.adminEmail) {
         setAdminEmail(broadcastStatsRes.adminEmail);
       }
+    }
+
+    const paymentsRes = await getAdminPaymentsData();
+    if (paymentsRes.success) {
+      setPayments(paymentsRes.payments || []);
+      if (paymentsRes.metrics) {
+        setPaymentsMetrics(paymentsRes.metrics);
+      }
+    }
+
+    const ambassadorsRes = await adminGetAmbassadors();
+    if (ambassadorsRes.success) {
+      setAmbassadors(ambassadorsRes.ambassadors || []);
     }
 
     setLoading(false);
@@ -510,6 +547,30 @@ function AdminDashboardContent() {
     return name.includes(query) || email.includes(query) || desc.includes(query) || title.includes(query) || action.includes(query);
   });
 
+  const filteredPayments = payments.filter((p) => {
+    if (!searchQuery.trim()) return true;
+    const ref = p.reference?.toLowerCase() || "";
+    const studentName = p.student?.name?.toLowerCase() || "";
+    const studentEmail = p.student?.email?.toLowerCase() || "";
+    const studentPhone = p.student?.phone?.toLowerCase() || "";
+    const agentName = p.agent?.name?.toLowerCase() || "";
+    const agentEmail = p.agent?.email?.toLowerCase() || "";
+    const propertyTitle = p.property?.title?.toLowerCase() || "";
+    const propertyLocation = p.property?.location?.toLowerCase() || "";
+    const status = p.status?.toLowerCase() || "";
+    return (
+      ref.includes(query) ||
+      studentName.includes(query) ||
+      studentEmail.includes(query) ||
+      studentPhone.includes(query) ||
+      agentName.includes(query) ||
+      agentEmail.includes(query) ||
+      propertyTitle.includes(query) ||
+      propertyLocation.includes(query) ||
+      status.includes(query)
+    );
+  });
+
   return (
     <div>
       {error && (
@@ -534,12 +595,24 @@ function AdminDashboardContent() {
         pendingAgentsQueueCount={agents.length}
       />
 
-      {/* Dynamic Directory Search Bar */}
-      <AdminSearchBar
-        activeTab={activeTab}
-        searchQuery={searchQuery}
-        setSearchQuery={setSearchQuery}
-      />
+      {/* Dynamic Directory Search Bar & Security CTA */}
+      <div className="admin-search-security-row">
+        <div className="admin-search-wrapper">
+          <AdminSearchBar
+            activeTab={activeTab}
+            searchQuery={searchQuery}
+            setSearchQuery={setSearchQuery}
+          />
+        </div>
+        <button
+          type="button"
+          onClick={() => setShow2FAModal(true)}
+          className="admin-2fa-security-btn"
+        >
+          <i className="fas fa-shield-alt admin-2fa-shield-icon"></i>
+          Admin 2FA Security
+        </button>
+      </div>
 
       {loading ? (
         <div className="no-data-text">
@@ -611,6 +684,7 @@ function AdminDashboardContent() {
               filteredActivityLogs={filteredActivityLogs}
               activityFilter={activityFilter}
               setActivityFilter={setActivityFilter}
+              adminAuditLogs={adminAuditLogs}
             />
           )}
 
@@ -654,6 +728,24 @@ function AdminDashboardContent() {
               }}
             />
           )}
+
+          {/* 10. INSPECTION PAYMENTS & ESCROW REVENUE MONITORING TAB */}
+          {activeTab === "payments" && (
+            <PaymentsTab
+              payments={payments}
+              filteredPayments={filteredPayments}
+              metrics={paymentsMetrics}
+              onRefresh={fetchQueues}
+            />
+          )}
+
+          {/* 11. CAMPUS AMBASSADORS TAB */}
+          {activeTab === "ambassadors" && (
+            <AmbassadorsTab
+              ambassadors={ambassadors}
+              onRefresh={fetchQueues}
+            />
+          )}
         </>
       )}
 
@@ -684,6 +776,14 @@ function AdminDashboardContent() {
       <DocViewerModal
         activePreviewDoc={activePreviewDoc}
         onClose={() => setActivePreviewDoc(null)}
+      />
+
+      {/* Admin 2FA Settings Modal */}
+      <TwoFactorSettingsModal
+        isOpen={show2FAModal}
+        onClose={() => setShow2FAModal(false)}
+        userEmail={adminEmail || "support@campustent.com"}
+        userRole="ADMIN"
       />
     </div>
   );

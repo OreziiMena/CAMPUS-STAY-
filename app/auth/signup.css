@@ -420,3 +420,237 @@ html{
 .auth-success-title, .auth-success-text{
     font-family: 'Poppins', sans-serif;
 }
+
+/* OTP Verification Styles */
+.auth-container-narrow {
+    max-width: 450px !important;
+}
+
+.auth-card-verify {
+    padding: 35px 20px !important;
+    border-radius: 20px !important;
+    box-shadow: 0 10px 35px rgba(0,0,0,0.06) !important;
+    border: 1px solid #eaeaea !important;
+    background: white !important;
+    width: 100% !important;
+    box-sizing: border-box !important;
+}
+
+.verify-alert-error {
+    background-color: #fde8e8;
+    border: 1px solid #f8b4b4;
+    color: #9b1c1c;
+    padding: 12px;
+    border-radius: 8px;
+    margin-bottom: 20px;
+    font-size: 0.85rem;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.verify-alert-success {
+    background-color: #e6f4ea;
+    border: 1px solid #c4eed0;
+    color: #137333;
+    padding: 12px;
+    border-radius: 8px;
+    margin-bottom: 20px;
+    font-size: 0.85rem;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.verify-alert-debug {
+    background-color: #e8f0fe;
+    border: 1px solid #d2e3fc;
+    color: #1967d2;
+    padding: 12px;
+    border-radius: 8px;
+    margin-bottom: 20px;
+    font-size: 0.8rem;
+}
+
+.otp-grid {
+    display: grid;
+    grid-template-columns: repeat(6, 1fr);
+    gap: 8px;
+    margin: 24px 0;
+    width: 100%;
+}
+
+.otp-input {
+    width: 100%;
+    min-width: 0;
+    height: 52px;
+    border-radius: 10px;
+    border: 1.5px solid #ddd;
+    text-align: center;
+    font-size: 1.3rem;
+    font-weight: 800;
+    background-color: #fafafa;
+    outline: none;
+    transition: all 0.2s;
+    color: rgb(2, 53, 28);
+    box-sizing: border-box;
+}
+
+.otp-input:focus {
+    border-color: rgb(2, 53, 28);
+    box-shadow: 0 0 0 3px rgba(2, 53, 28, 0.1);
+    background-color: white;
+}
+
+.verify-btn {
+    width: 100%;
+    padding: 14px;
+    background-color: rgb(2, 53, 28);
+    color: white;
+    border: none;
+    border-radius: 10px;
+    font-size: 1rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.3s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+}
+
+.verify-btn:hover:not(:disabled) {
+    background-color: #047857;
+}
+
+.verify-footer {
+    text-align: center;
+    margin-top: 24px;
+    font-size: 0.85rem;
+    color: #666;
+}
+
+.countdown-text {
+    color: #999;
+}
+
+.resend-btn {
+    background: none;
+    border: none;
+    color: rgb(2, 53, 28);
+    font-weight: 700;
+    cursor: pointer;
+    padding: 0;
+    text-decoration: underline;
+    font-family: inherit;
+}
+
+.loading-fallback-container {
+    color: rgb(2, 53, 28);
+    font-size: 1.2rem;
+    font-weight: 600;
+}
+
+/* 2FA Login Form Styles */
+.two-factor-icon-badge {
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    background-color: rgba(5, 150, 105, 0.1);
+    color: #059669;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 12px auto;
+    font-size: 1.5rem;
+}
+
+.two-factor-desc {
+    font-size: 0.85rem !important;
+    color: #64748b !important;
+}
+
+.two-factor-code-input {
+    text-align: center;
+    font-size: 1.4rem !important;
+    letter-spacing: 6px;
+    font-weight: 700;
+    font-family: monospace !important;
+}
+
+.two-factor-code-input.backup-mode {
+    letter-spacing: 2px;
+}
+
+.two-factor-fallback-box {
+    margin-top: 18px;
+    border-top: 1px solid #e2e8f0;
+    padding-top: 14px;
+    font-size: 0.82rem;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    text-align: center;
+}
+
+.two-factor-link-primary {
+    background: none;
+    border: none;
+    color: #059669;
+    cursor: pointer;
+    font-weight: 600;
+    text-decoration: underline;
+    font-size: 0.82rem;
+    font-family: inherit;
+}
+
+.two-factor-link-secondary {
+    background: none;
+    border: none;
+    color: #64748b;
+    cursor: pointer;
+    font-size: 0.8rem;
+    font-family: inherit;
+}
+
+.two-factor-link-back {
+    background: none;
+    border: none;
+    color: #94a3b8;
+    cursor: pointer;
+    font-size: 0.78rem;
+    margin-top: 4px;
+    font-family: inherit;
+}
+
+.auth-loading-card {
+    text-align: center !important;
+    padding: 40px !important;
+}
+
+.auth-loading-spinner {
+    font-size: 2rem !important;
+    color: rgb(2, 53, 28) !important;
+}
+
+.auth-loading-text {
+    margin-top: 15px !important;
+}
+
+.optional-badge {
+    font-weight: 400;
+    color: #64748b;
+}
+
+.referral-valid-text {
+    color: #059669 !important;
+    font-weight: 600;
+}
+
+.suspense-loading-text {
+    text-align: center;
+    color: rgb(2, 53, 28);
+    font-family: 'Poppins', sans-serif;
+    font-weight: 600;
+    padding: 30px;
+}

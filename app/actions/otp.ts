@@ -16,7 +16,7 @@ function signSession(payload: any): string {
   return `${data}.${signature}`;
 }
 
-export async function generateOTP(email: string, purpose: "EMAIL_VERIFICATION" | "PASSWORD_RESET") {
+export async function generateOTP(email: string, purpose: "EMAIL_VERIFICATION" | "PASSWORD_RESET" | "TWO_FACTOR_AUTH") {
   try {
     const rateCheck = await checkRateLimit(`otp-${purpose}`, 3, 3);
     if (!rateCheck.success) {
@@ -55,29 +55,54 @@ export async function generateOTP(email: string, purpose: "EMAIL_VERIFICATION" |
   }
 }
 
-export async function verifyOTP(email: string, code: string, purpose: "EMAIL_VERIFICATION" | "PASSWORD_RESET") {
+export async function verifyOTP(email: string, code: string, purpose: "EMAIL_VERIFICATION" | "PASSWORD_RESET" | "TWO_FACTOR_AUTH") {
   try {
     const rateCheck = await checkRateLimit("verify-otp", 5, 5);
     if (!rateCheck.success) {
       return { success: false, error: rateCheck.error };
     }
 
+    const trimmedCode = (code || "").trim();
+
     const otpRecord = await prisma.oTP.findFirst({
       where: {
         email,
-        code,
         purpose,
       },
     });
 
     if (!otpRecord) {
-      return { success: false, error: "Invalid verification code." };
+      return { success: false, error: "Invalid verification code or code has expired." };
     }
 
     if (new Date() > otpRecord.expiresAt) {
       // Clean up expired record
       await prisma.oTP.delete({ where: { id: otpRecord.id } }).catch(() => {});
-      return { success: false, error: "Verification code has expired." };
+      return { success: false, error: "Verification code has expired. Please request a new code." };
+    }
+
+    // Brute-force lockout verification
+    if (otpRecord.code !== trimmedCode) {
+      const updatedAttempts = (otpRecord.attempts || 0) + 1;
+      const maxAttempts = otpRecord.maxAttempts || 3;
+
+      if (updatedAttempts >= maxAttempts) {
+        await prisma.oTP.delete({ where: { id: otpRecord.id } }).catch(() => {});
+        return {
+          success: false,
+          error: "Too many failed attempts. This OTP has been invalidated for your security. Please request a fresh verification code.",
+        };
+      } else {
+        await prisma.oTP.update({
+          where: { id: otpRecord.id },
+          data: { attempts: updatedAttempts },
+        });
+        const remaining = maxAttempts - updatedAttempts;
+        return {
+          success: false,
+          error: `Invalid verification code. ${remaining} attempt${remaining !== 1 ? "s" : ""} remaining.`,
+        };
+      }
     }
 
     // Code is valid 
@@ -94,6 +119,7 @@ export async function verifyOTP(email: string, code: string, purpose: "EMAIL_VER
     const token = signSession({
       userId: user.id,
       role: user.role,
+      tokenVersion: user.tokenVersion || 1,
       expiresAt: Date.now() + 60 * 60 * 24 * 7 * 1000, // 7 days in milliseconds
     });
     cookieStore.set(SESSION_COOKIE_NAME, token, {
@@ -125,7 +151,7 @@ async function sendOTPEmail(email: string, code: string) {
   try {
     const res = await sendEmail({
       to: email,
-      subject: `🔐 Your Campus Tent Verification Code: ${code}`,
+      subject: `Your Campus Tent Verification Code: ${code}`,
       html: `
         <!DOCTYPE html>
         <html>
@@ -152,7 +178,7 @@ async function sendOTPEmail(email: string, code: string) {
               </div>
               
               <p style="color: #6b7280; font-size: 13px; line-height: 1.5; margin-bottom: 8px;">
-                ⏳ This code will expire in <strong>10 minutes</strong>.
+                This code will expire in <strong>10 minutes</strong>.
               </p>
               <p style="color: #9ca3af; font-size: 12px; line-height: 1.5; margin-top: 16px; border-top: 1px solid #f3f4f6; padding-top: 16px;">
                 If you did not request this verification code, you can safely disregard this email.

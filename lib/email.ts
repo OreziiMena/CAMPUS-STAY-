@@ -1,3 +1,5 @@
+import { removeEmojis, maskPhoneNumbers } from "./email-sanitizer";
+
 export async function sendEmail({
   to,
   subject,
@@ -5,6 +7,7 @@ export async function sendEmail({
   text,
   from,
   replyTo,
+  isInspectionMessage = false,
 }: {
   to: string;
   subject: string;
@@ -12,17 +15,29 @@ export async function sendEmail({
   text?: string;
   from?: string;
   replyTo?: string;
+  isInspectionMessage?: boolean;
 }): Promise<{ success: boolean; error?: string; debug?: boolean; data?: any }> {
+  // 1. Remove all inline emojis from subject and body content
+  const cleanedSubject = removeEmojis(subject).trim();
+  let cleanedHtml = removeEmojis(html).trim();
+  let cleanedText = text ? removeEmojis(text).trim() : cleanedHtml.replace(/<[^>]*>/g, " ").trim();
+
+  // 2. Remove / mask phone numbers from email unless it is an inspection message
+  if (!isInspectionMessage) {
+    cleanedHtml = maskPhoneNumbers(cleanedHtml);
+    cleanedText = maskPhoneNumbers(cleanedText);
+  }
+
   const apiKey = process.env.RESEND_API_KEY;
 
   if (!apiKey || apiKey === "re_test_key" || apiKey === "placeholder" || apiKey.includes("your_resend_api_key")) {
     console.log("\n==============================================");
     console.log(`[DEV / LOCAL EMAIL FALLBACK]`);
     console.log(`To: ${to}`);
-    console.log(`Subject: ${subject}`);
+    console.log(`Subject: ${cleanedSubject}`);
     console.log(`From: ${from || "Campus Tent <support@campustent.com>"}`);
     console.log(`Reply-To: ${replyTo || "support@campustent.com"}`);
-    console.log(`Content:\n${html.replace(/<[^>]*>/g, " ").trim()}`);
+    console.log(`Content:\n${cleanedHtml.replace(/<[^>]*>/g, " ").trim()}`);
     console.log("==============================================\n");
     return { success: true, debug: true };
   }
@@ -42,9 +57,9 @@ export async function sendEmail({
         from: fromAddress,
         to: [to.trim()],
         reply_to: replyToAddress,
-        subject,
-        html,
-        text: text || html.replace(/<[^>]*>/g, " ").trim(),
+        subject: cleanedSubject,
+        html: cleanedHtml,
+        text: cleanedText,
       }),
     });
 

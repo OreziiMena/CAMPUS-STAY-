@@ -21,6 +21,8 @@ interface ChatRoom {
   propertyImage: string;
   targetName: string;
   targetRoleLabel: string;
+  targetRole?: "AGENT" | "STUDENT";
+  targetAvatarText?: string;
   lastMessage: string;
   lastMessageAt: Date | string;
   targetVerified?: boolean;
@@ -49,7 +51,6 @@ function ChatContent() {
   const [loadingRooms, setLoadingRooms] = useState(true);
   const [loadingMessages, setLoadingMessages] = useState(false);
   const [inputText, setInputText] = useState("");
-  const [isSending, setIsSending] = useState(false);
 
   const [isTabVisible, setIsTabVisible] = useState(true);
   const [isIdle, setIsIdle] = useState(false);
@@ -338,7 +339,6 @@ function ChatContent() {
     );
 
     // Send payload asynchronously in background
-    setIsSending(true);
     sendChatMessage(selectedRoomId, textToSend).then((res) => {
       if (res.success && res.message) {
         const msg = res.message;
@@ -360,7 +360,6 @@ function ChatContent() {
         setMessages((prev) => prev.filter((m) => m.id !== tempId));
         showToast(res.error || "Failed to send message.", "error");
       }
-      setIsSending(false);
     });
   };
 
@@ -383,7 +382,7 @@ function ChatContent() {
                 <i className="fas fa-spinner fa-spin"></i> Loading...
               </div>
             ) : rooms.length === 0 ? (
-              <div style={{ textAlign: "center", padding: "40px 10px", color: "#888", fontSize: "14px" }}>
+              <div className="no-conversations-msg">
                 No active conversations yet.
               </div>
             ) : (
@@ -393,14 +392,16 @@ function ChatContent() {
                   className={`conversation-item ${room.id === selectedRoomId ? "active" : ""}`}
                   onClick={() => setSelectedRoomId(room.id)}
                 >
-                  <img src={room.propertyImage} alt="property thumbnail" className="conversation-img" />
+                  <div className={`conversation-avatar ${room.targetRole === "AGENT" ? "agent-avatar" : "student-avatar"}`}>
+                    {room.targetAvatarText || (room.targetName ? room.targetName.replace(/^@/, "")[0]?.toUpperCase() : "U")}
+                  </div>
                   <div className="conversation-details">
-                    <h4 style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-                      {room.targetName}
-                      {room.targetVerified && (
-                        <i className="fas fa-check-circle verified-icon" style={{ color: "#2e7d32", fontSize: "0.85rem" }} title="Verified User"></i>
-                      )}
-                    </h4>
+                    <h4 className="conversation-title-row">
+                       {room.targetName}
+                       {room.targetVerified && (
+                         <i className="fas fa-check-circle verified-icon verified-icon-chat" title="Verified User"></i>
+                       )}
+                     </h4>
                     <p className="listing-title-sub">{room.propertyTitle}</p>
                     <p className="last-msg">{room.lastMessage}</p>
                   </div>
@@ -424,15 +425,18 @@ function ChatContent() {
               <div className="chat-header sticky top-0 z-10 bg-white">
                 {selectedRoom && (
                   <>
-                    <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+                    <div className="chat-header-user-info">
                       <button onClick={() => setSelectedRoomId(null)} className="chat-back-btn">
                         <i className="fas fa-arrow-left"></i>
                       </button>
+                      <div className={`conversation-avatar ${selectedRoom.targetRole === "AGENT" ? "agent-avatar" : "student-avatar"} chat-header-avatar`}>
+                        {selectedRoom.targetAvatarText || (selectedRoom.targetName ? selectedRoom.targetName.replace(/^@/, "")[0]?.toUpperCase() : "U")}
+                      </div>
                       <div className="header-info">
-                        <h3 style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                        <h3 className="conversation-title-row">
                           {selectedRoom.targetName}
                           {selectedRoom.targetVerified && (
-                            <i className="fas fa-check-circle verified-icon" style={{ color: "#2e7d32", fontSize: "1rem" }} title="Verified User"></i>
+                            <i className="fas fa-check-circle verified-icon verified-icon-chat-header" title="Verified User"></i>
                           )}
                         </h3>
                         <p>Query: {selectedRoom.propertyTitle}</p>
@@ -501,7 +505,7 @@ function ChatContent() {
 export default function ChatPage() {
   return (
     <Suspense fallback={
-      <div className="chat-loader" style={{ height: "100vh" }}>
+      <div className="chat-loader chat-loader-fullscreen">
         <i className="fas fa-spinner fa-spin"></i> Loading chat workspace...
       </div>
     }>
@@ -509,3 +513,4 @@ export default function ChatPage() {
     </Suspense>
   );
 }
+

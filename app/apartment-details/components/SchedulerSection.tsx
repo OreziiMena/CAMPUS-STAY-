@@ -4,6 +4,8 @@ import Link from "next/link";
 interface SchedulerSectionProps {
   propertyId: string;
   currentUser: any;
+  isUnlocked: boolean;
+  onUnlockClick: () => void;
   viewingDate: string;
   setViewingDate: (date: string) => void;
   viewingTime: string;
@@ -18,6 +20,8 @@ interface SchedulerSectionProps {
 export default function SchedulerSection({
   propertyId,
   currentUser,
+  isUnlocked,
+  onUnlockClick,
   viewingDate,
   setViewingDate,
   viewingTime,
@@ -32,10 +36,10 @@ export default function SchedulerSection({
     <section id="scheduler" className="content-card scheduling-card">
       <div className="scheduling-header">
         <div>
-          <h3 style={{ margin: 0, fontSize: "1.15rem", fontWeight: "700", color: "rgb(2, 53, 28)" }}>
+          <h3 className="scheduling-header-title">
             Schedule an In-Person Inspection
           </h3>
-          <p style={{ margin: "3px 0 0 0", fontSize: "0.83rem", color: "#64748b" }}>
+          <p className="scheduling-header-sub">
             Select your preferred date and time to meet the verified agent at the hostel.
           </p>
         </div>
@@ -48,6 +52,31 @@ export default function SchedulerSection({
           <Link href={`/auth/login?redirect=/apartment-details?id=${propertyId}`} className="primary-btn btn-sm">
             <i className="fas fa-sign-in-alt"></i> Log in to Schedule Viewing
           </Link>
+        </div>
+      ) : !isUnlocked ? (
+        <div className="scheduler-locked-box">
+          <div className="scheduler-lock-icon-wrap">
+            <i className="fas fa-lock"></i>
+          </div>
+          <h4>₦10,000 Inspection Fee Required</h4>
+          <p>
+            To protect students and verified agents against ghost visits, an inspection fee of ₦10,000 is required before booking in-person physical inspections. It is fully refundable if the inspection was cancelled by the agent.
+          </p>
+          <div className="inspection-bonus-card inspection-bonus-card-adjusted">
+            <div className="inspection-bonus-title">
+              <i className="fas fa-sparkles"></i> Package Bonus
+            </div>
+            <p className="inspection-bonus-text">
+              "Your ₦10,000 fee covers a physical inspection of this property, plus any alternative options the agent has available in the same area/budget."
+            </p>
+          </div>
+          <button
+            type="button"
+            className="pay-inspection-btn pay-inspection-btn-adjusted"
+            onClick={onUnlockClick}
+          >
+            <i className="fas fa-bolt"></i> Check Availability & Pay ₦10,000
+          </button>
         </div>
       ) : (
         <form onSubmit={onScheduleViewing} className="scheduling-form">
@@ -107,13 +136,13 @@ export default function SchedulerSection({
 
           {/* Optional Note */}
           <div className="input-group">
-            <label htmlFor="viewing-note" style={{ fontSize: "0.82rem", color: "#64748b" }}>
+            <label htmlFor="viewing-note" className="viewing-note-label">
               <i className="fas fa-comment-alt"></i> Notes for Agent (optional)
             </label>
             <input
               type="text"
               id="viewing-note"
-              placeholder="e.g. Inspecting with a coursemate, question about gate closing time..."
+              placeholder="Add any specific questions or inspection requests (optional)..."
               value={viewingNote}
               onChange={(e) => setViewingNote(e.target.value)}
               className="scheduling-time-input"
@@ -123,7 +152,7 @@ export default function SchedulerSection({
           {/* Selected Appointment Preview Banner */}
           {viewingDate && viewingTime && (
             <div className="appointment-preview-badge">
-              <i className="fas fa-check-circle" style={{ color: "#16a34a" }}></i>
+              <i className="fas fa-check-circle"></i>
               <span>
                 Selected: <strong>{new Date(`${viewingDate}T${viewingTime}`).toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" })}</strong> at <strong>{new Date(`${viewingDate}T${viewingTime}`).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit", hour12: true })}</strong>
               </span>
@@ -153,6 +182,8 @@ export default function SchedulerSection({
           </button>
         </form>
       )}
+      
     </section>
+    
   );
 }

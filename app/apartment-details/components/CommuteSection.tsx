@@ -43,7 +43,7 @@ export default function CommuteSection({ distance, location }: CommuteSectionPro
         </div>
       </div>
 
-      <h4 style={{ margin: "24px 0 10px 0", fontSize: "1rem", fontWeight: "700", color: "rgb(2, 53, 28)", fontFamily: "'Poppins', sans-serif" }}>
+      <h4 className="trust-scorecard-heading">
         Campus Tent Verification Scorecard
       </h4>
       <div className="trust-scorecard-grid">

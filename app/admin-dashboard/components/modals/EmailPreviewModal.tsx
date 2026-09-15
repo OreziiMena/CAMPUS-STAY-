@@ -56,7 +56,7 @@ export default function EmailPreviewModal({
             {/* Banner */}
             <div className="email-preview-banner">
               <div className="email-preview-logo-text">
-                ⛺ Campus Tent
+                Campus Tent
               </div>
               <div className="email-preview-tagline">
                 Verified Student Accommodation & Roommates

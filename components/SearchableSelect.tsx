@@ -14,6 +14,8 @@ interface SearchableSelectProps {
   disabled?: boolean;
   required?: boolean;
   showSearch?: boolean;
+  searchable?: boolean;
+  emptyMessage?: string;
 }
 
 export default function SearchableSelect({
@@ -23,8 +25,11 @@ export default function SearchableSelect({
   placeholder = "Select option...",
   disabled = false,
   required = false,
-  showSearch = options.length > 5,
+  showSearch,
+  searchable,
+  emptyMessage = "No matching options found",
 }: SearchableSelectProps) {
+  const isSearchVisible = searchable !== undefined ? searchable : (showSearch !== undefined ? showSearch : options.length > 5);
   const [isOpen, setIsOpen] = useState(false);
   const [search, setSearch] = useState("");
   const containerRef = useRef<HTMLDivElement>(null);
@@ -59,7 +64,7 @@ export default function SearchableSelect({
 
       {isOpen && (
         <div className="searchable-select-dropdown">
-          {showSearch && (
+          {isSearchVisible && (
             <div className="searchable-select-search-box">
               <i className="fas fa-search search-box-icon"></i>
               <input
@@ -72,7 +77,7 @@ export default function SearchableSelect({
               />
               {search && (
                 <button 
-                  type="button"
+                  type="button" 
                   onClick={(e) => { e.stopPropagation(); setSearch(""); }}
                   className="search-box-clear"
                 >
@@ -84,7 +89,7 @@ export default function SearchableSelect({
 
           <div className="searchable-select-options-list">
             {filteredOptions.length === 0 ? (
-              <div className="no-options-found">No institutions found</div>
+              <div className="no-options-found">{emptyMessage}</div>
             ) : (
               filteredOptions.map((opt) => (
                 <div
@@ -123,7 +128,7 @@ export default function SearchableSelect({
           max-width: 100%;
           min-width: 0;
           box-sizing: border-box;
-          font-family: 'Open Sans', sans-serif;
+          font-family: inherit;
         }
 
         .searchable-select-trigger {
@@ -230,7 +235,7 @@ export default function SearchableSelect({
           outline: none;
           font-size: 0.9rem;
           color: #333;
-          font-family: 'Open Sans', sans-serif;
+          font-family: inherit;
           width: 100%;
         }
 
@@ -280,7 +285,7 @@ export default function SearchableSelect({
           color: #444;
           cursor: pointer;
           transition: all 0.15s ease;
-          font-family: 'Open Sans', sans-serif;
+          font-family: inherit;
         }
 
         .searchable-select-option:hover {

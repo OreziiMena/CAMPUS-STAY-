@@ -24,12 +24,7 @@ export default function QuickNav({
         >
           <i className="fas fa-check-double"></i> Amenities
         </button>
-        <button 
-          className={`quick-nav-item ${activeNavSection === "commute" ? "active" : ""}`}
-          onClick={() => onScrollToSection("commute")}
-        >
-          <i className="fas fa-walking"></i> Commute & Specs
-        </button>
+        
         <button 
           className={`quick-nav-item ${activeNavSection === "scheduler" ? "active" : ""}`}
           onClick={() => onScrollToSection("scheduler")}

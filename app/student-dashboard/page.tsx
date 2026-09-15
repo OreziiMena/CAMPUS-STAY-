@@ -1,14 +1,25 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { getCurrentUser } from "@/app/actions/auth";
-import { getStudentDashboardData } from "@/app/actions/student";
+import { getStudentDashboardData, getStudentPaymentHistory } from "@/app/actions/student";
 import { getOrCreateChatRoom } from "@/app/actions/chat";
+import { confirmStudentInspectionTour, reportInspectionIssue } from "@/app/actions/inspection";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import "./student-dashboard.css";
+
+// Modular Components
+import StudentWelcomeBanner from "./components/StudentWelcomeBanner";
+import StudentVerificationAlert from "./components/StudentVerificationAlert";
+import StudentPaymentsCard from "./components/StudentPaymentsCard";
+import StudentViewingsCard from "./components/StudentViewingsCard";
+import StudentInquiriesCard from "./components/StudentInquiriesCard";
+
+// Modals
+import StudentReceiptModal from "./components/modals/StudentReceiptModal";
+import StudentDisputeModal from "./components/modals/StudentDisputeModal";
 
 export default function StudentDashboard() {
   const router = useRouter();
@@ -17,27 +28,98 @@ export default function StudentDashboard() {
   const [profile, setProfile] = useState<any>(null);
   const [inquiries, setInquiries] = useState<any[]>([]);
   const [viewings, setViewings] = useState<any[]>([]);
+  const [payments, setPayments] = useState<any[]>([]);
+  const [confirmingViewingId, setConfirmingViewingId] = useState<string | null>(null);
+
+  // Modals
+  const [receiptModalPayment, setReceiptModalPayment] = useState<any | null>(null);
+  const [disputeModalPayment, setDisputeModalPayment] = useState<any | null>(null);
+  const [disputeReason, setDisputeReason] = useState("Agent did not show up for inspection");
+  const [disputeDesc, setDisputeDesc] = useState("");
+  const [disputeLoading, setDisputeLoading] = useState(false);
+
+  const fetchDashboard = async () => {
+    setLoading(true);
+    const user = await getCurrentUser();
+    if (!user || user.role !== "STUDENT") {
+      router.push("/auth/login");
+      return;
+    }
+    setStudentName(user.studentProfile?.fullName || user.name || "Student");
+
+    const [res, paymentsRes] = await Promise.all([
+      getStudentDashboardData(),
+      getStudentPaymentHistory(),
+    ]);
+
+    if (res.success) {
+      setProfile(res.profile);
+      setInquiries(res.inquiries || []);
+      setViewings(res.viewings || []);
+    }
+    if (paymentsRes.success) {
+      setPayments(paymentsRes.payments || []);
+    }
+    setLoading(false);
+  };
 
   useEffect(() => {
-    const fetchDashboard = async () => {
-      setLoading(true);
-      const user = await getCurrentUser();
-      if (!user || user.role !== "STUDENT") {
-        router.push("/auth/login");
-        return;
-      }
-      setStudentName(user.studentProfile?.fullName || user.name || "Student");
-
-      const res = await getStudentDashboardData();
-      if (res.success) {
-        setProfile(res.profile);
-        setInquiries(res.inquiries || []);
-        setViewings(res.viewings || []);
-      }
-      setLoading(false);
-    };
     fetchDashboard();
   }, [router]);
+
+  const handleSubmitDispute = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!disputeModalPayment) return;
+    setDisputeLoading(true);
+    try {
+      const res = await reportInspectionIssue({
+        paymentId: disputeModalPayment.id,
+        reason: disputeReason,
+        description: disputeDesc,
+      });
+      if (res.success) {
+        alert("Dispute report submitted successfully. Our admin team has been alerted.");
+        setPayments((prev) =>
+          prev.map((p) =>
+            p.id === disputeModalPayment.id
+              ? { ...p, status: "DISPUTED", disputeReason: `${disputeReason}: ${disputeDesc}` }
+              : p
+          )
+        );
+        setDisputeModalPayment(null);
+        setDisputeDesc("");
+      } else {
+        alert(res.error || "Failed to submit dispute.");
+      }
+    } catch (err: any) {
+      alert(err.message || "An error occurred.");
+    } finally {
+      setDisputeLoading(false);
+    }
+  };
+
+  const handleConfirmTour = async (e: React.MouseEvent, viewingId: string) => {
+    e.stopPropagation();
+    setConfirmingViewingId(viewingId);
+    try {
+      const res = await confirmStudentInspectionTour(viewingId);
+      if (res.success) {
+        setViewings((prev) =>
+          prev.map((v) =>
+            v.id === viewingId
+              ? { ...v, studentConfirmedTour: true, studentConfirmedAt: new Date().toISOString() }
+              : v
+          )
+        );
+      } else {
+        alert(res.error || "Failed to confirm tour.");
+      }
+    } catch (err: any) {
+      alert(err.message || "An error occurred.");
+    } finally {
+      setConfirmingViewingId(null);
+    }
+  };
 
   const handleInquiryClick = async (propertyId: string) => {
     const res = await getOrCreateChatRoom(propertyId);
@@ -60,147 +142,50 @@ export default function StudentDashboard() {
         ) : (
           <div className="student-dashboard-container">
             {/* Welcome Section */}
-            <div className="student-welcome-banner">
-              <div>
-                <h1>Welcome back, {studentName}! 👋</h1>
-                <p>Manage your hostel search, viewings, and verification status.</p>
-              </div>
-              <div className="student-actions-row">
-                <Link href="/explore" className="student-explore-btn">
-                  <i className="fas fa-search"></i> Find Hostels
-                </Link>
-                <Link href="/roommates" className="student-explore-btn roommate-btn">
-                  <i className="fas fa-user-friends"></i> Find Roommates
-                </Link>
-              </div>
-            </div>
+            <StudentWelcomeBanner studentName={studentName} />
 
             {/* Verification Status Alert Banner */}
-            {profile?.isVerified ? (
-              <div className="verification-alert verified">
-                <i className="fas fa-check-circle verified-icon"></i>
-                <div className="alert-details">
-                  <h4>Student Identity Verified</h4>
-                  <p>All student features are unlocked! You can now contact agents directly and schedule physical viewings.</p>
-                </div>
-              </div>
-            ) : (profile?.idCardDoc || profile?.feesReceiptDoc || profile?.portalScreenshotDoc) ? (
-              <div className="verification-alert pending">
-                <i className="fas fa-clock pending-icon"></i>
-                <div className="alert-details">
-                  <h4>Verification Review Pending</h4>
-                  <p>We are reviewing your uploaded document(s). You will unlock full permissions once verified by our admin team.</p>
-                </div>
-                <Link href="/student-dashboard/profile" className="alert-action-btn">
-                  Check Status
-                </Link>
-              </div>
-            ) : (
-              <div className="verification-alert unverified">
-                <i className="fas fa-exclamation-triangle unverified-icon"></i>
-                <div className="alert-details">
-                  <h4>Verification Required</h4>
-                  <p>Your profile is unverified. Please upload at least one document (Student ID, current fees receipt, or portal screenshot) to unlock agent contacts, direct messaging, and physical viewings.</p>
-                </div>
-                <Link href="/student-dashboard/profile" className="alert-action-btn verify">
-                  Verify Now
-                </Link>
-              </div>
-            )}
+            <StudentVerificationAlert profile={profile} />
 
-            {/* Dashboard Sections Grid */}
+            {/* Inspection Payments & Receipts Section */}
+            <StudentPaymentsCard
+              payments={payments}
+              onViewReceipt={(payment) => setReceiptModalPayment(payment)}
+              onDispute={(payment) => setDisputeModalPayment(payment)}
+            />
+
+            {/* Dashboard Sections Grid: Scheduled Viewings & Sent Inquiries */}
             <div className="dashboard-sections-grid">
-              {/* Column 1: Scheduled Viewings */}
-              <div className="dashboard-card-section">
-                <div className="section-title-row">
-                  <h3><i className="fas fa-calendar-alt"></i> Scheduled Viewings</h3>
-                  <span className="badge-count">{viewings.length}</span>
-                </div>
-                
-                {viewings.length === 0 ? (
-                  <div className="empty-section-state">
-                    <i className="far fa-calendar-times"></i>
-                    <p>No physical viewings scheduled yet.</p>
-                    <Link href="/explore" className="inline-link">Browse apartments &rarr;</Link>
-                  </div>
-                ) : (
-                  <div className="viewings-list-wrapper">
-                    <div className="dashboard-list">
-                      {viewings.map((viewing) => (
-                        <div 
-                          key={viewing.id} 
-                          className="dashboard-list-item clickable"
-                          onClick={() => handleInquiryClick(viewing.propertyId)}
-                          style={{ cursor: "pointer" }}
-                          title="Click to message listing owner"
-                        >
-                          <div className="item-main">
-                            <h5>{viewing.propertyTitle}</h5>
-                            <p className="item-meta">
-                              <span style={{ display: "inline-flex", alignItems: "center", gap: "4px" }}>
-                                <i className="fas fa-user-tie"></i>
-                                {viewing.agentName}
-                                {viewing.agentVerified && (
-                                  <i className="fas fa-check-circle verified-icon" style={{ color: "#2e7d32", fontSize: "0.8rem" }} title="Verified Owner"></i>
-                                )}
-                              </span>
-                              <span><i className="far fa-clock"></i> {new Date(viewing.dateTime).toLocaleString()}</span>
-                            </p>
-                          </div>
-                          <span className={`status-tag ${viewing.status.toLowerCase()}`}>
-                            {viewing.status}
-                          </span>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
-              </div>
+              <StudentViewingsCard
+                viewings={viewings}
+                confirmingViewingId={confirmingViewingId}
+                onInquiryClick={handleInquiryClick}
+                onConfirmTour={handleConfirmTour}
+              />
 
-              {/* Column 2: Recent Inquiries */}
-              <div className="dashboard-card-section">
-                <div className="section-title-row">
-                  <h3><i className="fas fa-comment-dots"></i> Sent Inquiries</h3>
-                  <span className="badge-count">{inquiries.length}</span>
-                </div>
-
-                {inquiries.length === 0 ? (
-                  <div className="empty-section-state">
-                    <i className="far fa-comments"></i>
-                    <p>You haven't sent any messages to agents yet.</p>
-                  </div>
-                ) : (
-                  <div className="inquiries-list-wrapper">
-                    <div className="dashboard-list">
-                       {inquiries.map((inquiry) => (
-                        <div 
-                          key={inquiry.id} 
-                          className="dashboard-list-item clickable"
-                          onClick={() => handleInquiryClick(inquiry.propertyId)}
-                          style={{ cursor: "pointer" }}
-                          title="Click to message listing owner"
-                        >
-                          <div className="item-main">
-                            <h5>{inquiry.propertyTitle}</h5>
-                            <p className="inquiry-msg">"{inquiry.message}"</p>
-                            <p className="item-meta">
-                              <span style={{ display: "inline-flex", alignItems: "center", gap: "4px" }}>
-                                <i className="fas fa-user-tie"></i>
-                                {inquiry.agentName}
-                                {inquiry.agentVerified && (
-                                  <i className="fas fa-check-circle verified-icon" style={{ color: "#2e7d32", fontSize: "0.8rem" }} title="Verified Owner"></i>
-                                )}
-                              </span>
-                              <span><i className="far fa-calendar-alt"></i> {new Date(inquiry.createdAt).toLocaleDateString()}</span>
-                            </p>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
-              </div>
+              <StudentInquiriesCard
+                inquiries={inquiries}
+                onInquiryClick={handleInquiryClick}
+              />
             </div>
+
+            {/* Student Receipt Modal */}
+            <StudentReceiptModal
+              payment={receiptModalPayment}
+              onClose={() => setReceiptModalPayment(null)}
+            />
+
+            {/* Student Dispute Modal */}
+            <StudentDisputeModal
+              payment={disputeModalPayment}
+              disputeReason={disputeReason}
+              setDisputeReason={setDisputeReason}
+              disputeDesc={disputeDesc}
+              setDisputeDesc={setDisputeDesc}
+              disputeLoading={disputeLoading}
+              onSubmit={handleSubmitDispute}
+              onClose={() => setDisputeModalPayment(null)}
+            />
           </div>
         )}
       </main>

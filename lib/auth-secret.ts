@@ -24,7 +24,7 @@ export function getAuthSecret(): string {
   if (!secret) {
     if (typeof window === "undefined" && !process.env.DEV_AUTH_SECRET_WARNED) {
       console.warn(
-        "⚠️ [SECURITY NOTICE] AUTH_SECRET is not configured in your local environment. Using temporary development secret. Please configure a 32+ character AUTH_SECRET in .env for production."
+        "[SECURITY NOTICE] AUTH_SECRET is not configured in your local environment. Using temporary development secret. Please configure a 32+ character AUTH_SECRET in .env for production."
       );
       process.env.DEV_AUTH_SECRET_WARNED = "true";
     }

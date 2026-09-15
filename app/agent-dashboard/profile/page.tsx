@@ -1,6 +1,5 @@
 "use client";
 import React, { useEffect, useState } from "react";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { getCurrentUser, updateAgentProfile, uploadAgentVerification, updateAgentPassword } from "@/app/actions/auth";
 import styles from "./profile.module.css";
@@ -198,20 +197,20 @@ export default function AgentProfilePage() {
                 </div>
                 <div className="input-group">
                   <label>Phone Number</label>
-                  <input type="tel" id="input-phone" placeholder="+234 --- --- ----" value={phone} onChange={(e) => setPhone(e.target.value)} required />
+                  <input type="tel" id="input-phone" placeholder="Phone number" value={phone} onChange={(e) => setPhone(e.target.value)} required />
                 </div>
                 <div className="input-group">
                   <label>Agency Name (Optional)</label>
-                  <input type="text" id="input-agency" value={agencyName} onChange={(e) => setAgencyName(e.target.value)} />
+                  <input type="text" id="input-agency" placeholder="Agency or business name" value={agencyName} onChange={(e) => setAgencyName(e.target.value)} />
                 </div>
               </div>
               <div className="input-group">
                 <label>Bio / About Me</label>
-                <textarea rows={4} id="input-bio" value={bio} onChange={(e) => setBio(e.target.value)}></textarea>
+                <textarea rows={4} id="input-bio" placeholder="Tell students about your agency experience..." value={bio} onChange={(e) => setBio(e.target.value)}></textarea>
               </div>
               <div className="input-group">
                 <label>Office Address (Optional)</label>
-                <input type="text" id="input-address" value={address} onChange={(e) => setAddress(e.target.value)} />
+                <input type="text" id="input-address" placeholder="Office / Business address" value={address} onChange={(e) => setAddress(e.target.value)} />
               </div>
 
               {saveStatus && (

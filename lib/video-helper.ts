@@ -18,7 +18,7 @@ export function extractVideoThumbnail(file: File): Promise<File | null> {
       const url = URL.createObjectURL(file);
       video.src = url;
 
-      let timeout = setTimeout(() => {
+      const timeout = setTimeout(() => {
         URL.revokeObjectURL(url);
         resolve(null);
       }, 5000);

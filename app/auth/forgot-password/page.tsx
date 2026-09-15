@@ -62,7 +62,7 @@ export default function ForgotPassword() {
                 <input
                   type="email"
                   id="reset-email"
-                  placeholder="student@fupre.edu.ng"
+                  placeholder="Enter your email address"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   disabled={isLoading || success}

@@ -257,11 +257,11 @@ export default function StudentProfile() {
                     </div>
                     <div className="input-group">
                       <label>Phone Number</label>
-                      <input type="tel" placeholder="+234 --- --- ----" value={phone} onChange={(e) => setPhone(e.target.value)} required />
+                      <input type="tel" placeholder="Phone number" value={phone} onChange={(e) => setPhone(e.target.value)} required />
                     </div>
                     <div className="input-group">
                       <label>University / Campus</label>
-                      <input type="text" placeholder="e.g. FUPRE" value={university} onChange={(e) => setUniversity(e.target.value)} required />
+                      <input type="text" placeholder="University / Campus" value={university} onChange={(e) => setUniversity(e.target.value)} required />
                     </div>
                   </div>
 
@@ -393,18 +393,18 @@ export default function StudentProfile() {
                       </label>
                     </div>
 
-                    <div className="form-grid" style={{ marginTop: "20px" }}>
+                    <div className="form-grid preferences-form-grid">
                       <div className="input-group font-bold">
                         <label>Maximum Yearly Rent Budget (₦)</label>
                         <input 
                           type="number" 
-                          placeholder="e.g. 150000" 
+                          placeholder="Maximum budget" 
                           value={budgetLimit} 
                           onChange={(e) => setBudgetLimit(e.target.value)} 
                         />
                       </div>
 
-                      <div className="input-group font-bold" style={{ display: "flex", flexDirection: "column", gap: "5px" }}>
+                      <div className="input-group font-bold input-group-select">
                         <label>Your Gender</label>
                         <SearchableSelect
                           options={GENDER_OPTIONS}
@@ -413,7 +413,7 @@ export default function StudentProfile() {
                         />
                       </div>
 
-                      <div className="input-group font-bold" style={{ display: "flex", flexDirection: "column", gap: "5px" }}>
+                      <div className="input-group font-bold input-group-select">
                         <label>Cleanliness Habit</label>
                         <SearchableSelect
                           options={CLEANLINESS_OPTIONS}
@@ -422,7 +422,7 @@ export default function StudentProfile() {
                         />
                       </div>
 
-                      <div className="input-group font-bold" style={{ display: "flex", flexDirection: "column", gap: "5px" }}>
+                      <div className="input-group font-bold input-group-select">
                         <label>Sleep Schedule</label>
                         <SearchableSelect
                           options={SLEEP_OPTIONS}
@@ -431,7 +431,7 @@ export default function StudentProfile() {
                         />
                       </div>
 
-                      <div className="input-group font-bold" style={{ display: "flex", flexDirection: "column", gap: "5px" }}>
+                      <div className="input-group font-bold input-group-select">
                         <label>Study / Noise Preference</label>
                         <SearchableSelect
                           options={NOISE_OPTIONS}

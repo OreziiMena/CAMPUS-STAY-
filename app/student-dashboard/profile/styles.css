@@ -513,6 +513,16 @@
     transform: translateX(20px);
 }
 
+.preferences-form-grid {
+    margin-top: 20px;
+}
+
+.input-group-select {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
 @media (max-width: 768px) {
     .profile-layout {
         margin: 20px auto;
@@ -548,3 +558,4 @@
         text-align: center;
     }
 }
+

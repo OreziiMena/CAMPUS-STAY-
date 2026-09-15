@@ -334,3 +334,150 @@
         box-sizing: border-box;
     }
 }
+
+.success-banner-card {
+    background: #fff;
+    padding: 35px;
+    border-radius: 12px;
+    text-align: center;
+    border: 1px solid #eaeaea;
+}
+
+.success-icon {
+    font-size: 48px;
+    color: #2e7d32;
+    margin-bottom: 15px;
+}
+
+.pricing-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.pricing-card-title {
+    font-weight: 700;
+    color: rgb(2, 53, 28);
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.pricing-total-badge {
+    font-size: 0.88rem;
+    font-weight: 700;
+    color: rgb(2, 53, 28);
+    background: rgba(2, 53, 28, 0.08);
+    padding: 4px 12px;
+    border-radius: 20px;
+}
+
+.pricing-input-label {
+    font-size: 0.85rem;
+    font-weight: 600;
+    margin-bottom: 6px;
+    display: block;
+}
+
+.pricing-input-optional {
+    color: #6b7280;
+    font-weight: normal;
+}
+
+.pricing-input-field {
+    width: 100%;
+    padding: 10px 14px;
+    border-radius: 8px;
+    border: 1px solid #d1d5db;
+    box-sizing: border-box;
+}
+
+.pricing-input-field:focus {
+    outline: none;
+    border-color: var(--primary-green);
+    box-shadow: 0 0 0 3px rgba(2, 53, 28, 0.1);
+}
+
+.negotiable-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-top: 4px;
+}
+
+.negotiable-checkbox {
+    width: 18px;
+    height: 18px;
+    accent-color: rgb(2, 53, 28);
+    cursor: pointer;
+}
+
+.negotiable-label {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: #374151;
+    cursor: pointer;
+    margin: 0;
+}
+
+.grid-full-width {
+    grid-column: 1 / -1;
+}
+
+.existing-media-section {
+    margin-bottom: 20px;
+}
+
+.media-section-heading {
+    font-family: 'Open Sans', sans-serif;
+    font-size: 14px;
+    font-weight: 600;
+    color: rgb(2, 53, 28);
+    margin-bottom: 10px;
+}
+
+.media-upload-help-text {
+    font-size: 0.78rem;
+    color: #666;
+    margin-top: 5px;
+}
+
+.preview-video-element {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: 8px;
+}
+
+.upload-error-box {
+    margin-top: 16px;
+    background-color: #fef2f2;
+    border: 1.5px solid #f87171;
+    border-radius: 10px;
+    padding: 14px 18px;
+    color: #991b1b;
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    line-height: 1.5;
+    box-shadow: 0 4px 12px rgba(239, 68, 68, 0.08);
+}
+
+.upload-error-icon {
+    font-size: 1.2rem;
+    margin-top: 2px;
+    color: #dc2626;
+    flex-shrink: 0;
+}
+
+.upload-error-title {
+    display: block;
+    margin-bottom: 2px;
+    color: #7f1d1d;
+}
+

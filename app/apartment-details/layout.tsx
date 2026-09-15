@@ -30,7 +30,7 @@ export async function generateMetadata(props: {
         images: property.images.length > 0 ? [property.images[0]] : ["/icon.png"],
       },
     };
-  } catch (e) {
+  } catch {
     return { title: "Apartment Details | Campus Tent" };
   }
 }

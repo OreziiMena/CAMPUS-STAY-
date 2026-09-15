@@ -11,6 +11,7 @@ import { generateOTP } from "./otp";
 import { checkRateLimit } from "@/lib/rate-limit";
 import { validateFileBuffer, generateSecureFilename } from "@/lib/upload-validator";
 import { getAuthSecret } from "@/lib/auth-secret";
+import { logAuditEvent } from "@/lib/audit";
 
 const SESSION_COOKIE_NAME = "campus_stay_session";
 
@@ -94,7 +95,7 @@ export async function registerStudent(data: any) {
       return { success: false, error: rateCheck.error };
     }
 
-    const { fullname, email, phone, university, username, password } = data;
+    const { fullname, email, phone, university, username, password, referralCode } = data;
 
     if (!password || typeof password !== "string" || password.length < 8) {
       return { success: false, error: "Password must be at least 8 characters long." };
@@ -112,6 +113,15 @@ export async function registerStudent(data: any) {
 
     const hashedPassword = await bcrypt.hash(password, 10);
 
+    // Validate referral code if provided
+    let appliedAmbassador: any = null;
+    const cleanRef = typeof referralCode === "string" ? referralCode.trim().toUpperCase() : null;
+    if (cleanRef) {
+      appliedAmbassador = await prisma.ambassadorApplication.findUnique({
+        where: { referralCode: cleanRef },
+      });
+    }
+
     const newUser = await prisma.user.create({
       data: {
         email,
@@ -123,10 +133,52 @@ export async function registerStudent(data: any) {
             fullName: fullname,
             university,
             username: username.toLowerCase().trim(),
+            preferences: appliedAmbassador
+              ? {
+                  referredBy: appliedAmbassador.referralCode,
+                  ambassadorName: appliedAmbassador.fullName,
+                  ambassadorUniversity: appliedAmbassador.university,
+                  referredAt: new Date().toISOString(),
+                }
+              : undefined,
           },
         },
       },
     });
+
+    // Increment ambassador referral count and log audit event
+    if (appliedAmbassador) {
+      try {
+        await prisma.ambassadorApplication.update({
+          where: { id: appliedAmbassador.id },
+          data: {
+            referralCount: { increment: 1 },
+          },
+        });
+
+        await logAuditEvent({
+          actorId: newUser.id,
+          actorEmail: email,
+          actorName: fullname,
+          actorRole: "STUDENT",
+          action: "REFERRAL_CODE_APPLIED",
+          targetType: "AMBASSADOR",
+          targetId: appliedAmbassador.id,
+          targetLabel: `${appliedAmbassador.fullName} (${appliedAmbassador.referralCode})`,
+          details: `Student ${fullname} (${email}) signed up using referral code ${appliedAmbassador.referralCode}`,
+          metadata: {
+            studentId: newUser.id,
+            studentEmail: email,
+            studentName: fullname,
+            referralCode: cleanRef,
+            ambassadorId: appliedAmbassador.id,
+            ambassadorName: appliedAmbassador.fullName,
+          },
+        });
+      } catch (refErr) {
+        console.error("Failed to update ambassador referral count:", refErr);
+      }
+    }
 
     // Generate OTP for email verification
     await generateOTP(email, "EMAIL_VERIFICATION");
@@ -202,6 +254,10 @@ export async function loginUser(data: any) {
       return { success: false, error: "Invalid email or password." };
     }
 
+    if (user.deletedAt) {
+      return { success: false, error: "This account has been deactivated. Please contact support." };
+    }
+
     const isValidPassword = await bcrypt.compare(password, user.password);
     if (!isValidPassword) {
       return { success: false, error: "Invalid email or password." };
@@ -212,11 +268,25 @@ export async function loginUser(data: any) {
       return { success: false, requireVerification: true, email, error: "Please verify your email address to continue." };
     }
 
+    // Two-Factor Authentication Check
+    if (user.twoFactorEnabled) {
+      const { sign2FATempToken } = await import("./two-factor");
+      const tempToken = await sign2FATempToken(user.id);
+      return {
+        success: false,
+        require2FA: true,
+        tempToken,
+        email: user.email,
+        role: user.role,
+      };
+    }
+
     const cookieStore = await cookies();
     const token = signSession({
       userId: user.id,
       role: user.role,
       passwordVersion: user.password.substring(0, 10),
+      tokenVersion: user.tokenVersion || 1,
       expiresAt: Date.now() + 60 * 60 * 24 * 7 * 1000, // 7 days in milliseconds
     });
     cookieStore.set(SESSION_COOKIE_NAME, token, {
@@ -248,7 +318,7 @@ export async function getCurrentUser() {
     const payload = verifySession(session.value);
     if (!payload || !payload.userId) return null;
 
-    const { userId, passwordVersion } = payload;
+    const { userId, passwordVersion, tokenVersion } = payload;
     const user = await prisma.user.findUnique({
       where: { id: userId },
       include: {
@@ -257,10 +327,13 @@ export async function getCurrentUser() {
       },
     });
 
-    if (!user) return null;
+    if (!user || user.deletedAt) return null;
 
-    // Validate password version to support instant session invalidation on password changes
+    // Validate password version and tokenVersion to support instant session invalidation
     if (passwordVersion && user.password.substring(0, 10) !== passwordVersion) {
+      return null;
+    }
+    if (tokenVersion && user.tokenVersion && tokenVersion !== user.tokenVersion) {
       return null;
     }
 
@@ -399,7 +472,10 @@ export async function updateAgentPassword(data: any) {
     const hashedPassword = await bcrypt.hash(newPassword, 10);
     const updatedUser = await prisma.user.update({
       where: { id: user.id },
-      data: { password: hashedPassword },
+      data: {
+        password: hashedPassword,
+        tokenVersion: { increment: 1 },
+      },
     });
 
     // Re-issue cookie for the current device so they remain logged in
@@ -408,6 +484,7 @@ export async function updateAgentPassword(data: any) {
       userId: updatedUser.id,
       role: updatedUser.role,
       passwordVersion: hashedPassword.substring(0, 10),
+      tokenVersion: updatedUser.tokenVersion,
       expiresAt: Date.now() + 60 * 60 * 24 * 7 * 1000,
     });
     cookieStore.set(SESSION_COOKIE_NAME, token, {
@@ -430,7 +507,7 @@ export async function requestPasswordReset(email: string) {
       where: { email },
     });
 
-    if (!user) {
+    if (!user || user.deletedAt) {
       return { success: false, error: "No account found with this email address." };
     }
 
@@ -452,21 +529,46 @@ export async function verifyPasswordResetOTP(email: string, code: string) {
       return { success: false, error: rateCheck.error };
     }
 
+    const trimmedCode = (code || "").trim();
+
     const otpRecord = await prisma.oTP.findFirst({
       where: {
         email,
-        code,
         purpose: "PASSWORD_RESET",
       },
     });
 
     if (!otpRecord) {
-      return { success: false, error: "Invalid verification code." };
+      return { success: false, error: "Invalid verification code or code has expired." };
     }
 
     if (new Date() > otpRecord.expiresAt) {
       await prisma.oTP.delete({ where: { id: otpRecord.id } }).catch(() => {});
-      return { success: false, error: "Verification code has expired." };
+      return { success: false, error: "Verification code has expired. Please request a new code." };
+    }
+
+    // Brute-force lockout verification
+    if (otpRecord.code !== trimmedCode) {
+      const updatedAttempts = (otpRecord.attempts || 0) + 1;
+      const maxAttempts = otpRecord.maxAttempts || 3;
+
+      if (updatedAttempts >= maxAttempts) {
+        await prisma.oTP.delete({ where: { id: otpRecord.id } }).catch(() => {});
+        return {
+          success: false,
+          error: "Too many failed attempts. This OTP has been invalidated for your security. Please request a fresh verification code.",
+        };
+      } else {
+        await prisma.oTP.update({
+          where: { id: otpRecord.id },
+          data: { attempts: updatedAttempts },
+        });
+        const remaining = maxAttempts - updatedAttempts;
+        return {
+          success: false,
+          error: `Invalid verification code. ${remaining} attempt${remaining !== 1 ? "s" : ""} remaining.`,
+        };
+      }
     }
 
     await prisma.oTP.delete({ where: { id: otpRecord.id } }).catch(() => {});
@@ -515,7 +617,10 @@ export async function resetPasswordWithToken(email: string, token: string, newPa
 
     await prisma.user.update({
       where: { email },
-      data: { password: hashedPassword },
+      data: {
+        password: hashedPassword,
+        tokenVersion: { increment: 1 },
+      },
     });
 
     return { success: true };

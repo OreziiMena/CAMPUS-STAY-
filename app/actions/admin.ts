@@ -5,6 +5,7 @@ import { getCurrentUser } from "./auth";
 import { Role } from "@prisma/client";
 import { sendEmail } from "@/lib/email";
 import { escapeHtml, sanitizeUrl, formatSafeEmailMessage } from "@/lib/email-sanitizer";
+import { logAuditEvent } from "@/lib/audit";
 
 export async function getAdminDashboardData() {
   try {
@@ -15,7 +16,7 @@ export async function getAdminDashboardData() {
 
     // 1. Fetch unverified students
     const unverifiedStudents = await prisma.studentProfile.findMany({
-      where: { isVerified: false },
+      where: { isVerified: false, user: { deletedAt: null } },
       include: {
         user: {
           select: {
@@ -29,7 +30,7 @@ export async function getAdminDashboardData() {
 
     // 2. Fetch unverified agents
     const unverifiedAgents = await prisma.agentProfile.findMany({
-      where: { isVerified: false },
+      where: { isVerified: false, user: { deletedAt: null } },
       include: {
         user: {
           select: {
@@ -43,7 +44,7 @@ export async function getAdminDashboardData() {
 
     // 3. Fetch unverified properties
     const unverifiedProperties = await prisma.property.findMany({
-      where: { isVerified: false },
+      where: { isVerified: false, deletedAt: null },
       include: {
         agent: true,
         student: true,
@@ -53,6 +54,7 @@ export async function getAdminDashboardData() {
 
     // 4. Fetch all users (excluding sensitive password hashes)
     const allUsers = await prisma.user.findMany({
+      where: { deletedAt: null },
       select: {
         id: true,
         email: true,
@@ -69,6 +71,7 @@ export async function getAdminDashboardData() {
 
     // 5. Fetch all properties
     const allProperties = await prisma.property.findMany({
+      where: { deletedAt: null },
       include: {
         agent: true,
         student: true,
@@ -89,7 +92,7 @@ export async function getAdminDashboardData() {
   }
 }
 
-export async function toggleUserVerification(profileId: string, role: "STUDENT" | "AGENT", status: boolean) {
+export async function toggleUserVerification(idOrProfileId: string, role: "STUDENT" | "AGENT", status: boolean) {
   try {
     const adminUser = await getCurrentUser();
     if (!adminUser || adminUser.role !== Role.ADMIN) {
@@ -100,43 +103,63 @@ export async function toggleUserVerification(profileId: string, role: "STUDENT" 
     let targetName: string | undefined;
 
     if (role === "STUDENT") {
-      const profile = await prisma.studentProfile.findUnique({
-        where: { id: profileId },
+      let profile = await prisma.studentProfile.findUnique({
+        where: { id: idOrProfileId },
         include: { user: true },
       });
-      if (profile) {
-        targetEmail = profile.user.email;
-        targetName = profile.fullName || "Student";
+      if (!profile) {
+        profile = await prisma.studentProfile.findUnique({
+          where: { userId: idOrProfileId },
+          include: { user: true },
+        });
       }
+
+      if (!profile) {
+        return { success: false, error: "Student profile not found." };
+      }
+
+      targetEmail = profile.user?.email;
+      targetName = profile.fullName || "Student";
+
       await prisma.studentProfile.update({
-        where: { id: profileId },
+        where: { id: profile.id },
         data: { isVerified: status },
       });
     } else if (role === "AGENT") {
-      const profile = await prisma.agentProfile.findUnique({
-        where: { id: profileId },
+      let profile = await prisma.agentProfile.findUnique({
+        where: { id: idOrProfileId },
         include: { user: true },
       });
-      if (profile) {
-        targetEmail = profile.user.email;
-        targetName = profile.fullName || "Agent";
+      if (!profile) {
+        profile = await prisma.agentProfile.findUnique({
+          where: { userId: idOrProfileId },
+          include: { user: true },
+        });
       }
+
+      if (!profile) {
+        return { success: false, error: "Agent profile not found." };
+      }
+
+      targetEmail = profile.user?.email;
+      targetName = profile.fullName || "Agent";
+
       await prisma.agentProfile.update({
-        where: { id: profileId },
+        where: { id: profile.id },
         data: { isVerified: status },
       });
     } else {
-      return { success: false, error: "Invalid role." };
+      return { success: false, error: "Invalid role specified." };
     }
 
     if (status && targetEmail) {
       const safeTargetName = escapeHtml(targetName || (role === "STUDENT" ? "Student" : "Agent"));
       await sendEmail({
         to: targetEmail,
-        subject: role === "STUDENT" ? "✅ Your Student Verification Approved! - Campus Tent" : "✅ Your Agent Profile Approved! - Campus Tent",
+        subject: role === "STUDENT" ? "Your Student Verification Approved! - Campus Tent" : "Your Agent Profile Approved! - Campus Tent",
         html: `
           <div style="font-family: Arial, sans-serif; max-width: 600px; padding: 20px; border: 1px solid #eaeaea; border-radius: 8px;">
-            <h2 style="color: rgb(2, 53, 28);">Congratulations! 🎉</h2>
+            <h2 style="color: rgb(2, 53, 28);">Congratulations!</h2>
             <p>Hi ${safeTargetName},</p>
             <p>Your identity verification documents have been successfully reviewed and approved by our team.</p>            
             <p>You now have full access to:
@@ -146,7 +169,7 @@ export async function toggleUserVerification(profileId: string, role: "STUDENT" 
                 <li>Posting roommate space listings.</li>
               </ul>
             </p>
-                <p>You can now log in to access all verified features on the platform.</p>
+            <p>You can now log in to access all verified features on the platform.</p>
             <p>Find your next campus home today!</p>
             <a href="https://campustent.com/" style="display: inline-block; background-color: rgb(2, 53, 28); color: white; padding: 10px 20px; text-decoration: none; border-radius: 4px; font-weight: bold; margin-top: 10px;">Check out Properties Now</a>
           </div>
@@ -154,6 +177,18 @@ export async function toggleUserVerification(profileId: string, role: "STUDENT" 
         text: `Hi ${targetName},\n\nYour identity verification documents have been successfully reviewed and approved by our team.\n\nYou can now log in to access all verified features on the platform: https://campustent.com/`
       });
     }
+
+    await logAuditEvent({
+      actorId: adminUser.id,
+      actorEmail: adminUser.email,
+      actorName: "Admin (" + adminUser.email + ")",
+      actorRole: "ADMIN",
+      action: status ? "USER_VERIFIED" : "USER_UNVERIFIED",
+      targetType: "USER",
+      targetId: idOrProfileId,
+      targetLabel: `${targetName || "User"} (${targetEmail || idOrProfileId})`,
+      details: `Admin ${status ? "approved" : "revoked"} verification for ${role.toLowerCase()} ${targetName || "User"}.`,
+    });
 
     return { success: true };
   } catch (err: any) {
@@ -168,9 +203,24 @@ export async function togglePropertyVerification(propertyId: string, status: boo
       return { success: false, error: "Unauthorized. Admin access required." };
     }
 
-    await prisma.property.update({
+    const updated = await prisma.property.update({
       where: { id: propertyId },
-      data: { isVerified: status },
+      data: {
+        isVerified: status,
+        deletedAt: null,
+      },
+    });
+
+    await logAuditEvent({
+      actorId: adminUser.id,
+      actorEmail: adminUser.email,
+      actorName: "Admin (" + adminUser.email + ")",
+      actorRole: "ADMIN",
+      action: status ? "PROPERTY_VERIFIED" : "PROPERTY_UNVERIFIED",
+      targetType: "PROPERTY",
+      targetId: propertyId,
+      targetLabel: updated.title,
+      details: `Admin ${status ? "verified" : "unverified"} property "${updated.title}".`,
     });
 
     return { success: true };
@@ -186,8 +236,24 @@ export async function deletePropertyByAdmin(propertyId: string) {
       return { success: false, error: "Unauthorized. Admin access required." };
     }
 
-    await prisma.property.delete({
+    const updated = await prisma.property.update({
       where: { id: propertyId },
+      data: {
+        deletedAt: new Date(),
+        isAvailable: false,
+      },
+    });
+
+    await logAuditEvent({
+      actorId: adminUser.id,
+      actorEmail: adminUser.email,
+      actorName: "Admin (" + adminUser.email + ")",
+      actorRole: "ADMIN",
+      action: "PROPERTY_DELETED_ADMIN",
+      targetType: "PROPERTY",
+      targetId: propertyId,
+      targetLabel: updated.title,
+      details: `Admin deleted listing "${updated.title}" (ID: ${propertyId}).`,
     });
 
     return { success: true };
@@ -196,30 +262,75 @@ export async function deletePropertyByAdmin(propertyId: string) {
   }
 }
 
-export async function deleteUserByAdmin(profileId: string, role: "STUDENT" | "AGENT") {
+export async function deleteUserByAdmin(idOrProfileId: string, role?: "STUDENT" | "AGENT") {
   try {
     const adminUser = await getCurrentUser();
     if (!adminUser || adminUser.role !== Role.ADMIN) {
       return { success: false, error: "Unauthorized. Admin access required." };
     }
 
-    if (role === "STUDENT") {
-      const profile = await prisma.studentProfile.findUnique({
-        where: { id: profileId },
+    let targetUserId: string | null = null;
+
+    // 1. Check if idOrProfileId is a direct User.id
+    const userRecord = await prisma.user.findUnique({
+      where: { id: idOrProfileId },
+      select: { id: true },
+    });
+
+    if (userRecord) {
+      targetUserId = userRecord.id;
+    } else if (role === "STUDENT") {
+      const studentProf = await prisma.studentProfile.findUnique({
+        where: { id: idOrProfileId },
         select: { userId: true },
       });
-      if (profile) {
-        await prisma.user.delete({ where: { id: profile.userId } });
+      if (studentProf) {
+        targetUserId = studentProf.userId;
       }
     } else if (role === "AGENT") {
-      const profile = await prisma.agentProfile.findUnique({
-        where: { id: profileId },
+      const agentProf = await prisma.agentProfile.findUnique({
+        where: { id: idOrProfileId },
         select: { userId: true },
       });
-      if (profile) {
-        await prisma.user.delete({ where: { id: profile.userId } });
+      if (agentProf) {
+        targetUserId = agentProf.userId;
       }
+    } else {
+      const [studentProf, agentProf] = await Promise.all([
+        prisma.studentProfile.findUnique({ where: { id: idOrProfileId }, select: { userId: true } }),
+        prisma.agentProfile.findUnique({ where: { id: idOrProfileId }, select: { userId: true } }),
+      ]);
+      targetUserId = studentProf?.userId || agentProf?.userId || null;
     }
+
+    if (!targetUserId) {
+      return { success: false, error: "User account or profile not found." };
+    }
+
+    const now = new Date();
+
+    // Soft-delete the user and invalidate active sessions
+    await prisma.user.update({
+      where: { id: targetUserId },
+      data: {
+        deletedAt: now,
+        tokenVersion: { increment: 1 },
+      },
+    });
+
+    // Also soft-delete all properties belonging to this user (as agent or student)
+    await prisma.property.updateMany({
+      where: {
+        OR: [
+          { agent: { userId: targetUserId } },
+          { student: { userId: targetUserId } },
+        ],
+      },
+      data: {
+        deletedAt: now,
+        isAvailable: false,
+      },
+    });
 
     return { success: true };
   } catch (err: any) {
@@ -234,23 +345,28 @@ export async function getAdminAnalyticsData() {
       return { success: false, error: "Unauthorized. Admin access required." };
     }
 
-    const totalStudents = await prisma.studentProfile.count();
-    const totalAgents = await prisma.agentProfile.count();
+    const totalStudents = await prisma.studentProfile.count({
+      where: { user: { deletedAt: null } },
+    });
+    const totalAgents = await prisma.agentProfile.count({
+      where: { user: { deletedAt: null } },
+    });
     const verifiedStudents = await prisma.studentProfile.count({
-      where: { isVerified: true },
+      where: { isVerified: true, user: { deletedAt: null } },
     });
     const verifiedAgents = await prisma.agentProfile.count({
-      where: { isVerified: true },
+      where: { isVerified: true, user: { deletedAt: null } },
     });
     const totalProperties = await prisma.property.count({
-      where: { isRoommateOption: false },
+      where: { isRoommateOption: false, deletedAt: null },
     });
     const totalRoommates = await prisma.property.count({
-      where: { isRoommateOption: true },
+      where: { isRoommateOption: true, deletedAt: null },
     });
 
     // Fetch properties to construct a listing growth chart
     const properties = await prisma.property.findMany({
+      where: { deletedAt: null },
       select: { createdAt: true },
       orderBy: { createdAt: "asc" },
     });
@@ -350,11 +466,11 @@ export async function getBroadcastAudienceStats() {
       verifiedStudentsCount,
       verifiedAgentsCount,
     ] = await Promise.all([
-      prisma.user.count({ where: { email: { not: "" } } }),
-      prisma.user.count({ where: { role: Role.STUDENT, email: { not: "" } } }),
-      prisma.user.count({ where: { role: Role.AGENT, email: { not: "" } } }),
-      prisma.studentProfile.count({ where: { isVerified: true } }),
-      prisma.agentProfile.count({ where: { isVerified: true } }),
+      prisma.user.count({ where: { email: { not: "" }, deletedAt: null } }),
+      prisma.user.count({ where: { role: Role.STUDENT, email: { not: "" }, deletedAt: null } }),
+      prisma.user.count({ where: { role: Role.AGENT, email: { not: "" }, deletedAt: null } }),
+      prisma.studentProfile.count({ where: { isVerified: true, user: { deletedAt: null } } }),
+      prisma.agentProfile.count({ where: { isVerified: true, user: { deletedAt: null } } }),
     ]);
 
     return {
@@ -434,7 +550,7 @@ export async function sendBroadcastEmailAction(params: {
           <tr>
             <td style="background-color: rgb(2, 53, 28); padding: 32px 30px; text-align: center;">
               <div style="font-size: 24px; font-weight: 800; color: #ffffff; letter-spacing: -0.5px; text-transform: uppercase;">
-                ⛺ Campus Tent
+                Campus Tent
               </div>
               <div style="color: rgba(255, 255, 255, 0.85); font-size: 13px; margin-top: 4px; font-weight: 500;">
                 Verified Student Accommodation & Roommates
@@ -515,8 +631,9 @@ export async function sendBroadcastEmailAction(params: {
     }
 
     // Build recipient list based on Audience
-    let whereCondition: any = {
+    const whereCondition: any = {
       email: { not: "" },
+      deletedAt: null,
     };
 
     if (audience === "STUDENTS") {
@@ -616,5 +733,411 @@ export async function sendBroadcastEmailAction(params: {
     return { success: false, error: err.message || "Failed to process broadcast email." };
   }
 }
+
+/**
+ * Fetch all Inspection Payments and financial metrics for Admin monitoring
+ */
+export async function getAdminPaymentsData() {
+  try {
+    const adminUser = await getCurrentUser();
+    if (!adminUser || adminUser.role !== Role.ADMIN) {
+      return { success: false, error: "Unauthorized. Admin access required." };
+    }
+
+    // Include PAID, DISPUTED, and REFUNDED inspection payments for comprehensive ledger
+    const payments = await prisma.inspectionPayment.findMany({
+      where: {
+        status: { in: ["PAID", "DISPUTED", "REFUNDED"] },
+      },
+      include: {
+        student: {
+          include: {
+            studentProfile: true,
+          },
+        },
+        agent: {
+          include: {
+            agentProfile: true,
+          },
+        },
+        property: true,
+      },
+      orderBy: { paidAt: "desc" },
+    });
+
+    const paidPayments = payments.filter((p) => p.status === "PAID");
+    const totalGross = paidPayments.reduce((sum, p) => sum + (p.amount || 0), 0);
+    // Platform model: 50-50 split (50% Platform fee = ₦5,000, 50% Agent escrow pool = ₦5,000 per ₦10,000 fee)
+    const platformShare = totalGross * 0.5;
+    const agentEscrowLiability = totalGross * 0.5;
+    const paidCount = paidPayments.length;
+
+    return {
+      success: true,
+      payments: payments.map((p) => ({
+        id: p.id,
+        amount: p.amount,
+        currency: p.currency,
+        status: p.status,
+        reference: p.reference,
+        paidAt: p.paidAt.toISOString(),
+        createdAt: p.createdAt.toISOString(),
+        payoutStatus: p.payoutStatus || "PENDING",
+        payoutReference: p.payoutReference,
+        payoutDisbursedAt: p.payoutDisbursedAt ? p.payoutDisbursedAt.toISOString() : null,
+        disputeReason: p.disputeReason,
+        disputedAt: p.disputedAt ? p.disputedAt.toISOString() : null,
+        refundReason: p.refundReason,
+        refundedAt: p.refundedAt ? p.refundedAt.toISOString() : null,
+        student: {
+          id: p.student.id,
+          name: p.student.studentProfile?.fullName || (p.student.studentProfile?.username ? `@${p.student.studentProfile.username}` : p.student.email.split("@")[0]),
+          email: p.student.email,
+          phone: p.student.phone || "Not provided",
+          university: p.student.studentProfile?.university || "Not specified",
+        },
+        agent: {
+          id: p.agent.id,
+          name: p.agent.agentProfile?.fullName || p.agent.email.split("@")[0],
+          agencyName: p.agent.agentProfile?.agencyName || "Independent Agent",
+          email: p.agent.email,
+          phone: p.agent.phone || "Not provided",
+          address: p.agent.agentProfile?.address || "N/A",
+          bankName: p.agent.agentProfile?.bankName,
+          accountNumber: p.agent.agentProfile?.accountNumber,
+          accountName: p.agent.agentProfile?.accountName,
+          recipientCode: p.agent.agentProfile?.recipientCode,
+        },
+        property: {
+          id: p.property.id,
+          title: p.property.title,
+          location: p.property.location,
+          university: p.property.university,
+          price: p.property.price,
+          rentAmount: p.property.rentAmount,
+          agentFee: p.property.agentFee,
+          cautionFee: p.property.cautionFee,
+          hostelType: p.property.hostelType,
+          thumbnail: p.property.images?.[0] || null,
+        },
+      })),
+      metrics: {
+        totalGross,
+        platformShare,
+        agentEscrowLiability,
+        totalTransactions: payments.length,
+        paidCount,
+      },
+    };
+  } catch (err: any) {
+    console.error("getAdminPaymentsData error:", err);
+    return { success: false, error: err.message || "Failed to fetch payments data." };
+  }
+}
+
+export async function disburseAgentPayout(paymentId: string) {
+  try {
+    const adminUser = await getCurrentUser();
+    if (!adminUser || adminUser.role !== Role.ADMIN) {
+      return { success: false, error: "Unauthorized. Admin access required." };
+    }
+
+    const payment = await prisma.inspectionPayment.findUnique({
+      where: { id: paymentId },
+      include: {
+        agent: { include: { agentProfile: true } },
+        property: true,
+      },
+    });
+
+    if (!payment) {
+      return { success: false, error: "Inspection payment not found." };
+    }
+
+    if (payment.status !== "PAID") {
+      return { success: false, error: `Cannot disburse payout for payment with status '${payment.status}'.` };
+    }
+
+    if (payment.payoutStatus === "DISBURSED") {
+      return { success: false, error: "Payout has already been disbursed for this inspection." };
+    }
+
+    const agentProfile = payment.agent.agentProfile;
+    if (!agentProfile?.recipientCode && !agentProfile?.accountNumber) {
+      return {
+        success: false,
+        error: "Agent has not set up their bank account details yet in Agent Settings.",
+      };
+    }
+
+    let recipientCode = agentProfile.recipientCode;
+    const paystackSecret = process.env.PAYSTACK_SECRET_KEY;
+
+    // Call Paystack Transfer API if secret key is configured
+    if (paystackSecret && !paystackSecret.includes("your-paystack-secret-key") && paystackSecret.startsWith("sk_")) {
+      try {
+        const transferRes = await fetch("https://api.paystack.co/transfer", {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${paystackSecret.trim()}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            source: "balance",
+            amount: 500000, // ₦5,000 in kobo (50% split)
+            recipient: recipientCode,
+            reason: `Campus Tent Inspection Payout for ${payment.property.title}`,
+          }),
+        });
+
+        const transferData = await transferRes.json();
+        if (!transferRes.ok || !transferData.status) {
+          return {
+            success: false,
+            error: transferData.message || "Paystack transfer initiation failed.",
+          };
+        }
+
+        const payoutRef = transferData.data?.reference || transferData.data?.transfer_code || `TRF-${Date.now()}`;
+
+        await prisma.inspectionPayment.update({
+          where: { id: payment.id },
+          data: {
+            payoutStatus: "DISBURSED",
+            payoutReference: payoutRef,
+            payoutDisbursedAt: new Date(),
+          },
+        });
+
+        await logAuditEvent({
+          actorId: adminUser.id,
+          actorEmail: adminUser.email,
+          actorName: "Admin (" + adminUser.email + ")",
+          actorRole: "ADMIN",
+          action: "PAYOUT_DISBURSED",
+          targetType: "PAYMENT",
+          targetId: payment.id,
+          targetLabel: payment.reference,
+          details: `Admin disbursed ₦5,000 payout to agent ${payment.agent.agentProfile?.fullName || payment.agent.email} for property "${payment.property.title}". Ref: ${payoutRef}`,
+          metadata: {
+            paymentId: payment.id,
+            amount: 5000,
+            reference: payment.reference,
+            payoutRef,
+            agentId: payment.agentId,
+          },
+        });
+
+        return { success: true, reference: payoutRef };
+      } catch (paystackErr: any) {
+        console.error("Paystack transfer error:", paystackErr);
+        return { success: false, error: "Network error communicating with Paystack transfer service." };
+      }
+    }
+
+    // Fallback simulation for local development / test keys
+    const fallbackRef = `TRF-TEST-${Math.random().toString(36).substring(2, 9).toUpperCase()}-${Date.now()}`;
+    await prisma.inspectionPayment.update({
+      where: { id: payment.id },
+      data: {
+        payoutStatus: "DISBURSED",
+        payoutReference: fallbackRef,
+        payoutDisbursedAt: new Date(),
+      },
+    });
+
+    await logAuditEvent({
+      actorId: adminUser.id,
+      actorEmail: adminUser.email,
+      actorName: "Admin (" + adminUser.email + ")",
+      actorRole: "ADMIN",
+      action: "PAYOUT_DISBURSED",
+      targetType: "PAYMENT",
+      targetId: payment.id,
+      targetLabel: payment.reference,
+      details: `Admin disbursed ₦5,000 payout (simulated test) to agent ${payment.agent.agentProfile?.fullName || payment.agent.email} for property "${payment.property.title}". Ref: ${fallbackRef}`,
+      metadata: {
+        paymentId: payment.id,
+        amount: 5000,
+        reference: payment.reference,
+        fallbackRef,
+        agentId: payment.agentId,
+      },
+    });
+
+    return { success: true, reference: fallbackRef, simulated: true };
+  } catch (err: any) {
+    console.error("disburseAgentPayout error:", err);
+    return { success: false, error: err.message || "Failed to disburse payout." };
+  }
+}
+
+export async function refundInspectionPayment(paymentId: string, reason: string) {
+  try {
+    const adminUser = await getCurrentUser();
+    if (!adminUser || adminUser.role !== Role.ADMIN) {
+      return { success: false, error: "Unauthorized. Admin access required." };
+    }
+
+    const payment = await prisma.inspectionPayment.findUnique({
+      where: { id: paymentId },
+      include: {
+        student: { include: { studentProfile: true } },
+        property: true,
+        agent: { include: { agentProfile: true } },
+      },
+    });
+
+    if (!payment) {
+      return { success: false, error: "Inspection payment record not found." };
+    }
+
+    if (payment.status === "REFUNDED") {
+      return { success: false, error: "This payment has already been refunded." };
+    }
+
+    const paystackSecret = process.env.PAYSTACK_SECRET_KEY;
+
+    if (paystackSecret && !paystackSecret.includes("your-paystack-secret-key") && paystackSecret.startsWith("sk_")) {
+      try {
+        const refundRes = await fetch("https://api.paystack.co/refund", {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${paystackSecret.trim()}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            transaction: payment.reference,
+            customer_note: reason || "Inspection cancelled / tour dispute resolved in student favor.",
+            merchant_note: `Campus Tent refund for payment ${payment.id}`,
+          }),
+        });
+
+        const refundData = await refundRes.json();
+        if (!refundRes.ok && !refundData.message?.includes("already refunded")) {
+          return {
+            success: false,
+            error: refundData.message || "Paystack refund request failed.",
+          };
+        }
+      } catch (paystackErr: any) {
+        console.error("Paystack refund error:", paystackErr);
+      }
+    }
+
+    await prisma.inspectionPayment.update({
+      where: { id: payment.id },
+      data: {
+        status: "REFUNDED",
+        refundReason: reason,
+        refundedAt: new Date(),
+      },
+    });
+
+    await logAuditEvent({
+      actorId: adminUser.id,
+      actorEmail: adminUser.email,
+      actorName: "Admin (" + adminUser.email + ")",
+      actorRole: "ADMIN",
+      action: "INSPECTION_REFUNDED",
+      targetType: "PAYMENT",
+      targetId: payment.id,
+      targetLabel: payment.reference,
+      details: `Admin processed ₦10,000 refund to student ${payment.student.studentProfile?.fullName || payment.student.email} for property "${payment.property.title}". Reason: ${reason || "N/A"}`,
+      metadata: {
+        paymentId: payment.id,
+        amount: payment.amount,
+        reference: payment.reference,
+        reason,
+      },
+    });
+
+    // Send refund confirmation email to student
+    if (payment.student.email) {
+      const studentName = escapeHtml(payment.student.studentProfile?.fullName || "Student");
+      const propTitle = escapeHtml(payment.property.title);
+
+      sendEmail({
+        to: payment.student.email,
+        subject: `Refund Processed: ₦10,000 for ${payment.property.title}`,
+        html: `
+          <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 600px; margin: 0 auto; background: #ffffff; border: 1px solid #e2e8f0; border-radius: 12px; overflow: hidden;">
+            <div style="background-color: #02351c; padding: 24px; text-align: center;">
+              <h1 style="color: #ffffff; font-size: 22px; margin: 0; font-weight: 700;">Campus Tent</h1>
+              <p style="color: #cbd5e1; font-size: 14px; margin: 6px 0 0 0;">Inspection Fee Refund Confirmation</p>
+            </div>
+            <div style="padding: 24px;">
+              <h2 style="color: #02351c; font-size: 18px; margin-top: 0;">Refund Processed (₦10,000)</h2>
+              <p style="color: #4b5563; font-size: 14px; line-height: 1.6;">
+                Hi ${studentName}, your refund of <strong>₦10,000</strong> for <strong>"${propTitle}"</strong> has been processed to your original payment method.
+              </p>
+              <div style="background-color: #f8fafc; border-left: 4px solid #02351c; padding: 14px; border-radius: 6px; margin: 16px 0;">
+                <p style="margin: 0 0 4px 0; font-size: 13.5px; color: #1e293b;"><strong>Reason:</strong> ${escapeHtml(reason)}</p>
+                <p style="margin: 0; font-size: 13.5px; color: #1e293b;"><strong>Transaction Ref:</strong> ${payment.reference}</p>
+              </div>
+              <p style="color: #64748b; font-size: 13px; line-height: 1.5;">
+                Depending on your bank, funds typically reflect within 1-3 business days.
+              </p>
+            </div>
+          </div>
+        `,
+        isInspectionMessage: true,
+      }).catch((err) => console.error("Refund email error:", err));
+    }
+
+    return { success: true };
+  } catch (err: any) {
+    console.error("refundInspectionPayment error:", err);
+    return { success: false, error: err.message || "Failed to process refund." };
+  }
+}
+
+/**
+ * Fetch immutable administrative audit logs
+ */
+export async function getAdminAuditLogs(filters?: { action?: string; targetType?: string; limit?: number }) {
+  try {
+    const adminUser = await getCurrentUser();
+    if (!adminUser || adminUser.role !== Role.ADMIN) {
+      return { success: false, error: "Unauthorized. Admin access required." };
+    }
+
+    const where: any = {};
+    if (filters?.action && filters.action !== "ALL") {
+      where.action = filters.action;
+    }
+    if (filters?.targetType && filters.targetType !== "ALL") {
+      where.targetType = filters.targetType;
+    }
+
+    const logs = await prisma.auditLog.findMany({
+      where,
+      orderBy: { createdAt: "desc" },
+      take: filters?.limit || 100,
+    });
+
+    return {
+      success: true,
+      logs: logs.map((l) => ({
+        id: l.id,
+        actorEmail: l.actorEmail,
+        actorName: l.actorName,
+        actorRole: l.actorRole,
+        action: l.action,
+        targetType: l.targetType,
+        targetLabel: l.targetLabel,
+        details: l.details,
+        metadata: l.metadata,
+        ipAddress: l.ipAddress,
+        userAgent: l.userAgent,
+        createdAt: l.createdAt.toISOString(),
+      })),
+    };
+  } catch (err: any) {
+    console.error("getAdminAuditLogs error:", err);
+    return { success: false, error: err.message || "Failed to load audit logs." };
+  }
+}
+
 
 

@@ -25,14 +25,13 @@ export default function AddRoommateListing() {
   const [genderPreference, setGenderPreference] = useState("Any");
 
   const [amenities, setAmenities] = useState({
-    bed: true,
-    bath: false,
-    prepaid: true,
-    water: true,
-    gated: true,
-    security: false,
+    fencedCompound: false,
+    gatedCompound: true,
     wardrobe: false,
-    kitchen: false
+    pvc: false,
+    pop: false,
+    prepaidMeter: false,
+    runningWater: true,
   });
 
   const [images, setImages] = useState<string[]>([]);
@@ -100,17 +99,16 @@ export default function AddRoommateListing() {
     setIsLoading(true);
 
     const activeAmenities: string[] = [];
-    if (amenities.bed) activeAmenities.push("Shared Bedspace");
-    if (amenities.bath) activeAmenities.push("Shared Bathroom");
-    if (amenities.prepaid) activeAmenities.push("Prepaid Meter");
-    if (amenities.water) activeAmenities.push("Borehole Water");
-    if (amenities.gated) activeAmenities.push("Gated Compound");
-    if (amenities.security) activeAmenities.push("Security Guard");
+    if (amenities.fencedCompound) activeAmenities.push("Fenced compound");
+    if (amenities.gatedCompound) activeAmenities.push("Gated compound");
     if (amenities.wardrobe) activeAmenities.push("Wardrobe");
-    if (amenities.kitchen) activeAmenities.push("Kitchen");
+    if (amenities.pvc) activeAmenities.push("PVC");
+    if (amenities.pop) activeAmenities.push("POP");
+    if (amenities.prepaidMeter) activeAmenities.push("Prepaid meter");
+    if (amenities.runningWater) activeAmenities.push("running water");
 
     try {
-      let uploadedUrls: string[] = [];
+      const uploadedUrls: string[] = [];
       if (imageFiles.length > 0) {
         // Place video on Slide 1 and synthesized photo on Slide 2
         const filesToProcess: File[] = [];
@@ -278,7 +276,7 @@ export default function AddRoommateListing() {
                 <input
                   type="text"
                   id="title"
-                  placeholder="e.g. Need 1 roommate for Self-Con sharing near South Gate"
+                  placeholder="Enter roommate listing title"
                   value={title}
                   onChange={(e) => setTitle(e.target.value)}
                   required
@@ -306,7 +304,7 @@ export default function AddRoommateListing() {
                 <input
                   type="number"
                   id="price"
-                  placeholder="e.g. 75000 (your roommate's share)"
+                  placeholder="Shared rent amount"
                   value={price}
                   onChange={(e) => setPrice(e.target.value)}
                   required
@@ -318,7 +316,7 @@ export default function AddRoommateListing() {
                 <input
                   type="text"
                   id="location"
-                  placeholder="e.g. South Gate Area, Effurun"
+                  placeholder="Apartment street address or area"
                   value={location}
                   onChange={(e) => setLocation(e.target.value)}
                   required
@@ -345,7 +343,7 @@ export default function AddRoommateListing() {
                 <input
                   type="text"
                   id="distance"
-                  placeholder="e.g. 5 mins walk to South Gate"
+                  placeholder="Estimated walking time to campus gate"
                   value={distance}
                   onChange={(e) => setDistance(e.target.value)}
                   required
@@ -357,7 +355,7 @@ export default function AddRoommateListing() {
                 <textarea
                   id="description"
                   rows={5}
-                  placeholder="Describe your current apartment, utilities, rules, and what kind of roommate you are looking for (e.g. clean, studious, gender preference)..."
+                  placeholder="Describe your current apartment, utilities, rules, and what kind of roommate you are looking for..."
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
                   required
@@ -370,50 +368,18 @@ export default function AddRoommateListing() {
               <label className="checkbox-item">
                 <input
                   type="checkbox"
-                  checked={amenities.bed}
-                  onChange={() => handleCheckboxChange("bed")}
+                  checked={amenities.fencedCompound}
+                  onChange={() => handleCheckboxChange("fencedCompound")}
                 />
-                <span>Shared Bedspace</span>
+                <span>Fenced compound</span>
               </label>
               <label className="checkbox-item">
                 <input
                   type="checkbox"
-                  checked={amenities.bath}
-                  onChange={() => handleCheckboxChange("bath")}
+                  checked={amenities.gatedCompound}
+                  onChange={() => handleCheckboxChange("gatedCompound")}
                 />
-                <span>Shared Bathroom</span>
-              </label>
-              <label className="checkbox-item">
-                <input
-                  type="checkbox"
-                  checked={amenities.prepaid}
-                  onChange={() => handleCheckboxChange("prepaid")}
-                />
-                <span>Prepaid Meter</span>
-              </label>
-              <label className="checkbox-item">
-                <input
-                  type="checkbox"
-                  checked={amenities.water}
-                  onChange={() => handleCheckboxChange("water")}
-                />
-                <span>Borehole Water</span>
-              </label>
-              <label className="checkbox-item">
-                <input
-                  type="checkbox"
-                  checked={amenities.gated}
-                  onChange={() => handleCheckboxChange("gated")}
-                />
-                <span>Gated Compound</span>
-              </label>
-              <label className="checkbox-item">
-                <input
-                  type="checkbox"
-                  checked={amenities.security}
-                  onChange={() => handleCheckboxChange("security")}
-                />
-                <span>Security Guard</span>
+                <span>Gated compound</span>
               </label>
               <label className="checkbox-item">
                 <input
@@ -426,19 +392,43 @@ export default function AddRoommateListing() {
               <label className="checkbox-item">
                 <input
                   type="checkbox"
-                  checked={amenities.kitchen}
-                  onChange={() => handleCheckboxChange("kitchen")}
+                  checked={amenities.pvc}
+                  onChange={() => handleCheckboxChange("pvc")}
                 />
-                <span>Kitchen</span>
+                <span>PVC</span>
+              </label>
+              <label className="checkbox-item">
+                <input
+                  type="checkbox"
+                  checked={amenities.pop}
+                  onChange={() => handleCheckboxChange("pop")}
+                />
+                <span>POP</span>
+              </label>
+              <label className="checkbox-item">
+                <input
+                  type="checkbox"
+                  checked={amenities.prepaidMeter}
+                  onChange={() => handleCheckboxChange("prepaidMeter")}
+                />
+                <span>Prepaid meter</span>
+              </label>
+              <label className="checkbox-item">
+                <input
+                  type="checkbox"
+                  checked={amenities.runningWater}
+                  onChange={() => handleCheckboxChange("runningWater")}
+                />
+                <span>running water</span>
               </label>
             </div>
 
             <div className="form-section-title">Apartment Photos & Video Tours</div>
             <div className="image-upload-section">
-              <div className="upload-box-wrapper" style={{ position: "relative" }}>
-                <i className="fas fa-cloud-upload-alt" style={{ fontSize: "2rem", color: "#10b981", marginBottom: "8px" }}></i>
-                <p>Drag and drop media or <span style={{ color: "rgb(2, 53, 28)", fontWeight: "700" }}>Browse files</span></p>
-                <p style={{ fontSize: "0.78rem", color: "#64748b", margin: "4px 0 0 0" }}>
+              <div className="upload-box-wrapper">
+                <i className="fas fa-cloud-upload-alt upload-icon-green"></i>
+                <p>Drag and drop media or <span className="upload-browse-highlight">Browse files</span></p>
+                <p className="upload-subtext">
                   Supports JPG, PNG, WEBP (Max 5MB) & MP4, MOV, WebM videos (Max 20MB)
                 </p>
                 <input
@@ -446,7 +436,6 @@ export default function AddRoommateListing() {
                   multiple
                   accept="image/*,video/*"
                   onChange={handleFileUpload}
-                  style={{ position: "absolute", top: 0, left: 0, width: "100%", height: "100%", opacity: 0, cursor: "pointer" }}
                 />
               </div>
 
@@ -457,7 +446,7 @@ export default function AddRoommateListing() {
                     return (
                       <div key={index} className="preview-image-card">
                         {isVideo ? (
-                          <video src={img} className="w-full h-full object-cover" controls style={{ width: "100%", height: "100%", objectFit: "cover", borderRadius: "8px" }} />
+                          <video src={img} className="preview-video" controls />
                         ) : (
                           <img src={img} alt={`Preview ${index + 1}`} />
                         )}

@@ -92,7 +92,7 @@ export default function BroadcastConfirmModal({
             onClick={onConfirm}
             className="confirm-btn-submit"
           >
-            Yes, Send Broadcast Now 🚀
+            Yes, Send Broadcast Now
           </button>
         </div>
       </div>

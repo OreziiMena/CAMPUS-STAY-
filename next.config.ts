@@ -1,5 +1,18 @@
 import type { NextConfig } from "next";
 
+const cspHeader = `
+  default-src 'self';
+  script-src 'self' 'unsafe-inline' 'unsafe-eval' https://js.pusher.com https://apis.google.com https://cdnjs.cloudflare.com;
+  style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdnjs.cloudflare.com;
+  font-src 'self' https://fonts.gstatic.com https://cdnjs.cloudflare.com data:;
+  img-src 'self' data: blob: https: http:;
+  media-src 'self' data: blob: https:;
+  connect-src 'self' https://*.pusher.com wss://*.pusher.com https://api.resend.com https://*.r2.cloudflarestorage.com https://*.upstash.io;
+  frame-ancestors 'none';
+  base-uri 'self';
+  form-action 'self';
+`.replace(/\s{2,}/g, ' ').trim();
+
 const nextConfig: NextConfig = {
   serverExternalPackages: ["@prisma/client", "prisma"],
   experimental: {
@@ -12,6 +25,10 @@ const nextConfig: NextConfig = {
       {
         source: "/(.*)",
         headers: [
+          {
+            key: "Content-Security-Policy",
+            value: cspHeader,
+          },
           {
             key: "X-Frame-Options",
             value: "DENY",

@@ -7,7 +7,7 @@ async function main() {
   console.log("Starting database seed...");
 
   // 1. Create Default Admin User
-  const adminEmail = "admin@campusstay.com";
+  const adminEmail = "support@campustent.com";
   const existingAdmin = await prisma.user.findUnique({
     where: { email: adminEmail }
   });
@@ -214,7 +214,7 @@ async function main() {
         location: "FUPRE Road, Effurun",
         distance: "5 mins walk to campus",
         description: "A neat and well-maintained self-contained apartment located just 5 minutes walk from the FUPRE main gate. Perfect for single students who desire proximity to lectures, featuring a serene study environment, strong security, and constant water supply.",
-        amenities: ["Bed included", "Private Bathroom", "Prepaid Meter", "Borehole Water"],
+        amenities: ["Gated compound", "Wardrobe", "Prepaid meter", "running water"],
         images: ["https://images.unsplash.com/photo-1522708323590-d24dbb6b0267"],
         isAvailable: true,
         isVerified: true,
@@ -239,7 +239,7 @@ async function main() {
         location: "PTI Road Junction",
         distance: "8 mins walk to campus",
         description: "Luxury 1-bedroom flat built recently. Features security fencing, running water, and backup generator spaces. Unverified listing waiting for admin review.",
-        amenities: ["Private Bathroom", "Prepaid Meter", "Borehole Water", "Gated Compound"],
+        amenities: ["POP", "Prepaid meter", "running water", "Gated compound"],
         images: ["https://images.unsplash.com/photo-1502672260266-1c1ef2d93688"],
         isAvailable: true,
         isVerified: false,
@@ -264,7 +264,7 @@ async function main() {
         location: "Ugbomro Community, near FUPRE",
         distance: "10 mins walk to campus",
         description: "I am looking for a neat roommate to split a standard double-room with. Water and prepaid electricity meters are ready. Looking for someone friendly.",
-        amenities: ["Bed included", "Borehole Water", "Prepaid Meter"],
+        amenities: ["Fenced compound", "running water", "Prepaid meter"],
         images: ["https://images.unsplash.com/photo-1522771739844-6a9f6d5f14af"],
         isAvailable: true,
         isVerified: true,

@@ -35,14 +35,13 @@ export default function InquiryList({ inquiries }: InquiryListProps) {
             <Link 
               key={inq.id} 
               href={`/chat?roomId=${inq.id}`} 
-              className="inquiry-item"
-              style={{ textDecoration: "none", color: "inherit", width: "100%" }}
+              className="inquiry-item inquiry-item-link"
             >
               <div className="inquiry-info">
-                <h4 style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                <h4 className="inquiry-student-title">
                   {inq.studentName}
                   {inq.studentVerified && (
-                    <i className="fas fa-check-circle verified-icon" style={{ color: "#2e7d32", fontSize: "0.85rem" }} title="Verified Student"></i>
+                    <i className="fas fa-check-circle verified-icon inquiry-verified-student" title="Verified Student"></i>
                   )}
                   {" "}<strong>({inq.propertyName})</strong>
                 </h4>

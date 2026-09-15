@@ -2,12 +2,10 @@
 
 import React, { useEffect, useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { getAgentProperties, togglePropertyAvailability, deleteProperty } from "@/app/actions/properties";
 import "./properties.css";
 
 export default function AgentPropertiesListing() {
-  const router = useRouter();
   const [properties, setProperties] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -99,7 +97,7 @@ export default function AgentPropertiesListing() {
           <i className="fas fa-building"></i>
           <h3>No properties listed yet</h3>
           <p>You haven't listed any student accommodations. Click the button below to publish your first hostel listing!</p>
-          <Link href="/agent-dashboard/add-property" className="add-prop-btn" style={{ display: "inline-flex" }}>
+          <Link href="/agent-dashboard/add-property" className="add-prop-btn add-prop-btn-inline">
             List Your First Property
           </Link>
         </div>
@@ -113,7 +111,7 @@ export default function AgentPropertiesListing() {
                 const defaultImg = "https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?ixlib=rb-4.0.3";
 
                 return (
-                  <div style={{ position: "relative", width: "100px", height: "80px", borderRadius: "8px", overflow: "hidden", flexShrink: 0, backgroundColor: "#0f172a" }}>
+                  <div className="property-media-thumbnail-box">
                     {videoUrl ? (
                       <video
                         ref={(el) => {
@@ -125,35 +123,22 @@ export default function AgentPropertiesListing() {
                         }}
                         src={videoUrl}
                         poster={posterUrl}
-                        className="property-row-img"
+                        className="property-row-img property-media-element"
                         muted
                         playsInline
                         preload="auto"
                         autoPlay
                         loop
-                        style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }}
                       />
                     ) : (
                       <img
                         src={posterUrl || property.images?.[0] || defaultImg}
                         alt={property.title}
-                        className="property-row-img"
-                        style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }}
+                        className="property-row-img property-media-element"
                       />
                     )}
                     {videoUrl && (
-                      <span style={{
-                        position: "absolute",
-                        bottom: "4px",
-                        right: "4px",
-                        background: "rgba(0,0,0,0.75)",
-                        color: "#fff",
-                        fontSize: "9px",
-                        fontWeight: "700",
-                        borderRadius: "3px",
-                        padding: "2px 5px",
-                        lineHeight: 1,
-                      }}>
+                      <span className="property-video-badge">
                         ▶ Video
                       </span>
                     )}
@@ -162,14 +147,14 @@ export default function AgentPropertiesListing() {
               })()}
               
               <div className="property-row-info">
-                <h3 style={{ display: "flex", alignItems: "center", gap: "10px", flexWrap: "wrap" }}>
+                <h3 className="property-title-flex">
                   {property.title}
                   {property.isVerified ? (
-                    <span style={{ color: "#2e7d32", background: "rgba(46, 125, 50, 0.08)", padding: "3px 8px", borderRadius: "4px", fontSize: "11px", fontWeight: "bold" }}>
+                    <span className="verified-status-tag">
                       <i className="fas fa-check-circle"></i> Active / Verified
                     </span>
                   ) : (
-                    <span style={{ color: "#d35400", background: "rgba(211, 84, 0, 0.08)", padding: "3px 8px", borderRadius: "4px", fontSize: "11px", fontWeight: "bold" }}>
+                    <span className="pending-status-tag">
                       <i className="fas fa-hourglass-half"></i> Pending Approval
                     </span>
                   )}
@@ -190,22 +175,22 @@ export default function AgentPropertiesListing() {
                 </div>
               </div>
 
-              <div className="property-price" style={{ minWidth: "160px" }}>
-                <div style={{ fontSize: "1.15rem", fontWeight: "800", color: "rgb(2, 53, 28)" }}>
-                  ₦{property.price.toLocaleString()} <span style={{ fontSize: "0.75rem", color: "#666", fontWeight: "normal" }}>/ yr</span>
+              <div className="property-price property-price-box">
+                <div className="property-price-main">
+                  ₦{property.price.toLocaleString()} <span className="property-price-unit">/ yr</span>
                 </div>
-                <div style={{ fontSize: "0.75rem", color: "#4b5563", lineHeight: "1.35", marginTop: "4px", backgroundColor: "#f9fafb", padding: "4px 8px", borderRadius: "6px", border: "1px solid #e5e7eb" }}>
-                  <div><span style={{ color: "#6b7280" }}>Rent:</span> ₦{(property.rentAmount ?? property.price).toLocaleString()}</div>
+                <div className="property-price-breakdown">
+                  <div><span className="breakdown-label">Rent:</span> ₦{(property.rentAmount ?? property.price).toLocaleString()}</div>
                   <div>
-                    <span style={{ color: "#6b7280" }}>Fee:</span> ₦{(property.agentFee ?? 0).toLocaleString()}{" "}
+                    <span className="breakdown-label">Fee:</span> ₦{(property.agentFee ?? 0).toLocaleString()}{" "}
                     {property.isNegotiable ? (
-                      <span style={{ color: "#047857", fontWeight: "700", fontSize: "0.68rem" }}>(Negotiable)</span>
+                      <span className="fee-negotiable-tag">(Negotiable)</span>
                     ) : (
-                      <span style={{ color: "#6b7280", fontSize: "0.68rem" }}>(Fixed)</span>
+                      <span className="fee-fixed-tag">(Fixed)</span>
                     )}
                   </div>
                   {property.cautionFee !== null && property.cautionFee !== undefined && property.cautionFee > 0 && (
-                    <div><span style={{ color: "#6b7280" }}>Caution:</span> ₦{property.cautionFee.toLocaleString()}</div>
+                    <div><span className="breakdown-label">Caution:</span> ₦{property.cautionFee.toLocaleString()}</div>
                   )}
                 </div>
               </div>

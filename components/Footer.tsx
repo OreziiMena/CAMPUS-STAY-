@@ -47,6 +47,7 @@ export default function Footer() {
         <div className="footer-links">
           <h4>RESOURCES</h4>
           <ul>
+            <li><Link href="/ambassador">Become an Ambassador</Link></li>
             <li><Link href="/support">Help Center / Support</Link></li>
             <li><Link href="/tenant-guide">Tenant Guide</Link></li>
             <li><Link href="/landlord-hub">Landlord Hub</Link></li>

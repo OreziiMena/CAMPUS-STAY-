@@ -75,3 +75,35 @@ export function formatSafeEmailMessage(rawMessage: string): string {
     )
     .join("");
 }
+
+/**
+ * Strips all inline emojis, emoticons, pictographs, and decorative symbols.
+ */
+export function removeEmojis(str: string): string {
+  if (!str) return "";
+  return str
+    .replace(/\p{Extended_Pictographic}/gu, "")
+    .replace(/[\u{1F000}-\u{1FAFF}]/gu, "")
+    .replace(/[\u{2600}-\u{26FF}]/gu, "")
+    .replace(/[\u{2700}-\u{27BF}]/gu, "")
+    .replace(/[\u{2B50}\u{2B55}\u{231A}\u{231B}\u{23E9}-\u{23EC}\u{23F0}\u{23F3}]/gu, "")
+    .replace(/\uFE0F/gu, "")
+    .replace(/\u200D/gu, "")
+    .replace(/\u20E3/gu, "")
+    .replace(/[ \t]+/g, " ");
+}
+
+/**
+ * Masks phone numbers in non-inspection email messages to ensure users do not bypass inspection fees.
+ */
+export function maskPhoneNumbers(str: string): string {
+  if (!str) return "";
+  const phoneRegex = /(?:\+?\d{1,3}[-.\s]?)?(?:\(?\d{3,4}\)?[-.\s]?)?\d{3,4}[-.\s]?\d{3,4}(?:[-.\s]?\d{1,4})?/g;
+  return str.replace(phoneRegex, (match) => {
+    const digitsOnly = match.replace(/\D/g, "");
+    if (digitsOnly.length >= 7 && digitsOnly.length <= 15) {
+      return "[contact number hidden until inspection]";
+    }
+    return match;
+  });
+}

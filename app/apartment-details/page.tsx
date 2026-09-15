@@ -9,6 +9,12 @@ import { getPropertyDetails } from "@/app/actions/properties";
 import { getCurrentUser } from "@/app/actions/auth";
 import { scheduleViewing } from "@/app/actions/student";
 import { submitReport } from "@/app/actions/reports";
+import {
+  getInspectionStatus,
+  queryPropertyAvailability,
+  processInspectionPayment,
+} from "@/app/actions/inspection";
+import { pusherClient } from "@/lib/pusher-client";
 import "./styles.css";
 
 // Modular Components
@@ -79,6 +85,20 @@ function ApartmentDetailsContent() {
   const [schedulingStatus, setSchedulingStatus] = useState("");
   const [isScheduling, setIsScheduling] = useState(false);
   const [showToast, setShowToast] = useState(false);
+  const [toastMessage, setToastMessage] = useState("Listing link copied to clipboard!");
+
+  // Inspection Fee & Availability States
+  const [inspectionStatus, setInspectionStatus] = useState<{
+    isPaid: boolean;
+    availabilityStatus: string;
+    isOwner: boolean;
+  }>({
+    isPaid: false,
+    availabilityStatus: "NONE",
+    isOwner: false,
+  });
+  const [isCheckingAvailability, setIsCheckingAvailability] = useState(false);
+  const [isPayingInspection, setIsPayingInspection] = useState(false);
 
   // Listing Report States
   const [isReportModalOpen, setIsReportModalOpen] = useState(false);
@@ -153,6 +173,7 @@ function ApartmentDetailsContent() {
     } else {
       try {
         await navigator.clipboard.writeText(shareUrl);
+        setToastMessage("Listing link copied to clipboard!");
         setShowToast(true);
         setTimeout(() => setShowToast(false), 3000);
       } catch (err) {
@@ -207,6 +228,16 @@ function ApartmentDetailsContent() {
             isVerified: prop.agent ? prop.agent.isVerified : (prop.student ? prop.student.isVerified : true),
           }
         });
+
+        // Check inspection and availability status
+        const inspRes = await getInspectionStatus(prop.id);
+        if (inspRes.success) {
+          setInspectionStatus({
+            isPaid: Boolean(inspRes.isPaid),
+            availabilityStatus: inspRes.availabilityStatus || "NONE",
+            isOwner: Boolean(inspRes.isOwner),
+          });
+        }
       } else {
         setProperty(null);
       }
@@ -215,10 +246,209 @@ function ApartmentDetailsContent() {
     fetchDetails();
   }, [id]);
 
+  // Real-time listener for agent 1-click availability updates via Pusher
+  useEffect(() => {
+    if (!id || !pusherClient) return;
+
+    const channelName = `property-${id}`;
+    const channel = pusherClient.subscribe(channelName);
+
+    channel.bind("availability-status", (data: any) => {
+      if (data && data.status) {
+        setInspectionStatus((prev) => ({
+          ...prev,
+          availabilityStatus: data.status,
+        }));
+        setToastMessage(
+          data.status === "AVAILABLE"
+            ? "Agent confirmed: Property is available! Inspection payment unlocked."
+            : "Agent updated status: Property is currently occupied/unavailable."
+        );
+        setShowToast(true);
+        setTimeout(() => setShowToast(false), 5000);
+      }
+    });
+
+    return () => {
+      channel.unbind_all();
+      pusherClient.unsubscribe(channelName);
+    };
+  }, [id]);
+
+  const handleCheckAvailability = async () => {
+    if (!property) return;
+    if (!currentUser) {
+      router.push(`/auth/login?redirect=/apartment-details?id=${property.id}`);
+      return;
+    }
+    if (currentUser.role === "AGENT") {
+      alert("Agents cannot check availability or book viewings. Please use a student account.");
+      return;
+    }
+    setIsCheckingAvailability(true);
+    try {
+      const res = await queryPropertyAvailability(property.id);
+      if (res.success) {
+        setInspectionStatus((prev) => ({
+          ...prev,
+          availabilityStatus: res.status || "PENDING",
+        }));
+        setToastMessage(
+          res.status === "AVAILABLE"
+            ? "Property is available! Proceed to pay the inspection fee."
+            : "Availability check sent to agent. Awaiting 1-click confirmation."
+        );
+        setShowToast(true);
+        setTimeout(() => setShowToast(false), 4000);
+      } else {
+        alert(res.error || "Failed to check availability.");
+      }
+    } catch (err: any) {
+      alert(err.message || "An unexpected error occurred.");
+    } finally {
+      setIsCheckingAvailability(false);
+    }
+  };
+
+  const loadPaystackScript = (): Promise<boolean> => {
+    return new Promise((resolve) => {
+      if (typeof window === "undefined") return resolve(false);
+      if ((window as any).PaystackPop) return resolve(true);
+
+      const script = document.createElement("script");
+      script.src = "https://js.paystack.co/v1/inline.js";
+      script.async = true;
+      script.onload = () => resolve(true);
+      script.onerror = () => resolve(false);
+      document.body.appendChild(script);
+    });
+  };
+
+  const handlePayInspectionFee = async () => {
+    if (!property) return;
+    if (!currentUser) {
+      router.push(`/auth/login?redirect=/apartment-details?id=${property.id}`);
+      return;
+    }
+
+    if (currentUser.role === "AGENT") {
+      alert("Agents cannot pay inspection fees or book viewings. Please use a student account.");
+      return;
+    }
+
+    if (currentUser.role === "STUDENT" && !currentUser.studentProfile?.isVerified) {
+      alert("Please verify your student profile before paying inspection fees.");
+      router.push("/student-dashboard/profile");
+      return;
+    }
+
+    setIsPayingInspection(true);
+
+    const studentEmail = currentUser.email || "student@campustent.com";
+    const studentName = currentUser.studentProfile?.fullName || currentUser.name || "Student";
+    const txRef = `INSP-${Date.now()}-${Math.random().toString(36).substring(2, 7).toUpperCase()}`;
+    const paystackKey = process.env.NEXT_PUBLIC_PAYSTACK_PUBLIC_KEY || "pk_test_6d1d6b2a82607cfb39ffeb9be11ae5e6913f7720";
+
+    const onPaymentSuccess = async (reference: string) => {
+      setIsPayingInspection(true);
+      try {
+        const res = await processInspectionPayment(property.id, reference);
+        if (res.success) {
+          setInspectionStatus((prev) => ({
+            ...prev,
+            isPaid: true,
+          }));
+          setToastMessage("Inspection fee of ₦10,000 paid! Direct chat & appointment booking unlocked.");
+          setShowToast(true);
+          setTimeout(() => setShowToast(false), 5000);
+        } else {
+          alert(res.error || "Failed to confirm payment on server.");
+        }
+      } catch (err: any) {
+        alert(err.message || "Error finalizing inspection fee.");
+      } finally {
+        setIsPayingInspection(false);
+      }
+    };
+
+    try {
+      const isScriptLoaded = await loadPaystackScript();
+
+      if (isScriptLoaded && typeof window !== "undefined" && (window as any).PaystackPop) {
+        const PaystackPop = (window as any).PaystackPop;
+
+        if (typeof PaystackPop.setup === "function") {
+          // Standard v1 Inline Popup
+          const handler = PaystackPop.setup({
+            key: paystackKey,
+            email: studentEmail,
+            amount: 10000 * 100, // ₦10,000 in kobo
+            currency: "NGN",
+            ref: txRef,
+            metadata: {
+              propertyId: property.id,
+              propertyTitle: property.title,
+              studentName: studentName,
+              custom_fields: [
+                {
+                  display_name: "Property",
+                  variable_name: "property_title",
+                  value: property.title,
+                },
+                {
+                  display_name: "Inspection Coverage",
+                  variable_name: "inspection_coverage",
+                  value: "₦10,000 Physical Tour & Alternative Options",
+                },
+              ],
+            },
+            callback: function (response: any) {
+              const ref = response?.reference || txRef;
+              onPaymentSuccess(ref);
+            },
+            onClose: function () {
+              setIsPayingInspection(false);
+            },
+          });
+
+          handler.openIframe();
+        } else if (typeof PaystackPop === "function") {
+          // v2 Transaction Popup
+          const paystack = new PaystackPop();
+          paystack.newTransaction({
+            key: paystackKey,
+            email: studentEmail,
+            amount: 10000 * 100,
+            currency: "NGN",
+            reference: txRef,
+            onSuccess: function (transaction: any) {
+              const ref = transaction?.reference || txRef;
+              onPaymentSuccess(ref);
+            },
+            onCancel: function () {
+              setIsPayingInspection(false);
+            },
+          });
+        }
+      } else {
+        // Direct server fallback for local testing
+        await onPaymentSuccess(txRef);
+      }
+    } catch (err: any) {
+      console.error("Paystack popup error:", err);
+      alert(err.message || "Payment process error.");
+      setIsPayingInspection(false);
+    }
+  };
+
   const handleScheduleViewing = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!viewingDate || !viewingTime || !property) {
       setSchedulingStatus("Error: Please select both a preferred inspection date and time.");
+      return;
+    }
+    if (currentUser?.role === "AGENT") {
+      setSchedulingStatus("Error: Agents cannot book inspections. Please use a student account.");
       return;
     }
     setIsScheduling(true);
@@ -346,12 +576,17 @@ function ApartmentDetailsContent() {
             {/* Key Features & Amenities */}
             <AmenitiesSection amenities={property.amenities} />
 
-            
-
             {/* In-Person Inspection Scheduler */}
             <SchedulerSection
               propertyId={property.id}
               currentUser={currentUser}
+              isUnlocked={
+                property.isRoommateOption ||
+                inspectionStatus.isOwner ||
+                currentUser?.role === "ADMIN" ||
+                inspectionStatus.isPaid
+              }
+              onUnlockClick={() => scrollToSection("pricing-card")}
               viewingDate={viewingDate}
               setViewingDate={setViewingDate}
               viewingTime={viewingTime}
@@ -362,7 +597,7 @@ function ApartmentDetailsContent() {
               isScheduling={isScheduling}
               onScheduleViewing={handleScheduleViewing}
             />
-
+            
             {/* Roommate Rent Splitter Calculator (Last Item on Page) */}
             <RentSplitter
               occupantsCount={occupantsCount}
@@ -378,6 +613,11 @@ function ApartmentDetailsContent() {
             property={property}
             currentUser={currentUser}
             rawTotal={rawTotal}
+            inspectionStatus={inspectionStatus}
+            isCheckingAvailability={isCheckingAvailability}
+            isPayingInspection={isPayingInspection}
+            onCheckAvailability={handleCheckAvailability}
+            onPayInspectionFee={handlePayInspectionFee}
             onScrollToScheduler={() => scrollToSection("scheduler")}
             onShare={handleShare}
             onOpenReportModal={() => setIsReportModalOpen(true)}
@@ -410,10 +650,10 @@ function ApartmentDetailsContent() {
           onReportSubmit={handleReportSubmit}
         />
 
-        {/* Share Toast Notification */}
+        {/* Toast Notification */}
         {showToast && (
           <div className="toast-notification">
-            <i className="fas fa-check-circle" style={{ marginRight: "8px" }}></i> Listing link copied to clipboard!
+            <i className="fas fa-check-circle"></i> {toastMessage}
           </div>
         )}
       </main>

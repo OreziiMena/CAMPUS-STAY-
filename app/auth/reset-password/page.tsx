@@ -159,9 +159,9 @@ export default function ResetPassword() {
     <Suspense fallback={
       <div className="auth-page">
         <div className="auth-container">
-          <div className="auth-card auth-card-narrow" style={{ textAlign: "center", padding: "40px" }}>
-            <i className="fas fa-spinner fa-spin" style={{ fontSize: "2rem", color: "rgb(2, 53, 28)" }}></i>
-            <p style={{ marginTop: "15px" }}>Loading password reset...</p>
+          <div className="auth-card auth-card-narrow auth-loading-card">
+            <i className="fas fa-spinner fa-spin auth-loading-spinner"></i>
+            <p className="auth-loading-text">Loading password reset...</p>
           </div>
         </div>
       </div>
