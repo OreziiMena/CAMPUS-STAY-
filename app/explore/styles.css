@@ -92,19 +92,21 @@ nav{
     background: linear-gradient(to right, rgb(13, 78, 25), rgb(126, 107, 1));
     color: white;
     border: 2px solid white;
-    padding: 12px;
-    font-size: 16px;
+    padding: 10px 20px;
+    font-size: 15px;
     border-radius: 50px;
     cursor: pointer;
     white-space: nowrap;
-    width: 100%;
-    transition: all 0.4s ease;
+    width: auto;
+    transition: all 0.3s ease;
     font-family: 'Poppins', sans-serif;
     text-align: center; 
-    display: inline-block;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
 }
 .start-btn:hover{
-    scale: 1.05;
+    transform: scale(1.04);
 }
 
 .nav-auth-group {
@@ -446,9 +448,6 @@ nav{
             padding-left: 5px;
             background: transparent;
         }
-        .start-btn {
-            display: block;
-        }
         .navlinks .start-btn {
             margin: 20px 0 0 0 !important; 
             display: inline-block; 
@@ -456,7 +455,7 @@ nav{
             text-align: center;
             padding: 12px;
         }
-        .btn-btn {
+        .navlinks .btn-btn {
             display: flex;
             flex-direction: column; 
             justify-content: center;

@@ -15,8 +15,7 @@ body {
     font-family: 'Poppins', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
 }
 
-nav.rolepick-nav,
-nav {
+nav.rolepick-nav {
     position: fixed;
     top: 0;
     left: 0;
@@ -24,9 +23,9 @@ nav {
     width: 100%;
     height: 70px;
     background-color: rgb(2, 53, 28);
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
     padding: 0 clamp(12px, 4vw, 32px);
     padding-top: env(safe-area-inset-top, 0px);
     z-index: 1000;
@@ -34,89 +33,97 @@ nav {
     box-sizing: border-box;
 }
 
-.brand {
+.rolepick-brand {
     display: flex !important;
     align-items: center !important;
     gap: 12px !important;
-    text-decoration: none;
-    margin-left: 0 !important;
-    flex-shrink: 0;
+    text-decoration: none !important;
+    margin: 0 !important;
+    flex-shrink: 0 !important;
+    width: auto !important;
 }
 
-.logo {
+.rolepick-logo {
     height: 38px !important;
     width: auto !important;
     object-fit: contain;
-    flex-shrink: 0;
+    flex-shrink: 0 !important;
     margin: 0 !important;
 }
 
-.logo-text {
-    color: white;
+.rolepick-logo-text {
+    color: white !important;
     font-size: 18px !important;
-    font-family: 'Poppins', sans-serif;
-    font-weight: 700;
-    background: linear-gradient(to right, #ffffff, #fbbf24);
-    -webkit-background-clip: text;
-    background-clip: text;
-    -webkit-text-fill-color: transparent;
-    color: transparent;
+    font-family: 'Poppins', sans-serif !important;
+    font-weight: 700 !important;
+    background: linear-gradient(to right, #ffffff, #fbbf24) !important;
+    -webkit-background-clip: text !important;
+    background-clip: text !important;
+    -webkit-text-fill-color: transparent !important;
+    color: transparent !important;
     letter-spacing: -0.3px;
     white-space: nowrap !important;
     margin: 0 !important;
     line-height: 1.2;
-    flex-shrink: 0;
+    flex-shrink: 0 !important;
 }
 
-.btn-btn {
-    display: flex;
-    align-items: center;
-    flex-shrink: 0;
+.rolepick-nav-actions {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: flex-end !important;
+    flex-shrink: 0 !important;
+    width: auto !important;
+    max-width: max-content !important;
+    margin: 0 !important;
+    padding: 0 !important;
 }
 
-.start-btn {
-    background: linear-gradient(to right, rgb(13, 78, 25), rgb(126, 107, 1));
-    color: white;
-    border: 1.5px solid rgba(255, 255, 255, 0.85);
-    padding: 8px 18px;
-    font-size: 13.5px;
-    font-weight: 600;
-    border-radius: 50px;
-    cursor: pointer;
+.rolepick-back-btn {
+    background: linear-gradient(to right, rgb(13, 78, 25), rgb(126, 107, 1)) !important;
+    color: #ffffff !important;
+    border: 1.5px solid rgba(255, 255, 255, 0.85) !important;
+    padding: 8px 18px !important;
+    font-size: 13.5px !important;
+    font-weight: 600 !important;
+    border-radius: 50px !important;
+    cursor: pointer !important;
     white-space: nowrap !important;
-    transition: all 0.25s ease;
-    font-family: 'Poppins', sans-serif;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    gap: 7px;
-    text-decoration: none;
-    flex-shrink: 0;
-    box-sizing: border-box;
+    transition: all 0.25s ease !important;
+    font-family: 'Poppins', sans-serif !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 7px !important;
+    text-decoration: none !important;
+    width: auto !important;
+    max-width: max-content !important;
+    flex-shrink: 0 !important;
+    box-sizing: border-box !important;
 }
 
-.start-btn i {
-    font-size: 12px;
-    transition: transform 0.2s ease;
+.rolepick-back-btn i {
+    font-size: 12px !important;
+    transition: transform 0.2s ease !important;
 }
 
-.start-btn:hover {
-    transform: translateY(-1px);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
-    border-color: #ffffff;
-    color: white;
+.rolepick-back-btn:hover {
+    transform: translateY(-1px) !important;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25) !important;
+    border-color: #ffffff !important;
+    color: white !important;
 }
 
-.start-btn:hover i {
-    transform: translateX(-2px);
+.rolepick-back-btn:hover i {
+    transform: translateX(-2px) !important;
 }
 
-.btn-text-short {
-    display: none;
+.rolepick-btn-text-short {
+    display: none !important;
 }
 
-.btn-text-full {
-    display: inline;
+.rolepick-btn-text-full {
+    display: inline !important;
 }
 
 .role-selection-section {
@@ -299,39 +306,44 @@ nav {
 
 /* Tablet & Mobile Breakpoints */
 @media (max-width: 768px) {
-    nav.rolepick-nav,
-    nav {
-        height: 62px;
+    nav.rolepick-nav {
+        height: 60px;
         padding: 0 16px;
         padding-top: env(safe-area-inset-top, 0px);
     }
 
-    .brand {
-        gap: 10px !important;
-        margin-left: 0 !important;
+    .rolepick-brand {
+        gap: 8px !important;
+        margin: 0 !important;
     }
 
-    .logo {
+    .rolepick-logo {
         height: 32px !important;
     }
 
-    .logo-text {
+    .rolepick-logo-text {
         font-size: 16px !important;
         white-space: nowrap !important;
     }
 
-    .start-btn {
-        padding: 6px 14px;
-        font-size: 12.5px;
-        gap: 6px;
+    .rolepick-nav-actions {
+        width: auto !important;
     }
 
-    .start-btn i {
-        font-size: 11px;
+    .rolepick-back-btn {
+        padding: 6px 13px !important;
+        font-size: 12px !important;
+        gap: 5px !important;
+        width: auto !important;
+        max-width: max-content !important;
+    }
+
+    .rolepick-back-btn i {
+        font-size: 11px !important;
     }
 
     .role-selection-section {
-        padding: calc(84px + env(safe-area-inset-top, 0px)) 16px 32px 16px;
+        padding: calc(80px + env(safe-area-inset-top, 0px)) 16px 32px 16px;
     }
 
     .role-cards-wrapper {
@@ -351,73 +363,73 @@ nav {
 
 /* Compact Mobile Devices (<= 480px) */
 @media (max-width: 480px) {
-    nav.rolepick-nav,
-    nav {
-        height: 58px;
+    nav.rolepick-nav {
+        height: 56px;
         padding: 0 12px;
         padding-top: env(safe-area-inset-top, 0px);
     }
 
-    .brand {
-        gap: 8px !important;
-        margin-left: 0 !important;
+    .rolepick-brand {
+        gap: 7px !important;
     }
 
-    .logo {
-        height: 30px !important;
+    .rolepick-logo {
+        height: 28px !important;
     }
 
-    .logo-text {
+    .rolepick-logo-text {
         font-size: 15px !important;
         white-space: nowrap !important;
     }
 
-    .start-btn {
-        padding: 6px 12px;
-        font-size: 12px;
-        gap: 5px;
+    .rolepick-back-btn {
+        padding: 5px 11px !important;
+        font-size: 11.5px !important;
+        gap: 4px !important;
+        width: auto !important;
+        max-width: max-content !important;
     }
 }
 
 /* Small / Foldable Mobile Devices (< 360px) */
 @media (max-width: 360px) {
-    nav.rolepick-nav,
-    nav {
-        height: 54px;
+    nav.rolepick-nav {
+        height: 52px;
         padding: 0 10px;
         padding-top: env(safe-area-inset-top, 0px);
     }
 
-    .brand {
-        gap: 6px !important;
-        margin-left: 0 !important;
+    .rolepick-brand {
+        gap: 5px !important;
     }
 
-    .logo {
-        height: 26px !important;
+    .rolepick-logo {
+        height: 25px !important;
     }
 
-    .logo-text {
-        font-size: 13.5px !important;
+    .rolepick-logo-text {
+        font-size: 13px !important;
         white-space: nowrap !important;
     }
 
-    .btn-text-full {
-        display: none;
+    .rolepick-btn-text-full {
+        display: none !important;
     }
 
-    .btn-text-short {
-        display: inline;
+    .rolepick-btn-text-short {
+        display: inline !important;
     }
 
-    .start-btn {
-        padding: 5px 9px;
-        font-size: 11px;
-        gap: 4px;
+    .rolepick-back-btn {
+        padding: 4px 8px !important;
+        font-size: 10.5px !important;
+        gap: 3px !important;
+        width: auto !important;
+        max-width: max-content !important;
     }
 
     .role-selection-section {
-        padding: calc(72px + env(safe-area-inset-top, 0px)) 12px 24px 12px;
+        padding: calc(68px + env(safe-area-inset-top, 0px)) 10px 24px 10px;
     }
 
     .role-card {

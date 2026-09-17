@@ -7,15 +7,15 @@ export default function Rolepick() {
     return (
         <>
             <nav className="rolepick-nav sticky-top">
-                <Link href="/" className="brand" aria-label="Campus Tent Home">
-                    <img src="/Assets/CAMPUS STAY LOGO.png" alt="Campus Tent Logo" className="logo" />
-                    <h2 className="logo-text">Campus Tent</h2>
+                <Link href="/" className="rolepick-brand" aria-label="Campus Tent Home">
+                    <img src="/Assets/CAMPUS STAY LOGO.png" alt="Campus Tent Logo" className="rolepick-logo" />
+                    <h2 className="rolepick-logo-text">Campus Tent</h2>
                 </Link>
-                <div className="btn-btn">
-                    <Link href="/" className="start-btn" aria-label="Back to Home">
+                <div className="rolepick-nav-actions">
+                    <Link href="/" className="rolepick-back-btn" aria-label="Back to Home">
                         <i className="fas fa-arrow-left" aria-hidden="true"></i>
-                        <span className="btn-text-full">Back to Home</span>
-                        <span className="btn-text-short">Home</span>
+                        <span className="rolepick-btn-text-full">Back to Home</span>
+                        <span className="rolepick-btn-text-short">Home</span>
                     </Link>
                 </div>
             </nav>
