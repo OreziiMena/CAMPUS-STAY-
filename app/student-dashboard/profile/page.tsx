@@ -18,6 +18,15 @@ const GENDER_OPTIONS = [
   { code: "Female", name: "Female" }
 ];
 
+const LEVEL_OPTIONS = [
+  { code: "100L", name: "100 Level (Freshman)" },
+  { code: "200L", name: "200 Level" },
+  { code: "300L", name: "300 Level" },
+  { code: "400L", name: "400 Level" },
+  { code: "500L", name: "500 Level (Finalist)" },
+  { code: "Postgraduate", name: "Postgraduate" }
+];
+
 const CLEANLINESS_OPTIONS = [
   { code: "Very Clean", name: "Very Clean" },
   { code: "Average", name: "Average" },
@@ -50,6 +59,8 @@ export default function StudentProfile() {
   const [openToRoommates, setOpenToRoommates] = useState(false);
   const [budgetLimit, setBudgetLimit] = useState("");
   const [gender, setGender] = useState("Any");
+  const [department, setDepartment] = useState("");
+  const [level, setLevel] = useState("100L");
   const [cleanliness, setCleanliness] = useState("Average");
   const [sleepSchedule, setSleepSchedule] = useState("Flexible");
   const [noiseLevel, setNoiseLevel] = useState("Flexible");
@@ -84,6 +95,8 @@ export default function StudentProfile() {
         setOpenToRoommates(prefs.openToRoommates || false);
         setBudgetLimit(prefs.budgetLimit ? String(prefs.budgetLimit) : "");
         setGender(prefs.gender || "Any");
+        setDepartment(prefs.department || "");
+        setLevel(prefs.level || "100L");
         setCleanliness(prefs.cleanliness || "Average");
         setSleepSchedule(prefs.sleepSchedule || "Flexible");
         setNoiseLevel(prefs.noiseLevel || "Flexible");
@@ -125,6 +138,8 @@ export default function StudentProfile() {
       openToRoommates,
       budgetLimit: parsedBudget,
       gender,
+      department,
+      level,
       cleanliness,
       sleepSchedule,
       noiseLevel,
@@ -251,6 +266,25 @@ export default function StudentProfile() {
                           options={GENDER_OPTIONS}
                           value={gender}
                           onChange={(val) => setGender(val)}
+                        />
+                      </div>
+
+                      <div className="input-group font-bold">
+                        <label>Academic Department</label>
+                        <input 
+                          type="text" 
+                          placeholder="e.g. Computer Science, Accounting" 
+                          value={department} 
+                          onChange={(e) => setDepartment(e.target.value)} 
+                        />
+                      </div>
+
+                      <div className="input-group font-bold input-group-select">
+                        <label>Academic Level</label>
+                        <SearchableSelect
+                          options={LEVEL_OPTIONS}
+                          value={level}
+                          onChange={(val) => setLevel(val)}
                         />
                       </div>
 

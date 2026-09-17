@@ -1389,3 +1389,831 @@
   justify-content: center;
 }
 
+/* ============================================================
+   CO-RENTING & INTERACTIVE ROOMMATE PAIRING (UNPAID HOUSES)
+   ============================================================ */
+
+.roommates-intent-tabs-wrapper {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  margin: 0 auto 30px auto;
+  max-width: 900px;
+  padding: 0 16px;
+  flex-wrap: wrap;
+}
+
+.intent-tab-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 22px;
+  border-radius: 50px;
+  font-size: 0.92rem;
+  font-weight: 600;
+  cursor: pointer;
+  border: 1.5px solid #e2e8f0;
+  background: white;
+  color: #475569;
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.03);
+}
+
+.intent-tab-btn:hover {
+  border-color: rgb(2, 53, 28);
+  color: rgb(2, 53, 28);
+  transform: translateY(-1px);
+}
+
+.intent-tab-btn.active {
+  background: rgb(2, 53, 28);
+  color: white;
+  border-color: rgb(2, 53, 28);
+  box-shadow: 0 4px 14px rgba(2, 53, 28, 0.25);
+}
+
+.intent-tab-count {
+  font-size: 0.75rem;
+  padding: 2px 8px;
+  border-radius: 20px;
+  background: rgba(0, 0, 0, 0.08);
+}
+
+.intent-tab-btn.active .intent-tab-count {
+  background: rgba(255, 255, 255, 0.25);
+  color: white;
+}
+
+/* Setup Compatibility Prompt Banner */
+.compat-setup-banner {
+  background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);
+  border: 1.5px dashed #86efac;
+  border-radius: 14px;
+  padding: 14px 20px;
+  margin: -10px auto 25px auto;
+  max-width: 960px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  box-shadow: 0 4px 12px rgba(22, 101, 52, 0.05);
+}
+
+.compat-setup-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  color: #166534;
+}
+
+.compat-setup-left i {
+  font-size: 1.4rem;
+}
+
+.compat-setup-title {
+  font-weight: 700;
+  font-size: 0.95rem;
+  margin: 0;
+}
+
+.compat-setup-desc {
+  font-size: 0.82rem;
+  color: #15803d;
+  margin: 2px 0 0 0;
+}
+
+.compat-setup-btn {
+  background: #15803d;
+  color: white;
+  border: none;
+  padding: 8px 18px;
+  border-radius: 30px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.2s ease;
+}
+
+.compat-setup-btn:hover {
+  background: #166534;
+  transform: translateY(-1px);
+}
+
+/* Card Header Badges for Co-Renting */
+.roommate-corent-badge {
+  background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+  color: #92400e;
+  border: 1px solid #fcd34d;
+  font-size: 0.68rem;
+  font-weight: 700;
+  padding: 3px 8px;
+  border-radius: 20px;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  letter-spacing: 0.3px;
+  text-transform: uppercase;
+}
+
+.roommate-sublet-badge {
+  background: #f1f5f9;
+  color: #475569;
+  border: 1px solid #e2e8f0;
+  font-size: 0.68rem;
+  font-weight: 700;
+  padding: 3px 8px;
+  border-radius: 20px;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  text-transform: uppercase;
+}
+
+/* Budget & Split Meter Box on Card */
+.roommate-budget-split-box {
+  background: #f8fafc;
+  border: 1.5px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 12px 14px;
+  margin: 10px 0 14px 0;
+}
+
+.split-box-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  margin-bottom: 6px;
+}
+
+.split-box-label {
+  font-size: 0.78rem;
+  color: #64748b;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+}
+
+.split-box-target-val {
+  font-size: 1.15rem;
+  font-weight: 800;
+  color: rgb(2, 53, 28);
+}
+
+.split-box-target-val span {
+  font-size: 0.75rem;
+  color: #64748b;
+  font-weight: 500;
+}
+
+.split-progress-bar-wrap {
+  height: 8px;
+  background: #e2e8f0;
+  border-radius: 10px;
+  overflow: hidden;
+  margin: 6px 0;
+  position: relative;
+}
+
+.split-progress-bar-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #10b981 0%, #059669 100%);
+  border-radius: 10px;
+  transition: width 0.4s ease;
+}
+
+.split-box-breakdown {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.74rem;
+  color: #475569;
+  margin-top: 4px;
+}
+
+.split-pledged {
+  color: #047857;
+  font-weight: 600;
+}
+
+.split-needed {
+  color: #b45309;
+  font-weight: 700;
+}
+
+/* Compatibility Gauge & Reasons */
+.roommate-compat-score-wrapper {
+  margin: 10px 0;
+  padding: 10px 12px;
+  border-radius: 10px;
+  font-size: 0.78rem;
+  font-family: 'Poppins', sans-serif;
+}
+
+.roommate-compat-score-wrapper.high {
+  background: rgba(34, 197, 94, 0.08);
+  border: 1px solid rgba(34, 197, 94, 0.25);
+  color: #15803d;
+}
+
+.roommate-compat-score-wrapper.compatible {
+  background: rgba(59, 130, 246, 0.08);
+  border: 1px solid rgba(59, 130, 246, 0.25);
+  color: #1d4ed8;
+}
+
+.roommate-compat-score-wrapper.fair {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  color: #475569;
+}
+
+.roommate-compat-score-wrapper.guest {
+  background: #fdf2f8;
+  border: 1px solid #fbcfe8;
+  color: #9d174d;
+}
+
+.compat-score-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-weight: 700;
+  margin-bottom: 4px;
+}
+
+.compat-score-val {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.88rem;
+  font-weight: 800;
+}
+
+.compat-matched-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-top: 5px;
+}
+
+.compat-reason-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.7rem;
+  background: white;
+  border: 1px solid currentColor;
+  padding: 2px 7px;
+  border-radius: 12px;
+  font-weight: 600;
+  opacity: 0.9;
+}
+
+/* Pair Up CTA Button */
+.roommate-pairup-btn {
+  background: linear-gradient(135deg, rgb(2, 53, 28) 0%, rgb(13, 78, 25) 100%) !important;
+  color: white !important;
+  font-weight: 700 !important;
+  box-shadow: 0 4px 12px rgba(2, 53, 28, 0.25);
+}
+
+.roommate-pairup-btn:hover {
+  background: linear-gradient(135deg, rgb(3, 70, 37) 0%, rgb(17, 95, 31) 100%) !important;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(2, 53, 28, 0.35);
+}
+
+/* Mode Toggle inside Add Listing Modal */
+.listing-intent-switch-bar {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin-bottom: 22px;
+  background: #f1f5f9;
+  padding: 6px;
+  border-radius: 12px;
+}
+
+.intent-mode-option {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 12px 10px;
+  border-radius: 10px;
+  border: 2px solid transparent;
+  background: transparent;
+  cursor: pointer;
+  transition: all 0.25s ease;
+  color: #475569;
+}
+
+.intent-mode-option i {
+  font-size: 1.3rem;
+  margin-bottom: 6px;
+}
+
+.intent-mode-option strong {
+  font-size: 0.88rem;
+  margin-bottom: 2px;
+}
+
+.intent-mode-option small {
+  font-size: 0.72rem;
+  opacity: 0.85;
+  line-height: 1.3;
+}
+
+.intent-mode-option.active {
+  background: white;
+  color: rgb(2, 53, 28);
+  border-color: rgb(2, 53, 28);
+  box-shadow: 0 4px 14px rgba(0,0,0,0.06);
+}
+
+.pairing-calc-banner {
+  background: #ecfdf5;
+  border: 1px solid #a7f3d0;
+  border-radius: 10px;
+  padding: 12px 14px;
+  margin-bottom: 18px;
+  color: #065f46;
+  font-size: 0.84rem;
+}
+
+.pairing-calc-banner p {
+  margin: 2px 0;
+}
+
+/* Department & Level Pills on Cards */
+.roommate-dept-level-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 6px 0 10px 0;
+}
+
+.roommate-dept-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  background: #f0fdf4;
+  color: #166534;
+  border: 1px solid #bbf7d0;
+  padding: 3px 9px;
+  border-radius: 16px;
+  font-size: 0.73rem;
+  font-weight: 600;
+}
+
+.roommate-level-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  background: #eff6ff;
+  color: #1e40af;
+  border: 1px solid #bfdbfe;
+  padding: 3px 9px;
+  border-radius: 16px;
+  font-size: 0.73rem;
+  font-weight: 600;
+}
+
+/* Roommate Pairing Proposal Modal */
+.proposal-modal-card {
+  max-width: 560px;
+  width: 90%;
+  border-radius: 20px;
+  overflow: hidden;
+  background: white;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.2);
+}
+
+.proposal-summary-box {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 14px;
+  padding: 16px;
+  margin-bottom: 20px;
+}
+
+.proposal-summary-title {
+  font-size: 1rem;
+  font-weight: 700;
+  color: #0f172a;
+  margin: 0 0 6px 0;
+}
+
+.proposal-grid-metrics {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+  margin-top: 12px;
+}
+
+.proposal-metric {
+  background: white;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  padding: 10px;
+  text-align: center;
+}
+
+.proposal-metric-lbl {
+  font-size: 0.68rem;
+  text-transform: uppercase;
+  color: #64748b;
+  font-weight: 600;
+  display: block;
+  margin-bottom: 2px;
+}
+
+.proposal-metric-val {
+  font-size: 0.92rem;
+  font-weight: 800;
+  color: #0f172a;
+}
+
+.proposal-metric-val.green {
+  color: #059669;
+}
+
+.proposal-metric-val.amber {
+  color: #d97706;
+}
+
+.proposal-calc-bar-wrap {
+  margin: 14px 0 6px 0;
+}
+
+.proposal-calc-bar-bg {
+  height: 10px;
+  background: #e2e8f0;
+  border-radius: 10px;
+  overflow: hidden;
+  display: flex;
+}
+
+.proposal-calc-bar-poster {
+  height: 100%;
+  background: #10b981;
+}
+
+.proposal-calc-bar-viewer {
+  height: 100%;
+  background: #3b82f6;
+  transition: width 0.3s ease;
+}
+
+.proposal-calc-bar-legend {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.72rem;
+  margin-top: 5px;
+  color: #64748b;
+}
+
+.legend-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.legend-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+}
+
+.legend-dot.poster {
+  background: #10b981;
+}
+
+.legend-dot.viewer {
+  background: #3b82f6;
+}
+
+.legend-dot.needed {
+  background: #e2e8f0;
+}
+
+.proposal-form-label {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #1e293b;
+  display: block;
+  margin-bottom: 6px;
+}
+
+.proposal-input {
+  width: 100%;
+  padding: 11px 14px;
+  border-radius: 10px;
+  border: 1.5px solid #cbd5e1;
+  font-size: 0.95rem;
+  font-family: inherit;
+  transition: border-color 0.2s;
+  background: white;
+}
+
+.proposal-input:focus {
+  outline: none;
+  border-color: rgb(2, 53, 28);
+  box-shadow: 0 0 0 3px rgba(2, 53, 28, 0.1);
+}
+
+.proposal-textarea {
+  width: 100%;
+  padding: 12px 14px;
+  border-radius: 10px;
+  border: 1.5px solid #cbd5e1;
+  font-size: 0.9rem;
+  font-family: inherit;
+  resize: vertical;
+  min-height: 80px;
+}
+
+.proposal-textarea:focus {
+  outline: none;
+  border-color: rgb(2, 53, 28);
+  box-shadow: 0 0 0 3px rgba(2, 53, 28, 0.1);
+}
+
+.proposal-actions-row {
+  display: flex;
+  gap: 12px;
+  margin-top: 20px;
+}
+
+.proposal-cancel-btn {
+  flex: 1;
+  background: #f1f5f9;
+  border: none;
+  color: #475569;
+  font-weight: 600;
+  padding: 12px;
+  border-radius: 10px;
+  cursor: pointer;
+}
+
+.proposal-submit-btn {
+  flex: 2;
+  background: linear-gradient(135deg, rgb(2, 53, 28) 0%, rgb(13, 78, 25) 100%);
+  border: none;
+  color: white;
+  font-weight: 700;
+  padding: 12px;
+  border-radius: 10px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  box-shadow: 0 4px 14px rgba(2, 53, 28, 0.25);
+  transition: transform 0.2s;
+}
+
+.proposal-submit-btn:hover:not(:disabled) {
+  transform: translateY(-1px);
+}
+
+.proposal-submit-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.proposal-success-box {
+  text-align: center;
+  padding: 30px 20px;
+}
+
+.proposal-success-icon {
+  font-size: 3.5rem;
+  color: #059669;
+  margin-bottom: 12px;
+}
+
+.proposal-success-box h3 {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #0f172a;
+  margin: 0 0 8px 0;
+}
+
+.proposal-success-box p {
+  color: #64748b;
+  font-size: 0.9rem;
+  margin: 0 0 20px 0;
+}
+
+.proposal-chat-link-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: rgb(2, 53, 28);
+  color: white;
+  padding: 12px 28px;
+  border-radius: 30px;
+  font-weight: 700;
+  text-decoration: none;
+  box-shadow: 0 4px 14px rgba(2, 53, 28, 0.25);
+}
+
+@media (max-width: 640px) {
+  .proposal-grid-metrics {
+    grid-template-columns: 1fr;
+    gap: 8px;
+  }
+  .listing-intent-switch-bar {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Specific Pill Color Overrides */
+.roommate-pill-pink {
+  background: #fdf2f8 !important;
+  color: #9d174d !important;
+  border: 1px solid #fbcfe8 !important;
+}
+
+.roommate-pill-amber {
+  background: #fef3c7 !important;
+  color: #92400e !important;
+  border: 1px solid #fde68a !important;
+}
+
+/* Price Subtext */
+.roommate-price-subtext {
+  font-size: 0.8rem;
+  font-weight: normal;
+  color: #64748b;
+  margin-left: 4px;
+}
+
+/* Spacing and Layout Helpers for Roommate Modals & Cards */
+.pairing-calc-summary {
+  margin-top: 6px;
+  font-weight: 600;
+}
+
+.proposal-summary-box-spaced {
+  margin: 14px 0 !important;
+}
+
+.proposal-summary-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.proposal-slots-indicator {
+  font-size: 0.8rem;
+  color: #64748b;
+}
+
+.proposal-summary-sub {
+  font-size: 0.82rem;
+  color: #64748b;
+}
+
+.modal-body-padded {
+  padding: 24px !important;
+}
+
+.modal-card-compat {
+  max-width: 480px !important;
+  width: 90% !important;
+}
+
+.compat-modal-desc {
+  font-size: 0.88rem;
+  color: #64748b;
+  margin: 0 0 18px 0;
+  line-height: 1.4;
+}
+
+.proposal-success-actions {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.btn-done-compact {
+  max-width: 120px !important;
+}
+
+.form-group-mb-14 {
+  margin-bottom: 14px !important;
+}
+
+.form-group-mb-16 {
+  margin-bottom: 16px !important;
+}
+
+.form-group-mb-20 {
+  margin-bottom: 20px !important;
+}
+
+.form-banner-mb-16 {
+  margin-bottom: 16px !important;
+}
+
+/* Media upload and video tour preview */
+.roommate-upload-hint {
+  font-size: 0.8rem;
+  color: #64748b;
+  margin-top: -4px;
+  margin-bottom: 8px;
+}
+
+.roommate-file-input {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px dashed #cbd5e1;
+  border-radius: 8px;
+  background-color: #f8fafc;
+  cursor: pointer;
+  font-size: 0.85rem;
+}
+
+.roommate-file-input:hover {
+  border-color: #10b981;
+}
+
+.roommate-preview-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+  gap: 12px;
+  margin-top: 14px;
+}
+
+.roommate-preview-wrap {
+  position: relative;
+  width: 100%;
+  height: 95px;
+  border-radius: 8px;
+  overflow: hidden;
+  border: 1px solid #e2e8f0;
+  background-color: #0f172a;
+}
+
+.roommate-preview-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.roommate-preview-video-box {
+  position: relative;
+  width: 100%;
+  height: 100%;
+}
+
+.roommate-preview-video-box video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.roommate-video-pill {
+  position: absolute;
+  bottom: 6px;
+  left: 6px;
+  background-color: rgba(15, 23, 42, 0.85);
+  color: #ffffff;
+  font-size: 0.65rem;
+  font-weight: 700;
+  padding: 2px 6px;
+  border-radius: 4px;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  pointer-events: none;
+}
+
+.roommate-preview-del-btn {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  width: 22px;
+  height: 22px;
+  background-color: rgba(220, 38, 38, 0.9);
+  color: white;
+  border: none;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  cursor: pointer;
+  transition: transform 0.15s ease, background-color 0.15s ease;
+  z-index: 5;
+}
+
+.roommate-preview-del-btn:hover {
+  background-color: #b91c1c;
+  transform: scale(1.1);
+}

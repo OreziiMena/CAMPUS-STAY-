@@ -13,9 +13,24 @@ import SearchableSelect from "@/components/SearchableSelect";
 const MAX_IMAGE_SIZE_MB = 5;
 const MAX_VIDEO_SIZE_MB = 20;
 
+const LEVEL_OPTIONS = [
+  { code: "100L", name: "100 Level (Freshman)" },
+  { code: "200L", name: "200 Level" },
+  { code: "300L", name: "300 Level" },
+  { code: "400L", name: "400 Level" },
+  { code: "500L", name: "500 Level (Finalist)" },
+  { code: "Postgraduate", name: "Postgraduate" }
+];
+
 export default function AddRoommateListing() {
   const router = useRouter();
   const [user, setUser] = useState<any>(null);
+  const [roommateIntent, setRoommateIntent] = useState<"HAVE_SPACE" | "LOOKING_TO_PAIR">("HAVE_SPACE");
+  const [targetTotalRent, setTargetTotalRent] = useState("");
+  const [myBudget, setMyBudget] = useState("");
+  const [department, setDepartment] = useState("");
+  const [level, setLevel] = useState("100L");
+  const [slotsTotal, setSlotsTotal] = useState(2);
   const [title, setTitle] = useState("");
   const [hostelType, setHostelType] = useState("Bedsitter");
   const [price, setPrice] = useState("");
@@ -26,12 +41,12 @@ export default function AddRoommateListing() {
 
   const [amenities, setAmenities] = useState({
     fencedCompound: false,
-    gatedCompound: true,
+    gatedCompound: false,
     wardrobe: false,
     pvc: false,
     pop: false,
     prepaidMeter: false,
-    runningWater: true,
+    runningWater: false,
   });
 
   const [images, setImages] = useState<string[]>([]);
@@ -48,6 +63,11 @@ export default function AddRoommateListing() {
         return;
       }
       setUser(currentUser);
+      if (currentUser?.studentProfile?.preferences) {
+        const p = currentUser.studentProfile.preferences as any;
+        if (p.department) setDepartment(p.department);
+        if (p.level) setLevel(p.level);
+      }
     };
     checkUser();
   }, [router]);
@@ -91,9 +111,16 @@ export default function AddRoommateListing() {
     e.preventDefault();
     setError("");
 
-    if (!title || !price || !location || !distance || !description) {
-      setError("Please fill in all required fields.");
-      return;
+    if (roommateIntent === "LOOKING_TO_PAIR") {
+      if (!title || !targetTotalRent || !myBudget || !location) {
+        setError("Please fill in required fields: Listing Title, Target Total Rent, Your Budget, and Target Area.");
+        return;
+      }
+    } else {
+      if (!title || !price || !location) {
+        setError("Please fill in required fields: Listing Title, Price, and Location.");
+        return;
+      }
     }
 
     setIsLoading(true);
@@ -197,13 +224,28 @@ export default function AddRoommateListing() {
       const res = await addProperty({
         title,
         hostelType,
-        price,
+        price: roommateIntent === "LOOKING_TO_PAIR" ? myBudget : price,
         location,
-        distance,
-        description,
+        distance: distance ? distance.trim() : "",
+        description: description.trim() || (roommateIntent === "LOOKING_TO_PAIR"
+          ? "Looking for a compatible roommate to pool budget and co-rent an apartment together."
+          : "Roommate accommodation space available."),
         amenities: activeAmenities,
-        images: uploadedUrls.length > 0 ? uploadedUrls : ["https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?ixlib=rb-4.0.3"],
+        images: uploadedUrls.length > 0 ? uploadedUrls : [
+          roommateIntent === "LOOKING_TO_PAIR"
+            ? "https://images.unsplash.com/photo-1529156069898-49953e39b3ac?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80"
+            : "https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80"
+        ],
         genderPreference,
+        roommateIntent,
+        ...(roommateIntent === "LOOKING_TO_PAIR" ? {
+          targetTotalRent,
+          myBudget,
+          department: department || (user.studentProfile?.preferences as any)?.department || "General Studies",
+          level: level || (user.studentProfile?.preferences as any)?.level || "100L",
+          slotsTotal,
+          slotsFilled: 1,
+        } : {}),
       });
 
       setIsLoading(false);
@@ -261,55 +303,166 @@ export default function AddRoommateListing() {
               </div>
             )}
 
-            {!user.studentProfile?.isVerified && (
-              <div className="verification-warning-banner">
-                <i className="fas fa-exclamation-triangle"></i>
-                <p>
-                  <strong>Note:</strong> Your profile is unverified. While you can upload listings, agents and students will not be able to contact you directly until you verify your profile in settings.
-                </p>
+
+
+            {/* Mode toggle */}
+            <div className="listing-intent-switch-bar">
+              <button
+                type="button"
+                className={`intent-mode-option ${roommateIntent === "HAVE_SPACE" ? "active" : ""}`}
+                onClick={() => setRoommateIntent("HAVE_SPACE")}
+              >
+                <i className="fas fa-door-open"></i>
+                <strong>I Have a Space / Room</strong>
+                <small>Sublet or find a roommate to move in</small>
+              </button>
+              <button
+                type="button"
+                className={`intent-mode-option ${roommateIntent === "LOOKING_TO_PAIR" ? "active" : ""}`}
+                onClick={() => setRoommateIntent("LOOKING_TO_PAIR")}
+              >
+                <i className="fas fa-handshake"></i>
+                <strong>Looking to Pair Up (Unpaid House)</strong>
+                <small>Find a partner to pool budget and co-rent</small>
+              </button>
+            </div>
+
+            {roommateIntent === "LOOKING_TO_PAIR" && (
+              <div className="pairing-calc-banner">
+                <p><i className="fas fa-handshake"></i> <strong>Unpaid Co-Renting Mode:</strong> List an apartment you want to rent so other students can pair with you to pool the rent together.</p>
+                {targetTotalRent && myBudget && (
+                  <p className="pairing-calc-summary">
+                    Target Total Rent: ₦{Number(targetTotalRent).toLocaleString()} | Your Contribution: ₦{Number(myBudget).toLocaleString()} | Needed from Roommate(s): ₦{Math.max(0, Number(targetTotalRent) - Number(myBudget)).toLocaleString()}
+                  </p>
+                )}
               </div>
             )}
 
             <div className="form-grid">
               <div className="input-group">
-                <label htmlFor="title">Listing Title *</label>
+                <label htmlFor="title">
+                  {roommateIntent === "LOOKING_TO_PAIR" ? "Co-Renting Listing Title *" : "Listing Title *"}
+                </label>
                 <input
                   type="text"
                   id="title"
-                  placeholder="Enter roommate listing title"
+                  placeholder={roommateIntent === "LOOKING_TO_PAIR" ? "e.g. Need 1 roommate to pair up for 2-bedroom flat at Gate" : "Enter roommate listing title"}
                   value={title}
                   onChange={(e) => setTitle(e.target.value)}
                   required
                 />
               </div>
 
-              <div className="input-group">
-                <label htmlFor="hostel-type">Roommate Space Type *</label>
-                <SearchableSelect
-                  options={[
-                    { code: "Bedsitter", name: "Bedsitter" },
-                    { code: "Self-Contain", name: "Self-Contain" },
-                    { code: "1-Bedroom Flat", name: "1-Bedroom Flat" },
-                    { code: "2-Bedroom Flat", name: "2-Bedroom Flat" }
-                  ]}
-                  value={hostelType}
-                  onChange={(val) => setHostelType(val)}
-                  placeholder="Select space type..."
-                  required
-                />
-              </div>
+              {roommateIntent === "LOOKING_TO_PAIR" ? (
+                <>
+                  <div className="input-group">
+                    <label htmlFor="targetTotalRent">Target Total Rent (₦ per year) *</label>
+                    <input
+                      type="number"
+                      id="targetTotalRent"
+                      placeholder="Total rent for whole apartment"
+                      value={targetTotalRent}
+                      onChange={(e) => setTargetTotalRent(e.target.value)}
+                      required
+                    />
+                  </div>
 
-              <div className="input-group">
-                <label htmlFor="price">Shared Rent Cost (₦ per year) *</label>
-                <input
-                  type="number"
-                  id="price"
-                  placeholder="Shared rent amount"
-                  value={price}
-                  onChange={(e) => setPrice(e.target.value)}
-                  required
-                />
-              </div>
+                  <div className="input-group">
+                    <label htmlFor="myBudget">Your Budget Contribution (₦ per year) *</label>
+                    <input
+                      type="number"
+                      id="myBudget"
+                      placeholder="Your pledged contribution"
+                      value={myBudget}
+                      onChange={(e) => setMyBudget(e.target.value)}
+                      required
+                    />
+                  </div>
+
+                  <div className="input-group">
+                    <label htmlFor="department">Your Academic Department *</label>
+                    <input
+                      type="text"
+                      id="department"
+                      placeholder="e.g. Computer Science, Accounting"
+                      value={department}
+                      onChange={(e) => setDepartment(e.target.value)}
+                      required
+                    />
+                  </div>
+
+                  <div className="input-group">
+                    <label htmlFor="level">Your Academic Level *</label>
+                    <SearchableSelect
+                      options={LEVEL_OPTIONS}
+                      value={level}
+                      onChange={(val) => setLevel(val)}
+                      placeholder="Select level..."
+                      required
+                    />
+                  </div>
+
+                  <div className="input-group">
+                    <label htmlFor="slotsTotal">Total Students in Flat *</label>
+                    <input
+                      type="number"
+                      id="slotsTotal"
+                      min="2"
+                      max="6"
+                      placeholder="e.g. 2"
+                      value={slotsTotal}
+                      onChange={(e) => setSlotsTotal(parseInt(e.target.value, 10) || 2)}
+                      required
+                    />
+                  </div>
+
+                  <div className="input-group">
+                    <label htmlFor="hostel-type">Roommate Space Type *</label>
+                    <SearchableSelect
+                      options={[
+                        { code: "Bedsitter", name: "Bedsitter" },
+                        { code: "Self-Contain", name: "Self-Contain" },
+                        { code: "1-Bedroom Flat", name: "1-Bedroom Flat" },
+                        { code: "2-Bedroom Flat", name: "2-Bedroom Flat" }
+                      ]}
+                      value={hostelType}
+                      onChange={(val) => setHostelType(val)}
+                      placeholder="Select space type..."
+                      required
+                    />
+                  </div>
+                </>
+              ) : (
+                <>
+                  <div className="input-group">
+                    <label htmlFor="hostel-type">Roommate Space Type *</label>
+                    <SearchableSelect
+                      options={[
+                        { code: "Bedsitter", name: "Bedsitter" },
+                        { code: "Self-Contain", name: "Self-Contain" },
+                        { code: "1-Bedroom Flat", name: "1-Bedroom Flat" },
+                        { code: "2-Bedroom Flat", name: "2-Bedroom Flat" }
+                      ]}
+                      value={hostelType}
+                      onChange={(val) => setHostelType(val)}
+                      placeholder="Select space type..."
+                      required
+                    />
+                  </div>
+
+                  <div className="input-group">
+                    <label htmlFor="price">Shared Rent Cost (₦ per year) *</label>
+                    <input
+                      type="number"
+                      id="price"
+                      placeholder="Shared rent amount"
+                      value={price}
+                      onChange={(e) => setPrice(e.target.value)}
+                      required
+                    />
+                  </div>
+                </>
+              )}
 
               <div className="input-group">
                 <label htmlFor="location">Apartment Location *</label>
@@ -339,31 +492,37 @@ export default function AddRoommateListing() {
               </div>
 
               <div className="input-group full-width-group">
-                <label htmlFor="distance">Walking Distance to Campus Gate *</label>
+                <label htmlFor="distance">
+                  {roommateIntent === "LOOKING_TO_PAIR" ? "Preferred Proximity to Campus (Optional)" : "Walking Distance to Campus Gate (Optional)"}
+                </label>
                 <input
                   type="text"
                   id="distance"
-                  placeholder="Estimated walking time to campus gate"
+                  placeholder={roommateIntent === "LOOKING_TO_PAIR" ? "e.g. 5-10 mins walk to campus gate (Optional)" : "Estimated walking time to campus gate (Optional)"}
                   value={distance}
                   onChange={(e) => setDistance(e.target.value)}
-                  required
                 />
               </div>
 
               <div className="input-group full-width-group">
-                <label htmlFor="description">About the Apartment & Roommate Preferences *</label>
+                <label htmlFor="description">
+                  {roommateIntent === "LOOKING_TO_PAIR" ? "Roommate & Co-Renting Preferences (Optional)" : "About the Apartment & Roommate Preferences (Optional)"}
+                </label>
                 <textarea
                   id="description"
                   rows={5}
-                  placeholder="Describe your current apartment, utilities, rules, and what kind of roommate you are looking for..."
+                  placeholder={roommateIntent === "LOOKING_TO_PAIR"
+                    ? "Optional: Describe what you are looking for in a co-renter, your lifestyle, quiet hours, or target area..."
+                    : "Optional: Describe your current apartment, utilities, rules, and what kind of roommate you are looking for..."}
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
-                  required
                 ></textarea>
               </div>
             </div>
 
-            <div className="form-section-title">Amenities Included</div>
+            <div className="form-section-title">
+              {roommateIntent === "LOOKING_TO_PAIR" ? "Desired Features & Amenities (Optional)" : "Amenities Included (Optional)"}
+            </div>
             <div className="amenities-grid">
               <label className="checkbox-item">
                 <input
@@ -423,13 +582,15 @@ export default function AddRoommateListing() {
               </label>
             </div>
 
-            <div className="form-section-title">Apartment Photos & Video Tours</div>
+            <div className="form-section-title">Apartment Photos & Video Tours (Optional)</div>
             <div className="image-upload-section">
               <div className="upload-box-wrapper">
                 <i className="fas fa-cloud-upload-alt upload-icon-green"></i>
                 <p>Drag and drop media or <span className="upload-browse-highlight">Browse files</span></p>
                 <p className="upload-subtext">
-                  Supports JPG, PNG, WEBP (Max 5MB) & MP4, MOV, WebM videos (Max 20MB)
+                  {roommateIntent === "LOOKING_TO_PAIR"
+                    ? "Optional if you have no apartment on ground yet. Supports JPG, PNG, WEBP (Max 5MB) & MP4, MOV, WebM (Max 20MB)"
+                    : "Supports JPG, PNG, WEBP (Max 5MB) & MP4, MOV, WebM videos (Max 20MB)"}
                 </p>
                 <input
                   type="file"

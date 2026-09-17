@@ -10,6 +10,8 @@ import { sendEmail } from "@/lib/email";
 import { checkRateLimit } from "@/lib/rate-limit";
 import { escapeHtml } from "@/lib/email-sanitizer";
 import { triggerPusherEvent } from "@/lib/pusher";
+import { parsePairingTags, buildPairingTags } from "@/lib/roommate-helper";
+import { getOrCreateRoommateChatRoom } from "./chat";
 
 function getFriendlyErrorMessage(err: any, defaultMsg: string): string {
   console.error("Student server action error:", err);
@@ -235,9 +237,11 @@ export async function uploadStudentVerification(_formData: FormData) {
 }
 
 export async function saveStudentPreferences(preferences: {
-  openToRoommates: boolean;
-  budgetLimit: number;
+  openToRoommates?: boolean;
+  budgetLimit?: number;
   gender?: string;
+  department?: string;
+  level?: string;
   cleanliness?: string;
   sleepSchedule?: string;
   noiseLevel?: string;
@@ -248,14 +252,20 @@ export async function saveStudentPreferences(preferences: {
       return { success: false, error: "Unauthorized." };
     }
 
+    const existingPrefs = (user.studentProfile.preferences as any) || {};
+    const updatedPrefs = {
+      ...existingPrefs,
+      ...preferences,
+    };
+
     await prisma.studentProfile.update({
       where: { id: user.studentProfile.id },
       data: {
-        preferences: preferences as any,
+        preferences: updatedPrefs as any,
       },
     });
 
-    return { success: true };
+    return { success: true, preferences: updatedPrefs };
   } catch (err: any) {
     return { success: false, error: getFriendlyErrorMessage(err, "Failed to save preferences.") };
   }
@@ -608,16 +618,29 @@ export async function getRoommateListings() {
     return {
       success: true,
       listings: otherListings.map((l) => {
-        const prefs = l.student?.preferences as any;
+        const prefs = (l.student?.preferences as any) || {};
+        const parsed = parsePairingTags(l.amenities || [], l.price);
+
+        const department = parsed.department || prefs.department || "General Studies";
+        const level = parsed.level || prefs.level || "Any Level";
+
         return {
           id: l.id,
           title: l.title,
           hostelType: l.hostelType,
           price: l.price,
+          myBudget: parsed.myBudget,
+          targetTotalRent: parsed.targetTotalRent,
+          roommateIntent: parsed.roommateIntent,
+          department,
+          level,
+          slotsTotal: parsed.slotsTotal,
+          slotsFilled: parsed.slotsFilled,
+          targetPropertyId: parsed.targetPropertyId || null,
           location: l.location,
           distance: l.distance,
           description: l.description,
-          amenities: l.amenities,
+          amenities: parsed.cleanAmenities,
           images: l.images,
           university: l.university,
           genderPreference: l.genderPreference || "Any",
@@ -628,6 +651,8 @@ export async function getRoommateListings() {
             username: l.student.username,
             isVerified: false,
             gender: prefs?.gender || "Any",
+            department: prefs?.department || department,
+            level: prefs?.level || level,
             cleanliness: prefs?.cleanliness || "Average",
             sleepSchedule: prefs?.sleepSchedule || "Flexible",
             noiseLevel: prefs?.noiseLevel || "Flexible",
@@ -637,6 +662,103 @@ export async function getRoommateListings() {
     };
   } catch (err: any) {
     return { success: false, error: getFriendlyErrorMessage(err, "Failed to load roommate listings.") };
+  }
+}
+
+export async function sendPairingProposal(data: {
+  listingId: string;
+  recipientUserId: string;
+  listingTitle: string;
+  proposedBudget: number;
+  introMessage?: string;
+  senderDepartment?: string;
+  senderLevel?: string;
+}) {
+  try {
+    const user = await getCurrentUser();
+    if (!user) {
+      return { success: false, error: "Please log in to send a roommate pairing proposal." };
+    }
+
+    if (user.role !== "STUDENT") {
+      return { success: false, error: "Only students can send pairing proposals." };
+    }
+
+    if (user.id === data.recipientUserId) {
+      return { success: false, error: "You cannot send a pairing proposal to yourself." };
+    }
+
+    // 1. Get or create the roommate chat room
+    const chatRoomRes = await getOrCreateRoommateChatRoom(data.recipientUserId);
+    if (!chatRoomRes.success || !chatRoomRes.chatRoomId) {
+      return { success: false, error: chatRoomRes.error || "Failed to start conversation." };
+    }
+
+    const chatRoomId = chatRoomRes.chatRoomId;
+
+    // 2. Build structured pairing message
+    const deptStr = data.senderDepartment ? ` | Dept: ${data.senderDepartment}` : "";
+    const levelStr = data.senderLevel ? ` | Level: ${data.senderLevel}` : "";
+    const customPitch = data.introMessage?.trim() ? `\n\n"${data.introMessage.trim()}"` : "";
+
+    const proposalText = `🤝 [PAIRING PROPOSAL]\nHey! I'm interested in pairing up with you to rent "${data.listingTitle}".\n• My Budget Pledge: ₦${data.proposedBudget.toLocaleString()}${deptStr}${levelStr}${customPitch}\n\nLet's chat and arrange an inspection!`;
+
+    // 3. Insert initial message
+    const message = await prisma.message.create({
+      data: {
+        chatRoomId,
+        senderId: user.id,
+        text: proposalText,
+      },
+    });
+
+    // 4. Trigger real-time Pusher event
+    await triggerPusherEvent(`private-chat-${chatRoomId}`, "new-message", {
+      id: message.id,
+      chatRoomId,
+      senderId: user.id,
+      text: message.text,
+      createdAt: message.createdAt.toISOString(),
+    });
+
+    // 5. Send notification email to the listing owner
+    try {
+      const recipientUser = await prisma.user.findUnique({
+        where: { id: data.recipientUserId },
+        include: { studentProfile: true },
+      });
+
+      if (recipientUser) {
+        const senderName = escapeHtml(user.studentProfile?.fullName || user.email);
+        const recipientName = escapeHtml(recipientUser.studentProfile?.fullName || "Student");
+
+        await sendEmail({
+          to: recipientUser.email,
+          subject: `New Roommate Pairing Proposal from ${senderName}!`,
+          html: `
+            <div style="font-family: 'Poppins', sans-serif; max-width: 600px; margin: 0 auto; padding: 25px; border: 1px solid #eaeaea; border-radius: 16px;">
+              <h2 style="color: rgb(2, 53, 28); font-weight: 700;">New Roommate Pairing Proposal!</h2>
+              <p>Hi ${recipientName},</p>
+              <p><strong>${senderName}</strong> sent you a co-renting proposal for <strong>"${escapeHtml(data.listingTitle)}"</strong>.</p>
+              <div style="background-color: #f8fafc; padding: 16px; border-radius: 12px; margin: 20px 0; border: 1px solid #e2e8f0;">
+                <p style="margin: 0 0 8px 0;"><strong>Proposed Budget:</strong> ₦${data.proposedBudget.toLocaleString()}</p>
+                ${data.senderDepartment ? `<p style="margin: 0 0 8px 0;"><strong>Department:</strong> ${escapeHtml(data.senderDepartment)}</p>` : ""}
+                ${data.senderLevel ? `<p style="margin: 0 0 8px 0;"><strong>Level:</strong> ${escapeHtml(data.senderLevel)}</p>` : ""}
+                ${data.introMessage ? `<p style="margin: 0; font-style: italic;">"${escapeHtml(data.introMessage)}"</p>` : ""}
+              </div>
+              <p>Log in to Campus Tent now to view the message and coordinate:</p>
+              <a href="${process.env.NEXT_PUBLIC_APP_URL || "https://campustent.com"}/chat" style="display: inline-block; background-color: rgb(2, 53, 28); color: white; padding: 12px 24px; border-radius: 30px; text-decoration: none; font-weight: 600;">Open Chat</a>
+            </div>
+          `,
+        });
+      }
+    } catch (emailErr) {
+      console.warn("Failed to send pairing proposal email:", emailErr);
+    }
+
+    return { success: true, chatRoomId };
+  } catch (err: any) {
+    return { success: false, error: getFriendlyErrorMessage(err, "Failed to submit pairing proposal.") };
   }
 }
 
@@ -714,3 +836,191 @@ export async function getStudentPaymentHistory() {
   }
 }
 
+export async function getStudentMyRoommateListings() {
+  try {
+    const user = await getCurrentUser();
+    if (!user || user.role !== "STUDENT" || !user.studentProfile) {
+      return { success: false, error: "Unauthorized. Student access required." };
+    }
+
+    const listings = await prisma.property.findMany({
+      where: {
+        studentId: user.studentProfile.id,
+        deletedAt: null,
+      },
+      include: {
+        inquiries: {
+          select: { id: true },
+        },
+        chatRooms: {
+          select: { id: true },
+        },
+      },
+      orderBy: { createdAt: "desc" },
+    });
+
+    const parsedListings = listings.map((item) => {
+      const pairing = parsePairingTags(item.amenities, item.price);
+      return {
+        id: item.id,
+        title: item.title,
+        hostelType: item.hostelType,
+        price: item.price,
+        rentAmount: item.rentAmount,
+        location: item.location,
+        distance: item.distance,
+        description: item.description,
+        amenities: item.amenities,
+        cleanAmenities: pairing.cleanAmenities,
+        images: item.images,
+        genderPreference: item.genderPreference,
+        isAvailable: item.isAvailable,
+        createdAt: item.createdAt.toISOString(),
+        views: item.views || 0,
+        inquiriesCount: (item.inquiries?.length || 0) + (item.chatRooms?.length || 0),
+        roommateIntent: pairing.roommateIntent,
+        isLookingToPair: pairing.isLookingToPair,
+        myBudget: pairing.myBudget,
+        targetTotalRent: pairing.targetTotalRent,
+        department: pairing.department,
+        level: pairing.level,
+        slotsTotal: pairing.slotsTotal,
+        slotsFilled: pairing.slotsFilled,
+      };
+    });
+
+    return { success: true, listings: parsedListings };
+  } catch (err: any) {
+    console.error("getStudentMyRoommateListings error:", err);
+    return { success: false, error: getFriendlyErrorMessage(err, "Failed to load roommate listings.") };
+  }
+}
+
+export async function toggleRoommateListingAvailability(listingId: string) {
+  try {
+    const user = await getCurrentUser();
+    if (!user || user.role !== "STUDENT" || !user.studentProfile) {
+      return { success: false, error: "Unauthorized. Student access required." };
+    }
+
+    const listing = await prisma.property.findUnique({
+      where: { id: listingId },
+    });
+
+    if (!listing || listing.deletedAt || listing.studentId !== user.studentProfile.id) {
+      return { success: false, error: "Roommate listing not found or access denied." };
+    }
+
+    const updated = await prisma.property.update({
+      where: { id: listingId },
+      data: {
+        isAvailable: !listing.isAvailable,
+      },
+    });
+
+    return { success: true, isAvailable: updated.isAvailable };
+  } catch (err: any) {
+    console.error("toggleRoommateListingAvailability error:", err);
+    return { success: false, error: getFriendlyErrorMessage(err, "Failed to update listing status.") };
+  }
+}
+
+export async function updateStudentRoommateListing(listingId: string, data: any) {
+  try {
+    const user = await getCurrentUser();
+    if (!user || user.role !== "STUDENT" || !user.studentProfile) {
+      return { success: false, error: "Unauthorized. Student access required." };
+    }
+
+    const existing = await prisma.property.findUnique({
+      where: { id: listingId },
+    });
+
+    if (!existing || existing.deletedAt || existing.studentId !== user.studentProfile.id) {
+      return { success: false, error: "Roommate listing not found or access denied." };
+    }
+
+    const {
+      title,
+      hostelType,
+      location,
+      distance,
+      description,
+      genderPreference,
+      amenities,
+      images,
+      roommateIntent,
+      myBudget,
+      targetTotalRent,
+      department,
+      level,
+      slotsTotal,
+      slotsFilled,
+      price,
+    } = data;
+
+    if (!title || !title.trim()) {
+      return { success: false, error: "Title is required." };
+    }
+    if (!location || !location.trim()) {
+      return { success: false, error: "Location is required." };
+    }
+
+    const isPairing = roommateIntent === "LOOKING_TO_PAIR";
+    const cleanAmenities = Array.isArray(amenities)
+      ? amenities.filter((a: string) => 
+          !a.startsWith("intent:") &&
+          !a.startsWith("pairing:") &&
+          !a.startsWith("my_budget:") &&
+          !a.startsWith("target_rent:") &&
+          !a.startsWith("dept:") &&
+          !a.startsWith("level:") &&
+          !a.startsWith("slots_total:") &&
+          !a.startsWith("slots_filled:") &&
+          !a.startsWith("target_prop:")
+        )
+      : existing.amenities;
+
+    let finalAmenities = cleanAmenities;
+    let finalPrice = price ? parseFloat(price) : existing.price;
+    let finalRent = existing.rentAmount;
+
+    if (isPairing) {
+      const pairingTags = buildPairingTags({
+        roommateIntent: "LOOKING_TO_PAIR",
+        myBudget: myBudget || finalPrice,
+        targetTotalRent: targetTotalRent || (finalPrice * 2),
+        department: department || (user.studentProfile?.preferences as any)?.department || "General Studies",
+        level: level || (user.studentProfile?.preferences as any)?.level || "100L",
+        slotsTotal: slotsTotal || 2,
+        slotsFilled: slotsFilled || 1,
+      });
+      finalAmenities = [...cleanAmenities, ...pairingTags];
+      finalPrice = myBudget ? parseFloat(myBudget) : finalPrice;
+      finalRent = targetTotalRent ? parseFloat(targetTotalRent) : (finalPrice * 2);
+    } else {
+      finalAmenities = [...cleanAmenities, "intent:HAVE_SPACE"];
+    }
+
+    const updated = await prisma.property.update({
+      where: { id: listingId },
+      data: {
+        title: title.trim(),
+        hostelType: hostelType ? hostelType.trim() : existing.hostelType,
+        location: location.trim(),
+        distance: distance !== undefined ? String(distance).trim() : existing.distance,
+        description: description !== undefined ? String(description).trim() : existing.description,
+        genderPreference: genderPreference || existing.genderPreference,
+        price: finalPrice,
+        rentAmount: finalRent,
+        amenities: finalAmenities,
+        ...(Array.isArray(images) && images.length > 0 ? { images } : {}),
+      },
+    });
+
+    return { success: true, listingId: updated.id };
+  } catch (err: any) {
+    console.error("updateStudentRoommateListing error:", err);
+    return { success: false, error: getFriendlyErrorMessage(err, "Failed to update listing.") };
+  }
+}

@@ -64,19 +64,6 @@ export default function Explore() {
       setShowSafetyTip(false);
     }, 15000);
 
-    // Auto-tailor to student's university location
-    const loadUserCampus = async () => {
-      try {
-        const user = await getCurrentUser();
-        if (user && user.role === "STUDENT" && user.studentProfile?.university) {
-          setUniversity(user.studentProfile.university);
-        }
-      } catch (e) {
-        console.warn("Failed to load user campus:", e);
-      }
-    };
-    loadUserCampus();
-
     return () => clearTimeout(timer);
   }, []);
 
@@ -150,7 +137,7 @@ export default function Explore() {
 
       {/* Main Content Area */}
       <section className="hero">
-        <div>
+        <div className="hero-content-wrapper">
           <h1 className="hero-text">Explore Properties</h1>
           <p className="hero-para">
             Verified Apartment Near your University <br /> We have a wide range of apartments for you to choose from

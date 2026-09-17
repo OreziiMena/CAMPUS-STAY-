@@ -10,6 +10,7 @@ import { logAgentActivity } from "@/lib/activity";
 import { validateFileBuffer, generateSecureFilename } from "@/lib/upload-validator";
 import { checkRateLimit } from "@/lib/rate-limit";
 import { escapeHtml } from "@/lib/email-sanitizer";
+import { buildPairingTags } from "@/lib/roommate-helper";
 
 export async function getProperties(filterParam?: string | {
   searchQuery?: string;
@@ -329,6 +330,23 @@ export async function addProperty(data: any) {
       }
       createData.studentId = user.studentProfile.id;
       createData.isRoommateOption = true; // Enforce roommate option for students
+
+      // If this is a co-renting / pairing request for an unpaid house
+      if (data.roommateIntent === "LOOKING_TO_PAIR") {
+        const pairingTags = buildPairingTags({
+          roommateIntent: "LOOKING_TO_PAIR",
+          myBudget: data.myBudget || parsedRent,
+          targetTotalRent: data.targetTotalRent || (parsedRent * 2),
+          department: data.department || (user.studentProfile?.preferences as any)?.department || "General Studies",
+          level: data.level || (user.studentProfile?.preferences as any)?.level || "100L",
+          slotsTotal: data.slotsTotal || 2,
+          slotsFilled: data.slotsFilled || 1,
+          targetPropertyId: data.targetPropertyId,
+        });
+        createData.amenities = [...createData.amenities, ...pairingTags];
+        createData.rentAmount = data.targetTotalRent ? parseFloat(data.targetTotalRent) : (parsedRent * 2);
+        createData.price = data.myBudget ? parseFloat(data.myBudget) : parsedRent;
+      }
     } else if (user.role === "AGENT") {
       if (!user.agentProfile) {
         return { success: false, error: "Agent profile not found." };

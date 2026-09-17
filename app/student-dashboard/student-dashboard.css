@@ -1069,5 +1069,603 @@ body {
     cursor: not-allowed;
 }
 
+/* ============================================================
+   STUDENT ROOMMATES & CO-RENTING MANAGEMENT
+============================================================ */
+.roommates-dashboard-section {
+    background: #ffffff;
+    border-radius: 12px;
+    padding: 24px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.04);
+    border: 1px solid var(--border-light);
+    margin-bottom: 30px;
+}
 
+.roommates-title-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+    gap: 12px;
+}
 
+.roommates-section-title {
+    font-family: 'Poppins', sans-serif;
+    font-size: 1.15rem;
+    font-weight: 700;
+    color: var(--primary-green);
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.roommates-section-subtitle {
+    font-size: 0.85rem;
+    color: var(--text-muted);
+    margin: 4px 0 0 0;
+}
+
+.roommates-header-actions {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+.btn-add-roommate {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background-color: var(--primary-green);
+    color: #ffffff;
+    padding: 8px 16px;
+    border-radius: 20px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    text-decoration: none;
+    transition: all 0.2s ease;
+}
+
+.btn-add-roommate:hover {
+    background-color: #034b27;
+    transform: translateY(-1px);
+}
+
+.roommates-badge-count {
+    background-color: #f1f5f9;
+    color: #334155;
+    padding: 4px 12px;
+    border-radius: 12px;
+    font-size: 0.8rem;
+    font-weight: 600;
+}
+
+.roommates-empty-state {
+    text-align: center;
+    padding: 36px 20px;
+    background: #f8fafc;
+    border-radius: 10px;
+    border: 1px dashed #cbd5e1;
+}
+
+.roommates-empty-icon {
+    font-size: 2.4rem;
+    color: #94a3b8;
+    margin-bottom: 12px;
+}
+
+.empty-subtext {
+    font-size: 0.82rem;
+    color: #64748b;
+    margin: 4px 0 16px 0;
+}
+
+.btn-create-first-listing {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background-color: var(--primary-green);
+    color: #ffffff;
+    padding: 10px 20px;
+    border-radius: 24px;
+    font-size: 0.88rem;
+    font-weight: 600;
+    text-decoration: none;
+    transition: all 0.2s ease;
+}
+
+.btn-create-first-listing:hover {
+    background-color: #034b27;
+    transform: translateY(-1px);
+}
+
+.student-roommates-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
+    gap: 20px;
+}
+
+.student-roommate-item-card {
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.student-roommate-item-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.06);
+    border-color: #cbd5e1;
+}
+
+.item-card-top {
+    display: flex;
+    flex-direction: column;
+}
+
+.item-media-thumb {
+    position: relative;
+    width: 100%;
+    height: 160px;
+    overflow: hidden;
+    background-color: #0f172a;
+}
+
+.thumb-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.item-video-wrapper {
+    position: relative;
+    width: 100%;
+    height: 100%;
+}
+
+.video-tour-tag {
+    position: absolute;
+    bottom: 8px;
+    left: 8px;
+    background: rgba(15, 23, 42, 0.85);
+    color: #ffffff;
+    font-size: 0.72rem;
+    font-weight: 700;
+    padding: 3px 8px;
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.status-badge-corner {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    font-size: 0.75rem;
+    font-weight: 700;
+    padding: 4px 10px;
+    border-radius: 20px;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    backdrop-filter: blur(4px);
+}
+
+.status-badge-corner.open {
+    background-color: rgba(16, 185, 129, 0.95);
+    color: #ffffff;
+}
+
+.status-badge-corner.paired {
+    background-color: rgba(71, 85, 105, 0.95);
+    color: #ffffff;
+}
+
+.item-details {
+    padding: 16px;
+}
+
+.item-badges-row {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    margin-bottom: 8px;
+    flex-wrap: wrap;
+}
+
+.badge-intent {
+    font-size: 0.72rem;
+    font-weight: 700;
+    padding: 3px 8px;
+    border-radius: 6px;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.badge-intent.pairing {
+    background-color: #eff6ff;
+    color: #2563eb;
+    border: 1px solid #bfdbfe;
+}
+
+.badge-intent.sublet {
+    background-color: #f0fdf4;
+    color: #16a34a;
+    border: 1px solid #bbf7d0;
+}
+
+.badge-type {
+    font-size: 0.72rem;
+    font-weight: 600;
+    color: #64748b;
+    background-color: #f1f5f9;
+    padding: 3px 8px;
+    border-radius: 6px;
+}
+
+.item-title {
+    font-family: 'Poppins', sans-serif;
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: #1e293b;
+    margin: 0 0 6px 0;
+    line-height: 1.35;
+}
+
+.item-location {
+    font-size: 0.8rem;
+    color: #64748b;
+    margin: 0 0 12px 0;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.item-financials {
+    display: flex;
+    gap: 14px;
+    background-color: #f8fafc;
+    padding: 10px 12px;
+    border-radius: 8px;
+    margin-bottom: 12px;
+}
+
+.financial-stat {
+    display: flex;
+    flex-direction: column;
+}
+
+.stat-label {
+    font-size: 0.68rem;
+    font-weight: 600;
+    color: #64748b;
+    text-transform: uppercase;
+}
+
+.stat-val {
+    font-size: 0.88rem;
+    font-weight: 700;
+    color: #1e293b;
+}
+
+.stat-val.green {
+    color: #16a34a;
+}
+
+.item-metrics-bar {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.metric-pill {
+    font-size: 0.74rem;
+    color: #475569;
+    background-color: #f1f5f9;
+    padding: 3px 8px;
+    border-radius: 4px;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.item-card-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 16px;
+    background-color: #fafafa;
+    border-top: 1px solid #f1f5f9;
+}
+
+.btn-action-status {
+    flex: 1;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    font-size: 0.78rem;
+    font-weight: 600;
+    padding: 8px 12px;
+    border-radius: 6px;
+    border: none;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.btn-action-status.mark-paired {
+    background-color: #fef2f2;
+    color: #dc2626;
+    border: 1px solid #fecaca;
+}
+
+.btn-action-status.mark-paired:hover {
+    background-color: #fee2e2;
+}
+
+.btn-action-status.mark-open {
+    background-color: #f0fdf4;
+    color: #16a34a;
+    border: 1px solid #bbf7d0;
+}
+
+.btn-action-status.mark-open:hover {
+    background-color: #dcfce7;
+}
+
+.btn-action-edit {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    background-color: #f1f5f9;
+    color: #1e293b;
+    border: 1px solid #cbd5e1;
+    font-size: 0.78rem;
+    font-weight: 600;
+    padding: 8px 12px;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.btn-action-edit:hover {
+    background-color: #e2e8f0;
+}
+
+.btn-action-delete {
+    width: 34px;
+    height: 34px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background-color: #fff;
+    color: #dc2626;
+    border: 1px solid #fecaca;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.btn-action-delete:hover {
+    background-color: #fef2f2;
+}
+
+.btn-action-view {
+    width: 34px;
+    height: 34px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background-color: #fff;
+    color: #475569;
+    border: 1px solid #cbd5e1;
+    border-radius: 6px;
+    text-decoration: none;
+    transition: all 0.2s ease;
+}
+
+.btn-action-view:hover {
+    background-color: #f1f5f9;
+    color: var(--primary-green);
+}
+
+/* ============================================================
+   EDIT ROOMMATE MODAL
+============================================================ */
+.edit-roommate-modal-container {
+    max-width: 620px !important;
+}
+
+.edit-roommate-form {
+    padding: 22px;
+}
+
+.edit-roommate-error-alert {
+    background-color: #fef2f2;
+    color: #dc2626;
+    padding: 10px 14px;
+    border-radius: 8px;
+    border: 1px solid #fecaca;
+    font-size: 0.85rem;
+    margin-bottom: 16px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.edit-roommate-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 14px;
+}
+
+.edit-col-span-2 {
+    grid-column: span 2;
+}
+
+.edit-roommate-field {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+.edit-roommate-label {
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: #334155;
+}
+
+.edit-roommate-input,
+.edit-roommate-select,
+.edit-roommate-textarea {
+    width: 100%;
+    padding: 9px 12px;
+    border: 1px solid #cbd5e1;
+    border-radius: 6px;
+    font-size: 0.85rem;
+    font-family: inherit;
+    outline: none;
+    box-sizing: border-box;
+    transition: border-color 0.2s ease;
+}
+
+.edit-roommate-input:focus,
+.edit-roommate-select:focus,
+.edit-roommate-textarea:focus {
+    border-color: var(--primary-green);
+    box-shadow: 0 0 0 3px rgba(2, 53, 28, 0.1);
+}
+
+.edit-roommate-amenities-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+    gap: 10px;
+    background-color: #f8fafc;
+    padding: 12px;
+    border-radius: 8px;
+    border: 1px solid #e2e8f0;
+}
+
+.edit-checkbox-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.8rem;
+    color: #334155;
+    cursor: pointer;
+}
+
+.edit-checkbox-item input[type="checkbox"] {
+    accent-color: var(--primary-green);
+    width: 15px;
+    height: 15px;
+    cursor: pointer;
+}
+
+.status-toggle-wrapper {
+    display: flex;
+    gap: 10px;
+}
+
+.status-toggle-btn {
+    flex: 1;
+    padding: 10px 14px;
+    border-radius: 8px;
+    border: 1px solid #cbd5e1;
+    background-color: #f8fafc;
+    color: #64748b;
+    font-size: 0.82rem;
+    font-weight: 600;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    transition: all 0.2s ease;
+}
+
+.status-toggle-btn.active-open {
+    background-color: #f0fdf4;
+    color: #16a34a;
+    border-color: #16a34a;
+}
+
+.status-toggle-btn.active-closed {
+    background-color: #fef2f2;
+    color: #dc2626;
+    border-color: #dc2626;
+}
+
+.edit-roommate-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    margin-top: 20px;
+    padding-top: 16px;
+    border-top: 1px solid #e2e8f0;
+}
+
+.edit-btn-cancel {
+    padding: 9px 18px;
+    border-radius: 6px;
+    border: 1px solid #cbd5e1;
+    background-color: #ffffff;
+    color: #475569;
+    font-size: 0.85rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+.edit-btn-cancel:hover:not(:disabled) {
+    background-color: #f1f5f9;
+}
+
+.edit-btn-save {
+    padding: 9px 22px;
+    border-radius: 6px;
+    border: none;
+    background-color: var(--primary-green);
+    color: #ffffff;
+    font-size: 0.85rem;
+    font-weight: 600;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    transition: background-color 0.2s;
+}
+
+.edit-btn-save:hover:not(:disabled) {
+    background-color: #034b27;
+}
+
+.edit-btn-save:disabled,
+.edit-btn-cancel:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+@media (max-width: 768px) {
+    .student-roommates-grid {
+        grid-template-columns: 1fr;
+    }
+    .edit-roommate-grid {
+        grid-template-columns: 1fr;
+    }
+    .edit-col-span-2 {
+        grid-column: span 1;
+    }
+    .status-toggle-wrapper {
+        flex-direction: column;
+    }
+}
