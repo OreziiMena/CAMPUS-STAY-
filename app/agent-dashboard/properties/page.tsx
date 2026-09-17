@@ -190,7 +190,7 @@ export default function AgentPropertiesListing() {
                     )}
                   </div>
                   {property.cautionFee !== null && property.cautionFee !== undefined && property.cautionFee > 0 && (
-                    <div><span className="breakdown-label">Caution:</span> ₦{property.cautionFee.toLocaleString()}</div>
+                    <div><span className="breakdown-label">Caution/others:</span> ₦{property.cautionFee.toLocaleString()}</div>
                   )}
                 </div>
               </div>

@@ -71,8 +71,11 @@ export default function Card({
             </span>
           </div>
           <div className="roommate-badges-right">
-            
-            {isLookingToPair ? (
+            {!listing.isAvailable ? (
+              <span className="roommate-paired-badge" title="Roommate listing paired">
+                <i className="fas fa-lock"></i> PAIRED
+              </span>
+            ) : isLookingToPair ? (
               <span className="roommate-corent-badge">
                 <i className="fas fa-handshake"></i> CO-RENTING
               </span>
@@ -252,6 +255,14 @@ export default function Card({
           >
             <i className="fas fa-tasks"></i> Manage Listing
           </Link>
+        ) : !listing.isAvailable ? (
+          <button
+            type="button"
+            className="message-roommate-btn roommate-paired-btn"
+            disabled
+          >
+            <i className="fas fa-lock"></i> Paired
+          </button>
         ) : isLookingToPair ? (
           <button
             type="button"

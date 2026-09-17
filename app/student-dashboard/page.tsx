@@ -14,6 +14,7 @@ import { getOrCreateChatRoom } from "@/app/actions/chat";
 import { confirmStudentInspectionTour, reportInspectionIssue } from "@/app/actions/inspection";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
+import { useToast } from "@/components/ToastProvider";
 import "./student-dashboard.css";
 
 // Modular Components
@@ -27,9 +28,11 @@ import StudentRoommatesCard from "./components/StudentRoommatesCard";
 import StudentReceiptModal from "./components/modals/StudentReceiptModal";
 import StudentDisputeModal from "./components/modals/StudentDisputeModal";
 import EditRoommateModal from "./components/modals/EditRoommateModal";
+import DeleteConfirmModal from "./components/modals/DeleteConfirmModal";
 
 export default function StudentDashboard() {
   const router = useRouter();
+  const { showToast } = useToast();
   const [loading, setLoading] = useState(true);
   const [studentName, setStudentName] = useState("Student");
   const [profile, setProfile] = useState<any>(null);
@@ -43,6 +46,8 @@ export default function StudentDashboard() {
   const [receiptModalPayment, setReceiptModalPayment] = useState<any | null>(null);
   const [disputeModalPayment, setDisputeModalPayment] = useState<any | null>(null);
   const [editingRoommateListing, setEditingRoommateListing] = useState<any | null>(null);
+  const [deleteTargetListing, setDeleteTargetListing] = useState<{ id: string; title: string } | null>(null);
+  const [isDeletingListing, setIsDeletingListing] = useState(false);
   const [roommateActionLoadingId, setRoommateActionLoadingId] = useState<string | null>(null);
   const [disputeReason, setDisputeReason] = useState("Agent did not show up for inspection");
   const [disputeDesc, setDisputeDesc] = useState("");
@@ -155,31 +160,40 @@ export default function StudentDashboard() {
           )
         );
       } else {
-        alert(res.error || "Failed to update listing status.");
+        showToast(res.error || "Failed to update listing status.", "error");
       }
     } catch (err: any) {
-      alert(err.message || "An error occurred.");
+      showToast(err.message || "An error occurred.", "error");
     } finally {
       setRoommateActionLoadingId(null);
     }
   };
 
-  const handleDeleteRoommateListing = async (listingId: string) => {
-    if (!confirm("Are you sure you want to delete this roommate listing? This cannot be undone.")) {
-      return;
-    }
-    setRoommateActionLoadingId(listingId);
+  const handleDeleteRoommateListing = (listingId: string) => {
+    const target = roommateListings.find((item) => item.id === listingId);
+    setDeleteTargetListing({
+      id: listingId,
+      title: target?.title || "Roommate Listing",
+    });
+  };
+
+  const handleConfirmDeleteRoommateListing = async () => {
+    if (!deleteTargetListing) return;
+    const listingId = deleteTargetListing.id;
+    setIsDeletingListing(true);
     try {
       const res = await deleteProperty(listingId);
       if (res.success) {
         setRoommateListings((prev) => prev.filter((item) => item.id !== listingId));
+        showToast("Roommate listing deleted successfully.", "success");
+        setDeleteTargetListing(null);
       } else {
-        alert(res.error || "Failed to delete listing.");
+        showToast(res.error || "Failed to delete listing.", "error");
       }
     } catch (err: any) {
-      alert(err.message || "An error occurred.");
+      showToast(err.message || "An error occurred.", "error");
     } finally {
-      setRoommateActionLoadingId(null);
+      setIsDeletingListing(false);
     }
   };
 
@@ -258,6 +272,15 @@ export default function StudentDashboard() {
               listing={editingRoommateListing}
               onClose={() => setEditingRoommateListing(null)}
               onSaveSuccess={handleSaveRoommateSuccess}
+            />
+
+            {/* Delete Roommate Confirmation Modal */}
+            <DeleteConfirmModal
+              isOpen={Boolean(deleteTargetListing)}
+              listingTitle={deleteTargetListing?.title || "Roommate Listing"}
+              isDeleting={isDeletingListing}
+              onConfirm={handleConfirmDeleteRoommateListing}
+              onCancel={() => setDeleteTargetListing(null)}
             />
           </div>
         )}

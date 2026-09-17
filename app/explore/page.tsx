@@ -470,9 +470,9 @@ export default function Explore() {
                             </span>
                           )}
                           {property.cautionFee && property.cautionFee > 0 ? (
-                            <span className="explore-caution-fee-badge" title="Refundable Caution Deposit">
+                            <span className="explore-caution-fee-badge" title="Refundable Caution / Other Deposit">
                               <i className="fas fa-shield-alt explore-fee-icon"></i>
-                              Caution: ₦{property.cautionFee.toLocaleString()}
+                              Caution/others: ₦{property.cautionFee.toLocaleString()}
                             </span>
                           ) : null}
                         </div>

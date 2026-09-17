@@ -2,7 +2,7 @@
   min-height: 100vh;
   background-color: #f8faf9;
   font-family: 'Poppins', sans-serif;
-  padding-top: 50px;
+  padding-top: 90px;
   padding-bottom: 60px;
 }
 
@@ -246,7 +246,8 @@
 
 .roommate-card-footer {
   display: flex;
-  gap: 10px;
+  gap: 8px;
+  margin-top: 10px;
 }
 
 .message-roommate-btn {
@@ -254,17 +255,20 @@
   background: rgb(2, 53, 28);
   color: white;
   border: none;
-  padding: 12px;
-  border-radius: 8px;
-  font-size: 0.9rem;
+  padding: 8px 12px;
+  border-radius: 7px;
+  font-size: 0.82rem;
   font-weight: 600;
   cursor: pointer;
-  transition: all 0.3s;
+  transition: all 0.2s ease;
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 8px;
+  gap: 6px;
   font-family: inherit;
+  min-height: 36px;
+  white-space: nowrap;
+  box-sizing: border-box;
 }
 
 .message-roommate-btn:hover {
@@ -343,11 +347,25 @@
   width: 100%;
   max-width: 650px;
   max-height: 90vh;
-  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
   box-shadow: 0 15px 40px rgba(0, 0, 0, 0.15);
   border: 1px solid #eaeaea;
   animation: modalFadeIn 0.3s ease;
   font-family: 'Poppins', sans-serif;
+}
+
+.modal-header {
+  flex-shrink: 0;
+}
+
+.modal-body {
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  flex: 1 1 auto;
+  min-height: 0;
+  overscroll-behavior: contain;
 }
 
 @keyframes modalFadeIn {
@@ -798,7 +816,7 @@
   margin-bottom: 20px;
 }
 
-@media (max-width: 580px) {
+@media (max-width: 768px) {
   .form-grid-2 {
     grid-template-columns: 1fr;
     gap: 15px;
@@ -1027,10 +1045,10 @@
 .roommate-media-box {
   position: relative;
   width: 100%;
-  height: 160px;
+  height: 150px;
   border-radius: 12px;
   overflow: hidden;
-  margin-bottom: 12px;
+  margin-bottom: 10px;
 }
 
 .roommate-media-img {
@@ -1131,29 +1149,29 @@
 }
 
 .roommate-listing-title {
-  font-size: 0.85rem;
-  color: #333;
-  font-weight: 600;
-  margin: 0 0 4px 0;
-  line-break: anywhere;
-}
-
-.roommate-desc-snippet {
-  font-size: 0.75rem;
-  color: #777;
-  margin: 0 0 10px 0;
+  font-size: 0.95rem;
+  color: #1e293b;
+  font-weight: 700;
+  margin: 0 0 6px 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .roommate-location-pill {
   display: inline-flex;
   align-items: center;
   gap: 5px;
-  background-color: #f1f3f4;
-  padding: 4px 10px;
+  background-color: #f1f5f9;
+  padding: 3px 9px;
   border-radius: 20px;
-  font-size: 0.75rem;
-  color: #444;
-  margin: 0 0 12px 0;
+  font-size: 0.74rem;
+  color: #475569;
+  margin: 0 0 8px 0;
+  max-width: 100%;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .roommate-map-icon {
@@ -1561,6 +1579,29 @@
   text-transform: uppercase;
 }
 
+.roommate-paired-badge {
+  background: #f1f5f9;
+  color: #475569;
+  border: 1px solid #cbd5e1;
+  font-size: 0.68rem;
+  font-weight: 700;
+  padding: 3px 8px;
+  border-radius: 20px;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  letter-spacing: 0.3px;
+  text-transform: uppercase;
+}
+
+.roommate-paired-btn {
+  background: #94a3b8 !important;
+  color: #ffffff !important;
+  border: none !important;
+  cursor: not-allowed !important;
+  opacity: 0.85;
+}
+
 .roommate-manage-btn {
   background: #f1f5f9;
   color: #1e293b;
@@ -1570,7 +1611,13 @@
   align-items: center;
   justify-content: center;
   gap: 6px;
+  padding: 8px 12px;
+  font-size: 0.82rem;
+  min-height: 36px;
+  white-space: nowrap;
+  border-radius: 7px;
   transition: all 0.2s ease;
+  box-sizing: border-box;
 }
 
 .roommate-manage-btn:hover {
@@ -2342,15 +2389,16 @@
 
 @media (max-width: 768px) {
   .roommates-layout {
-    padding-top: 20px !important;
+    padding-top: 85px !important;
     padding-bottom: 40px !important;
   }
   .roommates-hero {
-    padding: 35px 16px !important;
+    padding: 30px 16px 45px 16px !important;
   }
   .roommates-hero h1 {
     font-size: 1.85rem !important;
     line-height: 1.25 !important;
+    margin-top: 6px !important;
   }
   .roommates-hero p {
     font-size: 0.92rem !important;
@@ -2430,15 +2478,24 @@
     max-height: 94vh !important;
     border-radius: 16px 16px 0 0 !important;
     max-width: 100% !important;
+    display: flex !important;
+    flex-direction: column !important;
+    overflow: hidden !important;
   }
   .modal-header {
     padding: 16px 18px !important;
+    flex-shrink: 0 !important;
   }
   .modal-header h2 {
     font-size: 1.1rem !important;
   }
   .modal-body {
+    overflow-y: auto !important;
+    -webkit-overflow-scrolling: touch !important;
+    flex: 1 1 auto !important;
+    min-height: 0 !important;
     padding: 16px !important;
+    overscroll-behavior: contain !important;
   }
   .roommate-details-footer {
     flex-direction: column !important;

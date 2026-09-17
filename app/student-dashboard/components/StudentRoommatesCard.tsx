@@ -75,9 +75,9 @@ export default function StudentRoommatesCard({
                     )}
                     <span className={`status-badge-corner ${item.isAvailable ? "open" : "paired"}`}>
                       {item.isAvailable ? (
-                        <><i className="fas fa-check-circle"></i> Active / Open</>
+                        <><i className="fas fa-check-circle"></i> Co-Renting / Open</>
                       ) : (
-                        <><i className="fas fa-lock"></i> Paired / Closed</>
+                        <><i className="fas fa-lock"></i> Paired</>
                       )}
                     </span>
                   </div>
@@ -162,7 +162,7 @@ export default function StudentRoommatesCard({
                     ) : item.isAvailable ? (
                       <><i className="fas fa-lock"></i> Mark as Paired</>
                     ) : (
-                      <><i className="fas fa-unlock"></i> Mark as Open</>
+                      <><i className="fas fa-unlock"></i> Mark as Co-Renting</>
                     )}
                   </button>
 

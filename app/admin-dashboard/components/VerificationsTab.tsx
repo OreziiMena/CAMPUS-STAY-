@@ -191,7 +191,7 @@ export default function VerificationsTab({
                               )}
                             </div>
                             {property.cautionFee !== null && property.cautionFee !== undefined && property.cautionFee > 0 && (
-                              <div><span className="property-fee-label">Caution Fee:</span> ₦{property.cautionFee.toLocaleString()}</div>
+                              <div><span className="property-fee-label">Caution/others:</span> ₦{property.cautionFee.toLocaleString()}</div>
                             )}
                           </div>
                         </div>

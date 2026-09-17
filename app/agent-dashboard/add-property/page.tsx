@@ -366,12 +366,12 @@ export default function AddProperty() {
 
                 <div>
                   <label htmlFor="cautionFee" className="pricing-input-label">
-                    Caution Fee (₦) <span className="pricing-input-label-optional">(Optional)</span>
+                    Caution/others (₦) <span className="pricing-input-label-optional">(Optional)</span>
                   </label>
                   <input
                     type="number"
                     id="cautionFee"
-                    placeholder="Caution fee (0 if none)"
+                    placeholder="Caution/others (0 if none)"
                     value={cautionFee}
                     onChange={(e) => setCautionFee(e.target.value)}
                     className="pricing-input-field"

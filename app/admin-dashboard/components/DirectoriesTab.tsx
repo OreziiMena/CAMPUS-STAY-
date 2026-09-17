@@ -264,7 +264,7 @@ export default function DirectoriesTab({
                               )}
                             </div>
                             {p.cautionFee !== null && p.cautionFee !== undefined && p.cautionFee > 0 && (
-                              <div><span className="property-fee-label">Caution Fee:</span> ₦{p.cautionFee.toLocaleString()}</div>
+                              <div><span className="property-fee-label">Caution/others:</span> ₦{p.cautionFee.toLocaleString()}</div>
                             )}
                           </div>
                         </div>

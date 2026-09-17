@@ -588,20 +588,27 @@ export async function getRoommateListings() {
   try {
     const user = await getCurrentUser();
 
+    const thirtyMinutesAgo = new Date(Date.now() - 30 * 60 * 1000);
+
     // Query roommate listings:
-    // Public/other students see verified listings.
-    // Listing owners see their own listings (even if pending review).
-    // Admins see all listings.
+    // Only verified listings are shown publicly (creators track unapproved listings in their student dashboard).
+    // Paired listings (isAvailable: false) are removed after 30 minutes of being paired.
     const whereClause: any = {
       isRoommateOption: true,
       deletedAt: null,
+      OR: [
+        { isAvailable: true },
+        {
+          isAvailable: false,
+          statusChangedAt: {
+            gte: thirtyMinutesAgo,
+          },
+        },
+      ],
     };
 
     if (user?.role !== "ADMIN") {
-      whereClause.OR = [
-        { isVerified: true },
-        ...(user?.id ? [{ student: { userId: user.id } }] : []),
-      ];
+      whereClause.isVerified = true;
     }
 
     const listings = await prisma.property.findMany({
@@ -655,6 +662,8 @@ export async function getRoommateListings() {
           university: l.university,
           genderPreference: l.genderPreference || "Any",
           isVerified: l.isVerified,
+          isAvailable: l.isAvailable,
+          statusChangedAt: l.statusChangedAt,
           isOwner,
           createdAt: l.createdAt,
           student: l.student ? {
@@ -929,6 +938,7 @@ export async function toggleRoommateListingAvailability(listingId: string) {
       where: { id: listingId },
       data: {
         isAvailable: !listing.isAvailable,
+        statusChangedAt: new Date(),
       },
     });
 

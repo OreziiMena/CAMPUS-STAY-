@@ -213,6 +213,14 @@ export default function DetailsModal({
               >
                 <i className="fas fa-tasks"></i> Manage in Dashboard
               </Link>
+            ) : !listing.isAvailable ? (
+              <button 
+                type="button" 
+                disabled
+                className="roommate-details-msg-btn roommate-paired-btn"
+              >
+                <i className="fas fa-lock"></i> Roommate Paired
+              </button>
             ) : isLookingToPair ? (
               <button 
                 type="button" 

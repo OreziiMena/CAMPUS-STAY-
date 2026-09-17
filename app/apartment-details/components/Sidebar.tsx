@@ -81,7 +81,7 @@ export default function Sidebar({
             </div>
             {property.cautionFee !== undefined && property.cautionFee > 0 && (
               <div className="sidebar-breakdown-row">
-                <span>Caution Fee</span>
+                <span>Caution/others</span>
                 <strong>₦{property.cautionFee.toLocaleString()}</strong>
               </div>
             )}
