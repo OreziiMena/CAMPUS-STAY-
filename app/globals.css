@@ -46,6 +46,7 @@ button, input, select, textarea {
     background-clip: text;
     -webkit-text-fill-color: transparent;
     color: transparent;
+    white-space: nowrap;
 }
 .mobilebtn{
     display: none;
@@ -917,7 +918,7 @@ nav .logo {
         display: flex !important;
         align-items: center !important;
         gap: 8px !important;
-        margin-left: 15px !important;
+        margin-left: 0 !important;
     }
     nav .logo {
         height: 35px !important;
@@ -926,6 +927,7 @@ nav .logo {
     nav .logo-text {
         font-size: 16px !important;
         margin-left: 0 !important;
+        white-space: nowrap !important;
     }
 }
 

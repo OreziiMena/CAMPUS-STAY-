@@ -2,19 +2,21 @@
 import React from "react";
 import Link from "next/link";
 import "./styles.css";
-import "../signup.css";
 
 export default function Rolepick() {
     return (
         <>
-
-
-            <nav className="sticky-top">
-                <div className="brand">
-                    <img src="/Assets/CAMPUS STAY LOGO.png" alt="logo" className="logo" /><h2 className="logo-text">Campus Tent</h2>
-                </div>
+            <nav className="rolepick-nav sticky-top">
+                <Link href="/" className="brand" aria-label="Campus Tent Home">
+                    <img src="/Assets/CAMPUS STAY LOGO.png" alt="Campus Tent Logo" className="logo" />
+                    <h2 className="logo-text">Campus Tent</h2>
+                </Link>
                 <div className="btn-btn">
-                    <Link href="/"><button className="start-btn">Back to Home</button></Link>
+                    <Link href="/" className="start-btn" aria-label="Back to Home">
+                        <i className="fas fa-arrow-left" aria-hidden="true"></i>
+                        <span className="btn-text-full">Back to Home</span>
+                        <span className="btn-text-short">Home</span>
+                    </Link>
                 </div>
             </nav>
 
