@@ -588,12 +588,24 @@ export async function getRoommateListings() {
   try {
     const user = await getCurrentUser();
 
-    // Query roommate listings (properties where isRoommateOption is true)
+    // Query roommate listings:
+    // Public/other students see verified listings.
+    // Listing owners see their own listings (even if pending review).
+    // Admins see all listings.
+    const whereClause: any = {
+      isRoommateOption: true,
+      deletedAt: null,
+    };
+
+    if (user?.role !== "ADMIN") {
+      whereClause.OR = [
+        { isVerified: true },
+        ...(user?.id ? [{ student: { userId: user.id } }] : []),
+      ];
+    }
+
     const listings = await prisma.property.findMany({
-      where: {
-        isRoommateOption: true,
-        deletedAt: null,
-      },
+      where: whereClause,
       include: {
         student: {
           include: {
@@ -612,17 +624,15 @@ export async function getRoommateListings() {
       },
     });
 
-    // Exclude current user's own listings if they are logged in
-    const otherListings = listings.filter((l) => l.student?.userId !== user?.id);
-
     return {
       success: true,
-      listings: otherListings.map((l) => {
+      listings: listings.map((l) => {
         const prefs = (l.student?.preferences as any) || {};
         const parsed = parsePairingTags(l.amenities || [], l.price);
 
         const department = parsed.department || prefs.department || "General Studies";
         const level = parsed.level || prefs.level || "Any Level";
+        const isOwner = Boolean(user && l.student?.userId === user.id);
 
         return {
           id: l.id,
@@ -644,6 +654,9 @@ export async function getRoommateListings() {
           images: l.images,
           university: l.university,
           genderPreference: l.genderPreference || "Any",
+          isVerified: l.isVerified,
+          isOwner,
+          createdAt: l.createdAt,
           student: l.student ? {
             id: l.student.id,
             userId: l.student.userId,
@@ -875,6 +888,7 @@ export async function getStudentMyRoommateListings() {
         images: item.images,
         genderPreference: item.genderPreference,
         isAvailable: item.isAvailable,
+        isVerified: item.isVerified,
         createdAt: item.createdAt.toISOString(),
         views: item.views || 0,
         inquiriesCount: (item.inquiries?.length || 0) + (item.chatRooms?.length || 0),

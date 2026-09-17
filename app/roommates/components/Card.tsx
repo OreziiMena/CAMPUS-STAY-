@@ -1,6 +1,7 @@
 "use client";
 
 import React from "react";
+import Link from "next/link";
 import { calculateRoommateCompatibility } from "@/lib/roommate-helper";
 
 interface CardProps {
@@ -31,6 +32,9 @@ export default function Card({
     : "ST";
 
   const isLookingToPair = listing.roommateIntent === "LOOKING_TO_PAIR";
+  const isOwner = Boolean(
+    listing.isOwner || (currentUser && student?.userId === currentUser?.id)
+  );
 
   // Dynamic progress calculation
   const targetRent = listing.targetTotalRent || (listing.myBudget || listing.price) * 2;
@@ -67,6 +71,7 @@ export default function Card({
             </span>
           </div>
           <div className="roommate-badges-right">
+            
             {isLookingToPair ? (
               <span className="roommate-corent-badge">
                 <i className="fas fa-handshake"></i> CO-RENTING
@@ -161,57 +166,34 @@ export default function Card({
           </div>
         )}
 
-        {/* Price & Budget Split Display */}
+        {/* Price & Target Row */}
         {isLookingToPair ? (
-          <>
+          <div className="roommate-price-row">
             <h3 className="roommate-price-title">
               ₦{pledgedRent.toLocaleString()}
-              <span className="roommate-price-subtext">/ poster pledge</span>
+              <span className="roommate-price-subtext">/ person</span>
             </h3>
-
-            <div className="roommate-budget-split-box">
-              <div className="split-box-row">
-                <span className="split-box-label">Target Total Rent</span>
-                <span className="split-box-target-val">
-                  ₦{targetRent.toLocaleString()}
-                  <span>/yr</span>
-                </span>
-              </div>
-              <div className="split-progress-bar-wrap">
-                <div 
-                  className="split-progress-bar-fill" 
-                  style={{ width: `${splitPct}%` }} 
-                />
-              </div>
-              <div className="split-box-breakdown">
-                <span className="split-pledged">
-                  <i className="fas fa-check-circle"></i> Pledged: ₦{pledgedRent.toLocaleString()}
-                </span>
-                <span className="split-needed">
-                  Needed: ₦{neededRent.toLocaleString()}
-                </span>
-              </div>
-            </div>
-          </>
+            <span className="roommate-target-badge" title="Target total apartment rent">
+              Target: ₦{targetRent.toLocaleString()}
+            </span>
+          </div>
         ) : (
-          <h3 className="roommate-price-title">
-            ₦{listing.price.toLocaleString()}
-            <span className="roommate-price-subtext">/ share</span>
-          </h3>
+          <div className="roommate-price-row">
+            <h3 className="roommate-price-title">
+              ₦{listing.price.toLocaleString()}
+              <span className="roommate-price-subtext">/ share</span>
+            </h3>
+          </div>
         )}
 
-        {/* Title & Proximity */}
-        <p className="roommate-listing-title">
+        {/* Title & Location */}
+        <h4 className="roommate-listing-title">
           {listing.title}
-        </p>
-
-        <p className="roommate-desc-snippet">
-          {new Date(listing.createdAt).toLocaleDateString()} - 12 Months
-        </p>
+        </h4>
 
         <div className="roommate-location-pill">
           <i className="fas fa-map-marker-alt roommate-map-icon"></i>
-          <span>{listing.location} ({listing.distance})</span>
+          <span>{listing.location} {listing.distance ? `(${listing.distance})` : ""}</span>
         </div>
 
         {/* Academic & Gender Pills */}
@@ -238,24 +220,20 @@ export default function Card({
           )}
         </div>
 
-        {/* Compatibility Gauge */}
-        <div className={`roommate-compat-score-wrapper ${compat.badgeClass}`}>
-          <div className="compat-score-header">
+        {/* Compact Compatibility / Status Badge */}
+        {isOwner ? (
+          <div className="roommate-compat-pill verified">
+            <i className="fas fa-check-circle"></i>
+            <span>{listing.isVerified ? "Verified & Live" : "Pending Admin Approval"}</span>
+          </div>
+        ) : (
+          <div className={`roommate-compat-pill ${compat.badgeClass}`}>
+            <i className="fas fa-shield-heart"></i>
             <span>
-              <i className="fas fa-shield-heart"></i> Compatibility
-            </span>
-            <span className="compat-score-val">
-              {compat.badgeClass !== "guest" ? `${compat.score}% • ` : ""}{compat.label}
+              {compat.badgeClass !== "guest" ? `${compat.score}% Match • ${compat.label}` : compat.label}
             </span>
           </div>
-          <div className="compat-matched-tags">
-            {compat.matchReasons.map((reason: string, rIdx: number) => (
-              <span key={rIdx} className="compat-reason-chip">
-                <i className="fas fa-check"></i> {reason}
-              </span>
-            ))}
-          </div>
-        </div>
+        )}
       </div>
 
       {/* Card Action Buttons */}
@@ -267,13 +245,20 @@ export default function Card({
         >
           <i className="fas fa-info-circle"></i> Details
         </button>
-        {isLookingToPair ? (
+        {isOwner ? (
+          <Link
+            href="/student-dashboard"
+            className="message-roommate-btn roommate-manage-btn"
+          >
+            <i className="fas fa-tasks"></i> Manage Listing
+          </Link>
+        ) : isLookingToPair ? (
           <button
             type="button"
             onClick={() => onPairUp(listing)}
             className="message-roommate-btn roommate-pairup-btn"
           >
-            <i className="fas fa-handshake"></i> Request to Pair Up
+            <i className="fas fa-handshake"></i> Pair Up
           </button>
         ) : (
           <button

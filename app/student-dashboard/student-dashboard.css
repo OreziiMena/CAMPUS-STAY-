@@ -1183,7 +1183,7 @@ body {
 
 .student-roommates-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(min(100%, 320px), 1fr));
     gap: 20px;
 }
 
@@ -1309,6 +1309,32 @@ body {
     background-color: #f1f5f9;
     padding: 3px 8px;
     border-radius: 6px;
+}
+
+.badge-verified-approved {
+    font-size: 0.72rem;
+    font-weight: 700;
+    color: #166534;
+    background-color: #dcfce7;
+    border: 1px solid #bbf7d0;
+    padding: 3px 8px;
+    border-radius: 6px;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.badge-verified-pending {
+    font-size: 0.72rem;
+    font-weight: 700;
+    color: #b45309;
+    background-color: #fef3c7;
+    border: 1px solid #fde68a;
+    padding: 3px 8px;
+    border-radius: 6px;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
 }
 
 .item-title {
@@ -1656,16 +1682,50 @@ body {
 }
 
 @media (max-width: 768px) {
+    .roommates-title-row {
+        flex-direction: column !important;
+        align-items: flex-start !important;
+        gap: 12px !important;
+    }
+    .roommates-header-actions {
+        width: 100% !important;
+        justify-content: space-between !important;
+    }
     .student-roommates-grid {
-        grid-template-columns: 1fr;
+        grid-template-columns: 1fr !important;
+        gap: 16px !important;
     }
     .edit-roommate-grid {
-        grid-template-columns: 1fr;
+        grid-template-columns: 1fr !important;
     }
     .edit-col-span-2 {
-        grid-column: span 1;
+        grid-column: span 1 !important;
     }
     .status-toggle-wrapper {
-        flex-direction: column;
+        flex-direction: column !important;
+    }
+}
+
+@media (max-width: 540px) {
+    .item-card-actions {
+        flex-wrap: wrap !important;
+        gap: 8px !important;
+        padding: 10px 12px !important;
+    }
+    .btn-action-status,
+    .btn-action-edit {
+        flex: 1 1 calc(50% - 4px) !important;
+        font-size: 0.78rem !important;
+        padding: 8px 10px !important;
+    }
+    .btn-action-delete,
+    .btn-action-view {
+        flex: 1 1 calc(50% - 4px) !important;
+        justify-content: center !important;
+        padding: 8px 10px !important;
+    }
+    .item-financials {
+        flex-wrap: wrap !important;
+        gap: 10px !important;
     }
 }

@@ -7,6 +7,7 @@ import { sendEmail } from "@/lib/email";
 import { escapeHtml, sanitizeUrl, formatSafeEmailMessage } from "@/lib/email-sanitizer";
 import { logAuditEvent } from "@/lib/audit";
 import { triggerPusherEvent } from "@/lib/pusher";
+import { revalidatePath } from "next/cache";
 
 const BASE_URL = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
 
@@ -193,6 +194,10 @@ export async function togglePropertyVerification(propertyId: string, status: boo
       targetLabel: updated.title,
       details: `Admin ${status ? "verified" : "unverified"} property "${updated.title}".`,
     });
+
+    revalidatePath("/roommates");
+    revalidatePath("/explore");
+    revalidatePath("/admin-dashboard");
 
     return { success: true };
   } catch (err: any) {

@@ -94,6 +94,15 @@ export default function StudentRoommatesCard({
                         </span>
                       )}
                       <span className="badge-type">{item.hostelType}</span>
+                      {item.isVerified ? (
+                        <span className="badge-verified-approved">
+                          <i className="fas fa-check-circle"></i> Approved
+                        </span>
+                      ) : (
+                        <span className="badge-verified-pending">
+                          <i className="fas fa-clock"></i> Pending Review
+                        </span>
+                      )}
                     </div>
 
                     <h4 className="item-title">{item.title}</h4>

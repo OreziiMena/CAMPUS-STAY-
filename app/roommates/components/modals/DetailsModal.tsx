@@ -1,6 +1,7 @@
 "use client";
 
 import React from "react";
+import Link from "next/link";
 
 interface DetailsModalProps {
   listing: any | null;
@@ -26,6 +27,7 @@ export default function DetailsModal({
   ).toUpperCase();
 
   const isLookingToPair = listing.roommateIntent === "LOOKING_TO_PAIR";
+  const isOwner = Boolean(listing.isOwner);
   const targetRent = listing.targetTotalRent || (listing.myBudget || listing.price) * 2;
   const pledgedRent = listing.myBudget || listing.price;
   const neededRent = Math.max(0, targetRent - pledgedRent);
@@ -38,14 +40,16 @@ export default function DetailsModal({
             <i className="fas fa-user-circle"></i> Roommate & Space Details
           </h2>
           <div className="roommate-header-actions">
-            <button 
-              type="button"
-              title="Report Listing" 
-              onClick={onReportClick}
-              className="roommate-report-trigger-btn"
-            >
-              <i className="fas fa-flag"></i>
-            </button>
+            {!isOwner && (
+              <button 
+                type="button"
+                title="Report Listing" 
+                onClick={onReportClick}
+                className="roommate-report-trigger-btn"
+              >
+                <i className="fas fa-flag"></i>
+              </button>
+            )}
             <button type="button" className="modal-close-btn" onClick={onClose}>
               &times;
             </button>
@@ -120,7 +124,7 @@ export default function DetailsModal({
                     <span className="proposal-metric-val">₦{targetRent.toLocaleString()}</span>
                   </div>
                   <div className="proposal-metric">
-                    <span className="proposal-metric-lbl">Poster Pledge</span>
+                    <span className="proposal-metric-lbl">Per Person</span>
                     <span className="proposal-metric-val green">₦{pledgedRent.toLocaleString()}</span>
                   </div>
                   <div className="proposal-metric">
@@ -202,7 +206,14 @@ export default function DetailsModal({
             >
               Close Details
             </button>
-            {isLookingToPair ? (
+            {isOwner ? (
+              <Link 
+                href="/student-dashboard" 
+                className="roommate-details-msg-btn roommate-manage-btn"
+              >
+                <i className="fas fa-tasks"></i> Manage in Dashboard
+              </Link>
+            ) : isLookingToPair ? (
               <button 
                 type="button" 
                 onClick={() => {

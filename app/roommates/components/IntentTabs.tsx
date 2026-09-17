@@ -29,22 +29,25 @@ export default function IntentTabs({
         <span><i className="fas fa-th-large"></i> All Listings</span>
         <span className="intent-tab-count">{countAll}</span>
       </button>
-      <button 
-        type="button"
-        className={`intent-tab-btn ${currentFilter === "LOOKING_TO_PAIR" ? "active" : ""}`}
-        onClick={() => onFilterChange("LOOKING_TO_PAIR")}
-      >
-        <span><i className="fas fa-handshake"></i> Looking to Pair Up (Unpaid Houses)</span>
-        <span className="intent-tab-count">{countPairing}</span>
-      </button>
+      
       <button 
         type="button"
         className={`intent-tab-btn ${currentFilter === "HAVE_SPACE" ? "active" : ""}`}
         onClick={() => onFilterChange("HAVE_SPACE")}
       >
-        <span><i className="fas fa-door-open"></i> Have a Space / Sublet</span>
+        <span><i className="fas fa-door-open"></i>Available Spaces</span>
         <span className="intent-tab-count">{countHaveSpace}</span>
       </button>
+
+      <button 
+        type="button"
+        className={`intent-tab-btn ${currentFilter === "LOOKING_TO_PAIR" ? "active" : ""}`}
+        onClick={() => onFilterChange("LOOKING_TO_PAIR")}
+      >
+        <span><i className="fas fa-handshake"></i> Co-Renting / Pairing</span>
+        <span className="intent-tab-count">{countPairing}</span>
+      </button>
+      
     </div>
   );
 }

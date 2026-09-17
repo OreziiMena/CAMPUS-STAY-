@@ -430,8 +430,21 @@
 }
 
 @media (max-width: 480px) {
+    .roommate-listing-layout {
+        padding: 90px 12px 40px 12px;
+    }
+    .roommate-welcome-banner {
+        padding: 20px 16px;
+    }
+    .property-form-card {
+        padding: 18px 14px;
+        border-radius: 12px;
+    }
     .amenities-grid {
         grid-template-columns: 1fr;
+    }
+    .uploaded-previews-grid {
+        grid-template-columns: repeat(2, 1fr);
     }
 }
 

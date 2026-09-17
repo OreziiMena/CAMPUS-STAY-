@@ -320,7 +320,7 @@ export default function ListingModal({
                   </p>
                   {formTargetTotalRent && formMyBudget && (
                     <p className="pairing-calc-summary">
-                      Target Rent: ₦{Number(formTargetTotalRent).toLocaleString()} | Your Pledge: ₦{Number(formMyBudget).toLocaleString()} | Roommate(s) Needed: ₦{Math.max(0, Number(formTargetTotalRent) - Number(formMyBudget)).toLocaleString()}
+                      Target Rent: ₦{Number(formTargetTotalRent).toLocaleString()} | Your Share: ₦{Number(formMyBudget).toLocaleString()} | Roommate(s) Needed: ₦{Math.max(0, Number(formTargetTotalRent) - Number(formMyBudget)).toLocaleString()}
                     </p>
                   )}
                 </div>

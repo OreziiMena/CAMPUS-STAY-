@@ -20,7 +20,7 @@ export default function HeroBanner({ onListRoommateClick }: HeroBannerProps) {
           onClick={onListRoommateClick} 
           className="list-roommate-hero-btn"
         >
-          <i className="fas fa-plus-circle"></i>Find or List Your Roommate Space
+          <i className="fas fa-plus-circle"></i> Find or List Roommate Space
         </button>
       </div>
     </section>
