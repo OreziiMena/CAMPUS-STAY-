@@ -1611,6 +1611,26 @@ body.dark-mode .filters-horizontal-row input::placeholder {
     flex-wrap: wrap;
 }
 
+.explore-rent-fee-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    background-color: #fefce8;
+    color: #854d0e;
+    border: 1px solid #fef08a;
+    padding: 2px 8px;
+    border-radius: 6px;
+    font-size: 0.72rem;
+    font-weight: 700;
+    font-family: 'Poppins', sans-serif;
+}
+
+body.dark-mode .explore-rent-fee-badge {
+    background-color: rgba(234, 179, 8, 0.15);
+    color: #fde047;
+    border-color: rgba(234, 179, 8, 0.3);
+}
+
 .explore-agent-fee-badge {
     display: inline-flex;
     align-items: center;

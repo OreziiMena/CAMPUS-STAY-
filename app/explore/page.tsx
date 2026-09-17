@@ -456,21 +456,35 @@ export default function Explore() {
                           )}
                         </div>
 
-                        {/* Agent Fee & Pricing Breakdown Badges */}
+                        {/* House Rent, Agent Fee & Caution Breakdown Badges */}
                         <div className="explore-fees-row">
+                          {(() => {
+                            const rentAmount = (property.rentAmount !== null && property.rentAmount !== undefined && property.rentAmount > 0)
+                              ? property.rentAmount
+                              : (property.price && (property.agentFee || property.cautionFee)
+                                  ? Math.max(0, property.price - (property.agentFee || 0) - (property.cautionFee || 0))
+                                  : property.price);
+                            return (
+                              <span className="explore-rent-fee-badge" title="Annual House Rent">
+                                <i className="fas fa-home explore-fee-icon"></i>
+                                Rent: ₦{rentAmount.toLocaleString()}
+                              </span>
+                            );
+                          })()}
                           {property.agentFee && property.agentFee > 0 ? (
-                            <span className="explore-agent-fee-badge">
+                            <span className="explore-agent-fee-badge" title="Agent / Agency Fee">
                               <i className="fas fa-user-tie explore-fee-icon"></i>
                               Agent Fee: ₦{property.agentFee.toLocaleString()}
                             </span>
                           ) : (
-                            <span className="explore-zero-agent-fee-badge">
+                            <span className="explore-zero-agent-fee-badge" title="Direct Host Listing">
                               <i className="fas fa-tag explore-fee-icon"></i>
                               0% Agent Fee (Direct Host)
                             </span>
                           )}
                           {property.cautionFee && property.cautionFee > 0 ? (
-                            <span className="explore-caution-fee-badge">
+                            <span className="explore-caution-fee-badge" title="Refundable Caution Deposit">
+                              <i className="fas fa-shield-alt explore-fee-icon"></i>
                               Caution: ₦{property.cautionFee.toLocaleString()}
                             </span>
                           ) : null}
