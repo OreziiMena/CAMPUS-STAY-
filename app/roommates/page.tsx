@@ -240,7 +240,11 @@ export default function RoommatesDirectory() {
 
       <main className="roommates-layout">
         {/* Hero Banner */}
-        <HeroBanner onListRoommateClick={handleOpenListingModal} />
+        <HeroBanner 
+          onListRoommateClick={handleOpenListingModal}
+          onEditCompatClick={() => setIsCompatModalOpen(true)}
+          isStudent={Boolean(currentUser && currentUser.role === "STUDENT")}
+        />
 
         {/* Search & Filters */}
         <SearchFilters
@@ -265,9 +269,12 @@ export default function RoommatesDirectory() {
           countHaveSpace={countHaveSpace}
         />
 
-        {/* Compatibility Setup Prompt Banner */}
-        {shouldShowCompatBanner && (
-          <CompatBanner onOpenCompatModal={() => setIsCompatModalOpen(true)} />
+        {/* Compatibility Match / Edit Banner */}
+        {currentUser && currentUser.role === "STUDENT" && (
+          <CompatBanner 
+            preferences={userPrefs}
+            onOpenCompatModal={() => setIsCompatModalOpen(true)} 
+          />
         )}
 
         {/* Directory Grid & Pagination */}

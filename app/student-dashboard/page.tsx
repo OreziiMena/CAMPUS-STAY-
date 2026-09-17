@@ -29,6 +29,16 @@ import StudentReceiptModal from "./components/modals/StudentReceiptModal";
 import StudentDisputeModal from "./components/modals/StudentDisputeModal";
 import EditRoommateModal from "./components/modals/EditRoommateModal";
 import DeleteConfirmModal from "./components/modals/DeleteConfirmModal";
+import CompatModal from "@/app/roommates/components/modals/CompatModal";
+
+const LEVEL_OPTIONS = [
+  { code: "100L", name: "100 Level" },
+  { code: "200L", name: "200 Level" },
+  { code: "300L", name: "300 Level" },
+  { code: "400L", name: "400 Level" },
+  { code: "500L", name: "500 Level" },
+  { code: "Postgraduate", name: "Postgraduate" },
+];
 
 export default function StudentDashboard() {
   const router = useRouter();
@@ -46,6 +56,7 @@ export default function StudentDashboard() {
   const [receiptModalPayment, setReceiptModalPayment] = useState<any | null>(null);
   const [disputeModalPayment, setDisputeModalPayment] = useState<any | null>(null);
   const [editingRoommateListing, setEditingRoommateListing] = useState<any | null>(null);
+  const [isCompatModalOpen, setIsCompatModalOpen] = useState(false);
   const [deleteTargetListing, setDeleteTargetListing] = useState<{ id: string; title: string } | null>(null);
   const [isDeletingListing, setIsDeletingListing] = useState(false);
   const [roommateActionLoadingId, setRoommateActionLoadingId] = useState<string | null>(null);
@@ -224,6 +235,7 @@ export default function StudentDashboard() {
               onEdit={(listing) => setEditingRoommateListing(listing)}
               onToggleStatus={handleToggleRoommateStatus}
               onDelete={handleDeleteRoommateListing}
+              onEditMatchProfile={() => setIsCompatModalOpen(true)}
               actionLoadingId={roommateActionLoadingId}
             />
 
@@ -281,6 +293,17 @@ export default function StudentDashboard() {
               isDeleting={isDeletingListing}
               onConfirm={handleConfirmDeleteRoommateListing}
               onCancel={() => setDeleteTargetListing(null)}
+            />
+
+            {/* Compatibility Matching Profile Modal */}
+            <CompatModal
+              isOpen={isCompatModalOpen}
+              onClose={() => setIsCompatModalOpen(false)}
+              onSuccess={fetchDashboard}
+              initialDept={profile?.preferences?.department || ""}
+              initialLevel={profile?.preferences?.level || "100L"}
+              initialGender={profile?.preferences?.gender || "Male"}
+              levelOptions={LEVEL_OPTIONS}
             />
           </div>
         )}

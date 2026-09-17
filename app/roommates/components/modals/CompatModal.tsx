@@ -31,10 +31,12 @@ export default function CompatModal({
   const [isSavingCompat, setIsSavingCompat] = useState(false);
 
   useEffect(() => {
-    setCompatDept(initialDept);
-    setCompatLevel(initialLevel);
-    setCompatGender(initialGender);
-  }, [initialDept, initialLevel, initialGender]);
+    if (isOpen) {
+      setCompatDept(initialDept || "");
+      setCompatLevel(initialLevel || "100L");
+      setCompatGender(initialGender || "Male");
+    }
+  }, [isOpen, initialDept, initialLevel, initialGender]);
 
   if (!isOpen) return null;
 
@@ -73,12 +75,15 @@ export default function CompatModal({
     <div className="modal-overlay" onClick={onClose}>
       <div className="modal-card modal-card-compat" onClick={(e) => e.stopPropagation()}>
         <div className="modal-header">
-          <h2><i className="fas fa-sliders-h"></i> Compatibility Profile</h2>
+          <h2>
+            <i className="fas fa-sliders-h"></i>{" "}
+            {initialDept ? "Edit Compatibility Profile" : "Compatibility Profile"}
+          </h2>
           <button type="button" className="modal-close-btn" onClick={onClose}>&times;</button>
         </div>
         <div className="modal-body modal-body-padded">
           <p className="compat-modal-desc">
-            Campus Tent matchmaking calculates compatibility strictly using your <strong>Department, Academic Level, and Gender</strong>.
+            Campus Tent calculates your roommate compatibility score strictly using your <strong>Department, Academic Level, and Gender</strong>. If anything was entered incorrectly, update it below at any time.
           </p>
           <form onSubmit={handleSubmit}>
             <div className="form-group-custom form-group-mb-14">
@@ -131,7 +136,11 @@ export default function CompatModal({
                 className="proposal-submit-btn"
                 disabled={isSavingCompat}
               >
-                {isSavingCompat ? <><i className="fas fa-spinner fa-spin"></i> Saving...</> : "Save & Match"}
+                {isSavingCompat ? (
+                  <><i className="fas fa-spinner fa-spin"></i> Saving Changes...</>
+                ) : (
+                  <><i className="fas fa-check"></i> Save & Update Matches</>
+                )}
               </button>
             </div>
           </form>

@@ -8,6 +8,7 @@ interface StudentRoommatesCardProps {
   onEdit: (listing: any) => void;
   onToggleStatus: (listingId: string) => void;
   onDelete: (listingId: string) => void;
+  onEditMatchProfile?: () => void;
   actionLoadingId: string | null;
 }
 
@@ -16,6 +17,7 @@ export default function StudentRoommatesCard({
   onEdit,
   onToggleStatus,
   onDelete,
+  onEditMatchProfile,
   actionLoadingId,
 }: StudentRoommatesCardProps) {
   return (
@@ -30,6 +32,16 @@ export default function StudentRoommatesCard({
           </p>
         </div>
         <div className="roommates-header-actions">
+          {onEditMatchProfile && (
+            <button 
+              type="button" 
+              onClick={onEditMatchProfile} 
+              className="btn-compat-match-profile"
+              title="Edit your Department, Level or Gender compatibility profile"
+            >
+              <i className="fas fa-sliders-h"></i> Match Profile
+            </button>
+          )}
           <Link href="/student-dashboard/add-roommate-listing" className="btn-add-roommate">
             <i className="fas fa-plus-circle"></i> Post New Listing
           </Link>

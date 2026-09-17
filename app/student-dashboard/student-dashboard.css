@@ -1823,3 +1823,26 @@ body {
     cursor: not-allowed;
 }
 
+.btn-compat-match-profile {
+    background: white;
+    color: rgb(2, 53, 28);
+    border: 1.5px solid rgb(2, 53, 28);
+    padding: 8px 14px;
+    border-radius: 8px;
+    font-size: 0.82rem;
+    font-weight: 600;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    transition: all 0.2s ease;
+    text-decoration: none;
+}
+
+.btn-compat-match-profile:hover {
+    background: #f0fdf4;
+    border-color: #046334;
+    color: #046334;
+}
+
+

@@ -2,14 +2,14 @@
   min-height: 100vh;
   background-color: #f8faf9;
   font-family: 'Poppins', sans-serif;
-  padding-top: 90px;
+  padding-top: 0;
   padding-bottom: 60px;
 }
 
 .roommates-hero {
   background: linear-gradient(135deg, rgb(2, 53, 28) 0%, rgb(13, 78, 25) 100%);
   color: white;
-  padding: 60px 5%;
+  padding: 120px 5% 60px 5%;
   text-align: center;
   position: relative;
   overflow: hidden;
@@ -933,21 +933,24 @@
 }
 
 .hero-actions {
-  margin-top: 20px;
+  margin-top: 24px;
   display: flex;
   justify-content: center;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
 }
 
 .list-roommate-hero-btn {
   background-color: rgb(126, 107, 1);
   color: white;
   border: none;
-  padding: 14px 28px;
+  padding: 13px 26px;
   border-radius: 30px;
-  font-size: 1rem;
+  font-size: 0.95rem;
   font-weight: 700;
   cursor: pointer;
-  transition: all 0.3s;
+  transition: all 0.25s ease;
   display: inline-flex;
   align-items: center;
   gap: 8px;
@@ -958,6 +961,28 @@
   background-color: rgb(150, 128, 5);
   transform: translateY(-2px);
   box-shadow: 0 6px 20px rgba(126, 107, 1, 0.4);
+}
+
+.hero-compat-edit-btn {
+  background-color: rgba(255, 255, 255, 0.12);
+  color: white;
+  border: 1.5px solid rgba(255, 255, 255, 0.35);
+  backdrop-filter: blur(8px);
+  padding: 13px 24px;
+  border-radius: 30px;
+  font-size: 0.92rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.25s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.hero-compat-edit-btn:hover {
+  background-color: rgba(255, 255, 255, 0.24);
+  border-color: white;
+  transform: translateY(-2px);
 }
 
 /* Roommate Card Classes */
@@ -1517,6 +1542,39 @@
 .compat-setup-btn:hover {
   background: #166534;
   transform: translateY(-1px);
+}
+
+.compat-setup-banner.compat-active-banner {
+  background: white;
+  border: 1.5px solid #86efac;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.04);
+}
+
+.compat-profile-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: #dcfce7;
+  color: rgb(2, 53, 28);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.1rem;
+  flex-shrink: 0;
+}
+
+.compat-setup-btn.compat-edit-btn {
+  background: white;
+  color: rgb(2, 53, 28);
+  border: 1.5px solid rgb(2, 53, 28);
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.compat-setup-btn.compat-edit-btn:hover {
+  background: rgb(2, 53, 28);
+  color: white;
 }
 
 /* Card Header Badges for Co-Renting */
@@ -2389,22 +2447,28 @@
 
 @media (max-width: 768px) {
   .roommates-layout {
-    padding-top: 85px !important;
+    padding-top: 0 !important;
     padding-bottom: 40px !important;
   }
   .roommates-hero {
-    padding: 30px 16px 45px 16px !important;
+    padding: 105px 16px 45px 16px !important;
   }
   .roommates-hero h1 {
     font-size: 1.85rem !important;
     line-height: 1.25 !important;
-    margin-top: 6px !important;
+    margin-top: 0 !important;
   }
   .roommates-hero p {
     font-size: 0.92rem !important;
     margin-bottom: 20px !important;
   }
-  .list-roommate-hero-btn {
+  .hero-actions {
+    flex-direction: column !important;
+    align-items: center !important;
+    gap: 10px !important;
+  }
+  .list-roommate-hero-btn,
+  .hero-compat-edit-btn {
     width: 100% !important;
     max-width: 320px !important;
     justify-content: center !important;
