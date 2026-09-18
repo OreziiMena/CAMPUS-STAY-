@@ -12,6 +12,7 @@ import { escapeHtml } from "@/lib/email-sanitizer";
 import { triggerPusherEvent } from "@/lib/pusher";
 import { parsePairingTags, buildPairingTags } from "@/lib/roommate-helper";
 import { getOrCreateRoommateChatRoom } from "./chat";
+import { isDeltaStateInstitution } from "@/lib/universities";
 
 function getFriendlyErrorMessage(err: any, defaultMsg: string): string {
   console.error("Student server action error:", err);
@@ -210,6 +211,12 @@ export async function updateStudentProfile(data: {
     }
     if (!university) {
       return { success: false, error: "University is required." };
+    }
+    if (!isDeltaStateInstitution(university)) {
+      return {
+        success: false,
+        error: "Student profiles are currently limited to Delta State tertiary institutions.",
+      };
     }
 
     await prisma.$transaction([

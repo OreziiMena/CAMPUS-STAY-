@@ -12,6 +12,7 @@ import { checkRateLimit } from "@/lib/rate-limit";
 import { validateFileBuffer, generateSecureFilename } from "@/lib/upload-validator";
 import { getAuthSecret } from "@/lib/auth-secret";
 import { logAuditEvent } from "@/lib/audit";
+import { isDeltaStateInstitution } from "@/lib/universities";
 
 const SESSION_COOKIE_NAME = "campus_stay_session";
 
@@ -96,6 +97,14 @@ export async function registerStudent(data: any) {
     }
 
     const { fullname, email, phone, university, username, password, referralCode } = data;
+
+    // Restrict student onboarding exclusively to Delta State tertiary institutions for initial rollout
+    if (!university || !isDeltaStateInstitution(university)) {
+      return {
+        success: false,
+        error: "Student signups are currently exclusive to tertiary institutions located in Delta State (e.g. FUPRE, DELSU, PTI, DOU, DSUST, UNIDEL). Campus Tent is expanding to your school soon!",
+      };
+    }
 
     if (!password || typeof password !== "string" || password.length < 8) {
       return { success: false, error: "Password must be at least 8 characters long." };

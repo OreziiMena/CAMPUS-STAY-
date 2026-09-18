@@ -5,7 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { registerStudent, checkUsernameAvailable } from "@/app/actions/auth";
 import { validateReferralCode } from "@/app/actions/ambassador";
 import "../signup.css";
-import { NIGERIAN_UNIVERSITIES } from "@/lib/universities";
+import { DELTA_STATE_UNIVERSITIES, isDeltaStateInstitution } from "@/lib/universities";
 import SearchableSelect from "@/components/SearchableSelect";
 
 function StudentSignupContent() {
@@ -106,6 +106,11 @@ function StudentSignupContent() {
       return;
     }
 
+    if (!university || !isDeltaStateInstitution(university)) {
+      setError("Student signups are currently restricted to tertiary institutions in Delta State (e.g. FUPRE, DELSU, PTI, DOU, DSUST, UNIDEL). Expansion to other states is coming soon!");
+      return;
+    }
+
     setIsLoading(true);
 
     try {
@@ -150,6 +155,13 @@ function StudentSignupContent() {
           <div className="auth-header">
             <h2>Sign Up for Campus Tent</h2>
             <p>Join Campus Tent to find your perfect off-campus home.</p>
+          </div>
+
+          <div className="state-notice-pill">
+            <i className="fas fa-map-marker-alt"></i>
+            <span>
+              <strong>Delta State Launch:</strong> Registration is currently open to students attending tertiary institutions in Delta State (FUPRE, DELSU, PTI, DOU, DSUST, UNIDEL, etc.).
+            </span>
           </div>
 
           {success ? (
@@ -204,14 +216,13 @@ function StudentSignupContent() {
               </div>
 
               <div className="input-group">
-                <label htmlFor="university">University</label>
+                <label htmlFor="university">University / Institution (Delta State)</label>
                 <SearchableSelect
-                  options={NIGERIAN_UNIVERSITIES}
+                  options={DELTA_STATE_UNIVERSITIES}
                   value={university}
                   onChange={(val) => setUniversity(val)}
-                  placeholder="Select your institution..."
+                  placeholder="Select your Delta State institution..."
                   disabled={isLoading}
-                  required
                 />
               </div>
 

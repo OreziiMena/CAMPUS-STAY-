@@ -60,7 +60,50 @@ export const NIGERIAN_UNIVERSITIES: University[] = [
   { code: "UNIPORT", name: "University of Port Harcourt (UNIPORT)" },
   { code: "UNIZIK", name: "Nnamdi Azikiwe University, Awka (UNIZIK)" },
   { code: "UNN", name: "University of Nigeria, Nsukka (UNN)" },
+  { code: "ADUN", name: "Admiralty University of Nigeria, Ibusa (ADUN)" },
+  { code: "COEMO", name: "College of Education, Mosogar (COEMO)" },
+  { code: "COEWARRI", name: "College of Education, Warri (COEWARRI)" },
+  { code: "DESPO", name: "Delta State Polytechnic, Otefe-Oghara (DESPO)" },
+  { code: "DSPG", name: "Delta State Polytechnic, Ogwashi-Uku (DSPG)" },
   { code: "USTA", name: "Federal University, Dutse" },
   { code: "WDU", name: "Western Delta University, Oghara (WDU)" },
   { code: "YABATECH", name: "Yaba College of Technology, Yaba" }
 ];
+
+// Institutions in Delta State eligible for initial platform rollout
+export const DELTA_STATE_UNIVERSITIES: University[] = [
+  { code: "FUPRE", name: "Federal University of Petroleum Resources, Effurun (FUPRE)" },
+  { code: "DELSU", name: "Delta State University, Abraka (DELSU)" },
+  { code: "PTI", name: "Petroleum Training Institute, Effurun (PTI)" },
+  { code: "DOU", name: "Dennis Osadebay University, Asaba (DOU)" },
+  { code: "DSUST", name: "Delta State University of Science and Technology, Ozoro (DSUST)" },
+  { code: "UNIDEL", name: "University of Delta, Agbor (UNIDEL)" },
+  { code: "FEPO", name: "Federal Polytechnic, Orogun (FEPO)" },
+  { code: "DSPG", name: "Delta State Polytechnic, Ogwashi-Uku (DSPG)" },
+  { code: "DESPO", name: "Delta State Polytechnic, Otefe-Oghara (DESPO)" },
+  { code: "NOVENA", name: "Novena University, Ogume-Amai (NOVENA)" },
+  { code: "WDU", name: "Western Delta University, Oghara (WDU)" },
+  { code: "ADUN", name: "Admiralty University of Nigeria, Ibusa (ADUN)" },
+  { code: "COEWARRI", name: "College of Education, Warri (COEWARRI)" },
+  { code: "COEMO", name: "College of Education, Mosogar (COEMO)" },
+];
+
+export const DELTA_STATE_CODES: string[] = DELTA_STATE_UNIVERSITIES.map((u) => u.code);
+
+/**
+ * Validates if an institution code or name belongs to Delta State.
+ */
+export function isDeltaStateInstitution(codeOrName: string): boolean {
+  if (!codeOrName || typeof codeOrName !== "string") return false;
+  const upper = codeOrName.trim().toUpperCase();
+
+  if (DELTA_STATE_CODES.includes(upper)) return true;
+
+  return DELTA_STATE_UNIVERSITIES.some(
+    (uni) =>
+      uni.code.toUpperCase() === upper ||
+      uni.name.toUpperCase().includes(upper) ||
+      upper.includes(uni.code.toUpperCase())
+  );
+}
+
