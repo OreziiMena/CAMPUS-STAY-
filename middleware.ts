@@ -59,7 +59,7 @@ async function verifySessionInEdge(token: string): Promise<any | null> {
   }
 }
 
-export async function proxy(request: NextRequest) {
+export async function middleware(request: NextRequest) {
   const { pathname, search } = request.nextUrl;
 
   // Short-circuit redirects for easy root-level paths
