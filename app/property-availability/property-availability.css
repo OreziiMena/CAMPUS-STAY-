@@ -129,3 +129,154 @@
   align-items: center;
   justify-content: center;
 }
+
+.prop-avail-icon-badge.pending {
+  background: #f0fdf4;
+  color: rgb(2, 53, 28);
+}
+
+.prop-avail-info-box {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 18px 20px;
+  margin: 20px 0;
+  text-align: left;
+}
+
+.prop-avail-property-name {
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: #1e293b;
+  margin: 0 0 6px 0;
+}
+
+.prop-avail-meta {
+  font-size: 0.88rem;
+  color: #64748b;
+  margin: 0 0 12px 0;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.prop-avail-info-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 6px 0;
+  font-size: 0.92rem;
+  border-top: 1px dashed #e2e8f0;
+}
+
+.prop-avail-info-row:first-of-type {
+  border-top: none;
+}
+
+.prop-avail-label {
+  color: #64748b;
+  font-weight: 500;
+}
+
+.prop-avail-value {
+  color: #1e293b;
+  font-weight: 600;
+}
+
+.prop-avail-status-pill {
+  padding: 4px 10px;
+  border-radius: 20px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+}
+
+.prop-avail-status-pill.available {
+  background: #dcfce7;
+  color: #15803d;
+}
+
+.prop-avail-status-pill.unavailable {
+  background: #fee2e2;
+  color: #b91c1c;
+}
+
+.prop-avail-status-pill.pending {
+  background: #fef3c7;
+  color: #b45309;
+}
+
+.prop-avail-prompt {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #1e293b;
+  margin: 20px 0 16px 0;
+}
+
+.prop-avail-decision-actions {
+  display: flex;
+  gap: 14px;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.prop-avail-btn-success {
+  background-color: #16a34a;
+  color: #ffffff;
+  padding: 13px 26px;
+  border-radius: 8px;
+  font-weight: 700;
+  font-size: 0.95rem;
+  border: none;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  transition: background-color 0.2s, transform 0.1s;
+}
+
+.prop-avail-btn-success:hover {
+  background-color: #15803d;
+  transform: translateY(-1px);
+}
+
+.prop-avail-btn-danger {
+  background-color: #dc2626;
+  color: #ffffff;
+  padding: 13px 26px;
+  border-radius: 8px;
+  font-weight: 700;
+  font-size: 0.95rem;
+  border: none;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  transition: background-color 0.2s, transform 0.1s;
+}
+
+.prop-avail-btn-danger:hover {
+  background-color: #b91c1c;
+  transform: translateY(-1px);
+}
+
+.prop-avail-resend-feedback {
+  padding: 10px 16px;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  margin: 14px 0;
+}
+
+.prop-avail-resend-feedback.success {
+  background: #ecfdf5;
+  color: #065f46;
+  border: 1px solid #a7f3d0;
+}
+
+.prop-avail-resend-feedback.error {
+  background: #fef2f2;
+  color: #991b1b;
+  border: 1px solid #fecaca;
+}
+

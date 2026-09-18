@@ -189,12 +189,15 @@ export async function queryPropertyAvailability(propertyId: string) {
         </div>
       `;
 
-      sendEmail({
+      const emailRes = await sendEmail({
         to: recipientUser.email,
         subject: `Availability Check: "${property.title}" - Action Required`,
         html: emailHtml,
         isInspectionMessage: false,
-      }).catch((err) => console.error("Agent availability check email failed:", err));
+      });
+      if (!emailRes.success) {
+        console.error("Agent availability check email failed:", emailRes.error);
+      }
     }
 
     return {
@@ -239,8 +242,8 @@ export async function respondPropertyAvailability(token: string, responseType: "
       return { success: false, error: "Invalid or expired confirmation link." };
     }
 
-    // Check if link has expired (valid for 24 hours)
-    const queryTime = new Date(query.updatedAt || query.createdAt).getTime();
+    // Check if link has expired (valid for 24 hours from creation)
+    const queryTime = new Date(query.createdAt).getTime();
     if (Date.now() - queryTime > AVAILABILITY_EXPIRATION_MS) {
       return {
         success: false,
@@ -332,11 +335,16 @@ export async function respondPropertyAvailability(token: string, responseType: "
         </div>
       `;
 
-      sendEmail({
+      const emailRes = await sendEmail({
         to: query.student.email,
         subject: `${isAvailable ? "Available: " : "Unavailable: "} ${query.property.title}`,
         html: studentHtml,
-      }).catch((err) => console.error("Student availability update email failed:", err));
+      });
+      if (!emailRes.success) {
+        console.error("Student availability update email failed:", emailRes.error);
+      } else {
+        console.log(`Student availability update email sent to ${query.student.email}, Resend ID:`, emailRes.data?.id);
+      }
     }
 
     return {
@@ -348,6 +356,160 @@ export async function respondPropertyAvailability(token: string, responseType: "
   } catch (err: any) {
     console.error("respondPropertyAvailability error:", err);
     return { success: false, error: err.message || "Failed to submit availability response." };
+  }
+}
+
+/**
+ * Get availability query details by token (used by property-availability confirmation page)
+ */
+export async function getAvailabilityQueryInfo(token: string) {
+  try {
+    if (!token) return { success: false, error: "Missing token." };
+
+    const query = await prisma.availabilityQuery.findUnique({
+      where: { token },
+      include: {
+        property: true,
+        student: {
+          include: {
+            studentProfile: true,
+          },
+        },
+        agent: {
+          include: {
+            agentProfile: true,
+          },
+        },
+      },
+    });
+
+    if (!query) {
+      return { success: false, error: "Availability request not found or invalid token." };
+    }
+
+    const queryTime = new Date(query.createdAt).getTime();
+    const isExpired = Date.now() - queryTime > AVAILABILITY_EXPIRATION_MS;
+
+    return {
+      success: true,
+      query: {
+        id: query.id,
+        status: query.status,
+        respondedAt: query.respondedAt ? query.respondedAt.toISOString() : null,
+        isExpired,
+        propertyTitle: query.property.title,
+        propertyId: query.property.id,
+        propertyLocation: query.property.location,
+        propertyPrice: query.property.price,
+        studentName: query.student?.studentProfile?.fullName || "Student",
+        studentEmail: query.student?.email,
+        agentName: query.agent?.agentProfile?.fullName || query.agent?.agentProfile?.agencyName || "Agent",
+      },
+    };
+  } catch (err: any) {
+    console.error("getAvailabilityQueryInfo error:", err);
+    return { success: false, error: err.message || "Failed to load availability request." };
+  }
+}
+
+/**
+ * Resend availability confirmation email to student
+ */
+export async function resendAvailabilityEmail(token: string) {
+  try {
+    if (!token) return { success: false, error: "Missing token." };
+
+    const query = await prisma.availabilityQuery.findUnique({
+      where: { token },
+      include: {
+        property: true,
+        student: {
+          include: {
+            studentProfile: true,
+          },
+        },
+      },
+    });
+
+    if (!query) return { success: false, error: "Availability request not found." };
+    if (!query.student?.email) return { success: false, error: "Student does not have a registered email address." };
+    if (query.status === "PENDING") {
+      return { success: false, error: "This request is still pending agent confirmation." };
+    }
+
+    const studentName = escapeHtml(query.student.studentProfile?.fullName || "Student");
+    const propertyTitle = escapeHtml(query.property.title);
+    const isAvailable = query.status === "AVAILABLE";
+
+    const studentHtml = `
+      <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 600px; margin: 0 auto; background: #ffffff; border: 1px solid #e2e8f0; border-radius: 12px; overflow: hidden;">
+        <div style="background-color: #02351c; padding: 24px; text-align: center;">
+          <h1 style="color: #ffffff; font-size: 22px; margin: 0; font-weight: 700;">Campus Tent</h1>
+          <p style="color: #cbd5e1; font-size: 14px; margin: 6px 0 0 0;">Property Availability Update</p>
+        </div>
+        <div style="padding: 24px;">
+          <h2 style="color: #02351c; font-size: 18px; margin-top: 0;">
+            ${isAvailable ? "Property is Available!" : "Property is Currently Unavailable"}
+          </h2>
+          <p style="color: #4b5563; font-size: 14px; line-height: 1.6;">
+            Hi ${studentName}, the agent has confirmed the status for <strong>"${propertyTitle}"</strong>:
+          </p>
+          <div style="background-color: ${isAvailable ? "#ecfdf5" : "#fef2f2"}; border-left: 4px solid ${isAvailable ? "#16a34a" : "#dc2626"}; padding: 16px; border-radius: 6px; margin: 20px 0;">
+            <p style="margin: 0; font-size: 15px; color: ${isAvailable ? "#065f46" : "#991b1b"}; font-weight: 600;">
+              ${isAvailable ? "The agent confirmed this property is available right now." : "The agent reported this property is currently occupied or unavailable."}
+            </p>
+            ${
+              isAvailable
+                ? `<p style="margin: 8px 0 0 0; font-size: 13.5px; color: #047857;">
+                    You can now pay the ₦7,500 inspection fee to unlock direct messaging and schedule your physical inspection tour.
+                  </p>`
+                : `<p style="margin: 8px 0 0 0; font-size: 13.5px; color: #b91c1c;">
+                    Please explore other verified listings on Campus Tent.
+                  </p>`
+            }
+          </div>
+
+          ${
+            isAvailable
+              ? `
+            <div style="text-align: center; margin: 25px 0;">
+              <a href="${BASE_URL}/apartment-details?id=${query.propertyId}" style="background-color: #02351c; color: #ffffff; padding: 13px 26px; border-radius: 8px; text-decoration: none; font-weight: 700; font-size: 14px; display: inline-block;">
+                Proceed to Pay ₦7,500 Inspection Fee
+              </a>
+            </div>
+          `
+              : `
+            <div style="text-align: center; margin: 25px 0;">
+              <a href="${BASE_URL}/explore" style="background-color: #02351c; color: #ffffff; padding: 13px 26px; border-radius: 8px; text-decoration: none; font-weight: 700; font-size: 14px; display: inline-block;">
+                Explore Alternative Hostels
+              </a>
+            </div>
+          `
+          }
+        </div>
+        <div style="background-color: #f1f5f9; padding: 14px; text-align: center; font-size: 12px; color: #64748b;">
+          Campus Tent &bull; Safe Student Accommodation
+        </div>
+      </div>
+    `;
+
+    const emailRes = await sendEmail({
+      to: query.student.email,
+      subject: `${isAvailable ? "Available: " : "Unavailable: "} ${query.property.title}`,
+      html: studentHtml,
+    });
+
+    if (!emailRes.success) {
+      return { success: false, error: emailRes.error || "Failed to deliver email." };
+    }
+
+    return {
+      success: true,
+      message: `Notification email successfully sent to ${query.student.email}!`,
+    };
+  } catch (err: any) {
+    console.error("resendAvailabilityEmail error:", err);
+    return { success: false, error: err.message || "Failed to resend email." };
   }
 }
 
