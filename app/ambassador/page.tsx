@@ -1,11 +1,12 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import SearchableSelect from "@/components/SearchableSelect";
 import { NIGERIAN_UNIVERSITIES } from "@/lib/universities";
 import { submitAmbassadorApplication, getAmbassadorStatus } from "@/app/actions/ambassador";
+import { getCurrentUser } from "@/app/actions/auth";
 import styles from "./ambassador.module.css";
 
 const ACADEMIC_LEVELS = [
@@ -36,12 +37,41 @@ export default function AmbassadorPage() {
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [copiedCode, setCopiedCode] = useState(false);
   const [copiedLink, setCopiedLink] = useState(false);
+  const [existingApp, setExistingApp] = useState<any>(null);
 
   // Status Lookup State
   const [statusQuery, setStatusQuery] = useState("");
   const [isCheckingStatus, setIsCheckingStatus] = useState(false);
   const [statusResult, setStatusResult] = useState<any>(null);
   const [statusError, setStatusError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const initUser = async () => {
+      try {
+        const user = await getCurrentUser();
+        if (user) {
+          setFormData((prev) => ({
+            ...prev,
+            fullName: user.name || prev.fullName,
+            email: user.email || prev.email,
+            phone: user.phone || prev.phone,
+            university: user.studentProfile?.university || prev.university,
+          }));
+
+          // Check if this student already has an active ambassador record
+          if (user.email) {
+            const statusCheck = await getAmbassadorStatus(user.email);
+            if (statusCheck.success && statusCheck.application) {
+              setExistingApp(statusCheck.application);
+            }
+          }
+        }
+      } catch (err) {
+        console.warn("Could not load user profile for ambassador prefill:", err);
+      }
+    };
+    initUser();
+  }, []);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -50,34 +80,70 @@ export default function AmbassadorPage() {
 
   const handleApplySubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setIsSubmitting(true);
     setSubmitError(null);
     setSubmitResult(null);
+
+    // Client-side validations
+    if (!formData.fullName.trim()) {
+      setSubmitError("Please provide your full name.");
+      return;
+    }
+    if (!formData.email.trim() || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email.trim())) {
+      setSubmitError("Please provide a valid email address.");
+      return;
+    }
+    if (!formData.phone.trim() || formData.phone.trim().length < 10) {
+      setSubmitError("Please provide a valid phone number (at least 10 digits).");
+      return;
+    }
+    if (!formData.university) {
+      setSubmitError("Please select your university / higher institution.");
+      return;
+    }
+    if (!formData.department.trim()) {
+      setSubmitError("Please provide your department / faculty.");
+      return;
+    }
+    if (!formData.pitch.trim() || formData.pitch.trim().length < 20) {
+      setSubmitError("Please provide at least 20 characters explaining why you would make an exceptional campus ambassador.");
+      return;
+    }
+
+    setIsSubmitting(true);
 
     try {
       const res = await submitAmbassadorApplication(formData);
       if (res.success) {
         setSubmitResult(res);
+        if (res.referralCode) {
+          setExistingApp({
+            referralCode: res.referralCode,
+            status: res.status || "PENDING",
+            fullName: formData.fullName,
+            university: formData.university,
+          });
+        }
       } else {
         setSubmitError(res.error || "Failed to submit application.");
       }
     } catch (err: any) {
-      setSubmitError(err.message || "An unexpected error occurred.");
+      setSubmitError(err.message || "An unexpected error occurred. Please try again.");
     } finally {
       setIsSubmitting(false);
     }
   };
 
-  const handleStatusCheck = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!statusQuery.trim()) return;
+  const handleStatusCheck = async (e?: React.FormEvent, directCode?: string) => {
+    if (e) e.preventDefault();
+    const query = (directCode || statusQuery).trim();
+    if (!query) return;
 
     setIsCheckingStatus(true);
     setStatusError(null);
     setStatusResult(null);
 
     try {
-      const res = await getAmbassadorStatus(statusQuery);
+      const res = await getAmbassadorStatus(query);
       if (res.success) {
         setStatusResult(res.application);
       } else {
@@ -122,7 +188,7 @@ export default function AmbassadorPage() {
             Lead on Your Campus. <span>Earn Lucrative Rewards.</span>
           </h1>
           <p className={styles.heroSubtitle}>
-            Help your fellow students discover verified, secure off-campus accommodation and roommates while unlocking commissions, leadership certificates, and exclusive perks.
+            Help fellow students discover verified, secure off-campus accommodation and roommates while unlocking commissions, leadership certificates, and exclusive perks.
           </p>
 
           <div className={styles.heroStats}>
@@ -156,7 +222,13 @@ export default function AmbassadorPage() {
           <button
             type="button"
             className={`${styles.tabBtn} ${activeTab === "status" ? styles.tabBtnActive : ""}`}
-            onClick={() => setActiveTab("status")}
+            onClick={() => {
+              setActiveTab("status");
+              if (existingApp?.referralCode && !statusResult) {
+                setStatusQuery(existingApp.referralCode);
+                handleStatusCheck(undefined, existingApp.referralCode);
+              }
+            }}
           >
             <i className="fas fa-search"></i> Check My Referral Code
           </button>
@@ -180,7 +252,7 @@ export default function AmbassadorPage() {
             </div>
             <h4 className={styles.perkTitle}>Executive Certificate</h4>
             <p className={styles.perkDesc}>
-              Receive an official Certificate of Leadership & Community Management endorsed by Campus Tent to boost your LinkedIn profile.
+              Receive an official Certificate of Leadership & Community Management endorsed by Campus Tent to boost your CV and LinkedIn.
             </p>
           </div>
 
@@ -190,7 +262,7 @@ export default function AmbassadorPage() {
             </div>
             <h4 className={styles.perkTitle}>Merchandise & Swag</h4>
             <p className={styles.perkDesc}>
-              Get branded Campus Tent Merchs and priority VIP invitations to university orientation events.
+              Get branded Campus Tent merchandise and priority VIP access to university orientation campaigns.
             </p>
           </div>
 
@@ -212,6 +284,29 @@ export default function AmbassadorPage() {
               <h3>Campus Ambassador Application</h3>
               <p>Fill out the application below. Approvals are typically processed within 48 hours.</p>
             </div>
+
+            {/* Existing Application Banner for Logged-In User */}
+            {existingApp && !submitResult && (
+              <div className={styles.existingNoticeBanner}>
+                <div className={styles.existingNoticeLeft}>
+                  <i className="fas fa-info-circle"></i>
+                  <div className={styles.existingNoticeText}>
+                    You already have an ambassador record with code: <strong>{existingApp.referralCode}</strong> ({existingApp.status}).
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  className={styles.existingNoticeBtn}
+                  onClick={() => {
+                    setActiveTab("status");
+                    setStatusQuery(existingApp.referralCode);
+                    handleStatusCheck(undefined, existingApp.referralCode);
+                  }}
+                >
+                  View Referral Stats
+                </button>
+              </div>
+            )}
 
             {submitError && (
               <div className={`${styles.alertBox} ${styles.alertError}`}>
@@ -358,7 +453,7 @@ export default function AmbassadorPage() {
                     required
                     value={formData.phone}
                     onChange={handleInputChange}
-                    placeholder="Phone number"
+                    placeholder="Phone number e.g. 08012345678"
                     className={styles.input}
                   />
                 </div>
@@ -370,7 +465,6 @@ export default function AmbassadorPage() {
                     value={formData.university}
                     onChange={(val) => setFormData({ ...formData, university: val })}
                     placeholder="Select your institution..."
-                    required
                   />
                 </div>
 
@@ -395,7 +489,6 @@ export default function AmbassadorPage() {
                     onChange={(val) => setFormData({ ...formData, level: val })}
                     placeholder="Select academic level..."
                     showSearch={false}
-                    required
                   />
                 </div>
 
@@ -406,7 +499,7 @@ export default function AmbassadorPage() {
                     name="socialHandle"
                     value={formData.socialHandle}
                     onChange={handleInputChange}
-                    placeholder="Social media handle (optional)"
+                    placeholder="e.g. @username"
                     className={styles.input}
                   />
                 </div>
@@ -421,7 +514,7 @@ export default function AmbassadorPage() {
                     required
                     value={formData.pitch}
                     onChange={handleInputChange}
-                    placeholder="Describe your campus involvement or motivation..."
+                    placeholder="Describe your campus involvement, leadership experience, or motivation (at least 20 characters)..."
                     className={styles.textarea}
                   />
                 </div>
@@ -468,7 +561,7 @@ export default function AmbassadorPage() {
                   setStatusQuery(e.target.value);
                   setStatusError(null);
                 }}
-                placeholder="Enter email or referral code"
+                placeholder="Enter registered email or referral code (e.g. CT-EMEN-924)"
                 className={`${styles.input} ${styles.statusInput}`}
               />
               <button
@@ -585,3 +678,4 @@ export default function AmbassadorPage() {
     </div>
   );
 }
+

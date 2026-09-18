@@ -1,17 +1,23 @@
 .ambassadorPage {
   min-height: 100vh;
-  background-color: #fafafa;
+  background-color: #f8fafc;
   color: #1e293b;
   font-family: var(--font-poppins, 'Poppins', sans-serif);
+  width: 100%;
+  max-width: 100vw;
+  overflow-x: hidden;
+  box-sizing: border-box;
 }
 
 .heroSection {
   background: linear-gradient(135deg, rgb(2, 53, 28) 0%, rgb(1, 30, 15) 100%);
-  padding: 120px 5% 70px 5%;
+  padding: 130px 5% 70px 5%;
   text-align: center;
   color: white;
   position: relative;
   overflow: hidden;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .heroSection::before {
@@ -30,6 +36,9 @@
   margin: 0 auto;
   position: relative;
   z-index: 2;
+  width: 100%;
+  box-sizing: border-box;
+  padding: 0 10px;
 }
 
 .heroBadge {
@@ -38,7 +47,7 @@
   gap: 8px;
   background: rgba(255, 255, 255, 0.1);
   border: 1px solid rgba(255, 255, 255, 0.2);
-  padding: 6px 16px;
+  padding: 8px 18px;
   border-radius: 30px;
   font-size: 0.85rem;
   font-weight: 700;
@@ -50,22 +59,22 @@
 
 .heroTitle {
   font-family: 'Poppins', sans-serif;
-  font-size: 44px;
+  font-size: 42px;
   font-weight: 700;
-  margin-bottom: 20px;
+  margin-bottom: 18px;
   line-height: 1.25;
 }
 
 .heroTitle span {
-  color: #d35400;
+  color: #f59e0b;
 }
 
 .heroSubtitle {
   font-family: 'Open Sans', sans-serif;
-  font-size: 17px;
+  font-size: 16.5px;
   max-width: 650px;
   margin: 0 auto;
-  color: rgba(255, 255, 255, 0.85);
+  color: rgba(255, 255, 255, 0.88);
   line-height: 1.6;
 }
 
@@ -75,6 +84,8 @@
   gap: 20px;
   flex-wrap: wrap;
   margin-top: 35px;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .heroStatItem {
@@ -83,6 +94,8 @@
   padding: 14px 24px;
   border-radius: 12px;
   backdrop-filter: blur(8px);
+  min-width: 160px;
+  box-sizing: border-box;
 }
 
 .heroStatValue {
@@ -96,14 +109,17 @@
   color: #cbd5e1;
   text-transform: uppercase;
   letter-spacing: 0.04em;
+  margin-top: 2px;
 }
 
 .mainContainer {
-  max-width: 1100px;
+  max-width: 1050px;
   margin: -40px auto 60px auto;
   padding: 0 20px;
   position: relative;
   z-index: 10;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .tabSwitcher {
@@ -113,9 +129,11 @@
   padding: 6px;
   border-radius: 12px;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
-  max-width: 440px;
+  max-width: 480px;
   margin: 0 auto 30px auto;
   border: 1px solid #e2e8f0;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .tabBtn {
@@ -134,6 +152,7 @@
   align-items: center;
   justify-content: center;
   gap: 8px;
+  white-space: nowrap;
 }
 
 .tabBtnActive {
@@ -144,18 +163,21 @@
 
 .perksGrid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
   gap: 20px;
-  margin-bottom: 40px;
+  margin-bottom: 35px;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .perkCard {
   background: #ffffff;
-  padding: 26px 22px;
+  padding: 24px 20px;
   border-radius: 14px;
   border: 1px solid #e2e8f0;
   box-shadow: 0 4px 15px rgba(0, 0, 0, 0.02);
   transition: transform 0.2s ease, box-shadow 0.2s ease;
+  box-sizing: border-box;
 }
 
 .perkCard:hover {
@@ -164,20 +186,20 @@
 }
 
 .perkIcon {
-  width: 52px;
-  height: 52px;
+  width: 48px;
+  height: 48px;
   border-radius: 12px;
   background: rgba(2, 53, 28, 0.08);
   color: #02351c;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 1.4rem;
-  margin-bottom: 16px;
+  font-size: 1.3rem;
+  margin-bottom: 14px;
 }
 
 .perkTitle {
-  font-size: 1.1rem;
+  font-size: 1.05rem;
   font-weight: 700;
   color: #02351c;
   margin-bottom: 8px;
@@ -194,15 +216,19 @@
 .formCard {
   background: #ffffff;
   border-radius: 16px;
-  padding: 40px;
+  padding: 36px;
   border: 1px solid #e2e8f0;
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.04);
+  width: 100%;
+  box-sizing: border-box;
+  overflow: hidden;
+  scroll-margin-top: 90px;
 }
 
 .formHeader {
-  margin-bottom: 28px;
+  margin-bottom: 24px;
   border-bottom: 1px solid #f1f5f9;
-  padding-bottom: 18px;
+  padding-bottom: 16px;
 }
 
 .formHeader h3 {
@@ -218,10 +244,64 @@
   margin: 0;
 }
 
+.existingNoticeBanner {
+  background: #f0fdf4;
+  border: 1px solid #86efac;
+  border-radius: 10px;
+  padding: 14px 18px;
+  margin-bottom: 22px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.existingNoticeLeft {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.existingNoticeLeft i {
+  font-size: 1.25rem;
+  color: #16a34a;
+}
+
+.existingNoticeText {
+  font-size: 0.9rem;
+  color: #166534;
+  font-weight: 500;
+}
+
+.existingNoticeBtn {
+  background: #02351c;
+  color: #ffffff;
+  border: none;
+  padding: 6px 14px;
+  border-radius: 6px;
+  font-size: 0.84rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: opacity 0.2s;
+}
+
+.existingNoticeBtn:hover {
+  opacity: 0.9;
+}
+
 .formGrid {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 20px;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.formGrid > div {
+  min-width: 0;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .formGroupFull {
@@ -236,8 +316,9 @@
   margin-bottom: 6px;
 }
 
-.input, .select, .textarea {
+.input, .textarea {
   width: 100%;
+  min-height: 48px;
   padding: 12px 14px;
   border-radius: 8px;
   border: 1.5px solid #cbd5e1;
@@ -249,7 +330,12 @@
   background: #ffffff;
 }
 
-.input:focus, .select:focus, .textarea:focus {
+.textarea {
+  min-height: 110px;
+  resize: vertical;
+}
+
+.input:focus, .textarea:focus {
   outline: none;
   border-color: #02351c;
   box-shadow: 0 0 0 3px rgba(2, 53, 28, 0.12);
@@ -260,10 +346,14 @@
 }
 
 .reviewNote {
-  margin: 8px 0 0 0;
+  margin: 10px 0 0 0;
   text-align: center;
   font-size: 0.82rem;
   color: #64748b;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
 }
 
 .submitBtn {
@@ -281,6 +371,8 @@
   justify-content: center;
   gap: 8px;
   width: 100%;
+  min-height: 50px;
+  box-sizing: border-box;
 }
 
 .submitBtn:hover {
@@ -290,9 +382,10 @@
 }
 
 .submitBtn:disabled {
-  opacity: 0.6;
+  opacity: 0.65;
   cursor: not-allowed;
   transform: none;
+  box-shadow: none;
 }
 
 .alertBox {
@@ -303,6 +396,8 @@
   display: flex;
   align-items: center;
   gap: 12px;
+  box-sizing: border-box;
+  line-height: 1.5;
 }
 
 .alertSuccess {
@@ -321,9 +416,11 @@
   background: linear-gradient(135deg, #02351c 0%, #064e3b 100%);
   color: #ffffff;
   border-radius: 16px;
-  padding: 35px;
+  padding: 35px 25px;
   text-align: center;
   box-shadow: 0 10px 30px rgba(2, 53, 28, 0.2);
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .successIcon {
@@ -342,87 +439,80 @@
   margin: 0 0 20px 0;
   color: #cbd5e1;
   font-size: 0.95rem;
+  line-height: 1.6;
 }
 
 .referralCodeBox {
   background: rgba(255, 255, 255, 0.15);
   border: 2px dashed rgba(255, 255, 255, 0.35);
-  padding: 16px 24px;
+  padding: 18px 24px;
   border-radius: 12px;
   display: inline-flex;
   align-items: center;
   gap: 16px;
   margin: 20px 0;
+  max-width: 100%;
+  box-sizing: border-box;
 }
 
 .codeLabel {
   font-size: 0.75rem;
   text-transform: uppercase;
   color: #cbd5e1;
+  letter-spacing: 0.05em;
+  font-weight: 600;
 }
 
 .referralCodeText {
-  font-size: 1.8rem;
+  font-size: 1.9rem;
   font-weight: 800;
-  letter-spacing: 0.1em;
+  letter-spacing: 0.12em;
   color: #fef08a;
-}
-
-.copyCodeBtn {
-  background: #ffffff;
-  color: #02351c;
-  border: none;
-  padding: 8px 16px;
-  border-radius: 8px;
-  font-weight: 700;
-  font-size: 0.85rem;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  transition: all 0.2s ease;
-}
-
-.copyCodeBtn:hover {
-  background: #f1f5f9;
+  margin-top: 4px;
+  word-break: break-all;
 }
 
 .resetBtnWrapper {
-  margin-top: 16px;
+  margin-top: 20px;
 }
 
 .resetBtn {
   background: transparent;
-  border: 1px solid rgba(255, 255, 255, 0.3);
+  border: 1px solid rgba(255, 255, 255, 0.35);
   color: #ffffff;
-  padding: 8px 18px;
+  padding: 10px 20px;
   border-radius: 8px;
   cursor: pointer;
-  font-size: 0.85rem;
+  font-size: 0.88rem;
+  font-weight: 600;
   transition: all 0.2s ease;
 }
 
 .resetBtn:hover {
-  background: rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.12);
 }
 
 .statusCheckCard {
   background: #ffffff;
   border-radius: 16px;
-  padding: 35px;
+  padding: 36px;
   border: 1px solid #e2e8f0;
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.04);
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .statusForm {
   display: flex;
   gap: 12px;
   flex-wrap: wrap;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .statusInput {
-  flex: 1;
-  min-width: 260px;
+  flex: 1 1 260px;
+  min-width: 0;
 }
 
 .statusBtn {
@@ -440,6 +530,8 @@
   border-radius: 12px;
   background: #f8fafc;
   border: 1px solid #e2e8f0;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .statusCardHeader {
@@ -454,6 +546,7 @@
   margin: 0 0 4px 0;
   font-size: 1.2rem;
   color: #02351c;
+  font-weight: 700;
 }
 
 .statusCardSub {
@@ -507,6 +600,8 @@
   grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
   gap: 14px;
   margin-top: 20px;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .statusStatCard {
@@ -514,13 +609,14 @@
   padding: 16px;
   border-radius: 10px;
   border: 1px solid #e2e8f0;
+  box-sizing: border-box;
 }
 
 .statusStatLabel {
   font-size: 0.75rem;
   color: #64748b;
   text-transform: uppercase;
-  fontWeight: 600;
+  font-weight: 600;
 }
 
 .statusStatValue {
@@ -528,6 +624,7 @@
   font-weight: 800;
   color: #02351c;
   margin-top: 4px;
+  word-break: break-all;
 }
 
 .statusStatEarnings {
@@ -547,6 +644,7 @@
   align-items: flex-start;
   gap: 14px;
   text-align: left;
+  box-sizing: border-box;
 }
 
 .noticeIcon {
@@ -576,6 +674,8 @@
   flex-wrap: wrap;
   justify-content: center;
   margin-top: 14px;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .actionBtn {
@@ -589,6 +689,7 @@
   cursor: pointer;
   transition: all 0.2s ease;
   text-decoration: none;
+  box-sizing: border-box;
 }
 
 .actionBtnPrimary {
@@ -620,6 +721,7 @@
   padding: 20px;
   margin-top: 24px;
   text-align: left;
+  box-sizing: border-box;
 }
 
 .instructionsTitle {
@@ -676,23 +778,23 @@
 
 @media (max-width: 992px) {
   .heroTitle {
-    font-size: 38px;
+    font-size: 36px;
   }
 }
 
 @media (max-width: 768px) {
   .heroSection {
-    padding: 90px 16px 45px 16px;
+    padding: 105px 16px 45px 16px;
   }
   .heroTitle {
-    font-size: 30px;
+    font-size: 28px;
   }
   .heroSubtitle {
     font-size: 15px;
   }
   .mainContainer {
-    margin-top: -30px;
-    padding: 0 14px;
+    margin-top: -25px;
+    padding: 0 12px;
   }
   .formGrid {
     grid-template-columns: 1fr;
@@ -700,16 +802,16 @@
   }
   .formCard, .statusCheckCard {
     padding: 24px 16px;
+    border-radius: 14px;
   }
   .referralCodeBox {
     flex-direction: column;
     width: 100%;
-    box-sizing: border-box;
     padding: 16px;
-    gap: 12px;
+    gap: 10px;
   }
   .referralCodeText {
-    font-size: 1.5rem;
+    font-size: 1.55rem;
   }
   .tabSwitcher {
     max-width: 100%;
@@ -721,6 +823,7 @@
   }
   .perksGrid {
     grid-template-columns: 1fr;
+    gap: 14px;
   }
   .statusForm {
     flex-direction: column;
@@ -728,25 +831,33 @@
   .statusBtn {
     width: 100%;
   }
+  .statusCardHeader {
+    flex-direction: column;
+  }
+  .statusShareSection {
+    flex-direction: column;
+    align-items: stretch;
+  }
 }
 
 @media (max-width: 480px) {
   .heroTitle {
-    font-size: 25px;
+    font-size: 24px;
   }
   .heroBadge {
     font-size: 0.75rem;
-    padding: 5px 12px;
+    padding: 6px 14px;
   }
   .heroStats {
     flex-direction: column;
     gap: 10px;
   }
   .heroStatItem {
-    padding: 10px 16px;
+    padding: 12px 16px;
+    width: 100%;
   }
   .heroStatValue {
-    font-size: 1.3rem;
+    font-size: 1.4rem;
   }
   .actionsRow {
     flex-direction: column;
@@ -755,7 +866,6 @@
   .actionBtn {
     width: 100%;
     justify-content: center;
-    box-sizing: border-box;
   }
   .noticeBanner {
     flex-direction: column;

@@ -110,12 +110,12 @@ export default function SearchableSelect({
         </div>
       )}
 
-      {/* Hidden input to support standard HTML form validation */}
+      {/* Hidden input for form data serialization */}
       <input 
         type="hidden" 
-        value={value} 
-        required={required} 
+        value={value || ""} 
         disabled={disabled}
+        onChange={() => {}}
       />
 
       <style jsx>{`
