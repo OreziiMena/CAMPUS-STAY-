@@ -321,6 +321,9 @@ export async function getAdminAnalyticsData() {
       return { success: false, error: "Unauthorized. Admin access required." };
     }
 
+    const totalUsers = await prisma.user.count({
+      where: { deletedAt: null },
+    });
     const totalStudents = await prisma.studentProfile.count({
       where: { user: { deletedAt: null } },
     });
@@ -358,6 +361,7 @@ export async function getAdminAnalyticsData() {
     return {
       success: true,
       stats: {
+        totalUsers,
         totalStudents,
         totalAgents,
         verifiedStudents,

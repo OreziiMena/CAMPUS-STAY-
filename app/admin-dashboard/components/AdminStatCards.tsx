@@ -1,6 +1,7 @@
 import React from "react";
 
 interface AdminStatCardsProps {
+  totalUsersCount?: number;
   totalStudentsCount: number;
   verifiedAgentsCount: number;
   totalAgentsCount: number;
@@ -14,6 +15,7 @@ interface AdminStatCardsProps {
 }
 
 export default function AdminStatCards({
+  totalUsersCount,
   totalStudentsCount,
   verifiedAgentsCount,
   totalAgentsCount,
@@ -27,22 +29,22 @@ export default function AdminStatCards({
 }: AdminStatCardsProps) {
   return (
     <div className="admin-metrics-grid">
-      {/* Total Students Card */}
+      {/* Total Users Card */}
       <div className="admin-stat-card">
-        <div className="stat-icon-wrapper student">
-          <i className="fas fa-user-graduate"></i>
+        <div className="stat-icon-wrapper user">
+          <i className="fas fa-users"></i>
         </div>
         <div>
           <div className="stat-value-group">
             <span className="stat-number text-green">
-              {totalStudentsCount}
+              {totalUsersCount ?? totalStudentsCount}
             </span>
           </div>
           <div className="stat-title">
-            Registered Students
+            Total Users
           </div>
           <span className="stat-subtext text-muted">
-            Active campus accounts
+            Active platform accounts
           </span>
         </div>
       </div>

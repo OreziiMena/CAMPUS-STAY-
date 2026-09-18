@@ -85,6 +85,18 @@ export default function AnalyticsTab({ analyticsData }: AnalyticsTabProps) {
       {/* Stat Cards Row */}
       <div className="analytics-stats-grid">
         <div className="analytics-metric-card">
+          <div className="analytics-stat-icon total-users">
+            <i className="fas fa-users"></i>
+          </div>
+          <div>
+            <h3 className="analytics-stat-number">
+              {analyticsData?.stats?.totalUsers ?? (analyticsData?.stats?.totalStudents || 0)}
+            </h3>
+            <p className="analytics-stat-label">Total Users</p>
+          </div>
+        </div>
+
+        <div className="analytics-metric-card">
           <div className="analytics-stat-icon total-students">
             <i className="fas fa-user-graduate"></i>
           </div>
@@ -93,18 +105,6 @@ export default function AnalyticsTab({ analyticsData }: AnalyticsTabProps) {
               {analyticsData?.stats?.totalStudents || 0}
             </h3>
             <p className="analytics-stat-label">Total Students</p>
-          </div>
-        </div>
-
-        <div className="analytics-metric-card">
-          <div className="analytics-stat-icon verified-students">
-            <i className="fas fa-user-shield"></i>
-          </div>
-          <div>
-            <h3 className="analytics-stat-number">
-              {analyticsData?.stats?.verifiedStudents || 0}
-            </h3>
-            <p className="analytics-stat-label">Verified Students</p>
           </div>
         </div>
 

@@ -569,6 +569,7 @@ function AdminDashboardContent() {
 
       {/* Global Admin Metrics Overview */}
       <AdminStatCards
+        totalUsersCount={users.length}
         totalStudentsCount={studentUsers.length}
         verifiedAgentsCount={verifiedAgentsCount}
         totalAgentsCount={agentUsers.length}
