@@ -107,7 +107,7 @@ function StudentSignupContent() {
     }
 
     if (!university || !isDeltaStateInstitution(university)) {
-      setError("Student signups are currently restricted to tertiary institutions in Delta State (e.g. FUPRE, DELSU, PTI, DOU, DSUST, UNIDEL). Expansion to other states is coming soon!");
+      setError("Student signups are currently restricted to tertiary institutions in Delta State and UNIBEN (e.g. FUPRE, DELSU, PTI, UNIBEN, DOU, DSUST, UNIDEL). Expansion to other states is coming soon!");
       return;
     }
 
@@ -160,7 +160,7 @@ function StudentSignupContent() {
           <div className="state-notice-pill">
             <i className="fas fa-map-marker-alt"></i>
             <span>
-              <strong>Delta State Launch:</strong> Registration is currently open to students attending tertiary institutions in Delta State (FUPRE, DELSU, PTI, DOU, DSUST, UNIDEL, etc.).
+              <strong>Launch Campuses:</strong> Registration is currently open to students attending tertiary institutions in Delta State and UNIBEN (FUPRE, DELSU, PTI, UNIBEN, DOU, DSUST, UNIDEL, etc.).
             </span>
           </div>
 

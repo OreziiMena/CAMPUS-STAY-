@@ -215,7 +215,7 @@ export async function updateStudentProfile(data: {
     if (!isDeltaStateInstitution(university)) {
       return {
         success: false,
-        error: "Student profiles are currently limited to Delta State tertiary institutions.",
+        error: "Student profiles are currently limited to Delta State tertiary institutions and UNIBEN.",
       };
     }
 

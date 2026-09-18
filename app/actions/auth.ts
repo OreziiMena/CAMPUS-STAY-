@@ -98,11 +98,11 @@ export async function registerStudent(data: any) {
 
     const { fullname, email, phone, university, username, password, referralCode } = data;
 
-    // Restrict student onboarding exclusively to Delta State tertiary institutions for initial rollout
+    // Restrict student onboarding exclusively to Delta State tertiary institutions and UNIBEN
     if (!university || !isDeltaStateInstitution(university)) {
       return {
         success: false,
-        error: "Student signups are currently exclusive to tertiary institutions located in Delta State (e.g. FUPRE, DELSU, PTI, DOU, DSUST, UNIDEL). Campus Tent is expanding to your school soon!",
+        error: "Student signups are currently exclusive to tertiary institutions in Delta State and UNIBEN (e.g. FUPRE, DELSU, PTI, UNIBEN, DOU, DSUST, UNIDEL). Campus Tent is expanding to your school soon!",
       };
     }
 

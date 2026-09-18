@@ -434,7 +434,7 @@ export default function Explore() {
                         {/* Price large and bold + Negotiable badge */}
                         <div className="explore-price-row">
                           <h3 className="explore-price-value">
-                            ₦{property.price.toLocaleString()} <span className="explore-price-period">/ year</span>
+                            ₦{property.price.toLocaleString()} <span className="explore-price-period">total package</span>
                           </h3>
                           {property.isNegotiable && (
                             <span className="explore-negotiable-badge">
