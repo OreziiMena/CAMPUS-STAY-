@@ -931,7 +931,7 @@ export async function submitBankTransferInspectionPayment(data: {
 /**
  * 6. Process Inspection Payment (₦7,500)
  */
-export async function processInspectionPayment(propertyId: string, reference?: string) {
+export async function processInspectionPayment(propertyId: string, reference: string) {
   try {
     const user = await getCurrentUser();
     if (!user) {
@@ -942,6 +942,38 @@ export async function processInspectionPayment(propertyId: string, reference?: s
       return {
         success: false,
         error: "Agents cannot pay inspection fees or book viewings. Please use a student account.",
+      };
+    }
+
+    if (!reference || typeof reference !== "string" || reference.trim() === "") {
+      return {
+        success: false,
+        error: "Payment reference is required to verify your transaction.",
+      };
+    }
+
+    const cleanRef = reference.trim();
+
+    // Prevent duplicate reference replay attacks
+    const existingWithRef = await prisma.inspectionPayment.findUnique({
+      where: { reference: cleanRef },
+    });
+
+    if (existingWithRef) {
+      if (
+        existingWithRef.studentId === user.id &&
+        existingWithRef.propertyId === propertyId &&
+        existingWithRef.status === "PAID"
+      ) {
+        return {
+          success: true,
+          alreadyPaid: true,
+          payment: existingWithRef,
+        };
+      }
+      return {
+        success: false,
+        error: "This transaction reference has already been recorded or claimed.",
       };
     }
 
@@ -971,7 +1003,7 @@ export async function processInspectionPayment(propertyId: string, reference?: s
       return { success: false, error: "You cannot pay an inspection fee on your own listing." };
     }
 
-    // Check if already paid
+    // Check if already paid for this property
     const existingPayment = await prisma.inspectionPayment.findFirst({
       where: {
         studentId: user.id,
@@ -1008,44 +1040,71 @@ export async function processInspectionPayment(propertyId: string, reference?: s
       }
     }
 
-    // Server-side Paystack verification if reference provided
+    // Mandatory Server-side Paystack verification
     const paystackSecret = process.env.PAYSTACK_SECRET_KEY;
-    if (reference && paystackSecret && !paystackSecret.includes("your-paystack-secret-key") && paystackSecret.startsWith("sk_")) {
-      try {
-        const verifyRes = await fetch(`https://api.paystack.co/transaction/verify/${encodeURIComponent(reference.trim())}`, {
-          method: "GET",
-          headers: {
-            Authorization: `Bearer ${paystackSecret.trim()}`,
-            "Content-Type": "application/json",
-          },
-        });
-
-        const verifyData = await verifyRes.json();
-        if (!verifyRes.ok || !verifyData.status || verifyData.data?.status !== "success") {
-          return {
-            success: false,
-            error: verifyData.message || "Payment verification failed with Paystack.",
-          };
-        }
-
-        // Verify amount matches ₦7,500 (750,000 kobo)
-        const amountPaidKobo = verifyData.data?.amount;
-        if (amountPaidKobo < 750000) {
-          return {
-            success: false,
-            error: "Payment amount does not match the ₦7,500 inspection fee.",
-          };
-        }
-      } catch (verifyErr: any) {
-        console.error("Paystack verification exception:", verifyErr);
-        return {
-          success: false,
-          error: "Network error during Paystack payment verification.",
-        };
-      }
+    if (!paystackSecret || paystackSecret.includes("your-paystack-secret-key") || !paystackSecret.startsWith("sk_")) {
+      console.error("[CRITICAL] PAYSTACK_SECRET_KEY is missing or invalid on server.");
+      return {
+        success: false,
+        error: "Payment verification service is temporarily unavailable. Please contact support.",
+      };
     }
 
-    const paymentRef = reference || `INSP-${Math.random().toString(36).substring(2, 9).toUpperCase()}-${Date.now()}`;
+    try {
+      const verifyRes = await fetch(`https://api.paystack.co/transaction/verify/${encodeURIComponent(cleanRef)}`, {
+        method: "GET",
+        headers: {
+          Authorization: `Bearer ${paystackSecret.trim()}`,
+          "Content-Type": "application/json",
+        },
+      });
+
+      const verifyData = await verifyRes.json();
+      if (!verifyRes.ok || !verifyData.status || verifyData.data?.status !== "success") {
+        return {
+          success: false,
+          error: verifyData.message || "Payment verification failed with Paystack.",
+        };
+      }
+
+      // Verify amount matches at least ₦7,500 (750,000 kobo)
+      const amountPaidKobo = verifyData.data?.amount;
+      if (typeof amountPaidKobo !== "number" || amountPaidKobo < 750000) {
+        return {
+          success: false,
+          error: "Payment amount does not match the required ₦7,500 inspection fee.",
+        };
+      }
+
+      // Verify currency is NGN
+      if (verifyData.data?.currency !== "NGN") {
+        return {
+          success: false,
+          error: "Invalid transaction currency.",
+        };
+      }
+
+      // Verify metadata matching if available
+      const meta = verifyData.data?.metadata;
+      if (meta?.propertyId && meta.propertyId !== propertyId) {
+        return {
+          success: false,
+          error: "This payment reference belongs to a different property listing.",
+        };
+      }
+      if (meta?.studentId && meta.studentId !== user.id) {
+        return {
+          success: false,
+          error: "This payment reference does not belong to your account.",
+        };
+      }
+    } catch (verifyErr: any) {
+      console.error("Paystack verification exception:", verifyErr);
+      return {
+        success: false,
+        error: "Network error during Paystack payment verification.",
+      };
+    }
 
     const payment = await prisma.inspectionPayment.create({
       data: {
@@ -1055,7 +1114,7 @@ export async function processInspectionPayment(propertyId: string, reference?: s
         amount: 7500,
         currency: "NGN",
         status: "PAID",
-        reference: paymentRef,
+        reference: cleanRef,
       },
     });
 
@@ -1078,8 +1137,8 @@ export async function processInspectionPayment(propertyId: string, reference?: s
             </p>
             <div style="background-color: #ecfdf5; border-left: 4px solid #16a34a; padding: 16px; border-radius: 6px; margin: 20px 0;">
               <p style="margin: 0 0 6px 0; font-size: 14px; color: #065f46;"><strong>Amount Paid:</strong> ₦7,500</p>
-              <p style="margin: 0 0 6px 0; font-size: 14px; color: #065f46;"><strong>Reference:</strong> ${paymentRef}</p>
-              <p style="margin: 0; font-size: 14px; color: #065f46;"><strong>Agent:</strong> ${agentName}</p>
+              <p style="margin: 0 0 6px 0; font-size: 14px; color: #065f46;"><strong>Reference:</strong> ${cleanRef}</p>
+              <p style="margin: 0 0 6px 0; font-size: 14px; color: #065f46;"><strong>Agent:</strong> ${agentName}</p>
             </div>
             <div style="background-color: #f8fafc; border: 1px dashed #cbd5e1; padding: 16px; border-radius: 8px; margin: 20px 0;">
               <p style="margin: 0; font-size: 13.5px; color: #334155; font-weight: 600;">
@@ -1101,12 +1160,12 @@ export async function processInspectionPayment(propertyId: string, reference?: s
         </div>
       `;
 
-      sendEmail({
+      await sendEmail({
         to: user.email,
         subject: `Inspection Fee Payment Confirmed: ${property.title}`,
         html: studentHtml,
         isInspectionMessage: true,
-      }).catch((err) => console.error("Student payment confirmation email failed:", err));
+      });
     }
 
     // Send notification email to Agent
@@ -1125,7 +1184,7 @@ export async function processInspectionPayment(propertyId: string, reference?: s
             <div style="background-color: #f8fafc; border-left: 4px solid #02351c; padding: 16px; border-radius: 6px; margin: 20px 0;">
               <p style="margin: 0 0 6px 0; font-size: 14px; color: #1e293b;"><strong>Student:</strong> ${studentName}</p>
               <p style="margin: 0 0 6px 0; font-size: 14px; color: #1e293b;"><strong>Phone:</strong> ${escapeHtml(user.phone || "Not provided")}</p>
-              <p style="margin: 0 0 6px 0; font-size: 14px; color: #1e293b;"><strong>Reference:</strong> ${paymentRef}</p>
+              <p style="margin: 0 0 6px 0; font-size: 14px; color: #1e293b;"><strong>Reference:</strong> ${cleanRef}</p>
             </div>
             <div style="background-color: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 8px; padding: 12px 16px; margin: 18px 0; text-align: center;">
               <p style="margin: 0; color: #166534; font-size: 13.5px; font-weight: 600;">
@@ -1144,12 +1203,12 @@ export async function processInspectionPayment(propertyId: string, reference?: s
         </div>
       `;
 
-      sendEmail({
+      await sendEmail({
         to: recipientUser.email,
         subject: `Inspection Fee Paid (₦7,500): ${property.title}`,
         html: agentHtml,
         isInspectionMessage: true,
-      }).catch((err) => console.error("Agent payment alert email failed:", err));
+      });
     }
 
     return {

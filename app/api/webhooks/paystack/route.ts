@@ -38,6 +38,14 @@ export async function POST(req: NextRequest) {
     if (eventType === "charge.success") {
       const reference = data?.reference;
       const metadata = data?.metadata || {};
+      const amountKobo = data?.amount;
+      const currency = data?.currency;
+
+      // Security Check: Verify amount matches at least ₦7,500 (750,000 kobo) and currency is NGN
+      if (typeof amountKobo !== "number" || amountKobo < 750000 || currency !== "NGN") {
+        console.warn(`[PAYSTACK WEBHOOK] Ignored charge.success due to amount or currency mismatch: ${amountKobo} kobo, currency: ${currency}. Ref: ${reference}`);
+        return NextResponse.json({ error: "Invalid payment amount or currency." }, { status: 400 });
+      }
 
       if (reference) {
         // Find existing payment by reference
