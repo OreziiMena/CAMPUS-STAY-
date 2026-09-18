@@ -179,7 +179,7 @@ export async function queryPropertyAvailability(propertyId: string) {
             </div>
 
             <p style="color: #94a3b8; font-size: 12px; text-align: center; margin-top: 15px;">
-              Clicking directly updates the student's screen in real-time so they can proceed with their inspection payment.
+              ⚡ <em>Link is active for 24 hours.</em> Clicking directly updates the student's screen in real-time so they can proceed with their inspection payment.
             </p>
           </div>
           
@@ -237,6 +237,15 @@ export async function respondPropertyAvailability(token: string, responseType: "
 
     if (!query) {
       return { success: false, error: "Invalid or expired confirmation link." };
+    }
+
+    // Check if link has expired (valid for 24 hours)
+    const queryTime = new Date(query.updatedAt || query.createdAt).getTime();
+    if (Date.now() - queryTime > AVAILABILITY_EXPIRATION_MS) {
+      return {
+        success: false,
+        error: "This availability confirmation link has expired (valid for 24 hours). The student can request a fresh availability check.",
+      };
     }
 
     const newStatus = responseType === "available" ? "AVAILABLE" : "UNAVAILABLE";
