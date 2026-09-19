@@ -368,6 +368,17 @@ model AmbassadorApplication {
   referralCount Int       @default(0)
   earnings      Float     @default(0.0)
   payoutInfo    String?
+
+  // Direct Bank Account Details (Paystack NUBAN)
+  bankCode      String?
+  bankName      String?
+  accountNumber String?
+  accountName   String?
+  recipientCode String?  // Paystack Transfer Recipient code (e.g. RCP_...)
+
+  // Payout History
+  payouts       AmbassadorPayout[]
+
   reviewedAt    DateTime?
   reviewedBy    String?
   createdAt     DateTime  @default(now())
@@ -378,4 +389,23 @@ model AmbassadorApplication {
   @@index([status])
   @@index([university])
 }
+
+model AmbassadorPayout {
+  id            String                @id @default(uuid())
+  ambassadorId  String
+  ambassador    AmbassadorApplication @relation(fields: [ambassadorId], references: [id], onDelete: Cascade)
+  amount        Float
+  reference     String                @unique
+  bankName      String
+  accountNumber String
+  accountName   String
+  status        String                @default("SUCCESS") // SUCCESS, PENDING, FAILED
+  note          String?
+  disbursedAt   DateTime              @default(now())
+  createdAt     DateTime              @default(now())
+
+  @@index([ambassadorId])
+  @@index([reference])
+}
+
 

@@ -776,6 +776,322 @@
   margin: 0;
 }
 
+/* Bank Account Card */
+.bankCard {
+  margin-top: 24px;
+  padding: 24px;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  box-sizing: border-box;
+  width: 100%;
+}
+
+.bankCardHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+  margin-bottom: 18px;
+  flex-wrap: wrap;
+}
+
+.bankCardTitle {
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: #02351c;
+  margin: 0 0 4px 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.bankCardSub {
+  font-size: 0.85rem;
+  color: #64748b;
+  margin: 0;
+  line-height: 1.5;
+}
+
+.editBankBtn {
+  background: transparent;
+  border: 1px solid #cbd5e1;
+  color: #02351c;
+  padding: 6px 14px;
+  border-radius: 6px;
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.editBankBtn:hover {
+  background: #f1f5f9;
+  border-color: #94a3b8;
+}
+
+.bankConfiguredBox {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  padding: 18px;
+}
+
+.bankDetailsRow {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 14px;
+}
+
+.bankDetailItem {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.bankDetailLabel {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  color: #64748b;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+}
+
+.bankDetailValue {
+  font-size: 0.98rem;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.bankVerifiedBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: #059669;
+  background: #ecfdf5;
+  padding: 4px 10px;
+  border-radius: 20px;
+  width: fit-content;
+  border: 1px solid #a7f3d0;
+}
+
+.bankForm {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin-top: 8px;
+}
+
+.bankFormGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  width: 100%;
+}
+
+.accountInputWrapper {
+  position: relative;
+  width: 100%;
+}
+
+.resolvingSpinner {
+  position: absolute;
+  right: 14px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #059669;
+  font-size: 1rem;
+}
+
+.resolvedNameBox {
+  background: #ecfdf5;
+  border: 1px solid #a7f3d0;
+  color: #065f46;
+  padding: 12px 16px;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.bankActionsRow {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-top: 4px;
+}
+
+.saveBankBtn {
+  background: #02351c;
+  color: #ffffff;
+  border: none;
+  padding: 11px 22px;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  font-weight: 700;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  transition: all 0.2s ease;
+}
+
+.saveBankBtn:hover:not(:disabled) {
+  background: #044e2b;
+  transform: translateY(-1px);
+}
+
+.saveBankBtn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.cancelBankBtn {
+  background: transparent;
+  border: 1px solid #cbd5e1;
+  color: #64748b;
+  padding: 11px 18px;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+/* Payout History Card */
+.payoutCard {
+  margin-top: 24px;
+  padding: 24px;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  box-sizing: border-box;
+  width: 100%;
+}
+
+.payoutCardHeader {
+  margin-bottom: 18px;
+}
+
+.payoutCardTitle {
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: #02351c;
+  margin: 0 0 4px 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.payoutCardSub {
+  font-size: 0.85rem;
+  color: #64748b;
+  margin: 0;
+  line-height: 1.5;
+}
+
+.payoutTableWrapper {
+  overflow-x: auto;
+  width: 100%;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+}
+
+.payoutTable {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+  font-size: 0.88rem;
+}
+
+.payoutTable th {
+  background: #f8fafc;
+  padding: 12px 14px;
+  font-weight: 700;
+  color: #475569;
+  font-size: 0.78rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.payoutTable td {
+  padding: 12px 14px;
+  border-bottom: 1px solid #f1f5f9;
+  color: #1e293b;
+  vertical-align: middle;
+}
+
+.payoutDateCell {
+  color: #64748b;
+  white-space: nowrap;
+  font-size: 0.84rem;
+}
+
+.payoutAmountCell {
+  font-weight: 800;
+  color: #059669;
+  font-size: 0.98rem;
+}
+
+.payoutRefBadge {
+  font-family: monospace;
+  background: #f1f5f9;
+  padding: 3px 8px;
+  border-radius: 4px;
+  font-size: 0.78rem;
+  color: #475569;
+  border: 1px solid #e2e8f0;
+}
+
+.payoutStatusSuccess {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: #059669;
+  background: #ecfdf5;
+  padding: 3px 8px;
+  border-radius: 12px;
+}
+
+.payoutEmptyBox {
+  text-align: center;
+  padding: 36px 20px;
+  background: #f8fafc;
+  border: 1.5px dashed #cbd5e1;
+  border-radius: 10px;
+  margin-top: 4px;
+}
+
+.payoutEmptyIcon {
+  font-size: 2.2rem;
+  color: #94a3b8;
+  margin-bottom: 10px;
+}
+
+.payoutEmptyTitle {
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: #334155;
+  margin-bottom: 6px;
+}
+
+.payoutEmptyText {
+  font-size: 0.85rem;
+  color: #64748b;
+  max-width: 480px;
+  margin: 0 auto;
+  line-height: 1.5;
+}
+
 @media (max-width: 992px) {
   .heroTitle {
     font-size: 36px;
@@ -837,6 +1153,12 @@
   .statusShareSection {
     flex-direction: column;
     align-items: stretch;
+  }
+  .bankFormGrid {
+    grid-template-columns: 1fr;
+  }
+  .bankDetailsRow {
+    grid-template-columns: 1fr;
   }
 }
 

@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import { adminUpdateAmbassadorStatus } from "@/app/actions/ambassador";
+import { adminUpdateAmbassadorStatus, adminDisburseAmbassadorPayout } from "@/app/actions/ambassador";
 
 interface AmbassadorRecord {
   id: string;
@@ -18,6 +18,11 @@ interface AmbassadorRecord {
   referralCount: number;
   earnings: number;
   createdAt: string | Date;
+  bankCode?: string | null;
+  bankName?: string | null;
+  accountNumber?: string | null;
+  accountName?: string | null;
+  recipientCode?: string | null;
 }
 
 interface AmbassadorsTabProps {
@@ -31,6 +36,13 @@ export default function AmbassadorsTab({ ambassadors, onRefresh }: AmbassadorsTa
   const [updatingId, setUpdatingId] = useState<string | null>(null);
   const [selectedAmbassador, setSelectedAmbassador] = useState<AmbassadorRecord | null>(null);
   const [feedback, setFeedback] = useState<string | null>(null);
+
+  // Payout Modal State
+  const [payoutAmbassador, setPayoutAmbassador] = useState<AmbassadorRecord | null>(null);
+  const [payoutAmount, setPayoutAmount] = useState<string>("");
+  const [payoutNote, setPayoutNote] = useState<string>("");
+  const [isDisbursing, setIsDisbursing] = useState<boolean>(false);
+  const [payoutError, setPayoutError] = useState<string | null>(null);
 
   const totalCount = ambassadors.length;
   const pendingCount = ambassadors.filter((a) => a.status === "PENDING").length;
@@ -76,6 +88,48 @@ export default function AmbassadorsTab({ ambassadors, onRefresh }: AmbassadorsTa
       alert(err.message || "An error occurred.");
     } finally {
       setUpdatingId(null);
+    }
+  };
+
+  const handleOpenPayoutModal = (amb: AmbassadorRecord) => {
+    setPayoutAmbassador(amb);
+    setPayoutAmount(amb.earnings > 0 ? amb.earnings.toString() : "1000");
+    setPayoutNote("");
+    setPayoutError(null);
+  };
+
+  const handleDisbursePayout = async () => {
+    if (!payoutAmbassador) return;
+    const amt = Number(payoutAmount);
+    if (!amt || amt <= 0) {
+      setPayoutError("Please enter a valid payout amount.");
+      return;
+    }
+
+    setIsDisbursing(true);
+    setPayoutError(null);
+
+    try {
+      const res = await adminDisburseAmbassadorPayout({
+        ambassadorId: payoutAmbassador.id,
+        amount: amt,
+        note: payoutNote,
+      });
+
+      if (res.success) {
+        setFeedback(
+          `Payout of ₦${amt.toLocaleString()} successfully disbursed to ${payoutAmbassador.fullName}! (Ref: ${res.reference})`
+        );
+        setTimeout(() => setFeedback(null), 6000);
+        setPayoutAmbassador(null);
+        onRefresh();
+      } else {
+        setPayoutError(res.error || "Failed to disburse payout.");
+      }
+    } catch (err: any) {
+      setPayoutError(err.message || "An unexpected error occurred.");
+    } finally {
+      setIsDisbursing(false);
     }
   };
 
@@ -195,6 +249,26 @@ export default function AmbassadorsTab({ ambassadors, onRefresh }: AmbassadorsTa
                 <strong>Pitch:</strong> "{amb.pitch}"
               </div>
 
+              {/* Bank Details */}
+              <div className="ambassador-bank-info-box">
+                {amb.bankName && amb.accountNumber ? (
+                  <div className="ambassador-bank-configured">
+                    <i className="fas fa-university"></i>
+                    <span>
+                      <strong>{amb.bankName}</strong> &bull; {amb.accountNumber} ({amb.accountName})
+                    </span>
+                    <span className="ambassador-bank-badge-verified">
+                      <i className="fas fa-check-circle"></i> Bank Verified
+                    </span>
+                  </div>
+                ) : (
+                  <div className="ambassador-bank-missing">
+                    <i className="fas fa-exclamation-triangle"></i>
+                    <span>No bank payout details added yet</span>
+                  </div>
+                )}
+              </div>
+
               {/* Action Controls */}
               <div className="ambassador-footer-row">
                 <div className="ambassador-stats-text">
@@ -214,15 +288,31 @@ export default function AmbassadorsTab({ ambassadors, onRefresh }: AmbassadorsTa
                   )}
 
                   {amb.status === "APPROVED" && (
-                    <button
-                      type="button"
-                      disabled={updatingId === amb.id}
-                      onClick={() => handleStatusUpdate(amb.id, "APPROVED", 2000)}
-                      className="ambassador-btn-credit"
-                      title="Credit ₦2,000 commission for a successful booking"
-                    >
-                      <i className="fas fa-plus"></i> Credit +₦2,000 Comm
-                    </button>
+                    <>
+                      <button
+                        type="button"
+                        disabled={updatingId === amb.id}
+                        onClick={() => handleStatusUpdate(amb.id, "APPROVED", 2000)}
+                        className="ambassador-btn-credit"
+                        title="Credit ₦2,000 commission for a successful booking"
+                      >
+                        <i className="fas fa-plus"></i> Credit +₦2,000 Comm
+                      </button>
+
+                      <button
+                        type="button"
+                        disabled={updatingId === amb.id || !amb.bankName || !amb.accountNumber}
+                        onClick={() => handleOpenPayoutModal(amb)}
+                        className="ambassador-btn-payout"
+                        title={
+                          !amb.bankName || !amb.accountNumber
+                            ? "Ambassador has not added bank details yet"
+                            : `Disburse payout to ${amb.accountName}`
+                        }
+                      >
+                        <i className="fas fa-paper-plane"></i> Disburse Payout
+                      </button>
+                    </>
                   )}
 
                   {amb.status !== "REJECTED" && (
@@ -239,6 +329,100 @@ export default function AmbassadorsTab({ ambassadors, onRefresh }: AmbassadorsTa
               </div>
             </div>
           ))}
+        </div>
+      )}
+
+      {/* Payout Modal */}
+      {payoutAmbassador && (
+        <div
+          className="ambassador-modal-overlay"
+          onClick={() => !isDisbursing && setPayoutAmbassador(null)}
+        >
+          <div
+            className="ambassador-modal-content"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="ambassador-modal-header">
+              <h3>
+                <i className="fas fa-money-bill-wave"></i> Disburse Commission Payout
+              </h3>
+              <button
+                type="button"
+                className="ambassador-modal-close"
+                disabled={isDisbursing}
+                onClick={() => setPayoutAmbassador(null)}
+              >
+                &times;
+              </button>
+            </div>
+
+            <div className="ambassador-modal-body">
+              <div className="ambassador-modal-beneficiary">
+                <div><strong>Ambassador:</strong> {payoutAmbassador.fullName} ({payoutAmbassador.referralCode})</div>
+                <div><strong>Destination Bank:</strong> {payoutAmbassador.bankName}</div>
+                <div><strong>Account Number:</strong> {payoutAmbassador.accountNumber}</div>
+                <div><strong>Account Name:</strong> {payoutAmbassador.accountName}</div>
+                <div><strong>Total Tracked Earnings:</strong> ₦{(payoutAmbassador.earnings || 0).toLocaleString()}</div>
+              </div>
+
+              <div className="ambassador-modal-field">
+                <label>Payout Amount (₦) *</label>
+                <input
+                  type="number"
+                  min="100"
+                  step="100"
+                  value={payoutAmount}
+                  onChange={(e) => setPayoutAmount(e.target.value)}
+                  placeholder="e.g. 5000"
+                  className="ambassador-modal-input"
+                />
+              </div>
+
+              <div className="ambassador-modal-field">
+                <label>Transaction / Disbursement Note (Optional)</label>
+                <input
+                  type="text"
+                  value={payoutNote}
+                  onChange={(e) => setPayoutNote(e.target.value)}
+                  placeholder="e.g. Commission payout for September 2026 bookings"
+                  className="ambassador-modal-input"
+                />
+              </div>
+
+              {payoutError && (
+                <div className="ambassador-modal-error">
+                  <i className="fas fa-exclamation-circle"></i> {payoutError}
+                </div>
+              )}
+            </div>
+
+            <div className="ambassador-modal-footer">
+              <button
+                type="button"
+                disabled={isDisbursing}
+                onClick={() => setPayoutAmbassador(null)}
+                className="ambassador-modal-btn-cancel"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                disabled={isDisbursing || !payoutAmount || Number(payoutAmount) <= 0}
+                onClick={handleDisbursePayout}
+                className="ambassador-modal-btn-confirm"
+              >
+                {isDisbursing ? (
+                  <>
+                    <i className="fas fa-spinner fa-spin"></i> Processing Disbursement...
+                  </>
+                ) : (
+                  <>
+                    <i className="fas fa-check"></i> Confirm & Disburse ₦{Number(payoutAmount || 0).toLocaleString()}
+                  </>
+                )}
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </div>

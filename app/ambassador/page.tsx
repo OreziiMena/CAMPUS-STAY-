@@ -5,7 +5,13 @@ import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import SearchableSelect from "@/components/SearchableSelect";
 import { NIGERIAN_UNIVERSITIES } from "@/lib/universities";
-import { submitAmbassadorApplication, getAmbassadorStatus } from "@/app/actions/ambassador";
+import { NIGERIAN_BANKS } from "@/lib/banks";
+import {
+  submitAmbassadorApplication,
+  getAmbassadorStatus,
+  resolveAmbassadorBankAccount,
+  saveAmbassadorBankDetails,
+} from "@/app/actions/ambassador";
 import { getCurrentUser } from "@/app/actions/auth";
 import styles from "./ambassador.module.css";
 
@@ -44,6 +50,17 @@ export default function AmbassadorPage() {
   const [isCheckingStatus, setIsCheckingStatus] = useState(false);
   const [statusResult, setStatusResult] = useState<any>(null);
   const [statusError, setStatusError] = useState<string | null>(null);
+
+  // Bank Account & Payout Setup State
+  const [bankCode, setBankCode] = useState("");
+  const [bankName, setBankName] = useState("");
+  const [accountNumber, setAccountNumber] = useState("");
+  const [accountName, setAccountName] = useState("");
+  const [isResolvingBank, setIsResolvingBank] = useState(false);
+  const [isSavingBank, setIsSavingBank] = useState(false);
+  const [bankError, setBankError] = useState<string | null>(null);
+  const [bankSuccess, setBankSuccess] = useState<string | null>(null);
+  const [isEditingBank, setIsEditingBank] = useState(false);
 
   useEffect(() => {
     const initUser = async () => {
@@ -144,8 +161,21 @@ export default function AmbassadorPage() {
 
     try {
       const res = await getAmbassadorStatus(query);
-      if (res.success) {
+      if (res.success && res.application) {
         setStatusResult(res.application);
+        if (res.application.bankCode) {
+          setBankCode(res.application.bankCode);
+          setBankName(res.application.bankName || "");
+          setAccountNumber(res.application.accountNumber || "");
+          setAccountName(res.application.accountName || "");
+          setIsEditingBank(false);
+        } else {
+          setBankCode("");
+          setBankName("");
+          setAccountNumber("");
+          setAccountName("");
+          setIsEditingBank(true);
+        }
       } else {
         setStatusError(res.error || "No ambassador found with this email or code.");
       }
@@ -153,6 +183,97 @@ export default function AmbassadorPage() {
       setStatusError(err.message || "Could not check status.");
     } finally {
       setIsCheckingStatus(false);
+    }
+  };
+
+  const handleBankChange = (code: string) => {
+    setBankCode(code);
+    const found = NIGERIAN_BANKS.find((b) => b.code === code);
+    setBankName(found ? found.name : "");
+    setBankError(null);
+    setBankSuccess(null);
+    if (accountNumber.trim().length === 10 && code) {
+      triggerResolveBank(accountNumber.trim(), code);
+    } else {
+      setAccountName("");
+    }
+  };
+
+  const handleAccountNumberChange = (val: string) => {
+    const cleaned = val.replace(/\D/g, "").slice(0, 10);
+    setAccountNumber(cleaned);
+    setBankError(null);
+    setBankSuccess(null);
+    if (cleaned.length === 10 && bankCode) {
+      triggerResolveBank(cleaned, bankCode);
+    } else {
+      setAccountName("");
+    }
+  };
+
+  const triggerResolveBank = async (num: string, bCode: string) => {
+    setIsResolvingBank(true);
+    setBankError(null);
+    setAccountName("");
+    try {
+      const res = await resolveAmbassadorBankAccount(num, bCode);
+      if (res.success && res.accountName) {
+        setAccountName(res.accountName);
+      } else {
+        setBankError(res.error || "Could not verify account name. Please check details.");
+      }
+    } catch (err: any) {
+      setBankError(err.message || "Failed to verify account.");
+    } finally {
+      setIsResolvingBank(false);
+    }
+  };
+
+  const handleSaveBank = async () => {
+    if (!statusResult?.id && !statusResult?.referralCode) return;
+    if (!bankCode) {
+      setBankError("Please select your bank.");
+      return;
+    }
+    if (accountNumber.length !== 10) {
+      setBankError("Account number must be exactly 10 digits.");
+      return;
+    }
+    if (!accountName) {
+      setBankError("Please wait for account name resolution or verify your details.");
+      return;
+    }
+
+    setIsSavingBank(true);
+    setBankError(null);
+    setBankSuccess(null);
+
+    try {
+      const res = await saveAmbassadorBankDetails({
+        identifier: statusResult.referralCode || statusResult.email,
+        bankCode,
+        bankName,
+        accountNumber,
+        accountName,
+      });
+
+      if (res.success) {
+        setBankSuccess("Bank details verified & saved successfully!");
+        setIsEditingBank(false);
+        setStatusResult((prev: any) => ({
+          ...prev,
+          bankCode,
+          bankName,
+          accountNumber,
+          accountName,
+        }));
+      } else {
+        setBankError(res.error || "Failed to save bank details.");
+      }
+    } catch (err: any) {
+      setBankError(err.message || "An unexpected error occurred while saving.");
+    } finally {
+      setIsSavingBank(false);
     }
   };
 
@@ -669,6 +790,221 @@ export default function AmbassadorPage() {
                       <i className="fab fa-whatsapp"></i> Share on WhatsApp
                     </a>
                   </div>
+                </div>
+
+                {/* Bank Account Payout Setup */}
+                <div className={styles.bankCard}>
+                  <div className={styles.bankCardHeader}>
+                    <div>
+                      <h4 className={styles.bankCardTitle}>
+                        <i className="fas fa-university"></i> Bank Account for Payouts
+                      </h4>
+                      <p className={styles.bankCardSub}>
+                        Add your Nigerian bank details to receive referral commission payouts directly to your account.
+                      </p>
+                    </div>
+                    {statusResult.bankCode && !isEditingBank && (
+                      <button
+                        type="button"
+                        className={styles.editBankBtn}
+                        onClick={() => setIsEditingBank(true)}
+                      >
+                        <i className="fas fa-edit"></i> Edit Details
+                      </button>
+                    )}
+                  </div>
+
+                  {statusResult.bankCode && !isEditingBank ? (
+                    <div className={styles.bankConfiguredBox}>
+                      <div className={styles.bankDetailsRow}>
+                        <div className={styles.bankDetailItem}>
+                          <span className={styles.bankDetailLabel}>Bank</span>
+                          <span className={styles.bankDetailValue}>{statusResult.bankName}</span>
+                        </div>
+                        <div className={styles.bankDetailItem}>
+                          <span className={styles.bankDetailLabel}>Account Number</span>
+                          <span className={styles.bankDetailValue}>
+                            &bull;&bull;&bull;&bull; {statusResult.accountNumber?.slice(-4) || statusResult.accountNumber}
+                          </span>
+                        </div>
+                        <div className={styles.bankDetailItem}>
+                          <span className={styles.bankDetailLabel}>Account Name</span>
+                          <span className={styles.bankDetailValue}>{statusResult.accountName}</span>
+                        </div>
+                        <div className={styles.bankDetailItem}>
+                          <span className={styles.bankDetailLabel}>Verification</span>
+                          <span className={styles.bankVerifiedBadge}>
+                            <i className="fas fa-check-circle"></i> Verified for Direct Payout
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className={styles.bankForm}>
+                      <div className={styles.bankFormGrid}>
+                        <div>
+                          <label className={styles.label}>Select Bank *</label>
+                          <SearchableSelect
+                            options={NIGERIAN_BANKS}
+                            value={bankCode}
+                            onChange={handleBankChange}
+                            placeholder="Choose your bank..."
+                          />
+                        </div>
+
+                        <div>
+                          <label className={styles.label}>10-Digit NUBAN Account Number *</label>
+                          <div className={styles.accountInputWrapper}>
+                            <input
+                              type="text"
+                              inputMode="numeric"
+                              maxLength={10}
+                              placeholder="e.g. 0123456789"
+                              value={accountNumber}
+                              onChange={(e) => handleAccountNumberChange(e.target.value)}
+                              className={styles.input}
+                            />
+                            {isResolvingBank && (
+                              <div className={styles.resolvingSpinner}>
+                                <i className="fas fa-spinner fa-spin"></i>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Resolved Account Name */}
+                      {accountName && (
+                        <div className={styles.resolvedNameBox}>
+                          <i className="fas fa-user-check"></i>
+                          <span>
+                            Account Name: <strong>{accountName}</strong>
+                          </span>
+                        </div>
+                      )}
+
+                      {bankError && (
+                        <div className={`${styles.alertBox} ${styles.alertError}`}>
+                          <i className="fas fa-exclamation-circle"></i>
+                          <span>{bankError}</span>
+                        </div>
+                      )}
+
+                      {bankSuccess && (
+                        <div className={`${styles.alertBox} ${styles.alertSuccess}`}>
+                          <i className="fas fa-check-circle"></i>
+                          <span>{bankSuccess}</span>
+                        </div>
+                      )}
+
+                      <div className={styles.bankActionsRow}>
+                        <button
+                          type="button"
+                          disabled={isSavingBank || isResolvingBank || !accountName || accountNumber.length !== 10}
+                          onClick={handleSaveBank}
+                          className={styles.saveBankBtn}
+                        >
+                          {isSavingBank ? (
+                            <>
+                              <i className="fas fa-spinner fa-spin"></i> Saving...
+                            </>
+                          ) : (
+                            <>
+                              <i className="fas fa-shield-alt"></i> Save & Verify Bank Account
+                            </>
+                          )}
+                        </button>
+                        {statusResult.bankCode && (
+                          <button
+                            type="button"
+                            className={styles.cancelBankBtn}
+                            onClick={() => {
+                              setIsEditingBank(false);
+                              setBankCode(statusResult.bankCode || "");
+                              setBankName(statusResult.bankName || "");
+                              setAccountNumber(statusResult.accountNumber || "");
+                              setAccountName(statusResult.accountName || "");
+                              setBankError(null);
+                            }}
+                          >
+                            Cancel
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                {/* Payout History & Transaction Log */}
+                <div className={styles.payoutCard}>
+                  <div className={styles.payoutCardHeader}>
+                    <div>
+                      <h4 className={styles.payoutCardTitle}>
+                        <i className="fas fa-history"></i> Payout History & Disbursements
+                      </h4>
+                      <p className={styles.payoutCardSub}>
+                        Track all completed and processed referral commission payments.
+                      </p>
+                    </div>
+                  </div>
+
+                  {statusResult.payouts && statusResult.payouts.length > 0 ? (
+                    <div className={styles.payoutTableWrapper}>
+                      <table className={styles.payoutTable}>
+                        <thead>
+                          <tr>
+                            <th>Date</th>
+                            <th>Amount</th>
+                            <th>Destination</th>
+                            <th>Reference</th>
+                            <th>Status</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {statusResult.payouts.map((payout: any) => (
+                            <tr key={payout.id}>
+                              <td className={styles.payoutDateCell}>
+                                {new Date(payout.disbursedAt || payout.createdAt).toLocaleDateString("en-NG", {
+                                  month: "short",
+                                  day: "numeric",
+                                  year: "numeric",
+                                })}
+                              </td>
+                              <td className={styles.payoutAmountCell}>
+                                ₦{payout.amount.toLocaleString()}
+                              </td>
+                              <td>
+                                <div>{payout.bankName}</div>
+                                <div style={{ fontSize: "0.75rem", color: "#64748b" }}>
+                                  &bull;&bull;&bull;&bull; {payout.accountNumber?.slice(-4) || payout.accountNumber} ({payout.accountName})
+                                </div>
+                              </td>
+                              <td>
+                                <span className={styles.payoutRefBadge}>
+                                  {payout.reference}
+                                </span>
+                              </td>
+                              <td>
+                                <span className={styles.payoutStatusSuccess}>
+                                  <i className="fas fa-check-circle"></i> {payout.status}
+                                </span>
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  ) : (
+                    <div className={styles.payoutEmptyBox}>
+                      <div className={styles.payoutEmptyIcon}>
+                        <i className="fas fa-receipt"></i>
+                      </div>
+                      <div className={styles.payoutEmptyTitle}>No Payouts Yet</div>
+                      <p className={styles.payoutEmptyText}>
+                        As soon as your referral commission payouts are disbursed by our finance team, the transaction records and Paystack transfer references will appear here.
+                      </p>
+                    </div>
+                  )}
                 </div>
               </div>
             )}

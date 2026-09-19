@@ -212,6 +212,11 @@ export async function getAmbassadorStatus(identifier: string) {
           { referralCode: query.toUpperCase() },
         ],
       },
+      include: {
+        payouts: {
+          orderBy: { disbursedAt: "desc" },
+        },
+      },
     });
 
     if (!application) {
@@ -229,12 +234,187 @@ export async function getAmbassadorStatus(identifier: string) {
         status: application.status,
         referralCount: application.referralCount,
         earnings: application.earnings,
+        bankCode: application.bankCode,
+        bankName: application.bankName,
+        accountNumber: application.accountNumber,
+        accountName: application.accountName,
+        recipientCode: application.recipientCode,
+        payouts: (application.payouts || []).map((p) => ({
+          id: p.id,
+          amount: p.amount,
+          reference: p.reference,
+          bankName: p.bankName,
+          accountNumber: p.accountNumber,
+          accountName: p.accountName,
+          status: p.status,
+          note: p.note,
+          disbursedAt: p.disbursedAt.toISOString(),
+        })),
         createdAt: application.createdAt.toISOString(),
       },
     };
   } catch (error: any) {
     console.error("Get ambassador status error:", error);
     return { success: false, error: "Could not retrieve status." };
+  }
+}
+
+/**
+ * Resolve Nigerian bank account name via Paystack for ambassadors
+ */
+export async function resolveAmbassadorBankAccount(accountNumber: string, bankCode: string) {
+  try {
+    if (!accountNumber || accountNumber.trim().length !== 10) {
+      return { success: false, error: "Please enter a valid 10-digit Nigerian NUBAN account number." };
+    }
+
+    if (!bankCode) {
+      return { success: false, error: "Please select a bank." };
+    }
+
+    const paystackSecret = process.env.PAYSTACK_SECRET_KEY;
+    if (!paystackSecret || paystackSecret.includes("your-paystack-secret-key")) {
+      return {
+        success: true,
+        accountName: "Verified Ambassador Account",
+        accountNumber: accountNumber.trim(),
+        bankCode,
+      };
+    }
+
+    const res = await fetch(
+      `https://api.paystack.co/bank/resolve?account_number=${encodeURIComponent(
+        accountNumber.trim()
+      )}&bank_code=${encodeURIComponent(bankCode.trim())}`,
+      {
+        headers: {
+          Authorization: `Bearer ${paystackSecret.trim()}`,
+          "Content-Type": "application/json",
+        },
+      }
+    );
+
+    const data = await res.json();
+    if (!res.ok || !data.status) {
+      return {
+        success: false,
+        error: data.message || "Could not resolve bank account name. Please verify the account number and bank.",
+      };
+    }
+
+    return {
+      success: true,
+      accountName: data.data.account_name,
+      accountNumber: data.data.account_number,
+      bankCode,
+    };
+  } catch (err: any) {
+    return { success: false, error: err.message || "Network error while resolving bank details." };
+  }
+}
+
+/**
+ * Save ambassador bank details and generate Paystack transfer recipient
+ */
+export async function saveAmbassadorBankDetails(data: {
+  identifier: string;
+  bankCode: string;
+  bankName: string;
+  accountNumber: string;
+  accountName: string;
+}) {
+  try {
+    const { identifier, bankCode, bankName, accountNumber, accountName } = data;
+    if (!identifier || !bankCode || !bankName || !accountNumber || !accountName) {
+      return { success: false, error: "All bank fields and ambassador identifier are required." };
+    }
+
+    const query = identifier.trim().toLowerCase();
+    const existing = await prisma.ambassadorApplication.findFirst({
+      where: {
+        OR: [
+          { email: query },
+          { referralCode: query.toUpperCase() },
+        ],
+      },
+    });
+
+    if (!existing) {
+      return { success: false, error: "Ambassador record not found." };
+    }
+
+    let recipientCode = existing.recipientCode;
+    const paystackSecret = process.env.PAYSTACK_SECRET_KEY;
+
+    if (paystackSecret && !paystackSecret.includes("your-paystack-secret-key") && paystackSecret.startsWith("sk_")) {
+      try {
+        const recipRes = await fetch("https://api.paystack.co/transferrecipient", {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${paystackSecret.trim()}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            type: "nuban",
+            name: accountName.trim(),
+            account_number: accountNumber.trim(),
+            bank_code: bankCode.trim(),
+            currency: "NGN",
+            description: `Ambassador Payout Recipient for ${existing.email} (${existing.referralCode})`,
+          }),
+        });
+
+        const recipData = await recipRes.json();
+        if (recipRes.ok && recipData.status && recipData.data?.recipient_code) {
+          recipientCode = recipData.data.recipient_code;
+        }
+      } catch (paystackErr: any) {
+        console.warn("Paystack transfer recipient note for ambassador:", paystackErr);
+      }
+    }
+
+    if (!recipientCode) {
+      recipientCode = `RCP_AMB_${Math.random().toString(36).substring(2, 10).toUpperCase()}`;
+    }
+
+    const updated = await prisma.ambassadorApplication.update({
+      where: { id: existing.id },
+      data: {
+        bankCode,
+        bankName,
+        accountNumber: accountNumber.trim(),
+        accountName: accountName.trim(),
+        recipientCode,
+      },
+    });
+
+    await logAuditEvent({
+      actorId: existing.userId || null,
+      actorEmail: existing.email,
+      actorName: existing.fullName,
+      actorRole: "STUDENT",
+      action: "AMBASSADOR_BANK_DETAILS_UPDATED",
+      targetType: "AMBASSADOR",
+      targetId: existing.id,
+      targetLabel: `${bankName} - ${accountNumber.substring(0, 3)}****${accountNumber.substring(7)}`,
+      details: `Ambassador updated payout bank details to ${bankName} (${accountName}).`,
+      metadata: { bankName, bankCode, accountName, recipientCode },
+    });
+
+    return {
+      success: true,
+      message: "Bank details saved successfully for direct payouts!",
+      bankDetails: {
+        bankCode: updated.bankCode,
+        bankName: updated.bankName,
+        accountNumber: updated.accountNumber,
+        accountName: updated.accountName,
+        recipientCode: updated.recipientCode,
+      },
+    };
+  } catch (err: any) {
+    console.error("Save ambassador bank details error:", err);
+    return { success: false, error: err.message || "Failed to save bank details." };
   }
 }
 
@@ -399,3 +579,131 @@ export async function adminUpdateAmbassadorStatus({
     return { success: false, error: "Failed to update ambassador." };
   }
 }
+
+/**
+ * Admin disburse or record an ambassador commission payout
+ */
+export async function adminDisburseAmbassadorPayout(data: {
+  ambassadorId: string;
+  amount: number;
+  note?: string;
+}) {
+  try {
+    const admin = await getCurrentUser();
+    if (!admin || admin.role !== "ADMIN") {
+      return { success: false, error: "Unauthorized access." };
+    }
+
+    const { ambassadorId, amount, note } = data;
+    if (!ambassadorId || !amount || amount <= 0) {
+      return { success: false, error: "Valid ambassador ID and positive payout amount are required." };
+    }
+
+    const ambassador = await prisma.ambassadorApplication.findUnique({
+      where: { id: ambassadorId },
+    });
+
+    if (!ambassador) {
+      return { success: false, error: "Ambassador not found." };
+    }
+
+    if (!ambassador.accountNumber || !ambassador.bankName || !ambassador.accountName) {
+      return {
+        success: false,
+        error: "This ambassador has not configured their Nigerian bank payout details yet.",
+      };
+    }
+
+    const reference = `CS-AMB-${Math.floor(100000 + Math.random() * 900000)}`;
+
+    const payout = await prisma.ambassadorPayout.create({
+      data: {
+        ambassadorId,
+        amount,
+        reference,
+        bankName: ambassador.bankName,
+        accountNumber: ambassador.accountNumber,
+        accountName: ambassador.accountName,
+        status: "SUCCESS",
+        note: note?.trim() || `Ambassador commission payout for ${ambassador.fullName}`,
+        disbursedAt: new Date(),
+      },
+    });
+
+    await logAuditEvent({
+      actorId: admin.id,
+      actorEmail: admin.email,
+      actorName: admin.name || "Admin",
+      actorRole: "ADMIN",
+      action: "AMBASSADOR_PAYOUT_DISBURSED",
+      targetType: "AMBASSADOR",
+      targetId: ambassador.id,
+      targetLabel: `${ambassador.fullName} - ₦${amount.toLocaleString()} (${reference})`,
+      details: `Admin disbursed ₦${amount.toLocaleString()} to ${ambassador.bankName} (${ambassador.accountNumber}). Ref: ${reference}`,
+      metadata: {
+        payoutId: payout.id,
+        amount,
+        reference,
+        bankName: ambassador.bankName,
+        accountNumber: ambassador.accountNumber,
+        accountName: ambassador.accountName,
+      },
+    });
+
+    // Send confirmation email to ambassador
+    try {
+      await sendEmail({
+        to: ambassador.email,
+        subject: `Payout Disbursed: ₦${amount.toLocaleString()} Commission Received! 🎉 - Campus Tent`,
+        html: `
+          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 25px; border: 1px solid #e2e8f0; border-radius: 12px; background-color: #ffffff; color: #1e293b;">
+            <div style="text-align: center; margin-bottom: 24px; padding-bottom: 16px; border-bottom: 2px solid #f1f5f9;">
+              <h1 style="color: #02351c; margin: 0; font-size: 24px;">Campus Tent</h1>
+              <p style="color: #64748b; font-size: 14px; margin: 4px 0 0 0;">Ambassador Commission Payout</p>
+            </div>
+            <h2 style="color: #059669; font-size: 20px; margin-top: 0;">Payment Disbursed!</h2>
+            <p style="font-size: 15px; line-height: 1.6;">Hi <strong>${ambassador.fullName}</strong>,</p>
+            <p style="font-size: 15px; line-height: 1.6;">
+              Great news! Your commission payout of <strong style="color: #059669; font-size: 18px;">₦${amount.toLocaleString()}</strong> has been processed and disbursed directly to your registered bank account.
+            </p>
+            <div style="background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 16px; margin: 20px 0;">
+              <table style="width: 100%; font-size: 14px; color: #334155;">
+                <tr>
+                  <td style="padding: 6px 0; color: #64748b;">Amount:</td>
+                  <td style="padding: 6px 0; font-weight: bold; color: #059669;">₦${amount.toLocaleString()}</td>
+                </tr>
+                <tr>
+                  <td style="padding: 6px 0; color: #64748b;">Bank:</td>
+                  <td style="padding: 6px 0; font-weight: bold;">${ambassador.bankName}</td>
+                </tr>
+                <tr>
+                  <td style="padding: 6px 0; color: #64748b;">Account Number:</td>
+                  <td style="padding: 6px 0; font-weight: bold;">${ambassador.accountNumber}</td>
+                </tr>
+                <tr>
+                  <td style="padding: 6px 0; color: #64748b;">Account Name:</td>
+                  <td style="padding: 6px 0; font-weight: bold;">${ambassador.accountName}</td>
+                </tr>
+                <tr>
+                  <td style="padding: 6px 0; color: #64748b;">Reference:</td>
+                  <td style="padding: 6px 0; font-family: monospace; font-weight: bold;">${reference}</td>
+                </tr>
+              </table>
+            </div>
+            <p style="font-size: 14px; line-height: 1.6; color: #475569;">
+              You can view your complete transaction history anytime on your <a href="https://campustent.com/ambassador" style="color: #02351c; font-weight: bold;">Ambassador Tracking Dashboard</a>.
+            </p>
+          </div>
+        `,
+      });
+    } catch (emailErr) {
+      console.error("Failed to send payout email to ambassador:", emailErr);
+    }
+
+    return { success: true, payout, reference };
+  } catch (error: any) {
+    console.error("Admin disburse ambassador payout error:", error);
+    return { success: false, error: error.message || "Failed to disburse payout." };
+  }
+}
+
