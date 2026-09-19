@@ -234,48 +234,50 @@ export default function AmbassadorPage() {
           </button>
         </div>
 
-        {/* Perks Grid */}
-        <div className={styles.perksGrid}>
-          <div className={styles.perkCard}>
-            <div className={styles.perkIcon}>
-              <i className="fas fa-wallet"></i>
+        {/* Perks Grid (Shown on Apply tab only so Status tab content is visible immediately without scrolling) */}
+        {activeTab === "apply" && (
+          <div className={styles.perksGrid}>
+            <div className={styles.perkCard}>
+              <div className={styles.perkIcon}>
+                <i className="fas fa-wallet"></i>
+              </div>
+              <h4 className={styles.perkTitle}>Direct Cash Payouts</h4>
+              <p className={styles.perkDesc}>
+                Earn direct bank payouts for every student who books an inspection tour or reserves accommodation with your referral code.
+              </p>
             </div>
-            <h4 className={styles.perkTitle}>Direct Cash Payouts</h4>
-            <p className={styles.perkDesc}>
-              Earn direct bank payouts for every student who books an inspection tour or reserves accommodation with your referral code.
-            </p>
-          </div>
 
-          <div className={styles.perkCard}>
-            <div className={styles.perkIcon}>
-              <i className="fas fa-certificate"></i>
+            <div className={styles.perkCard}>
+              <div className={styles.perkIcon}>
+                <i className="fas fa-certificate"></i>
+              </div>
+              <h4 className={styles.perkTitle}>Executive Certificate</h4>
+              <p className={styles.perkDesc}>
+                Receive an official Certificate of Leadership & Community Management endorsed by Campus Tent to boost your CV and LinkedIn.
+              </p>
             </div>
-            <h4 className={styles.perkTitle}>Executive Certificate</h4>
-            <p className={styles.perkDesc}>
-              Receive an official Certificate of Leadership & Community Management endorsed by Campus Tent to boost your CV and LinkedIn.
-            </p>
-          </div>
 
-          <div className={styles.perkCard}>
-            <div className={styles.perkIcon}>
-              <i className="fas fa-gift"></i>
+            <div className={styles.perkCard}>
+              <div className={styles.perkIcon}>
+                <i className="fas fa-gift"></i>
+              </div>
+              <h4 className={styles.perkTitle}>Merchandise & Swag</h4>
+              <p className={styles.perkDesc}>
+                Get branded Campus Tent merchandise and priority VIP access to university orientation campaigns.
+              </p>
             </div>
-            <h4 className={styles.perkTitle}>Merchandise & Swag</h4>
-            <p className={styles.perkDesc}>
-              Get branded Campus Tent merchandise and priority VIP access to university orientation campaigns.
-            </p>
-          </div>
 
-          <div className={styles.perkCard}>
-            <div className={styles.perkIcon}>
-              <i className="fas fa-shield-alt"></i>
+            <div className={styles.perkCard}>
+              <div className={styles.perkIcon}>
+                <i className="fas fa-shield-alt"></i>
+              </div>
+              <h4 className={styles.perkTitle}>Safety & Advocacy</h4>
+              <p className={styles.perkDesc}>
+                Protect your peers from hostel scammers by guiding them to 100% verified, inspected student residences.
+              </p>
             </div>
-            <h4 className={styles.perkTitle}>Safety & Advocacy</h4>
-            <p className={styles.perkDesc}>
-              Protect your peers from hostel scammers by guiding them to 100% verified, inspected student residences.
-            </p>
           </div>
-        </div>
+        )}
 
         {/* TAB 1: APPLICATION FORM */}
         {activeTab === "apply" && (

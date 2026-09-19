@@ -91,12 +91,23 @@ export async function queryPropertyAvailability(propertyId: string) {
         },
       });
     } else {
+      // Check if existing query was already PENDING and within the 24-hour window
+      const queryTime = Math.max(
+        new Date(existingQuery.createdAt).getTime(),
+        new Date(existingQuery.updatedAt).getTime()
+      );
+      const isPendingRecent = existingQuery.status === "PENDING" && (Date.now() - queryTime <= AVAILABILITY_EXPIRATION_MS);
+
+      // If already pending and recent, preserve the existing token so emails already delivered to the agent's inbox remain valid!
+      const tokenToUse = isPendingRecent && existingQuery.token ? existingQuery.token : randomUUID();
+
       query = await prisma.availabilityQuery.update({
         where: { id: existingQuery.id },
         data: {
           status: "PENDING",
-          token: randomUUID(),
+          token: tokenToUse,
           respondedAt: null,
+          createdAt: new Date(), // Reset createdAt so the 24-hour confirmation window starts fresh!
         },
       });
     }
@@ -221,8 +232,10 @@ export async function respondPropertyAvailability(token: string, responseType: "
       return { success: false, error: "Missing verification token." };
     }
 
+    const cleanToken = token.trim();
+
     const query = await prisma.availabilityQuery.findUnique({
-      where: { token },
+      where: { token: cleanToken },
       include: {
         property: true,
         student: {
@@ -242,8 +255,11 @@ export async function respondPropertyAvailability(token: string, responseType: "
       return { success: false, error: "Invalid or expired confirmation link." };
     }
 
-    // Check if link has expired (valid for 24 hours from creation)
-    const queryTime = new Date(query.createdAt).getTime();
+    // Check if link has expired (valid for 24 hours from latest creation/update)
+    const queryTime = Math.max(
+      new Date(query.createdAt).getTime(),
+      new Date(query.updatedAt).getTime()
+    );
     if (Date.now() - queryTime > AVAILABILITY_EXPIRATION_MS) {
       return {
         success: false,
@@ -366,8 +382,10 @@ export async function getAvailabilityQueryInfo(token: string) {
   try {
     if (!token) return { success: false, error: "Missing token." };
 
+    const cleanToken = token.trim();
+
     const query = await prisma.availabilityQuery.findUnique({
-      where: { token },
+      where: { token: cleanToken },
       include: {
         property: true,
         student: {
@@ -387,7 +405,10 @@ export async function getAvailabilityQueryInfo(token: string) {
       return { success: false, error: "Availability request not found or invalid token." };
     }
 
-    const queryTime = new Date(query.createdAt).getTime();
+    const queryTime = Math.max(
+      new Date(query.createdAt).getTime(),
+      new Date(query.updatedAt).getTime()
+    );
     const isExpired = Date.now() - queryTime > AVAILABILITY_EXPIRATION_MS;
 
     return {
@@ -419,8 +440,10 @@ export async function resendAvailabilityEmail(token: string) {
   try {
     if (!token) return { success: false, error: "Missing token." };
 
+    const cleanToken = token.trim();
+
     const query = await prisma.availabilityQuery.findUnique({
-      where: { token },
+      where: { token: cleanToken },
       include: {
         property: true,
         student: {

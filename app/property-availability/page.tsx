@@ -47,7 +47,8 @@ function PropertyAvailabilityContent() {
 
   useEffect(() => {
     async function init() {
-      if (!token) {
+      const cleanToken = token?.trim();
+      if (!cleanToken) {
         setResult({
           success: false,
           error: "Missing confirmation token. Please open the exact link provided in your email.",
@@ -58,7 +59,7 @@ function PropertyAvailabilityContent() {
 
       // If responseType is present in the URL, automatically submit it (one-click from email)
       if (responseType) {
-        const res = await respondPropertyAvailability(token, responseType);
+        const res = await respondPropertyAvailability(cleanToken, responseType);
         setResult(res);
         setLoading(false);
         return;
@@ -66,7 +67,7 @@ function PropertyAvailabilityContent() {
 
       // If no responseType in the URL (e.g. user pasted database token or opened link):
       // Fetch details so user can click to confirm or resend
-      const infoRes = await getAvailabilityQueryInfo(token);
+      const infoRes = await getAvailabilityQueryInfo(cleanToken);
       if (!infoRes.success || !infoRes.query) {
         setResult({
           success: false,
@@ -82,18 +83,20 @@ function PropertyAvailabilityContent() {
   }, [token, responseType]);
 
   const handleManualResponse = async (choice: "available" | "unavailable") => {
-    if (!token) return;
+    const cleanToken = token?.trim();
+    if (!cleanToken) return;
     setSubmitting(true);
-    const res = await respondPropertyAvailability(token, choice);
+    const res = await respondPropertyAvailability(cleanToken, choice);
     setResult(res);
     setSubmitting(false);
   };
 
   const handleResendEmail = async () => {
-    if (!token) return;
+    const cleanToken = token?.trim();
+    if (!cleanToken) return;
     setResending(true);
     setResendStatus(null);
-    const res = await resendAvailabilityEmail(token);
+    const res = await resendAvailabilityEmail(cleanToken);
     if (res.success) {
       setResendStatus({ success: true, message: res.message || "Notification email sent successfully!" });
     } else {
