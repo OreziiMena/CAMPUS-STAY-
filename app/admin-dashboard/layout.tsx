@@ -143,9 +143,14 @@ function AdminSidebarWrapper({
   );
 }
 
+import TwoFactorSettingsModal from "@/components/TwoFactorSettingsModal";
+
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const [adminName, setAdminName] = useState("Admin");
+  const [adminEmail, setAdminEmail] = useState("");
+  const [is2FAEnabled, setIs2FAEnabled] = useState(true);
+  const [show2FAModal, setShow2FAModal] = useState(false);
   const [loading, setLoading] = useState(true);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
@@ -158,6 +163,8 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         return;
       }
       setAdminName(user.name || "Admin");
+      setAdminEmail(user.email || "");
+      setIs2FAEnabled(!!user.twoFactorEnabled);
       setLoading(false);
       setIsSidebarOpen(false);
     };
@@ -206,6 +213,28 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
             </div>
           </div>
           <div className="admin-profile-info">
+            <button
+              type="button"
+              onClick={() => setShow2FAModal(true)}
+              title="Two-Factor Security Configuration"
+              style={{
+                display: "inline-flex",
+                alignItems: "center",
+                gap: "6px",
+                background: is2FAEnabled ? "#ecfdf5" : "#fef2f2",
+                color: is2FAEnabled ? "#065f46" : "#991b1b",
+                border: `1px solid ${is2FAEnabled ? "#a7f3d0" : "#fecaca"}`,
+                padding: "6px 12px",
+                borderRadius: "6px",
+                fontSize: "0.8rem",
+                fontWeight: 600,
+                cursor: "pointer",
+                marginRight: "12px",
+              }}
+            >
+              <i className={`fas ${is2FAEnabled ? "fa-shield-alt" : "fa-exclamation-triangle"}`}></i>
+              {is2FAEnabled ? "2FA Protected" : "2FA Required"}
+            </button>
             <div className="admin-avatar">
               {adminName.charAt(0).toUpperCase()}
             </div>
@@ -214,8 +243,44 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         </header>
 
         {/* Content */}
-        <div className="admin-content">{children}</div>
+        <div className="admin-content">
+          {!is2FAEnabled ? (
+            <div style={{ textAlign: "center", padding: "80px 20px" }}>
+              <div style={{ width: "64px", height: "64px", borderRadius: "50%", background: "#fef2f2", color: "#dc2626", display: "inline-flex", alignItems: "center", justifyContent: "center", fontSize: "28px", marginBottom: "16px" }}>
+                <i className="fas fa-lock"></i>
+              </div>
+              <h3 style={{ fontSize: "1.3rem", fontWeight: 700, color: "#0f172a", marginBottom: "8px" }}>
+                Administrative 2FA Enrollment Required
+              </h3>
+              <p style={{ color: "#64748b", maxWidth: "460px", margin: "0 auto 20px auto", fontSize: "0.9rem", lineHeight: 1.6 }}>
+                Access to the Campus Tent Admin Portal strictly requires an active Two-Factor Authentication (TOTP) setup. Please link your Authenticator app to continue.
+              </p>
+              <button
+                type="button"
+                onClick={() => setShow2FAModal(true)}
+                style={{ background: "#02351c", color: "white", padding: "10px 22px", borderRadius: "8px", border: "none", fontWeight: 600, cursor: "pointer", fontSize: "0.9rem" }}
+              >
+                <i className="fas fa-qrcode" style={{ marginRight: "8px" }}></i> Complete 2FA Setup
+              </button>
+            </div>
+          ) : (
+            children
+          )}
+        </div>
       </main>
+
+      {/* 2FA Modal (Mandatory when !is2FAEnabled) */}
+      <TwoFactorSettingsModal
+        isOpen={!is2FAEnabled || show2FAModal}
+        onClose={() => setShow2FAModal(false)}
+        onSuccess={() => {
+          setIs2FAEnabled(true);
+          setShow2FAModal(false);
+        }}
+        userEmail={adminEmail}
+        userRole="ADMIN"
+        mandatory={!is2FAEnabled}
+      />
     </div>
   );
 }

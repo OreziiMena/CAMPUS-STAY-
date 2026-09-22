@@ -47,7 +47,7 @@ export async function generateOTP(email: string, purpose: "EMAIL_VERIFICATION" |
     });
 
     // 5. Deliver email
-    const emailRes = await sendOTPEmail(email, code);
+    const emailRes = await sendOTPEmail(email, code, purpose);
     
     return { success: true, debug: emailRes.debug };
   } catch (err: any) {
@@ -136,12 +136,23 @@ export async function verifyOTP(email: string, code: string, purpose: "EMAIL_VER
   }
 }
 
-async function sendOTPEmail(email: string, code: string) {
+async function sendOTPEmail(email: string, code: string, purpose?: string) {
   const apiKey = process.env.RESEND_API_KEY;
+
+  const isTwoFactor = purpose === "TWO_FACTOR_AUTH";
+  const subjectTitle = isTwoFactor 
+    ? `Campus Tent Security Code: ${code}`
+    : `Your Campus Tent Verification Code: ${code}`;
+  const headerTitle = isTwoFactor 
+    ? "Security Authorization Code" 
+    : "Email Verification Code";
+  const descText = isTwoFactor
+    ? "Use the one-time security code below to authorize your high-privilege account action or login on Campus Tent."
+    : "Use the one-time verification code below to complete your registration or password reset on Campus Tent.";
 
   if (!apiKey || apiKey === "placeholder" || apiKey === "re_test_key" || apiKey.includes("your-api-key")) {
     console.log("\n==============================================");
-    console.log(`[DEV OTP DELIVERY FALLBACK]`);
+    console.log(`[DEV OTP DELIVERY FALLBACK - ${purpose || "GENERAL"}]`);
     console.log(`To: ${email}`);
     console.log(`Code: ${code}`);
     console.log("==============================================\n");
@@ -151,14 +162,14 @@ async function sendOTPEmail(email: string, code: string) {
   try {
     const res = await sendEmail({
       to: email,
-      subject: `Your Campus Tent Verification Code: ${code}`,
+      subject: subjectTitle,
       html: `
         <!DOCTYPE html>
         <html>
         <head>
           <meta charset="utf-8">
           <meta name="viewport" content="width=device-width, initial-scale=1.0">
-          <title>Campus Tent Verification Code</title>
+          <title>${headerTitle}</title>
         </head>
         <body style="font-family: 'Poppins', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background-color: #f4f6f5; margin: 0; padding: 30px 15px;">
           <div style="max-width: 520px; margin: 0 auto; background-color: #ffffff; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 20px rgba(0,0,0,0.06); border: 1px solid #e5e7eb;">
@@ -168,9 +179,9 @@ async function sendOTPEmail(email: string, code: string) {
             </div>
             
             <div style="padding: 32px 28px;">
-              <h2 style="color: rgb(2, 53, 28); font-size: 18px; margin-top: 0; font-weight: 600;">Email Verification Code</h2>
+              <h2 style="color: rgb(2, 53, 28); font-size: 18px; margin-top: 0; font-weight: 600;">${headerTitle}</h2>
               <p style="color: #4b5563; font-size: 14px; line-height: 1.6; margin-bottom: 24px;">
-                Use the one-time verification code below to complete your registration or password reset on Campus Tent.
+                ${descText}
               </p>
               
               <div style="background: linear-gradient(135deg, #f0fdf4 0%, #ecfdf5 100%); border: 2px dashed #059669; border-radius: 12px; padding: 20px; text-align: center; margin: 24px 0;">

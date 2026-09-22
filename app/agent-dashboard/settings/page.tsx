@@ -3,6 +3,7 @@ import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { getCurrentUser, updateAgentPassword } from "@/app/actions/auth";
 import { getAgentBankDetails, resolveBankAccount, saveAgentBankDetails } from "@/app/actions/agent";
+import { requestAgentBankUpdateVerification } from "@/app/actions/two-factor";
 import { NIGERIAN_BANKS } from "@/lib/banks";
 import styles from "./settings.module.css";
 import "./styles.css";
@@ -49,9 +50,25 @@ export default function Settings() {
   const [bankStatusMsg, setBankStatusMsg] = useState("");
   const [bankSaveLoading, setBankSaveLoading] = useState(false);
 
+  // Bank Verification states
+  const [showBankVerifyModal, setShowBankVerifyModal] = useState(false);
+  const [bankVerifyMethod, setBankVerifyMethod] = useState<"TOTP" | "EMAIL_OTP">("EMAIL_OTP");
+  const [bankVerifyMaskedEmail, setBankVerifyMaskedEmail] = useState("");
+  const [bankVerifyCode, setBankVerifyCode] = useState("");
+  const [bankVerifyError, setBankVerifyError] = useState("");
+  const [resendCooldown, setResendCooldown] = useState(0);
+
   // 2FA Modal state
   const [show2FAModal, setShow2FAModal] = useState(false);
   const [agentEmail, setAgentEmail] = useState("");
+
+  useEffect(() => {
+    if (resendCooldown <= 0) return;
+    const interval = setInterval(() => {
+      setResendCooldown((prev) => prev - 1);
+    }, 1000);
+    return () => clearInterval(interval);
+  }, [resendCooldown]);
 
   useEffect(() => {
     const checkUser = async () => {
@@ -168,7 +185,7 @@ export default function Settings() {
     setIsResolvingBank(false);
   };
 
-  const handleSaveBank = async (e: React.FormEvent) => {
+  const handleInitiateBankSave = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!bankCode || !accountNumber || !accountName) {
       alert("Please ensure your bank is selected and account number is verified.");
@@ -176,22 +193,67 @@ export default function Settings() {
     }
     setBankSaveLoading(true);
     setBankStatusMsg("");
+    setBankVerifyError("");
+    setBankVerifyCode("");
+
+    const verifyInit = await requestAgentBankUpdateVerification();
+    setBankSaveLoading(false);
+
+    if (!verifyInit.success) {
+      setBankStatusMsg(`Error: ${verifyInit.error || "Failed to initialize verification"}`);
+      return;
+    }
+
+    setBankVerifyMethod(verifyInit.method || "EMAIL_OTP");
+    if (verifyInit.maskedEmail) {
+      setBankVerifyMaskedEmail(verifyInit.maskedEmail);
+    }
+    setShowBankVerifyModal(true);
+    if (verifyInit.method === "EMAIL_OTP") {
+      setResendCooldown(60);
+    }
+  };
+
+  const handleResendBankOTP = async () => {
+    if (resendCooldown > 0) return;
+    setBankVerifyError("");
+    const verifyInit = await requestAgentBankUpdateVerification();
+    if (verifyInit.success) {
+      setResendCooldown(60);
+    } else {
+      setBankVerifyError(verifyInit.error || "Failed to resend code.");
+    }
+  };
+
+  const handleConfirmBankUpdate = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!bankVerifyCode.trim() || bankVerifyCode.trim().length !== 6) {
+      setBankVerifyError("Please enter the complete 6-digit security code.");
+      return;
+    }
+
+    setBankSaveLoading(true);
+    setBankVerifyError("");
 
     const res = await saveAgentBankDetails({
       bankCode,
       bankName,
       accountNumber,
       accountName,
+      securityCode: bankVerifyCode.trim(),
     });
+
+    setBankSaveLoading(false);
 
     if (res.success) {
       setRecipientCode(res.recipientCode || null);
-      setBankStatusMsg("Bank and payout details saved successfully!");
-      setTimeout(() => setBankStatusMsg(""), 4000);
+      setShowBankVerifyModal(false);
+      setBankVerifyCode("");
+      setBankStatusMsg("Payout bank details successfully verified and saved!");
+      setTimeout(() => setBankStatusMsg(""), 5000);
     } else {
-      setBankStatusMsg(`Error: ${res.error}`);
+      setBankVerifyError(res.error || "Invalid security code. Please try again.");
     }
-    setBankSaveLoading(false);
   };
 
   return (
@@ -310,7 +372,7 @@ export default function Settings() {
                 </div>
               )}
 
-              <form onSubmit={handleSaveBank}>
+              <form onSubmit={handleInitiateBankSave}>
                 <div className="input-group payout-form-group">
                   <label>Select Nigerian Bank</label>
                   <div className="payout-select-wrapper">
@@ -531,6 +593,204 @@ export default function Settings() {
               </div>
             </section>
           )}
+        </div>
+      )}
+
+      {/* Multi-Factor Verification Modal for Bank Account Update */}
+      {showBankVerifyModal && (
+        <div 
+          style={{
+            position: "fixed",
+            top: 0,
+            left: 0,
+            width: "100%",
+            height: "100%",
+            backgroundColor: "rgba(15, 23, 42, 0.7)",
+            backdropFilter: "blur(4px)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            zIndex: 9999,
+            padding: "16px",
+            fontFamily: "'Poppins', system-ui, sans-serif",
+          }} 
+          onClick={() => !bankSaveLoading && setShowBankVerifyModal(false)}
+        >
+          <div 
+            style={{
+              backgroundColor: "#ffffff",
+              borderRadius: "12px",
+              maxWidth: "460px",
+              width: "100%",
+              boxShadow: "0 20px 25px -5px rgba(0, 0, 0, 0.1)",
+              overflow: "hidden",
+              border: "1px solid #e2e8f0",
+            }} 
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div 
+              style={{
+                backgroundColor: "#02351c",
+                color: "#ffffff",
+                padding: "16px 20px",
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+              }}
+            >
+              <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                <i className="fas fa-shield-alt" style={{ fontSize: "1.2rem", color: "#34d399" }}></i>
+                <div>
+                  <h3 style={{ margin: 0, fontSize: "1rem", fontWeight: 700 }}>Security Verification</h3>
+                  <span style={{ fontSize: "0.75rem", color: "#a7f3d0" }}>Authorize Payout Account Change</span>
+                </div>
+              </div>
+              <button
+                onClick={() => !bankSaveLoading && setShowBankVerifyModal(false)}
+                style={{ background: "none", border: "none", color: "#e2e8f0", fontSize: "1.4rem", cursor: "pointer", lineHeight: 1 }}
+              >
+                &times;
+              </button>
+            </div>
+
+            <div style={{ padding: "20px" }}>
+              <div 
+                style={{
+                  backgroundColor: "#f8fafc",
+                  border: "1px solid #e2e8f0",
+                  borderRadius: "8px",
+                  padding: "12px 14px",
+                  marginBottom: "16px",
+                }}
+              >
+                <div style={{ fontSize: "0.75rem", color: "#64748b", textTransform: "uppercase", fontWeight: 700, letterSpacing: "0.5px", marginBottom: "4px" }}>
+                  New Payout Target:
+                </div>
+                <div style={{ fontSize: "0.95rem", fontWeight: 700, color: "#0f172a" }}>
+                  {bankName} &bull; {accountNumber}
+                </div>
+                <div style={{ fontSize: "0.85rem", color: "#059669", fontWeight: 600 }}>
+                  {accountName}
+                </div>
+              </div>
+
+              <p style={{ fontSize: "0.85rem", color: "#475569", lineHeight: 1.5, margin: "0 0 16px 0" }}>
+                {bankVerifyMethod === "TOTP" ? (
+                  <>
+                    Open your <strong>Authenticator App</strong> (e.g. Google Authenticator) and enter your active 6-digit code to authorize this change.
+                  </>
+                ) : (
+                  <>
+                    A 6-digit one-time security code was dispatched to <strong>{bankVerifyMaskedEmail}</strong>. Enter it below to confirm this change.
+                  </>
+                )}
+              </p>
+
+              {bankVerifyError && (
+                <div 
+                  style={{
+                    backgroundColor: "#fef2f2",
+                    border: "1px solid #fecaca",
+                    color: "#991b1b",
+                    padding: "10px 12px",
+                    borderRadius: "6px",
+                    fontSize: "0.82rem",
+                    marginBottom: "14px",
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "8px",
+                  }}
+                >
+                  <i className="fas fa-exclamation-circle"></i>
+                  <span>{bankVerifyError}</span>
+                </div>
+              )}
+
+              <form onSubmit={handleConfirmBankUpdate}>
+                <div style={{ marginBottom: "16px" }}>
+                  <input
+                    type="text"
+                    maxLength={6}
+                    placeholder="000000"
+                    value={bankVerifyCode}
+                    onChange={(e) => setBankVerifyCode(e.target.value.replace(/\D/g, "").slice(0, 6))}
+                    style={{
+                      width: "100%",
+                      padding: "12px",
+                      textAlign: "center",
+                      letterSpacing: "8px",
+                      fontFamily: "monospace",
+                      fontSize: "1.4rem",
+                      fontWeight: 700,
+                      border: "2px solid #cbd5e1",
+                      borderRadius: "8px",
+                      outline: "none",
+                      color: "#0f172a",
+                      boxSizing: "border-box",
+                    }}
+                    autoFocus
+                    required
+                  />
+                </div>
+
+                {bankVerifyMethod === "EMAIL_OTP" && (
+                  <div style={{ textAlign: "center", marginBottom: "16px" }}>
+                    <button
+                      type="button"
+                      onClick={handleResendBankOTP}
+                      disabled={resendCooldown > 0 || bankSaveLoading}
+                      style={{
+                        background: "none",
+                        border: "none",
+                        color: resendCooldown > 0 ? "#94a3b8" : "#059669",
+                        fontSize: "0.82rem",
+                        fontWeight: 600,
+                        cursor: resendCooldown > 0 ? "default" : "pointer",
+                      }}
+                    >
+                      {resendCooldown > 0 ? `Resend code in ${resendCooldown}s` : "Resend Security Code"}
+                    </button>
+                  </div>
+                )}
+
+                <div style={{ display: "flex", gap: "10px", justifyContent: "flex-end" }}>
+                  <button
+                    type="button"
+                    onClick={() => setShowBankVerifyModal(false)}
+                    disabled={bankSaveLoading}
+                    style={{
+                      padding: "9px 16px",
+                      border: "1px solid #cbd5e1",
+                      background: "white",
+                      borderRadius: "6px",
+                      fontSize: "0.85rem",
+                      cursor: "pointer",
+                      color: "#475569",
+                    }}
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={bankSaveLoading || bankVerifyCode.trim().length !== 6}
+                    style={{
+                      backgroundColor: "#02351c",
+                      color: "white",
+                      border: "none",
+                      padding: "9px 20px",
+                      borderRadius: "6px",
+                      fontWeight: 600,
+                      fontSize: "0.85rem",
+                      cursor: bankSaveLoading || bankVerifyCode.trim().length !== 6 ? "not-allowed" : "pointer",
+                      opacity: bankSaveLoading || bankVerifyCode.trim().length !== 6 ? 0.7 : 1,
+                    }}
+                  >
+                    {bankSaveLoading ? "Verifying..." : "Verify & Save Details"}
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
         </div>
       )}
     </>

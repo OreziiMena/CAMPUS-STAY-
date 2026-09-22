@@ -9,6 +9,8 @@ interface TwoFactorSettingsModalProps {
   onClose: () => void;
   userEmail?: string;
   userRole?: string;
+  mandatory?: boolean;
+  onSuccess?: () => void;
 }
 
 export default function TwoFactorSettingsModal({
@@ -16,6 +18,8 @@ export default function TwoFactorSettingsModal({
   onClose,
   userEmail,
   userRole,
+  mandatory = false,
+  onSuccess,
 }: TwoFactorSettingsModalProps) {
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState(false);
@@ -41,6 +45,11 @@ export default function TwoFactorSettingsModal({
     if (res.success) {
       setIsEnabled(!!res.enabled);
       setConfirmedAt(res.confirmedAt ? new Date(res.confirmedAt).toLocaleDateString() : null);
+      if (mandatory && !res.enabled) {
+        setStep("SETUP_QR");
+        handleStartSetup();
+        return;
+      }
     }
     setLoading(false);
   };
@@ -94,6 +103,9 @@ export default function TwoFactorSettingsModal({
       if (res.success) {
         setIsEnabled(true);
         setStep("BACKUP_CODES");
+        if (onSuccess) {
+          onSuccess();
+        }
       } else {
         setError(res.error || "Invalid verification code. Please check your authenticator clock.");
       }
@@ -106,6 +118,11 @@ export default function TwoFactorSettingsModal({
 
   const handleDisable2FA = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (userRole === "ADMIN") {
+      setError("Two-Factor Authentication is mandatory for administrator accounts and cannot be disabled.");
+      return;
+    }
+
     if (!disableCode.trim()) {
       setError("Please enter your 6-digit code to confirm disabling 2FA.");
       return;
@@ -148,7 +165,7 @@ export default function TwoFactorSettingsModal({
   const qrCodeUrl = `https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${encodeURIComponent(otpauthUri)}`;
 
   return (
-    <div className={styles.overlay} onClick={onClose}>
+    <div className={styles.overlay} onClick={mandatory && !isEnabled ? undefined : onClose}>
       <div className={styles.modal} onClick={(e) => e.stopPropagation()}>
         {/* Header */}
         <div className={styles.header}>
@@ -161,13 +178,24 @@ export default function TwoFactorSettingsModal({
               </span>
             </div>
           </div>
-          <button onClick={onClose} className={styles.closeBtn}>
-            &times;
-          </button>
+          {!mandatory && (
+            <button onClick={onClose} className={styles.closeBtn}>
+              &times;
+            </button>
+          )}
         </div>
 
         {/* Content Body */}
         <div className={styles.body}>
+          {mandatory && !isEnabled && (
+            <div className={styles.mandatoryAlert}>
+              <i className="fas fa-shield-alt" style={{ fontSize: "1.1rem", marginTop: "2px" }}></i>
+              <div>
+                <strong>Administrator Security Required:</strong> Two-Factor Authentication (2FA) is mandatory for all administrator accounts. Please link your Authenticator app to continue.
+              </div>
+            </div>
+          )}
+
           {error && (
             <div className={styles.alertError}>
               <i className="fas fa-exclamation-circle"></i>
@@ -226,6 +254,10 @@ export default function TwoFactorSettingsModal({
                     {actionLoading ? <i className="fas fa-spinner fa-spin"></i> : <i className="fas fa-qrcode"></i>}
                     Enable 2FA Protection
                   </button>
+                ) : userRole === "ADMIN" ? (
+                  <div className={styles.adminMandatoryBadge}>
+                    <i className="fas fa-lock"></i> Mandatory for Administrator Accounts (Cannot be disabled)
+                  </div>
                 ) : (
                   <button
                     type="button"
@@ -293,13 +325,15 @@ export default function TwoFactorSettingsModal({
                 </div>
 
                 <div className={styles.actionRow}>
-                  <button
-                    type="button"
-                    onClick={() => setStep("STATUS")}
-                    className={styles.btnCancel}
-                  >
-                    Cancel
-                  </button>
+                  {!mandatory && (
+                    <button
+                      type="button"
+                      onClick={() => setStep("STATUS")}
+                      className={styles.btnCancel}
+                    >
+                      Cancel
+                    </button>
+                  )}
                   <button
                     type="submit"
                     disabled={actionLoading}
@@ -347,12 +381,16 @@ export default function TwoFactorSettingsModal({
                 <button
                   type="button"
                   onClick={() => {
-                    setStep("STATUS");
-                    setSuccessMsg("Two-Factor Authentication is now active!");
+                    if (mandatory) {
+                      onClose();
+                    } else {
+                      setStep("STATUS");
+                      setSuccessMsg("Two-Factor Authentication is now active!");
+                    }
                   }}
                   className={styles.btnPrimary}
                 >
-                  I've Saved My Codes
+                  {mandatory ? "I've Saved My Codes — Unlock Dashboard" : "I've Saved My Codes"}
                 </button>
               </div>
             </div>

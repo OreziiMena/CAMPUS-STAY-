@@ -352,6 +352,7 @@ export async function getCurrentUser() {
       phone: user.phone,
       role: user.role,
       name: user.role === "STUDENT" ? user.studentProfile?.fullName : user.agentProfile?.fullName,
+      twoFactorEnabled: !!user.twoFactorEnabled,
       studentProfile: user.studentProfile,
       agentProfile: user.agentProfile,
     };

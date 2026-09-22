@@ -11,12 +11,26 @@ import { revalidatePath } from "next/cache";
 
 const BASE_URL = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
 
+async function requireAdminUser() {
+  const user = await getCurrentUser();
+  if (!user || user.role !== Role.ADMIN) {
+    return { error: "Unauthorized. Admin access required." };
+  }
+  if (!user.twoFactorEnabled) {
+    return {
+      error: "Two-Factor Authentication (2FA) is mandatory for administrator accounts. Please complete 2FA setup to access admin functions.",
+    };
+  }
+  return { user };
+}
+
 export async function getAdminDashboardData() {
   try {
-    const user = await getCurrentUser();
-    if (!user || user.role !== Role.ADMIN) {
-      return { success: false, error: "Unauthorized. Admin access required." };
+    const auth = await requireAdminUser();
+    if (auth.error) {
+      return { success: false, error: auth.error, require2FA: true };
     }
+    const user = auth.user;
 
     // 1. Student verification is removed - returning empty array for backwards compatibility
     const unverifiedStudents: any[] = [];

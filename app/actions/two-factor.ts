@@ -182,6 +182,13 @@ export async function disable2FA(data: { code: string }) {
       return { success: false, error: "Unauthorized" };
     }
 
+    if (user.role === "ADMIN") {
+      return {
+        success: false,
+        error: "Two-Factor Authentication is mandatory for administrator accounts and cannot be disabled.",
+      };
+    }
+
     const dbUser = await prisma.user.findUnique({
       where: { id: user.id },
       select: { twoFactorSecret: true, twoFactorEnabled: true },
@@ -223,6 +230,53 @@ export async function disable2FA(data: { code: string }) {
     return { success: true };
   } catch (err: any) {
     return { success: false, error: err.message || "Failed to disable 2FA." };
+  }
+}
+
+/**
+ * Request verification challenge for updating Agent bank payout account details
+ */
+export async function requestAgentBankUpdateVerification() {
+  try {
+    const user = await getCurrentUser();
+    if (!user || user.role !== "AGENT") {
+      return { success: false, error: "Unauthorized. Agent session required." };
+    }
+
+    const dbUser = await prisma.user.findUnique({
+      where: { id: user.id },
+      select: { twoFactorEnabled: true, email: true },
+    });
+
+    if (dbUser?.twoFactorEnabled) {
+      return {
+        success: true,
+        method: "TOTP" as const,
+      };
+    }
+
+    // Agent does not have TOTP app configured: dispatch Email OTP
+    const rateCheck = await checkRateLimit(`bank-otp:${user.id}`, 3, 5);
+    if (!rateCheck.success) {
+      return { success: false, error: rateCheck.error };
+    }
+
+    const otpRes = await generateOTP(user.email, "TWO_FACTOR_AUTH");
+    if (!otpRes.success) {
+      return { success: false, error: otpRes.error || "Failed to dispatch email verification code." };
+    }
+
+    // Mask email for display (e.g., j***@example.com)
+    const [localPart, domain] = user.email.split("@");
+    const maskedEmail = `${localPart[0]}***@${domain}`;
+
+    return {
+      success: true,
+      method: "EMAIL_OTP" as const,
+      maskedEmail,
+    };
+  } catch (err: any) {
+    return { success: false, error: err.message || "Failed to initialize bank verification." };
   }
 }
 
