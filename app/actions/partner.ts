@@ -171,7 +171,7 @@ export async function getPartnerBySlug(rawSlug: string): Promise<{ success: bool
           referralRewardAmount: agent.referralRewardAmount || 5000,
           referralOfferTitle: agent.referralOfferTitle || "Refer an available student apartment and earn ₦5,000 instantly.",
           referralOfferDesc: agent.referralOfferDesc || "Know of an available student apartment? Refer it to our agency and earn ₦5,000 instantly once the property is verified.",
-          referralWhatsappLink: agent.referralWhatsappLink || `https://wa.me/${cleanPhone}?text=I%20have%20an%20available%20student%20apartment.`,
+          referralWhatsappLink: agent.referralWhatsappLink || `https://wa.me/${cleanPhone}?text=Hello%20Easyville,%20I%20have%20an%20available%20student%20apartment.`,
           properties: agent.properties || [],
           totalProperties: agent.properties?.length || 0,
         },

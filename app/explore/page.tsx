@@ -319,22 +319,23 @@ export default function Explore() {
                   const isEasyville = Boolean(
                     property.agent?.agencyName?.toLowerCase().includes("easyville") ||
                     property.agent?.fullName?.toLowerCase().includes("easyville") ||
-                    property.title?.toLowerCase().includes("easyville") ||
-                    property.location?.toLowerCase().includes("iterigbi")
+                    property.agent?.slug === "easyville-estates" ||
+                    property.title?.toLowerCase().includes("easyville")
                   );
 
-                  const agentLogoUrl = property.agent?.logoUrl || (isEasyville ? "/partners/easyville-logo.jpg" : null);
-                  const partnerSlug = property.agent?.slug || (isEasyville ? "easyville-estates" : null);
+                  const agentLogoUrl = isEasyville 
+                    ? (property.agent?.logoUrl || "/partners/easyville-logo.jpg") 
+                    : (property.agent?.logoUrl || null);
+                  const partnerSlug = isEasyville ? (property.agent?.slug || "easyville-estates") : null;
 
-                  const isTrustedPartnerAgency = Boolean(isEasyville || property.agent?.isTrustedPartner);
-
+                  // Use full name for all agents. For Easyville Estates, display "Easyville Estates"
                   const ownerName = property.agent 
-                    ? (isTrustedPartnerAgency 
-                        ? (property.agent.agencyName || property.agent.fullName)
-                        : (property.agent.fullName || property.agent.agencyName))
+                    ? (isEasyville 
+                        ? (property.agent.agencyName || property.agent.fullName || "Easyville Estates")
+                        : (property.agent.fullName || property.agent.agencyName || "Agent"))
                     : (property.student ? `@${property.student.username}` : "Campus Tent Official");
                   const isVerified = property.agent 
-                    ? (property.agent.isVerified || isEasyville || Boolean(property.agent.isTrustedPartner)) 
+                    ? (property.agent.isVerified || isEasyville) 
                     : (property.student ? property.student.isVerified : false);
                   const initial = ownerName ? ownerName.replace(/^@/, "").charAt(0).toUpperCase() : "C";
 
@@ -359,13 +360,13 @@ export default function Explore() {
                                   {ownerName}
                                   {isVerified && (
                                     <i
-                                      className={`fas fa-check-circle verified-icon explore-owner-verified-icon ${isEasyville || property.agent?.isTrustedPartner ? "verified-gold-icon" : ""}`}
-                                      title={isEasyville || property.agent?.isTrustedPartner ? "Verified Trusted Partner" : "Verified Owner"}
+                                      className={`fas fa-check-circle verified-icon explore-owner-verified-icon ${isEasyville ? "verified-gold-icon" : ""}`}
+                                      title={isEasyville ? "CampusTent Trusted Partner" : "Verified Owner"}
                                     ></i>
                                   )}
                                 </h3>
                                 {property.agent ? (
-                                  (isEasyville || property.agent?.isTrustedPartner) ? (
+                                  isEasyville ? (
                                     <span className="explore-trusted-partner-badge">
                                       <i className="fas fa-crown"></i> Trusted Partner Agency
                                     </span>
@@ -393,13 +394,13 @@ export default function Explore() {
                                   {ownerName}
                                   {isVerified && (
                                     <i
-                                      className={`fas fa-check-circle verified-icon explore-owner-verified-icon ${isEasyville || property.agent?.isTrustedPartner ? "verified-gold-icon" : ""}`}
-                                      title={isEasyville || property.agent?.isTrustedPartner ? "Verified Trusted Partner" : "Verified Owner"}
+                                      className={`fas fa-check-circle verified-icon explore-owner-verified-icon ${isEasyville ? "verified-gold-icon" : ""}`}
+                                      title={isEasyville ? "CampusTent Trusted Partner" : "Verified Owner"}
                                     ></i>
                                   )}
                                 </h3>
                                 {property.agent ? (
-                                  (isEasyville || property.agent?.isTrustedPartner) ? (
+                                  isEasyville ? (
                                     <span className="explore-trusted-partner-badge">
                                       <i className="fas fa-crown"></i> Trusted Partner Agency
                                     </span>

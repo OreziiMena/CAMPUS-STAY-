@@ -244,12 +244,26 @@ export default async function PartnerPage({ params }: PageProps) {
                         </span>
                       </p>
 
-                      <Link
-                        href={`/apartment-details?id=${property.id}`}
-                        className={styles.cardBtn}
-                      >
-                        View Details
-                      </Link>
+                      {/* Action buttons: Custom Details Link & Direct WhatsApp CTA */}
+                      <div className={styles.cardActionsRow}>
+                        <Link
+                          href={`/apartment-details?id=${property.id}&partner=${partner.slug}`}
+                          className={styles.cardBtn}
+                        >
+                          View Details
+                        </Link>
+                        <a
+                          href={`https://wa.me/2347048489342?text=${encodeURIComponent(
+                            `Hello EasyVille Estates, I'm inquiring about "${property.title}" (₦${property.price?.toLocaleString()}) on CampusTent.`
+                          )}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className={styles.cardBtnWhatsApp}
+                          title="Inquire on WhatsApp"
+                        >
+                          <i className="fab fa-whatsapp"></i> Inquire
+                        </a>
+                      </div>
                     </div>
                   </div>
                 );

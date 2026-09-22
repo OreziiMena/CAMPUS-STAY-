@@ -2809,4 +2809,65 @@ body {
   }
 }
 
+/* Partner Return Bar */
+.partner-return-bar {
+  background: linear-gradient(135deg, #022b17 0%, #073b24 100%);
+  border-bottom: 2px solid #fbbf24;
+  padding: 12px 20px;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.partner-return-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.partner-return-link {
+  color: #ffffff;
+  text-decoration: none;
+  font-weight: 600;
+  font-size: 0.92rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  transition: all 0.2s ease;
+}
+
+.partner-return-link i {
+  color: #fbbf24;
+  transition: transform 0.2s ease;
+}
+
+.partner-return-link:hover {
+  color: #fef08a;
+}
+
+.partner-return-link:hover i {
+  transform: translateX(-3px);
+}
+
+.partner-return-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+  color: #92400e;
+  border: 1px solid #f59e0b;
+  font-size: 0.75rem;
+  font-weight: 700;
+  padding: 3px 10px;
+  border-radius: 14px;
+}
+
+.partner-return-badge i {
+  color: #b45309;
+}
+
+
 

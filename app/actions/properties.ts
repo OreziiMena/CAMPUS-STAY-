@@ -37,21 +37,19 @@ function seededShuffle<T>(array: T[], randomFn: () => number): T[] {
   return copy;
 }
 
-// Helper: Identify if a property belongs to EasyVille Estates / trusted partner
+// Helper: Identify if a property belongs strictly to EasyVille Estates
 function isEasyvilleListing(property: any): boolean {
   const agencyName = property.agent?.agencyName?.toLowerCase() || "";
   const fullName = property.agent?.fullName?.toLowerCase() || "";
   const slug = property.agent?.slug?.toLowerCase() || "";
   const title = property.title?.toLowerCase() || "";
-  const location = property.location?.toLowerCase() || "";
 
   return (
     agencyName.includes("easyville") ||
     fullName.includes("easyville") ||
+    slug === "easyville-estates" ||
     slug.includes("easyville") ||
-    title.includes("easyville") ||
-    location.includes("iterigbi") ||
-    Boolean(property.agent?.isTrustedPartner && (agencyName.includes("easyville") || title.includes("easyville")))
+    title.includes("easyville")
   );
 }
 

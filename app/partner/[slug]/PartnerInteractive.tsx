@@ -40,14 +40,7 @@ export default function PartnerInteractive({
 
   return (
     <div className={styles.heroActions}>
-      <a
-        href={whatsappLink}
-        target="_blank"
-        rel="noopener noreferrer"
-        className={styles.actionBtnWhatsApp}
-      >
-        <i className="fab fa-whatsapp"></i> Chat on WhatsApp
-      </a>
+      
 
       <button
         type="button"

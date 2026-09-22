@@ -521,21 +521,56 @@
   color: #10b981;
 }
 
-.cardBtn {
+.cardActionsRow {
   margin-top: auto;
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  width: 100%;
+}
+
+.cardBtn {
+  flex: 1;
   background: #073b24;
   color: #ffffff;
   text-align: center;
-  padding: 10px;
+  padding: 10px 12px;
   border-radius: 8px;
   font-weight: 700;
-  font-size: 0.9rem;
+  font-size: 0.88rem;
   text-decoration: none;
   transition: all 0.2s ease;
+  white-space: nowrap;
+  box-sizing: border-box;
 }
 
 .cardBtn:hover {
   background: #022b17;
+  transform: translateY(-1px);
+}
+
+.cardBtnWhatsApp {
+  background: #25d366;
+  color: #ffffff;
+  text-align: center;
+  padding: 10px 14px;
+  border-radius: 8px;
+  font-weight: 700;
+  font-size: 0.86rem;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+  box-sizing: border-box;
+  box-shadow: 0 2px 8px rgba(37, 211, 102, 0.25);
+}
+
+.cardBtnWhatsApp:hover {
+  background: #20ba5a;
+  transform: translateY(-1px);
 }
 
 /* Empty State */

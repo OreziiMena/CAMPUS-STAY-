@@ -121,7 +121,7 @@ export default function Sidebar({
                   ></i>
                 )}
               </h5>
-              {property.agent.isTrustedPartner || property.agent.role === "Trusted Partner Agency" ? (
+              {property.agent.isTrustedPartner && property.agent.role === "Trusted Partner Agency" ? (
                 <span className="sidebar-trusted-partner-badge">
                   <i className="fas fa-crown"></i> Trusted Partner Agency
                 </span>

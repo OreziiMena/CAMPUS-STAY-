@@ -68,6 +68,7 @@ function ApartmentDetailsContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const id = searchParams.get("id");
+  const partnerSlug = searchParams.get("partner");
 
   const [property, setProperty] = useState<Property | null>(null);
   const [loading, setLoading] = useState(true);
@@ -219,14 +220,20 @@ function ApartmentDetailsContent() {
         const rawCautionFee = prop.cautionFee !== null && prop.cautionFee !== undefined ? prop.cautionFee : 0;
         const rawTotal = prop.price || (rawRent + rawAgentFee + rawCautionFee);
 
+        const isEasyville = Boolean(
+          prop.agent?.agencyName?.toLowerCase().includes("easyville") ||
+          prop.agent?.fullName?.toLowerCase().includes("easyville") ||
+          prop.agent?.slug === "easyville-estates" ||
+          prop.title?.toLowerCase().includes("easyville")
+        );
+
         setProperty({
           id: prop.id,
           title: prop.title,
-          price: `₦${rawTotal.toLocaleString()}`,
-          rawPriceNum: rawTotal,
-          rentAmount: rawRent,
-          agentFee: rawAgentFee,
-          cautionFee: rawCautionFee,
+          price: `₦${prop.price.toLocaleString()}`,
+          rentAmount: prop.rentAmount,
+          agentFee: prop.agentFee,
+          cautionFee: prop.cautionFee,
           isNegotiable: Boolean(prop.isNegotiable),
           location: prop.location,
           distance: prop.distance,
@@ -239,16 +246,20 @@ function ApartmentDetailsContent() {
           roommateGenderPreference: prop.roommateGenderPreference,
           agent: {
             name: prop.agent 
-              ? ((Boolean(prop.agent?.isTrustedPartner || Boolean(prop.agent?.agencyName?.toLowerCase().includes("easyville"))))
-                  ? (prop.agent.agencyName || prop.agent.fullName)
-                  : (prop.agent.fullName || prop.agent.agencyName))
+              ? (isEasyville
+                  ? (prop.agent.agencyName || prop.agent.fullName || "Easyville Estates")
+                  : (prop.agent.fullName || prop.agent.agencyName || "Agent"))
               : (prop.student ? `@${prop.student.username}` : "Campus Tent Official"),
-            role: prop.agent ? (prop.agent.isVerified ? (prop.agent.agencyName ? "Trusted Partner Agency" : "Verified Agent") : "Agent/Landlord") : (prop.student ? (prop.student.isVerified ? "Verified Student Roommate" : "Student Roommate") : "Campus Tent Partner"),
+            role: prop.agent 
+              ? (isEasyville 
+                  ? "Trusted Partner Agency" 
+                  : (prop.agent.isVerified ? "Verified Agent" : "Agent / Landlord")) 
+              : (prop.student ? (prop.student.isVerified ? "Verified Student Roommate" : "Student Roommate") : "Campus Tent Partner"),
             phone: prop.agent ? (prop.agent.user?.phone || "+2349161863877") : (prop.student?.user?.phone || "+2349161863877"),
             isVerified: prop.agent ? prop.agent.isVerified : (prop.student ? prop.student.isVerified : true),
-            logoUrl: prop.agent?.logoUrl || (Boolean(prop.agent?.agencyName?.toLowerCase().includes("easyville") || prop.title?.toLowerCase().includes("easyville") || prop.location?.toLowerCase().includes("iterigbi")) ? "/partners/easyville-logo.jpg" : undefined),
-            slug: prop.agent?.slug || (Boolean(prop.agent?.agencyName?.toLowerCase().includes("easyville") || prop.title?.toLowerCase().includes("easyville") || prop.location?.toLowerCase().includes("iterigbi")) ? "easyville-estates" : undefined),
-            isTrustedPartner: prop.agent?.isTrustedPartner || Boolean(prop.agent?.agencyName?.toLowerCase().includes("easyville")),
+            logoUrl: isEasyville ? (prop.agent?.logoUrl || "/partners/easyville-logo.jpg") : (prop.agent?.logoUrl || undefined),
+            slug: isEasyville ? (prop.agent?.slug || "easyville-estates") : undefined,
+            isTrustedPartner: isEasyville,
           }
         });
 
@@ -678,6 +689,21 @@ function ApartmentDetailsContent() {
       <Navbar />
 
       <main className="details-page-wrapper">
+        {/* Partner Return Bar if arrived from EasyVille Estates */}
+        {(partnerSlug === "easyville-estates" || (partnerSlug && property.agent.slug === partnerSlug)) && (
+          <div className="partner-return-bar">
+            <div className="partner-return-container">
+              <Link href={`/partner/${partnerSlug}`} className="partner-return-link">
+                <i className="fas fa-arrow-left"></i>
+                <span>Back to <strong>EasyVille Estates</strong> Agency Profile &amp; Properties</span>
+              </Link>
+              <span className="partner-return-badge">
+                <i className="fas fa-crown"></i> Trusted Partner
+              </span>
+            </div>
+          </div>
+        )}
+
         {/* 1. Desktop Bento Gallery (Hidden on Mobile) */}
         <HeroGallery
           gallery={gallery}
