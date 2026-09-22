@@ -1428,11 +1428,42 @@ body.dark-mode .filters-horizontal-row input::placeholder {
     font-weight: bold;
     border: 1px solid rgba(26, 115, 232, 0.15);
     font-family: 'Poppins', sans-serif;
+    flex-shrink: 0;
+}
+
+.explore-owner-avatar-logo {
+    background-color: #ffffff !important;
+    padding: 2px;
+    border: 1.5px solid #d4af37 !important;
+    overflow: hidden;
+}
+
+.explore-owner-logo-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: 50%;
+}
+
+.explore-owner-link-wrapper {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    text-decoration: none;
+    color: inherit;
+    flex: 1;
+    min-width: 0;
+    transition: opacity 0.2s ease;
+}
+
+.explore-owner-link-wrapper:hover .explore-owner-name {
+    color: #073b24;
 }
 
 .explore-owner-details {
     display: flex;
     flex-direction: column;
+    min-width: 0;
 }
 
 .explore-owner-name {
@@ -1456,6 +1487,34 @@ body.dark-mode .filters-horizontal-row input::placeholder {
     font-size: 0.75rem;
     color: #666;
     font-family: 'Poppins', sans-serif;
+}
+
+.explore-trusted-partner-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+    color: #92400e;
+    border: 1px solid #f59e0b;
+    font-size: 0.60rem;
+    font-weight: 700;
+    padding: 2px 8px;
+    border-radius: 12px;
+    box-shadow: 0 1px 4px rgba(245, 158, 11, 0.2);
+    width: fit-content;
+    margin-top: 2px;
+    letter-spacing: 0.02em;
+    font-family: 'Poppins', sans-serif;
+    line-height: 1.2;
+}
+
+.explore-trusted-partner-badge i {
+    color: #b45309;
+    font-size: 0.5rem;
+}
+
+.verified-gold-icon {
+    color: #f59e0b !important;
 }
 
 .explore-badges-col {

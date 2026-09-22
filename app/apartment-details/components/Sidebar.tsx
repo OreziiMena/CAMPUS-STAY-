@@ -14,6 +14,9 @@ interface SidebarProps {
       name: string;
       role: string;
       isVerified?: boolean;
+      logoUrl?: string;
+      slug?: string;
+      isTrustedPartner?: boolean;
     };
   };
   currentUser: any;
@@ -95,20 +98,48 @@ export default function Sidebar({
         {/* 2. Agent Profile & Inspection Action Card */}
         <div id="agent-card" className="agent-action-card">
           <div className="agent-profile-box">
-            <div className="agent-avatar-circle">
-              <i className="fas fa-user"></i>
-            </div>
+            {property.agent.logoUrl ? (
+              <div className="agent-avatar-circle agent-avatar-logo">
+                <img
+                  src={property.agent.logoUrl}
+                  alt={property.agent.name}
+                  className="agent-avatar-logo-img"
+                />
+              </div>
+            ) : (
+              <div className="agent-avatar-circle">
+                <i className="fas fa-user"></i>
+              </div>
+            )}
             <div className="agent-details-info">
               <h5>
                 {property.agent.name}
                 {property.agent.isVerified && (
-                  <i className="fas fa-check-circle agent-verified-badge"></i>
+                  <i
+                    className={`fas fa-check-circle agent-verified-badge ${property.agent.isTrustedPartner ? "verified-gold-icon" : ""}`}
+                    title={property.agent.isTrustedPartner ? "Verified Trusted Partner" : "Verified Partner"}
+                  ></i>
                 )}
               </h5>
-              <p className="agent-role-text">{property.agent.role}</p>
-              <div className="response-rate-pill">
-                <i className="fas fa-bolt"></i> Responds fast (&lt; 30 mins)
-              </div>
+              {property.agent.isTrustedPartner || property.agent.role === "Trusted Partner Agency" ? (
+                <span className="sidebar-trusted-partner-badge">
+                  <i className="fas fa-crown"></i> Trusted Partner Agency
+                </span>
+              ) : (
+                <p className="agent-role-text">{property.agent.role}</p>
+              )}
+              {property.agent.slug ? (
+                <Link
+                  href={`/partner/${property.agent.slug}`}
+                  className="agent-partner-link"
+                >
+                  <i className="fas fa-external-link-alt"></i> See more listings by this agency/View Profile
+                </Link>
+              ) : (
+                <div className="response-rate-pill">
+                  <i className="fas fa-bolt"></i> Responds fast (&lt; 30 mins)
+                </div>
+              )}
             </div>
           </div>
 

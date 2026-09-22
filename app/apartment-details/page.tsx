@@ -58,6 +58,9 @@ interface Property {
     role: string;
     phone: string;
     isVerified?: boolean;
+    logoUrl?: string;
+    slug?: string;
+    isTrustedPartner?: boolean;
   };
 }
 
@@ -235,10 +238,17 @@ function ApartmentDetailsContent() {
           isRoommateOption: prop.isRoommateOption,
           roommateGenderPreference: prop.roommateGenderPreference,
           agent: {
-            name: prop.agent ? prop.agent.fullName : (prop.student ? `@${prop.student.username}` : "Campus Tent Official"),
-            role: prop.agent ? (prop.agent.isVerified ? "Verified Agent" : "Agent/Landlord") : (prop.student ? (prop.student.isVerified ? "Verified Student Roommate" : "Student Roommate") : "Campus Tent Partner"),
+            name: prop.agent 
+              ? ((Boolean(prop.agent?.isTrustedPartner || Boolean(prop.agent?.agencyName?.toLowerCase().includes("easyville"))))
+                  ? (prop.agent.agencyName || prop.agent.fullName)
+                  : (prop.agent.fullName || prop.agent.agencyName))
+              : (prop.student ? `@${prop.student.username}` : "Campus Tent Official"),
+            role: prop.agent ? (prop.agent.isVerified ? (prop.agent.agencyName ? "Trusted Partner Agency" : "Verified Agent") : "Agent/Landlord") : (prop.student ? (prop.student.isVerified ? "Verified Student Roommate" : "Student Roommate") : "Campus Tent Partner"),
             phone: prop.agent ? (prop.agent.user?.phone || "+2349161863877") : (prop.student?.user?.phone || "+2349161863877"),
             isVerified: prop.agent ? prop.agent.isVerified : (prop.student ? prop.student.isVerified : true),
+            logoUrl: prop.agent?.logoUrl || (Boolean(prop.agent?.agencyName?.toLowerCase().includes("easyville") || prop.title?.toLowerCase().includes("easyville") || prop.location?.toLowerCase().includes("iterigbi")) ? "/partners/easyville-logo.jpg" : undefined),
+            slug: prop.agent?.slug || (Boolean(prop.agent?.agencyName?.toLowerCase().includes("easyville") || prop.title?.toLowerCase().includes("easyville") || prop.location?.toLowerCase().includes("iterigbi")) ? "easyville-estates" : undefined),
+            isTrustedPartner: prop.agent?.isTrustedPartner || Boolean(prop.agent?.agencyName?.toLowerCase().includes("easyville")),
           }
         });
 

@@ -57,6 +57,8 @@ export default function Explore() {
   const [totalPages, setTotalPages] = useState(1);
   const [totalCount, setTotalCount] = useState(0);
   const [lastFilters, setLastFilters] = useState("");
+  // Session random seed: initialized anew on every page mount/refresh
+  const [sessionSeed] = useState(() => Date.now().toString());
   const LIMIT = 9;
 
   useEffect(() => {
@@ -91,6 +93,7 @@ export default function Explore() {
         agentFeeFilter: agentFee !== "All" ? agentFee : undefined,
         page: page,
         limit: LIMIT,
+        seed: sessionSeed,
       });
 
       if (res.success && res.properties) {
@@ -313,35 +316,102 @@ export default function Explore() {
             ) : (
               <div className="property-grid">
                 {displayProperties.map((property: any) => {
+                  const isEasyville = Boolean(
+                    property.agent?.agencyName?.toLowerCase().includes("easyville") ||
+                    property.agent?.fullName?.toLowerCase().includes("easyville") ||
+                    property.title?.toLowerCase().includes("easyville") ||
+                    property.location?.toLowerCase().includes("iterigbi")
+                  );
+
+                  const agentLogoUrl = property.agent?.logoUrl || (isEasyville ? "/partners/easyville-logo.jpg" : null);
+                  const partnerSlug = property.agent?.slug || (isEasyville ? "easyville-estates" : null);
+
+                  const isTrustedPartnerAgency = Boolean(isEasyville || property.agent?.isTrustedPartner);
+
                   const ownerName = property.agent 
-                    ? property.agent.fullName 
+                    ? (isTrustedPartnerAgency 
+                        ? (property.agent.agencyName || property.agent.fullName)
+                        : (property.agent.fullName || property.agent.agencyName))
                     : (property.student ? `@${property.student.username}` : "Campus Tent Official");
                   const isVerified = property.agent 
-                    ? property.agent.isVerified 
-                    : false;
-                  const initial = property.agent 
-                    ? property.agent.fullName.charAt(0) 
-                    : (property.student ? (property.student.fullName?.charAt(0) || "S") : "C");
+                    ? (property.agent.isVerified || isEasyville || Boolean(property.agent.isTrustedPartner)) 
+                    : (property.student ? property.student.isVerified : false);
+                  const initial = ownerName ? ownerName.replace(/^@/, "").charAt(0).toUpperCase() : "C";
 
                   return (
                     <div key={property.id} className="property-card explore-card-custom">
                       <div>
                         {/* Owner Header on top */}
                         <div className="explore-owner-header">
-                          <div className="explore-owner-avatar">
-                            {initial.toUpperCase()}
-                          </div>
-                          <div className="explore-owner-details">
-                            <h3 className="explore-owner-name">
-                              {ownerName}
-                              {isVerified && (
-                                <i className="fas fa-check-circle verified-icon explore-owner-verified-icon" title="Verified Owner"></i>
+                          {partnerSlug ? (
+                            <Link href={`/partner/${partnerSlug}`} className="explore-owner-link-wrapper" title={`View ${ownerName} Profile & Properties`}>
+                              {agentLogoUrl ? (
+                                <div className="explore-owner-avatar explore-owner-avatar-logo">
+                                  <img src={agentLogoUrl} alt={ownerName} className="explore-owner-logo-img" />
+                                </div>
+                              ) : (
+                                <div className="explore-owner-avatar">
+                                  {initial.toUpperCase()}
+                                </div>
                               )}
-                            </h3>
-                            <span className="explore-owner-type">
-                              {property.agent ? "Agent / Landlord" : "Student Roommate"}
-                            </span>
-                          </div>
+                              <div className="explore-owner-details">
+                                <h3 className="explore-owner-name">
+                                  {ownerName}
+                                  {isVerified && (
+                                    <i
+                                      className={`fas fa-check-circle verified-icon explore-owner-verified-icon ${isEasyville || property.agent?.isTrustedPartner ? "verified-gold-icon" : ""}`}
+                                      title={isEasyville || property.agent?.isTrustedPartner ? "Verified Trusted Partner" : "Verified Owner"}
+                                    ></i>
+                                  )}
+                                </h3>
+                                {property.agent ? (
+                                  (isEasyville || property.agent?.isTrustedPartner) ? (
+                                    <span className="explore-trusted-partner-badge">
+                                      <i className="fas fa-crown"></i> Trusted Partner Agency
+                                    </span>
+                                  ) : (
+                                    <span className="explore-owner-type">Agent / Landlord</span>
+                                  )
+                                ) : (
+                                  <span className="explore-owner-type">Student Roommate</span>
+                                )}
+                              </div>
+                            </Link>
+                          ) : (
+                            <div className="explore-owner-link-wrapper">
+                              {agentLogoUrl ? (
+                                <div className="explore-owner-avatar explore-owner-avatar-logo">
+                                  <img src={agentLogoUrl} alt={ownerName} className="explore-owner-logo-img" />
+                                </div>
+                              ) : (
+                                <div className="explore-owner-avatar">
+                                  {initial.toUpperCase()}
+                                </div>
+                              )}
+                              <div className="explore-owner-details">
+                                <h3 className="explore-owner-name">
+                                  {ownerName}
+                                  {isVerified && (
+                                    <i
+                                      className={`fas fa-check-circle verified-icon explore-owner-verified-icon ${isEasyville || property.agent?.isTrustedPartner ? "verified-gold-icon" : ""}`}
+                                      title={isEasyville || property.agent?.isTrustedPartner ? "Verified Trusted Partner" : "Verified Owner"}
+                                    ></i>
+                                  )}
+                                </h3>
+                                {property.agent ? (
+                                  (isEasyville || property.agent?.isTrustedPartner) ? (
+                                    <span className="explore-trusted-partner-badge">
+                                      <i className="fas fa-crown"></i> Trusted Partner Agency
+                                    </span>
+                                  ) : (
+                                    <span className="explore-owner-type">Agent / Landlord</span>
+                                  )
+                                ) : (
+                                  <span className="explore-owner-type">Student Roommate</span>
+                                )}
+                              </div>
+                            </div>
+                          )}
                           <div className="explore-badges-col">
                             <span className={`explore-availability-badge ${property.isAvailable ? "available" : "taken"}`}>
                               {property.isAvailable ? "AVAILABLE" : "TAKEN"}

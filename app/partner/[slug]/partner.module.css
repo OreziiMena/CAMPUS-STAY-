@@ -1,0 +1,742 @@
+.partnerPage {
+  min-height: 100vh;
+  background-color: #f8fafc;
+  color: #1e293b;
+  font-family: 'Poppins', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  width: 100%;
+  max-width: 100vw;
+  overflow-x: hidden;
+  box-sizing: border-box;
+}
+
+/* Hero Section */
+.heroSection {
+  background: linear-gradient(135deg, #022b17 0%, #073b24 60%, #0a4f31 100%);
+  color: #ffffff;
+  padding: 120px 20px 60px 20px;
+  position: relative;
+  overflow: hidden;
+  text-align: center;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.heroGlow {
+  position: absolute;
+  top: 30%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 500px;
+  height: 300px;
+  background: radial-gradient(circle, rgba(16, 185, 129, 0.25) 0%, rgba(2, 43, 23, 0) 70%);
+  pointer-events: none;
+}
+
+.heroContainer {
+  max-width: 900px;
+  width: 100%;
+  margin: 0 auto;
+  position: relative;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  box-sizing: border-box;
+}
+
+.logoWrapper {
+  width: 120px;
+  height: 120px;
+  border-radius: 50%;
+  background: #ffffff;
+  padding: 5px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35), 0 0 0 3px rgba(251, 191, 36, 0.4);
+  margin-bottom: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  position: relative;
+}
+
+.agencyLogo {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 50%;
+}
+
+.logoFallback {
+  width: 100%;
+  height: 100%;
+  background: #e8f0fe;
+  color: #073b24;
+  font-size: 2.5rem;
+  font-weight: 800;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+}
+
+.agencyTitleRow {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-bottom: 8px;
+}
+
+.agencyTitle {
+  font-size: 2.2rem;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+  margin: 0;
+  text-transform: uppercase;
+  color: #ffffff;
+}
+
+.trustedBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+  border: 1.5px solid #f59e0b;
+  color: #78350f;
+  padding: 6px 16px;
+  border-radius: 24px;
+  font-size: 0.88rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  margin-bottom: 12px;
+  box-shadow: 0 4px 15px rgba(245, 158, 11, 0.25);
+}
+
+.trustedBadge i {
+  color: #b45309;
+}
+
+.agencyTagline {
+  font-size: 1.1rem;
+  color: #fef08a;
+  font-weight: 600;
+  margin: 0 0 24px 0;
+  letter-spacing: 0.02em;
+}
+
+.heroActions {
+  display: flex;
+  gap: 14px;
+  flex-wrap: wrap;
+  justify-content: center;
+  margin-top: 10px;
+}
+
+.actionBtnWhatsApp {
+  background: #25d366;
+  color: #ffffff;
+  padding: 12px 24px;
+  border-radius: 10px;
+  font-weight: 700;
+  font-size: 0.95rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  text-decoration: none;
+  transition: all 0.2s ease;
+  box-shadow: 0 4px 15px rgba(37, 211, 102, 0.35);
+}
+
+.actionBtnWhatsApp:hover {
+  background: #20ba5a;
+  transform: translateY(-2px);
+}
+
+.actionBtnShare {
+  background: rgba(255, 255, 255, 0.12);
+  color: #ffffff;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  padding: 12px 20px;
+  border-radius: 10px;
+  font-weight: 600;
+  font-size: 0.95rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.actionBtnShare:hover {
+  background: rgba(255, 255, 255, 0.22);
+}
+
+/* Main Content Container */
+.mainContainer {
+  width: 100%;
+  max-width: 1160px;
+  margin: -35px auto 60px auto;
+  padding: 0 20px;
+  position: relative;
+  z-index: 10;
+  box-sizing: border-box;
+}
+
+/* About Card */
+.aboutCard {
+  background: #ffffff;
+  border-radius: 16px;
+  padding: 28px 32px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
+  border: 1px solid #e2e8f0;
+  margin-bottom: 30px;
+  width: 100%;
+  box-sizing: border-box;
+  overflow: hidden;
+}
+
+.aboutTitle {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #073b24;
+  margin: 0 0 12px 0;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.aboutTitle i {
+  color: #10b981;
+}
+
+.aboutText {
+  font-size: 1rem;
+  line-height: 1.7;
+  color: #475569;
+  margin: 0 0 20px 0;
+}
+
+.aboutHighlights {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  padding-top: 16px;
+  border-top: 1px solid #f1f5f9;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.highlightPill {
+  background: #f0fdf4;
+  color: #065f46;
+  border: 1px solid #bbf7d0;
+  padding: 6px 14px;
+  border-radius: 20px;
+  font-size: 0.82rem;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+/* Refer & Earn Banner */
+.referBanner {
+  background: linear-gradient(135deg, #073b24 0%, #032114 100%);
+  border: 2px solid #fbbf24;
+  border-radius: 16px;
+  padding: 30px;
+  color: #ffffff;
+  margin-bottom: 40px;
+  box-shadow: 0 12px 35px rgba(7, 59, 36, 0.25);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 24px;
+  position: relative;
+  overflow: hidden;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.referBannerGlow {
+  position: absolute;
+  right: -50px;
+  top: -50px;
+  width: 250px;
+  height: 250px;
+  background: radial-gradient(circle, rgba(251, 191, 36, 0.15) 0%, rgba(7, 59, 36, 0) 70%);
+  pointer-events: none;
+}
+
+.referContent {
+  flex: 1 1 300px;
+  min-width: 0;
+  max-width: 100%;
+  box-sizing: border-box;
+  z-index: 2;
+}
+
+.referBadge {
+  background: #fbbf24;
+  color: #78350f;
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 0.78rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 12px;
+}
+
+.referTitle {
+  font-size: 1.55rem;
+  font-weight: 800;
+  color: #ffffff;
+  margin: 0 0 8px 0;
+  line-height: 1.3;
+}
+
+.referTitle span {
+  color: #fef08a;
+}
+
+.referDesc {
+  font-size: 0.95rem;
+  color: #e2e8f0;
+  line-height: 1.6;
+  margin: 0;
+}
+
+.referBtnWrapper {
+  z-index: 2;
+}
+
+.referBtn {
+  background: #fbbf24;
+  color: #073b24;
+  padding: 14px 28px;
+  border-radius: 12px;
+  font-weight: 800;
+  font-size: 1rem;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  box-shadow: 0 6px 20px rgba(251, 191, 36, 0.4);
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.referBtn:hover {
+  background: #f59e0b;
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(251, 191, 36, 0.5);
+}
+
+/* Properties Section */
+.propertiesSection {
+  margin-top: 20px;
+}
+
+.sectionHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  flex-wrap: wrap;
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.sectionTitle {
+  font-size: 1.6rem;
+  font-weight: 800;
+  color: #073b24;
+  margin: 0 0 4px 0;
+}
+
+.sectionSub {
+  font-size: 0.95rem;
+  color: #64748b;
+  margin: 0;
+}
+
+.propertyCountBadge {
+  background: #ecfdf5;
+  color: #059669;
+  border: 1px solid #a7f3d0;
+  font-weight: 700;
+  padding: 6px 14px;
+  border-radius: 20px;
+  font-size: 0.85rem;
+}
+
+/* Property Grid */
+.propertyGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 24px;
+}
+
+.propertyCard {
+  background: #ffffff;
+  border-radius: 16px;
+  border: 1px solid #e2e8f0;
+  overflow: hidden;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.04);
+  transition: all 0.25s ease;
+  display: flex;
+  flex-direction: column;
+}
+
+.propertyCard:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.08);
+  border-color: #cbd5e1;
+}
+
+.cardMediaWrapper {
+  position: relative;
+  width: 100%;
+  height: 210px;
+  background-color: #0f172a;
+  overflow: hidden;
+}
+
+.cardMedia {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.videoBadge {
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  background: rgba(0, 0, 0, 0.7);
+  backdrop-filter: blur(4px);
+  color: #ffffff;
+  font-size: 0.75rem;
+  font-weight: 700;
+  padding: 4px 10px;
+  border-radius: 20px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.availBadge {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  background: #ecfdf5;
+  color: #065f46;
+  border: 1px solid #10b981;
+  font-size: 0.72rem;
+  font-weight: 800;
+  padding: 3px 8px;
+  border-radius: 6px;
+}
+
+.cardBody {
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+}
+
+.cardPriceRow {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  margin-bottom: 12px;
+}
+
+.cardPrice {
+  font-size: 1.4rem;
+  font-weight: 800;
+  color: #073b24;
+  margin: 0;
+}
+
+.cardPriceSub {
+  font-size: 0.8rem;
+  color: #64748b;
+  font-weight: 500;
+}
+
+.feeBreakdownRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 14px;
+}
+
+.feePill {
+  font-size: 0.72rem;
+  font-weight: 600;
+  padding: 3px 8px;
+  border-radius: 6px;
+  background: #f1f5f9;
+  color: #334155;
+  border: 1px solid #e2e8f0;
+}
+
+.feePillRent {
+  background: #fef9c3;
+  color: #854d0e;
+  border-color: #fef08a;
+}
+
+.feePillAgent {
+  background: #eff6ff;
+  color: #1e40af;
+  border-color: #bfdbfe;
+}
+
+.cardTitle {
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: #0f172a;
+  margin: 0 0 8px 0;
+  line-height: 1.4;
+}
+
+.cardLocation {
+  font-size: 0.84rem;
+  color: #64748b;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0 0 16px 0;
+}
+
+.cardLocation i {
+  color: #10b981;
+}
+
+.cardBtn {
+  margin-top: auto;
+  background: #073b24;
+  color: #ffffff;
+  text-align: center;
+  padding: 10px;
+  border-radius: 8px;
+  font-weight: 700;
+  font-size: 0.9rem;
+  text-decoration: none;
+  transition: all 0.2s ease;
+}
+
+.cardBtn:hover {
+  background: #022b17;
+}
+
+/* Empty State */
+.emptyCard {
+  background: #ffffff;
+  border: 1.5px dashed #cbd5e1;
+  border-radius: 16px;
+  padding: 48px 24px;
+  text-align: center;
+}
+
+.emptyIcon {
+  font-size: 2.8rem;
+  color: #94a3b8;
+  margin-bottom: 14px;
+}
+
+.emptyTitle {
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: #334155;
+  margin: 0 0 6px 0;
+}
+
+.emptyText {
+  font-size: 0.9rem;
+  color: #64748b;
+  margin: 0 0 20px 0;
+}
+
+.emptyBtn {
+  background: #073b24;
+  color: #ffffff;
+  padding: 10px 20px;
+  border-radius: 8px;
+  font-weight: 700;
+  font-size: 0.88rem;
+  text-decoration: none;
+  display: inline-block;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .heroSection {
+    padding: 105px 16px 45px 16px;
+  }
+  .agencyTitle {
+    font-size: 1.65rem;
+  }
+  .agencyTagline {
+    font-size: 0.95rem;
+    margin-bottom: 20px;
+  }
+  .logoWrapper {
+    width: 100px;
+    height: 100px;
+  }
+  .heroActions {
+    flex-direction: column;
+    width: 100%;
+  }
+  .actionBtnWhatsApp, .actionBtnShare {
+    width: 100%;
+    justify-content: center;
+    box-sizing: border-box;
+  }
+
+  .mainContainer {
+    padding: 0 16px;
+    margin-top: -25px;
+    margin-bottom: 40px;
+  }
+
+  /* Responsive About Card */
+  .aboutCard {
+    padding: 22px 18px;
+    border-radius: 14px;
+    margin-bottom: 24px;
+    width: 100%;
+    box-sizing: border-box;
+  }
+  .aboutTitle {
+    font-size: 1.18rem;
+    margin-bottom: 10px;
+  }
+  .aboutText {
+    font-size: 0.93rem;
+    line-height: 1.65;
+    margin-bottom: 16px;
+  }
+  .aboutHighlights {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding-top: 14px;
+    width: 100%;
+  }
+  .highlightPill {
+    width: 100%;
+    box-sizing: border-box;
+    font-size: 0.82rem;
+    padding: 9px 14px;
+    border-radius: 10px;
+    justify-content: flex-start;
+  }
+
+  /* Responsive Refer Banner */
+  .referBanner {
+    padding: 22px 18px;
+    gap: 18px;
+    border-radius: 14px;
+    margin-bottom: 30px;
+    width: 100%;
+    box-sizing: border-box;
+  }
+  .referContent {
+    flex: 1 1 100%;
+    width: 100%;
+    box-sizing: border-box;
+  }
+  .referTitle {
+    font-size: 1.25rem;
+    margin-bottom: 6px;
+  }
+  .referDesc {
+    font-size: 0.88rem;
+    line-height: 1.55;
+  }
+  .referBtnWrapper {
+    width: 100%;
+    box-sizing: border-box;
+  }
+  .referBtn {
+    width: 100%;
+    justify-content: center;
+    box-sizing: border-box;
+    padding: 12px 20px;
+    font-size: 0.95rem;
+  }
+
+  /* Responsive Properties Header & Grid */
+  .sectionHeader {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+    margin-bottom: 18px;
+    width: 100%;
+    box-sizing: border-box;
+  }
+  .sectionTitle {
+    font-size: 1.35rem;
+  }
+  .sectionSub {
+    font-size: 0.88rem;
+  }
+  .propertyCountBadge {
+    align-self: flex-start;
+  }
+  .propertyGrid {
+    grid-template-columns: 1fr;
+    gap: 18px;
+    width: 100%;
+    box-sizing: border-box;
+  }
+  .propertyCard {
+    width: 100%;
+    box-sizing: border-box;
+  }
+}
+
+@media (max-width: 480px) {
+  .heroSection {
+    padding: 95px 14px 40px 14px;
+  }
+  .agencyTitle {
+    font-size: 1.45rem;
+  }
+  .mainContainer {
+    padding: 0 12px;
+    margin-top: -20px;
+  }
+  .aboutCard {
+    padding: 18px 14px;
+  }
+  .aboutTitle {
+    font-size: 1.1rem;
+  }
+  .aboutText {
+    font-size: 0.88rem;
+  }
+  .highlightPill {
+    font-size: 0.78rem;
+    padding: 8px 12px;
+  }
+  .referBanner {
+    padding: 18px 14px;
+  }
+  .referTitle {
+    font-size: 1.15rem;
+  }
+  .referDesc {
+    font-size: 0.84rem;
+  }
+}

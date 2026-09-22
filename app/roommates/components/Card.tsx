@@ -174,10 +174,10 @@ export default function Card({
           <div className="roommate-price-row">
             <h3 className="roommate-price-title">
               ₦{pledgedRent.toLocaleString()}
-              <span className="roommate-price-subtext">/ person</span>
+              <span className="roommate-price-subtext"> budget</span>
             </h3>
             <span className="roommate-target-badge" title="Target total apartment rent">
-              Target: ₦{targetRent.toLocaleString()}
+              Target rent: ₦{targetRent.toLocaleString()}
             </span>
           </div>
         ) : (

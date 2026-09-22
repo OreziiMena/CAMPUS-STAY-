@@ -12,6 +12,49 @@ import { checkRateLimit } from "@/lib/rate-limit";
 import { escapeHtml } from "@/lib/email-sanitizer";
 import { buildPairingTags } from "@/lib/roommate-helper";
 
+// Helper: Seeded deterministic pseudo-random number generator (Mulberry32)
+function createPrng(seedVal: string | number) {
+  const seedStr = String(seedVal);
+  let h = 1779033703 ^ seedStr.length;
+  for (let i = 0; i < seedStr.length; i++) {
+    h = Math.imul(h ^ seedStr.charCodeAt(i), 3432918353);
+    h = (h << 13) | (h >>> 19);
+  }
+  return function () {
+    h = Math.imul(h ^ (h >>> 16), 2246822507);
+    h = Math.imul(h ^ (h >>> 13), 3266489909);
+    return ((h ^= h >>> 16) >>> 0) / 4294967296;
+  };
+}
+
+// Helper: Seeded Fisher-Yates array shuffle
+function seededShuffle<T>(array: T[], randomFn: () => number): T[] {
+  const copy = [...array];
+  for (let i = copy.length - 1; i > 0; i--) {
+    const j = Math.floor(randomFn() * (i + 1));
+    [copy[i], copy[j]] = [copy[j], copy[i]];
+  }
+  return copy;
+}
+
+// Helper: Identify if a property belongs to EasyVille Estates / trusted partner
+function isEasyvilleListing(property: any): boolean {
+  const agencyName = property.agent?.agencyName?.toLowerCase() || "";
+  const fullName = property.agent?.fullName?.toLowerCase() || "";
+  const slug = property.agent?.slug?.toLowerCase() || "";
+  const title = property.title?.toLowerCase() || "";
+  const location = property.location?.toLowerCase() || "";
+
+  return (
+    agencyName.includes("easyville") ||
+    fullName.includes("easyville") ||
+    slug.includes("easyville") ||
+    title.includes("easyville") ||
+    location.includes("iterigbi") ||
+    Boolean(property.agent?.isTrustedPartner && (agencyName.includes("easyville") || title.includes("easyville")))
+  );
+}
+
 export async function getProperties(filterParam?: string | {
   searchQuery?: string;
   university?: string;
@@ -23,6 +66,7 @@ export async function getProperties(filterParam?: string | {
   maxAgentFee?: number;
   page?: number;
   limit?: number;
+  seed?: string | number;
 }) {
   try {
     let searchQuery: string | undefined;
@@ -33,6 +77,7 @@ export async function getProperties(filterParam?: string | {
     let proximity: string | undefined;
     let agentFeeFilter: string | undefined;
     let maxAgentFee: number | undefined;
+    let seed: string | number | undefined;
 
     let page = 1;
     let limit = 9;
@@ -50,6 +95,7 @@ export async function getProperties(filterParam?: string | {
       maxAgentFee = filterParam.maxAgentFee;
       page = filterParam.page || 1;
       limit = filterParam.limit || 9;
+      seed = filterParam.seed;
     }
 
     const skip = (page - 1) * limit;
@@ -164,17 +210,7 @@ export async function getProperties(filterParam?: string | {
       orderBy: { createdAt: "desc" },
     });
 
-    // Verified Agent listings always come first
-    properties.sort((a, b) => {
-      const aVerified = a.agent?.isVerified ? 1 : 0;
-      const bVerified = b.agent?.isVerified ? 1 : 0;
-      if (bVerified !== aVerified) {
-        return bVerified - aVerified; // Verified agent listings ranked first
-      }
-      return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
-    });
-
-    // 5. Proximity filter (in-memory walk time minutes comparison)
+    // 1. Proximity filter (in-memory walk time minutes comparison)
     if (isProximityFiltered) {
       properties = properties.filter((property) => {
         const distStr = property.distance || "";
@@ -193,11 +229,52 @@ export async function getProperties(filterParam?: string | {
       });
     }
 
-    const totalCount = properties.length;
+    // 2. Deterministic PRNG initialized with the session seed (or random fallback)
+    const effectiveSeed = seed !== undefined ? seed : Math.random();
+    const randomFn = createPrng(effectiveSeed);
+
+    // 3. Separate EasyVille properties from other listings
+    const easyvilleProps: any[] = [];
+    const otherProps: any[] = [];
+
+    for (const prop of properties) {
+      if (isEasyvilleListing(prop)) {
+        easyvilleProps.push(prop);
+      } else {
+        otherProps.push(prop);
+      }
+    }
+
+    let orderedProperties: any[] = [];
+
+    if (easyvilleProps.length > 0) {
+      // Prioritize available EasyVille apartments for the top spot if available
+      const availableEasyville = easyvilleProps.filter((p) => p.isAvailable);
+      const candidatesForTop = availableEasyville.length > 0 ? availableEasyville : easyvilleProps;
+
+      // Pick exactly ONE EasyVille apartment at random for slot 0
+      const chosenTopIndex = Math.floor(randomFn() * candidatesForTop.length);
+      const topEasyville = candidatesForTop[chosenTopIndex];
+
+      // Any remaining EasyVille properties go into the general pool to be randomly shuffled
+      const remainingEasyville = easyvilleProps.filter((p) => p.id !== topEasyville.id);
+      const remainingPool = [...remainingEasyville, ...otherProps];
+
+      // Shuffle the remaining listings in random order
+      const shuffledRest = seededShuffle(remainingPool, randomFn);
+
+      // Final order: Exactly 1 EasyVille first, followed by all other listings randomly
+      orderedProperties = [topEasyville, ...shuffledRest];
+    } else {
+      // If no EasyVille properties match current filter, randomize all matching properties
+      orderedProperties = seededShuffle(properties, randomFn);
+    }
+
+    const totalCount = orderedProperties.length;
     const totalPages = Math.ceil(totalCount / limit) || 1;
 
     // Apply pagination slice
-    const paginatedProperties = properties.slice(skip, skip + limit);
+    const paginatedProperties = orderedProperties.slice(skip, skip + limit);
 
     return {
       success: true,

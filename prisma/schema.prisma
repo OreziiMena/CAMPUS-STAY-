@@ -89,6 +89,16 @@ model AgentProfile {
   accountName   String?
   recipientCode String?  // Paystack Transfer Recipient code (e.g. RCP_...)
 
+  // Partner Standoff & Branding Details
+  logoUrl               String?
+  slug                  String?    @unique
+  isTrustedPartner      Boolean    @default(false)
+  tagline               String?
+  referralRewardAmount  Float?     @default(5000)
+  referralOfferTitle    String?
+  referralOfferDesc     String?
+  referralWhatsappLink  String?
+
   properties  Property[]
   createdAt   DateTime   @default(now())
   updatedAt   DateTime   @updatedAt

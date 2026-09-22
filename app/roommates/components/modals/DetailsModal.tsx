@@ -120,16 +120,12 @@ export default function DetailsModal({
                 </div>
                 <div className="proposal-grid-metrics">
                   <div className="proposal-metric">
-                    <span className="proposal-metric-lbl">Target Rent</span>
+                    <span className="proposal-metric-lbl">Target Rent Needed</span>
                     <span className="proposal-metric-val">₦{targetRent.toLocaleString()}</span>
                   </div>
                   <div className="proposal-metric">
-                    <span className="proposal-metric-lbl">Per Person</span>
+                    <span className="proposal-metric-lbl">My Budget</span>
                     <span className="proposal-metric-val green">₦{pledgedRent.toLocaleString()}</span>
-                  </div>
-                  <div className="proposal-metric">
-                    <span className="proposal-metric-lbl">Needed to Rent</span>
-                    <span className="proposal-metric-val amber">₦{neededRent.toLocaleString()}</span>
                   </div>
                 </div>
               </div>
