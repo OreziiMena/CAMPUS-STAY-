@@ -41,17 +41,31 @@ export default function TwoFactorSettingsModal({
   const fetchStatus = async () => {
     setLoading(true);
     setError("");
-    const res = await get2FAStatus();
-    if (res.success) {
-      setIsEnabled(!!res.enabled);
-      setConfirmedAt(res.confirmedAt ? new Date(res.confirmedAt).toLocaleDateString() : null);
-      if (mandatory && !res.enabled) {
-        setStep("SETUP_QR");
-        handleStartSetup();
-        return;
+    try {
+      const res = await get2FAStatus();
+      if (res.success) {
+        setIsEnabled(!!res.enabled);
+        setConfirmedAt(res.confirmedAt ? new Date(res.confirmedAt).toLocaleDateString() : null);
+        if (mandatory && !res.enabled) {
+          setStep("SETUP_QR");
+          const setupRes = await setup2FA();
+          if (setupRes.success && setupRes.secret) {
+            setSecret(setupRes.secret);
+            setOtpauthUri(setupRes.otpauthUri || "");
+            setBackupCodes(setupRes.backupCodes || []);
+            setVerificationCode("");
+          } else {
+            setError(setupRes.error || "Failed to initialize 2FA setup.");
+          }
+        }
+      } else {
+        setError(res.error || "Failed to load 2FA status.");
       }
+    } catch {
+      setError("Network error while checking 2FA status.");
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   };
 
   useEffect(() => {
@@ -81,6 +95,7 @@ export default function TwoFactorSettingsModal({
       setError("An unexpected error occurred.");
     } finally {
       setActionLoading(false);
+      setLoading(false);
     }
   };
 
@@ -282,14 +297,50 @@ export default function TwoFactorSettingsModal({
               {/* QR Code container */}
               <div className={styles.qrImageWrap}>
                 <div className={styles.qrBox}>
-                  <img src={qrCodeUrl} alt="2FA QR Code" width={170} height={170} className={styles.qrImg} />
+                  {otpauthUri ? (
+                    <img 
+                      src={`https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${encodeURIComponent(otpauthUri)}`} 
+                      alt="2FA QR Code" 
+                      width={170} 
+                      height={170} 
+                      className={styles.qrImg} 
+                    />
+                  ) : (
+                    <div style={{ padding: "40px 10px", color: "#64748b", fontSize: "0.85rem", textAlign: "center" }}>
+                      <i className="fas fa-spinner fa-spin"></i> Generating QR code...
+                    </div>
+                  )}
                 </div>
               </div>
+
+              {/* Mobile Quick Link: Direct open in Authenticator */}
+              {otpauthUri && (
+                <div style={{ textAlign: "center", marginBottom: "16px" }}>
+                  <a
+                    href={otpauthUri}
+                    style={{
+                      display: "inline-flex",
+                      alignItems: "center",
+                      gap: "8px",
+                      backgroundColor: "#02351c",
+                      color: "#ffffff",
+                      padding: "10px 18px",
+                      borderRadius: "8px",
+                      fontSize: "0.85rem",
+                      fontWeight: 600,
+                      textDecoration: "none",
+                      boxShadow: "0 2px 8px rgba(2, 53, 28, 0.2)",
+                    }}
+                  >
+                    <i className="fas fa-mobile-alt"></i> Tap to Open Authenticator App
+                  </a>
+                </div>
+              )}
 
               {/* Manual Secret Key */}
               <div className={styles.secretBox}>
                 <div className={styles.secretLabel}>
-                  CAN'T SCAN? ENTER KEY MANUALLY:
+                  ON MOBILE OR CAN'T SCAN? COPY KEY:
                 </div>
                 <div className={styles.secretFlex}>
                   <code className={styles.secretCode}>
@@ -300,7 +351,7 @@ export default function TwoFactorSettingsModal({
                     onClick={handleCopySecret}
                     className={styles.copySecretBtn}
                   >
-                    {copiedSecret ? "Copied!" : "Copy"}
+                    {copiedSecret ? "Copied!" : "Copy Key"}
                   </button>
                 </div>
               </div>
