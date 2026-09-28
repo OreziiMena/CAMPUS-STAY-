@@ -19,8 +19,8 @@ export default function ApprovePaymentModal({
   if (!isOpen || !payment) return null;
 
   const feeAmount = payment.amount || 7500;
-  const platformCut = feeAmount === 7500 ? 2480 : feeAmount * 0.5;
-  const agentCut = feeAmount === 7500 ? 5020 : feeAmount * 0.5;
+  const platformCut = feeAmount === 7500 ? 2490 : feeAmount * 0.5;
+  const agentCut = feeAmount === 7500 ? 5010 : feeAmount * 0.5;
 
   return (
     <div className="admin-modal-overlay" onClick={onClose}>

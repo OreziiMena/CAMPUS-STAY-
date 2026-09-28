@@ -35,7 +35,7 @@ export default function Privacy() {
             <p>To acquire the <em>Verified Agent Badge</em> and priority Explore ranking, agents may optionally provide verification credentials (such as video walkthroughs, utility/lease receipts, tenant references, BVN/Bank match, or identity documents). These credentials are used solely for authentication and safety scoring.</p>
 
             <h3>C. Inspection Payment & Transaction Data</h3>
-            <p>When booking physical inspections, we record transaction identifiers, Paystack references, or bank transfer confirmations to manage the ₦7,500 inspection fee escrow (₦5,020 agent disbursement and ₦2,480 platform fee).</p>
+            <p>When booking physical inspections, we record transaction identifiers and Paystack references to manage the ₦7,500 inspection fee escrow (₦5,010 agent disbursement and ₦2,490 platform fee).</p>
           </section>
 
           <section className="content-section">

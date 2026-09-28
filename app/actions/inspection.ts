@@ -185,7 +185,7 @@ export async function queryPropertyAvailability(propertyId: string) {
 
             <div style="background-color: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 8px; padding: 12px 16px; margin: 18px 0; text-align: center;">
               <p style="margin: 0; color: #166534; font-size: 13px; font-weight: 600;">
-                💵 Your Payout: You will receive <strong>₦5,020</strong> automatically once this inspection tour is completed.
+                💵 Your Payout: You will receive <strong>₦5,010</strong> automatically once this inspection tour is completed.
               </p>
             </div>
 
@@ -775,180 +775,13 @@ export async function initializePaystackInspection(propertyId: string) {
 }
 
 /**
- * 5. Submit Direct Bank Transfer Inspection Payment (Alternative to Paystack)
+ * 5. Submit Direct Bank Transfer Inspection Payment (Phased Out)
  */
-export async function submitBankTransferInspectionPayment(data: {
-  propertyId: string;
-  senderName: string;
-  bankName: string;
-  reference?: string;
-  receiptUrl?: string;
-  notes?: string;
-}) {
-  try {
-    const user = await getCurrentUser();
-    if (!user) {
-      return { success: false, error: "Please log in to submit payment." };
-    }
-
-    if (user.role === "AGENT") {
-      return {
-        success: false,
-        error: "Agents cannot pay inspection fees. Please use a student account.",
-      };
-    }
-
-    const { propertyId, senderName, bankName, receiptUrl, notes } = data;
-    if (!propertyId || !senderName || !bankName) {
-      return { success: false, error: "Please provide sender name and bank name." };
-    }
-
-    const property = await prisma.property.findUnique({
-      where: { id: propertyId },
-      include: {
-        agent: { include: { user: true } },
-        student: { include: { user: true } },
-      },
-    });
-
-    if (!property) {
-      return { success: false, error: "Property not found." };
-    }
-
-    const recipientUser = property.agent?.user || property.student?.user;
-    const recipientId = recipientUser?.id;
-    if (!recipientId) {
-      return { success: false, error: "Listing host not found." };
-    }
-
-    if (recipientId === user.id) {
-      return { success: false, error: "You cannot pay an inspection fee on your own listing." };
-    }
-
-    // Check if already paid
-    const existingPayment = await prisma.inspectionPayment.findFirst({
-      where: {
-        studentId: user.id,
-        propertyId: propertyId,
-        status: "PAID",
-      },
-    });
-
-    if (existingPayment) {
-      return {
-        success: true,
-        alreadyPaid: true,
-        payment: existingPayment,
-      };
-    }
-
-    // Require confirmed availability (within 24 hours)
-    if (user.role !== "ADMIN" && property.agentId) {
-      const twentyFourHoursAgo = new Date(Date.now() - AVAILABILITY_EXPIRATION_MS);
-      const confirmedAvailability = await prisma.availabilityQuery.findFirst({
-        where: {
-          studentId: user.id,
-          propertyId: propertyId,
-          status: "AVAILABLE",
-          updatedAt: { gte: twentyFourHoursAgo },
-        },
-      });
-
-      if (!confirmedAvailability) {
-        return {
-          success: false,
-          error: "Property availability confirmation has expired (valid for 24 hours) or has not been confirmed. Please re-confirm availability with the agent before payment.",
-        };
-      }
-    }
-
-    const paymentRef = data.reference?.trim() || `BT-${Math.random().toString(36).substring(2, 8).toUpperCase()}-${Date.now()}`;
-
-    const payment = await prisma.inspectionPayment.create({
-      data: {
-        studentId: user.id,
-        propertyId: property.id,
-        agentId: recipientId,
-        amount: 7500,
-        currency: "NGN",
-        status: "PENDING_ADMIN_APPROVAL",
-        reference: paymentRef,
-      },
-    });
-
-    // Record audit log for Admin review
-    await prisma.activityLog.create({
-      data: {
-        userId: user.id,
-        userName: senderName.trim(),
-        userEmail: user.email || "",
-        action: "BANK_TRANSFER_PENDING_APPROVAL",
-        description: `Direct Bank Transfer Inspection Payment Submitted (₦7,500). Sender: ${senderName.trim()} (${bankName.trim()}). Ref: ${paymentRef}${receiptUrl ? ` Receipt: ${receiptUrl}` : ""}${notes ? ` Notes: ${notes}` : ""}`,
-        propertyTitle: property.title,
-      },
-    }).catch((e) => console.warn("Failed to create activity log for bank transfer:", e));
-
-    const studentDisplayName = escapeHtml(user.studentProfile?.fullName || user.name || senderName || "Student");
-    const propertyTitle = escapeHtml(property.title);
-
-    // Send pending acknowledgement email to student (Official confirmation emails will only send upon Admin Approval)
-    if (user.email) {
-      const studentHtml = `
-        <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 600px; margin: 0 auto; background: #ffffff; border: 1px solid #e2e8f0; border-radius: 12px; overflow: hidden;">
-          <div style="background-color: #02351c; padding: 24px; text-align: center;">
-            <h1 style="color: #ffffff; font-size: 22px; margin: 0; font-weight: 700;">Campus Tent</h1>
-            <p style="color: #cbd5e1; font-size: 14px; margin: 6px 0 0 0;">Direct Bank Transfer Received</p>
-          </div>
-          <div style="padding: 24px;">
-            <h2 style="color: #02351c; font-size: 18px; margin-top: 0;">Bank Transfer Under Review</h2>
-            <p style="color: #4b5563; font-size: 14px; line-height: 1.6;">
-              Hi ${studentDisplayName}, we have received your direct bank transfer payment submission of <strong>₦7,500</strong> for <strong>"${propertyTitle}"</strong>.
-            </p>
-            <div style="background-color: #fffbeb; border-left: 4px solid #f59e0b; padding: 16px; border-radius: 6px; margin: 20px 0;">
-              <p style="margin: 0 0 6px 0; font-size: 14px; color: #92400e;"><strong>Amount:</strong> ₦7,500</p>
-              <p style="margin: 0 0 6px 0; font-size: 14px; color: #92400e;"><strong>Bank Used:</strong> ${escapeHtml(bankName)}</p>
-              <p style="margin: 0 0 6px 0; font-size: 14px; color: #92400e;"><strong>Sender Name:</strong> ${escapeHtml(senderName)}</p>
-              <p style="margin: 0; font-size: 14px; color: #92400e;"><strong>Reference:</strong> ${paymentRef}</p>
-            </div>
-            <p style="color: #475569; font-size: 13.5px; line-height: 1.6;">
-              Our admin team is currently confirming your deposit with our bank. As soon as your transfer is verified, you will receive an official approval email and direct chat & inspection tour scheduling will be unlocked automatically.
-            </p>
-            <div style="text-align: center; margin: 25px 0;">
-              <a href="${BASE_URL}/apartment-details?id=${property.id}" style="background-color: #02351c; color: #ffffff; padding: 12px 24px; border-radius: 8px; text-decoration: none; font-weight: 700; font-size: 14px; display: inline-block;">
-                View Property Status
-              </a>
-            </div>
-          </div>
-          <div style="background-color: #f1f5f9; padding: 14px; text-align: center; font-size: 12px; color: #64748b;">
-            Campus Tent &bull; Safe Student Accommodation
-          </div>
-        </div>
-      `;
-
-      sendEmail({
-        to: user.email,
-        subject: `Bank Transfer Received (Pending Admin Verification): ${property.title}`,
-        html: studentHtml,
-        isInspectionMessage: true,
-      }).catch((err) => console.error("Student bank transfer acknowledgment email failed:", err));
-    }
-
-    return {
-      success: true,
-      pendingApproval: true,
-      payment: {
-        id: payment.id,
-        amount: payment.amount,
-        status: payment.status,
-        paidAt: payment.paidAt.toISOString(),
-        reference: payment.reference,
-      },
-      message: "₦7,500 bank transfer submitted! Our admin team is verifying your payment with the bank.",
-    };
-  } catch (err: any) {
-    console.error("submitBankTransferInspectionPayment error:", err);
-    return { success: false, error: err.message || "Failed to process bank transfer payment." };
-  }
+export async function submitBankTransferInspectionPayment(data?: any) {
+  return {
+    success: false,
+    error: "Direct bank transfer has been phased out. Please make your inspection fee payment securely via Paystack.",
+  };
 }
 
 /**
@@ -1211,7 +1044,7 @@ export async function processInspectionPayment(propertyId: string, reference: st
             </div>
             <div style="background-color: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 8px; padding: 12px 16px; margin: 18px 0; text-align: center;">
               <p style="margin: 0; color: #166534; font-size: 13.5px; font-weight: 600;">
-                💵 Your Payout: You will receive <strong>₦5,020</strong> automatically once this inspection tour is completed.
+                💵 Your Payout: You will receive <strong>₦5,010</strong> automatically once this inspection tour is completed.
               </p>
             </div>
             <p style="color: #4b5563; font-size: 13.5px; line-height: 1.5;">
@@ -1250,7 +1083,7 @@ export async function processInspectionPayment(propertyId: string, reference: st
 }
 
 /**
- * Internal helper to automatically disburse the agent's payout (₦5,020)
+ * Internal helper to automatically disburse the agent's payout (₦5,010)
  * when both student and agent have confirmed the physical inspection tour.
  */
 async function checkAndTriggerAutomatedPayout(params: {
@@ -1325,7 +1158,7 @@ async function checkAndTriggerAutomatedPayout(params: {
           },
           body: JSON.stringify({
             source: "balance",
-            amount: 502000, // ₦5,020 in kobo
+            amount: 501000, // ₦5,010 in kobo
             recipient: agentProfile.recipientCode,
             reason: `Campus Tent Auto-Payout for ${payment.property.title}`,
           }),
@@ -1369,7 +1202,7 @@ async function checkAndTriggerAutomatedPayout(params: {
               Hi ${agentName}, both you and the student (<strong>${studentName}</strong>) have confirmed the inspection tour for:
             </p>
             <div style="background-color: #f0fdf4; border-left: 4px solid #16a34a; padding: 16px; border-radius: 6px; margin: 20px 0;">
-              <p style="margin: 0; font-size: 16px; color: #166534; font-weight: 700;">Payout Amount: ₦5,020</p>
+              <p style="margin: 0; font-size: 16px; color: #166534; font-weight: 700;">Payout Amount: ₦5,010</p>
               <p style="margin: 6px 0 0 0; font-size: 13.5px; color: #334155;">Property: ${propTitle}</p>
               <p style="margin: 4px 0 0 0; font-size: 13px; color: #64748b;">Transfer Ref: ${payoutRef}</p>
             </div>
@@ -1385,7 +1218,7 @@ async function checkAndTriggerAutomatedPayout(params: {
 
       sendEmail({
         to: payment.agent.email,
-        subject: `₦5,020 Inspection Payout Disbursed: ${payment.property.title}`,
+        subject: `₦5,010 Inspection Payout Disbursed: ${payment.property.title}`,
         html: emailHtml,
         isInspectionMessage: true,
       }).catch((e) => console.error("Agent auto-payout email error:", e));

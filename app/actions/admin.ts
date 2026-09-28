@@ -754,10 +754,10 @@ export async function getAdminPaymentsData() {
 
     const paidPayments = payments.filter((p) => p.status === "PAID");
     const totalGross = paidPayments.reduce((sum, p) => sum + (p.amount || 0), 0);
-    // Platform fee model: ₦2,480 Platform service fee, ₦5,020 Agent escrow payout per ₦7,500 inspection fee
+    // Platform fee model: ₦2,490 Platform service fee, ₦5,010 Agent escrow payout per ₦7,500 inspection fee
     const paidCount = paidPayments.length;
     const pendingApprovalCount = payments.filter((p) => p.status === "PENDING_ADMIN_APPROVAL").length;
-    const platformShare = paidPayments.reduce((sum, p) => sum + (p.amount === 7500 ? 2480 : p.amount * (2480 / 7500)), 0);
+    const platformShare = paidPayments.reduce((sum, p) => sum + (p.amount === 7500 ? 2490 : p.amount * (2490 / 7500)), 0);
     const agentEscrowLiability = totalGross - platformShare;
 
     return {
@@ -957,7 +957,7 @@ export async function approveBankTransferPayment(paymentId: string) {
             </div>
             <div style="background-color: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 8px; padding: 12px 16px; margin: 18px 0; text-align: center;">
               <p style="margin: 0; color: #166534; font-size: 13.5px; font-weight: 600;">
-                💵 Your Payout: You will receive <strong>₦5,020</strong> automatically once this physical inspection is completed.
+                💵 Your Payout: You will receive <strong>₦5,010</strong> automatically once this physical inspection is completed.
               </p>
             </div>
             <div style="text-align: center; margin: 25px 0;">
@@ -1121,7 +1121,7 @@ export async function disburseAgentPayout(paymentId: string) {
           },
           body: JSON.stringify({
             source: "balance",
-            amount: 500000, // ₦5,000 in kobo (50% split)
+            amount: 501000, // ₦5,010 in kobo
             recipient: recipientCode,
             reason: `Campus Tent Inspection Payout for ${payment.property.title}`,
           }),
@@ -1155,10 +1155,10 @@ export async function disburseAgentPayout(paymentId: string) {
           targetType: "PAYMENT",
           targetId: payment.id,
           targetLabel: payment.reference,
-          details: `Admin disbursed ₦5,000 payout to agent ${payment.agent.agentProfile?.fullName || payment.agent.email} for property "${payment.property.title}". Ref: ${payoutRef}`,
+          details: `Admin disbursed ₦5,010 payout to agent ${payment.agent.agentProfile?.fullName || payment.agent.email} for property "${payment.property.title}". Ref: ${payoutRef}`,
           metadata: {
             paymentId: payment.id,
-            amount: 5000,
+            amount: 5010,
             reference: payment.reference,
             payoutRef,
             agentId: payment.agentId,
@@ -1192,10 +1192,10 @@ export async function disburseAgentPayout(paymentId: string) {
       targetType: "PAYMENT",
       targetId: payment.id,
       targetLabel: payment.reference,
-      details: `Admin disbursed ₦5,000 payout (simulated test) to agent ${payment.agent.agentProfile?.fullName || payment.agent.email} for property "${payment.property.title}". Ref: ${fallbackRef}`,
+      details: `Admin disbursed ₦5,010 payout (simulated test) to agent ${payment.agent.agentProfile?.fullName || payment.agent.email} for property "${payment.property.title}". Ref: ${fallbackRef}`,
       metadata: {
         paymentId: payment.id,
-        amount: 5000,
+        amount: 5010,
         reference: payment.reference,
         fallbackRef,
         agentId: payment.agentId,

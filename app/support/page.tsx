@@ -102,7 +102,7 @@ export default function SupportPage() {
       category: "PAYMENTS",
       categoryLabel: "Payments & Escrow",
       q: "How does Campus Tent Escrow protect my money?",
-      a: "When you pay for an inspection, your money is held safely in escrow. Agents only receive their payout (₦5,020 net after processing and commission) once the inspection takes place. This guarantees zero financial loss from ghost agents, fake listings, or unfulfilled promises."
+      a: "When you pay for an inspection, your money is held safely in escrow. Agents only receive their payout (₦5,010 net after processing and platform fee) once the inspection takes place. This guarantees zero financial loss from ghost agents, fake listings, or unfulfilled promises."
     },
     {
       category: "PAYMENTS",
@@ -144,7 +144,7 @@ export default function SupportPage() {
       category: "AGENTS",
       categoryLabel: "Agents & Landlords",
       q: "How do agents receive their inspection payouts?",
-      a: "Agents submit their Nigerian bank account details (account number and bank name) in their Agent Dashboard. Once a student's physical tour is completed and marked confirmed, the ₦5,020 payout is automatically disbursed directly to the agent's verified bank account."
+      a: "Agents submit their Nigerian bank account details (account number and bank name) in their Agent Dashboard. Once a student's physical tour is completed and marked confirmed, the ₦5,010 payout is automatically disbursed directly to the agent's verified bank account."
     },
     {
       category: "SAFETY",

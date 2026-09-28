@@ -275,9 +275,9 @@ export default function Sidebar({
                     <div className="availability-status-pill pending" style={{ marginTop: '12px', background: '#fffbeb', border: '1.5px solid #fde68a', padding: '14px', borderRadius: '10px' }}>
                       <i className="fas fa-clock" style={{ color: '#d97706', fontSize: '18px' }}></i>
                       <div>
-                        <strong style={{ color: '#92400e' }}>Bank Transfer Under Verification</strong>
+                        <strong style={{ color: '#92400e' }}>Inspection Payment Under Verification</strong>
                         <div className="status-pill-desc" style={{ color: '#78350f', marginTop: '4px' }}>
-                          We have received your ₦7,500 bank transfer. Our admin team is verifying your deposit with the bank. Once confirmed, you will receive an approval email and tour scheduling will unlock automatically.
+                          We have received your ₦7,500 inspection payment submission. Our admin team is verifying your payment with the bank. Once confirmed, you will receive an approval email and tour scheduling will unlock automatically.
                         </div>
                       </div>
                     </div>

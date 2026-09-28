@@ -119,10 +119,10 @@ export default function InspectionsLeadsList({
       <div className="section-header leads-section-header">
         <div>
           <h2 className="leads-title">
-            Physical Inspections & ₦10k Paid Leads
+            Physical Inspections & Paid Leads
           </h2>
           <p className="leads-subtitle">
-            Track viewing appointments, student tour confirmations, and ₦5,000 escrow payouts.
+            Track viewing appointments, student tour confirmations, and ₦5,010 escrow payouts.
           </p>
         </div>
 
@@ -281,7 +281,7 @@ export default function InspectionsLeadsList({
           <div className="leads-empty-card">
             <i className="fas fa-receipt leads-empty-icon"></i>
             <p className="leads-empty-text">
-              No paid inspection fees recorded yet. When students pay ₦7,500 for your listings, your ₦5,020 payout records will appear here.
+              No paid inspection fees recorded yet. When students pay ₦7,500 for your listings, your ₦5,010 payout records will appear here.
             </p>
           </div>
         ) : (
@@ -318,7 +318,7 @@ export default function InspectionsLeadsList({
                       {isDisbursed ? (
                         <div className="escrow-payout-col">
                           <span className="escrow-badge-disbursed">
-                            <i className="fas fa-check-circle"></i> ₦5,000 Disbursed to Bank
+                            <i className="fas fa-check-circle"></i> ₦5,010 Disbursed to Bank
                           </span>
                           {payment.payoutReference && (
                             <div className="escrow-trf-ref">
@@ -336,7 +336,7 @@ export default function InspectionsLeadsList({
                         </span>
                       ) : (
                         <span className="escrow-badge-pending">
-                          <i className="fas fa-hourglass-half"></i> ₦5,000 in Escrow (Pending Tour)
+                          <i className="fas fa-hourglass-half"></i> ₦5,010 in Escrow (Pending Tour)
                         </span>
                       )}
                     </div>
@@ -344,7 +344,7 @@ export default function InspectionsLeadsList({
 
                   <div className="escrow-footer-line">
                     <span>
-                      Student paid total fee: <strong>₦{payment.amount.toLocaleString()}</strong> (₦5,000 Platform / ₦5,000 Agent Share)
+                      Student paid total fee: <strong>₦{payment.amount.toLocaleString()}</strong> (₦2,490 Platform / ₦5,010 Agent Share)
                     </span>
                     {!isDisbursed && !isDisputed && !isRefunded && (
                       <span className="escrow-disburse-hint">

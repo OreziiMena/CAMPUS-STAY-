@@ -357,7 +357,7 @@ export default function Settings() {
             <section id="bank-section" className="tab-content active">
               <h3 className="prefer">Bank & Payout Details</h3>
               <p className="payout-desc-text">
-                Add your verified Nigerian bank account to receive your 50% agent split (₦5,000) from confirmed student inspection tours.
+                Add your verified Nigerian bank account to receive your agent split (₦5,010) from confirmed student inspection tours.
               </p>
 
               {recipientCode && (

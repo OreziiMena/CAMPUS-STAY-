@@ -39,8 +39,8 @@ export default function Terms() {
             <ul>
               <li><strong>Inspection Fee Amount:</strong> The standard inspection fee is fixed at <strong>₦7,500</strong> per booking.</li>
               <li><strong>Multi-Hostel Bonus Value:</strong> Your ₦7,500 fee covers a physical inspection of the primary property plus any alternative available accommodation options shown by the agent in the same campus vicinity and budget.</li>
-              <li><strong>Automated Agent Payout Split:</strong> Out of the ₦7,500 inspection fee, <strong>₦5,020</strong> is held in automated escrow and paid directly to the agent/landlord once both the student and agent confirm the inspection tour was completed. The remaining <strong>₦2,480</strong> is retained as the Campus Tent platform service fee.</li>
-              <li><strong>Supported Payment Methods:</strong> Payments can be processed securely online via Paystack (Debit Cards, USSD, Bank Transfer) or through direct bank transfer to verified Campus Tent corporate accounts.</li>
+              <li><strong>Automated Agent Payout Split:</strong> Out of the ₦7,500 inspection fee, <strong>₦5,010</strong> is held in automated escrow and paid directly to the agent/landlord once both the student and agent confirm the inspection tour was completed. The remaining <strong>₦2,490</strong> is retained as the Campus Tent platform service fee.</li>
+              <li><strong>Supported Payment Methods:</strong> Payments are processed securely online via Paystack (Debit Cards, USSD, Bank Transfer, Apple Pay).</li>
               <li><strong>Refund Policy:</strong> Inspection fees are 100% refundable to the student if the agent fails to conduct the scheduled inspection or marks the property unavailable.</li>
             </ul>
           </section>

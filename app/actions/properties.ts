@@ -618,9 +618,9 @@ export async function getAgentDashboardData() {
     const disbursedPayments = inspectionPayments.filter((p) => p.payoutStatus === "DISBURSED");
     const pendingPayments = inspectionPayments.filter((p) => p.payoutStatus === "PENDING");
 
-    const disbursedEarnings = disbursedPayments.length * 5000;
-    const pendingEscrow = pendingPayments.length * 5000;
-    const totalEarnings = inspectionPayments.length * 5000;
+    const disbursedEarnings = disbursedPayments.length * 5010;
+    const pendingEscrow = pendingPayments.length * 5010;
+    const totalEarnings = inspectionPayments.length * 5010;
 
     const bankConfigured = Boolean(user.agentProfile?.recipientCode || user.agentProfile?.accountNumber);
     const bankInfo = {

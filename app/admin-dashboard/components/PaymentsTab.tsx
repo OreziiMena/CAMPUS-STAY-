@@ -155,7 +155,7 @@ export default function PaymentsTab({
   };
 
   const handleDisbursePayout = async (paymentId: string) => {
-    if (!window.confirm("Are you sure you want to disburse ₦5,020 payout to the agent's verified bank account?")) {
+    if (!window.confirm("Are you sure you want to disburse ₦5,010 payout to the agent's verified bank account?")) {
       return;
     }
     setActionLoading(true);
@@ -163,7 +163,7 @@ export default function PaymentsTab({
     try {
       const res = await disburseAgentPayout(paymentId);
       if (res.success) {
-        alert("Agent payout of ₦5,020 successfully disbursed!");
+        alert("Agent payout of ₦5,010 successfully disbursed!");
         if (selectedPayment && selectedPayment.id === paymentId) {
           setSelectedPayment({
             ...selectedPayment,
@@ -243,7 +243,7 @@ export default function PaymentsTab({
                 ₦{metrics.platformShare.toLocaleString()}
               </span>
             </div>
-            <div className="stat-title">Platform Revenue (₦2,480/fee)</div>
+            <div className="stat-title">Platform Revenue (₦2,490/fee)</div>
             <span className="stat-subtext text-muted">
               Campus Tent platform fee
             </span>
@@ -260,7 +260,7 @@ export default function PaymentsTab({
                 ₦{metrics.agentEscrowLiability.toLocaleString()}
               </span>
             </div>
-            <div className="stat-title">Agent Escrow Pool (₦5,020/fee)</div>
+            <div className="stat-title">Agent Escrow Pool (₦5,010/fee)</div>
             <span className="stat-subtext text-muted">
               Allocated for agent payouts
             </span>
@@ -294,7 +294,7 @@ export default function PaymentsTab({
               <i className="fas fa-credit-card activity-history-icon"></i> Inspection Payments Ledger
             </h4>
             <p className="activity-sub">
-              Auditable transaction logs for confirmed student inspection fees (₦7,500 each: ₦5,020 agent payout, ₦2,480 platform fee) with Paystack & Direct Transfer audit records.
+              Auditable transaction logs for confirmed student inspection fees (₦7,500 each: ₦5,010 agent payout, ₦2,490 platform fee) with Paystack audit records.
             </p>
           </div>
 
@@ -379,8 +379,8 @@ export default function PaymentsTab({
                 })
                 .map((payment) => {
                   const feeAmount = payment.amount || 7500;
-                  const platformCut = feeAmount === 7500 ? 2480 : feeAmount * 0.5;
-                  const agentCut = feeAmount === 7500 ? 5020 : feeAmount * 0.5;
+                  const platformCut = feeAmount === 7500 ? 2490 : feeAmount * 0.5;
+                  const agentCut = feeAmount === 7500 ? 5010 : feeAmount * 0.5;
                   const isDisbursed = payment.payoutStatus === "DISBURSED";
                   const isPendingApproval = payment.status === "PENDING_ADMIN_APPROVAL";
 
@@ -548,9 +548,9 @@ export default function PaymentsTab({
                             onClick={() => handleDisbursePayout(payment.id)}
                             disabled={actionLoading}
                             className="payment-payout-action-btn"
-                            title="Disburse ₦5,020 to Agent"
+                            title="Disburse ₦5,010 to Agent"
                           >
-                            <i className="fas fa-paper-plane"></i> Disburse ₦5,020
+                            <i className="fas fa-paper-plane"></i> Disburse ₦5,010
                           </button>
                         )}
                       </td>
@@ -875,7 +875,7 @@ export default function PaymentsTab({
                     disabled={actionLoading}
                     className="payment-modal-btn-disburse"
                   >
-                    <i className="fas fa-paper-plane"></i> Disburse ₦5,020 Payout
+                    <i className="fas fa-paper-plane"></i> Disburse ₦5,010 Payout
                   </button>
                 )}
 
