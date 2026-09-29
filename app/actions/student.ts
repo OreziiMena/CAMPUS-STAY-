@@ -728,9 +728,10 @@ export async function sendPairingProposal(data: {
     // 2. Build structured pairing message
     const deptStr = data.senderDepartment ? ` | Dept: ${data.senderDepartment}` : "";
     const levelStr = data.senderLevel ? ` | Level: ${data.senderLevel}` : "";
+    const phoneLine = user.phone ? `\n• Phone / WhatsApp: ${user.phone}` : "";
     const customPitch = data.introMessage?.trim() ? `\n\n"${data.introMessage.trim()}"` : "";
 
-    const proposalText = `🤝 [PAIRING PROPOSAL]\nHey! I'm interested in pairing up with you to rent "${data.listingTitle}".\n• My Budget Pledge: ₦${data.proposedBudget.toLocaleString()}${deptStr}${levelStr}${customPitch}\n\nLet's chat and arrange an inspection!`;
+    const proposalText = `🤝 [PAIRING PROPOSAL]\nHey! I'm interested in pairing up with you to rent "${data.listingTitle}".\n• My Budget Pledge: ₦${data.proposedBudget.toLocaleString()}${deptStr}${levelStr}${phoneLine}${customPitch}\n\nLet's chat and arrange an inspection!`;
 
     // 3. Insert initial message
     const message = await prisma.message.create({
@@ -760,6 +761,9 @@ export async function sendPairingProposal(data: {
       if (recipientUser) {
         const senderName = escapeHtml(user.studentProfile?.fullName || user.email);
         const recipientName = escapeHtml(recipientUser.studentProfile?.fullName || "Student");
+        const senderPhone = user.phone ? escapeHtml(user.phone) : "";
+        const phoneDigits = user.phone ? user.phone.replace(/\D/g, "") : "";
+        const cleanPhone = phoneDigits.startsWith("0") ? `234${phoneDigits.slice(1)}` : phoneDigits;
 
         await sendEmail({
           to: recipientUser.email,
@@ -773,6 +777,13 @@ export async function sendPairingProposal(data: {
                 <p style="margin: 0 0 8px 0;"><strong>Proposed Budget:</strong> ₦${data.proposedBudget.toLocaleString()}</p>
                 ${data.senderDepartment ? `<p style="margin: 0 0 8px 0;"><strong>Department:</strong> ${escapeHtml(data.senderDepartment)}</p>` : ""}
                 ${data.senderLevel ? `<p style="margin: 0 0 8px 0;"><strong>Level:</strong> ${escapeHtml(data.senderLevel)}</p>` : ""}
+                ${senderPhone ? `
+                <p style="margin: 0 0 8px 0;">
+                  <strong>Phone / WhatsApp:</strong> 
+                  <a href="tel:${senderPhone}" style="color: rgb(2, 53, 28); font-weight: 600; text-decoration: none;">${senderPhone}</a>
+                  ${cleanPhone ? `&nbsp;(<a href="https://wa.me/${cleanPhone}" style="color: #128C7E; font-weight: 600; text-decoration: underline;" target="_blank">Chat on WhatsApp</a>)` : ""}
+                </p>
+                ` : ""}
                 ${data.introMessage ? `<p style="margin: 0; font-style: italic;">"${escapeHtml(data.introMessage)}"</p>` : ""}
               </div>
               <p>Log in to Campus Tent now to view the message and coordinate:</p>

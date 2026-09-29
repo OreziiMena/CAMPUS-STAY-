@@ -291,6 +291,9 @@ export async function sendChatMessage(chatRoomId: string, text: string) {
               const recipientName = escapeHtml(recipientUser.studentProfile?.fullName || "Student");
               const listingTitle = escapeHtml(chatRoom.property.title);
               const safeText = escapeHtml(text);
+              const senderPhone = user.phone ? escapeHtml(user.phone) : "";
+              const phoneDigits = user.phone ? user.phone.replace(/\D/g, "") : "";
+              const cleanPhone = phoneDigits.startsWith("0") ? `234${phoneDigits.slice(1)}` : phoneDigits;
 
               await sendEmail({
                 to: recipientUser.email,
@@ -304,6 +307,16 @@ export async function sendChatMessage(chatRoomId: string, text: string) {
                     <div style="background-color: #f9f9f9; padding: 15px; border-left: 4px solid rgb(2, 53, 28); border-radius: 4px; margin: 20px 0; font-style: italic;">
                        "${safeText}"
                     </div>
+
+                    ${senderPhone ? `
+                    <div style="background-color: #f8fafc; padding: 12px 16px; border-radius: 8px; margin: 15px 0; border: 1px solid #e2e8f0;">
+                      <p style="margin: 0; font-size: 0.95rem;">
+                        <strong>Phone / WhatsApp:</strong> 
+                        <a href="tel:${senderPhone}" style="color: rgb(2, 53, 28); font-weight: 600; text-decoration: none;">${senderPhone}</a>
+                        ${cleanPhone ? `&nbsp;(<a href="https://wa.me/${cleanPhone}" style="color: #128C7E; font-weight: 600; text-decoration: underline;" target="_blank">Chat on WhatsApp</a>)` : ""}
+                      </p>
+                    </div>
+                    ` : ""}
                     
                     <p>Please log in to your dashboard to reply and coordinate details:</p>
                     <div style="text-align: center; margin: 25px 0;">
