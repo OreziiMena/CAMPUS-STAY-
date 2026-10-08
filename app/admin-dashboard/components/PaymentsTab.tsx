@@ -2,6 +2,7 @@
 import React, { useState } from "react";
 import {
   disburseAgentPayout,
+  recordManualPayoutDisbursed,
   refundInspectionPayment,
   approveBankTransferPayment,
   rejectBankTransferPayment,
@@ -25,6 +26,8 @@ export interface PaymentRecord {
   disputedAt?: string | null;
   refundReason?: string | null;
   refundedAt?: string | null;
+  refundStudentAmount?: number | null;
+  refundPlatformRetention?: number | null;
   student: {
     id: string;
     name: string;
@@ -60,11 +63,17 @@ export interface PaymentRecord {
 
 export interface PaymentMetrics {
   totalGross: number;
+  netPaidGross?: number;
   platformShare: number;
   agentEscrowLiability: number;
   totalTransactions: number;
   paidCount: number;
   pendingApprovalCount?: number;
+  disputedCount?: number;
+  disputedVolume?: number;
+  totalRefundCount?: number;
+  totalRefundedToStudents?: number;
+  platformRefundRetention?: number;
 }
 
 interface PaymentsTabProps {
@@ -83,10 +92,47 @@ export default function PaymentsTab({
   const [selectedPayment, setSelectedPayment] = useState<PaymentRecord | null>(null);
   const [approveModalPayment, setApproveModalPayment] = useState<PaymentRecord | null>(null);
   const [rejectModalPayment, setRejectModalPayment] = useState<PaymentRecord | null>(null);
+  const [manualPayoutPayment, setManualPayoutPayment] = useState<PaymentRecord | null>(null);
+  const [manualBankRef, setManualBankRef] = useState("");
+  const [manualNotes, setManualNotes] = useState("");
   const [copiedRef, setCopiedRef] = useState<string | null>(null);
   const [actionLoading, setActionLoading] = useState(false);
   const [actionMsg, setActionMsg] = useState("");
-  const [activeFilter, setActiveFilter] = useState<"ALL" | "PENDING_APPROVAL" | "PAID" | "REFUNDED">("ALL");
+  const [activeFilter, setActiveFilter] = useState<"ALL" | "PENDING_APPROVAL" | "PAID" | "DISPUTED" | "REFUNDED">("ALL");
+
+  const handleRecordManualPayout = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!manualPayoutPayment) return;
+    setActionLoading(true);
+    try {
+      const res = await recordManualPayoutDisbursed({
+        paymentId: manualPayoutPayment.id,
+        bankReference: manualBankRef.trim() || undefined,
+        notes: manualNotes.trim() || undefined,
+      });
+      if (res.success) {
+        alert("Manual bank transfer payout of ₦5,010 recorded successfully!");
+        if (selectedPayment && selectedPayment.id === manualPayoutPayment.id) {
+          setSelectedPayment({
+            ...selectedPayment,
+            payoutStatus: "DISBURSED",
+            payoutReference: res.reference || "MANUAL_BANK_TRANSFER",
+            payoutDisbursedAt: new Date().toISOString(),
+          });
+        }
+        setManualPayoutPayment(null);
+        setManualBankRef("");
+        setManualNotes("");
+        if (onRefresh) onRefresh();
+      } else {
+        alert(`Failed to record manual payout: ${res.error}`);
+      }
+    } catch (err: any) {
+      alert(`Error: ${err.message || "Failed to record manual payout."}`);
+    } finally {
+      setActionLoading(false);
+    }
+  };
 
   const handleCopyRef = (ref: string) => {
     navigator.clipboard.writeText(ref);
@@ -228,7 +274,7 @@ export default function PaymentsTab({
             </div>
             <div className="stat-title">Total Gross Volume</div>
             <span className="stat-subtext text-muted">
-              {metrics.totalTransactions} verified payment{metrics.totalTransactions !== 1 ? "s" : ""}
+              All-time charged gross (incl. refunded)
             </span>
           </div>
         </div>
@@ -284,6 +330,41 @@ export default function PaymentsTab({
             </span>
           </div>
         </div>
+
+        <div className="admin-stat-card">
+          <div className="stat-icon-wrapper" style={{ background: "#fffbeb", color: "#d97706" }}>
+            <i className="fas fa-exclamation-triangle"></i>
+          </div>
+          <div>
+            <div className="stat-value-group">
+              <span className="stat-number text-amber">
+                {metrics.disputedCount || 0}
+              </span>
+              <span className="stat-total-label">/ {metrics.totalTransactions}</span>
+            </div>
+            <div className="stat-title">Disputed Tours</div>
+            <span className="stat-subtext text-muted">
+              ₦{(metrics.disputedVolume || 0).toLocaleString()} contested volume
+            </span>
+          </div>
+        </div>
+
+        <div className="admin-stat-card">
+          <div className="stat-icon-wrapper" style={{ background: "#fef2f2", color: "#dc2626" }}>
+            <i className="fas fa-undo-alt"></i>
+          </div>
+          <div>
+            <div className="stat-value-group">
+              <span className="stat-number" style={{ color: "#dc2626" }}>
+                ₦{(metrics.totalRefundedToStudents || 0).toLocaleString()}
+              </span>
+            </div>
+            <div className="stat-title">Student Refunds Issued</div>
+            <span className="stat-subtext text-muted">
+              Platform kept: ₦{(metrics.platformRefundRetention || 0).toLocaleString()} ({metrics.totalRefundCount || 0} refund{metrics.totalRefundCount !== 1 ? "s" : ""})
+            </span>
+          </div>
+        </div>
       </div>
 
       {/* 2. Main Card with Table */}
@@ -327,10 +408,19 @@ export default function PaymentsTab({
 
           <button
             type="button"
+            onClick={() => setActiveFilter("DISPUTED")}
+            className={`activity-filter-pill ${activeFilter === "DISPUTED" ? "active payment-filter-pill-active" : ""}`}
+            style={(metrics.disputedCount || 0) > 0 ? { borderColor: "#f59e0b", color: "#b45309", fontWeight: 700 } : {}}
+          >
+            <i className="fas fa-exclamation-triangle"></i> Disputed Tours ({metrics.disputedCount || payments.filter((p) => p.status === "DISPUTED").length})
+          </button>
+
+          <button
+            type="button"
             onClick={() => setActiveFilter("REFUNDED")}
             className={`activity-filter-pill ${activeFilter === "REFUNDED" ? "active payment-filter-pill-active" : ""}`}
           >
-            Refunded / Disputed
+            <i className="fas fa-undo"></i> Refunded ({metrics.totalRefundCount || payments.filter((p) => p.status === "REFUNDED").length})
           </button>
 
           {onRefresh && (
@@ -374,7 +464,8 @@ export default function PaymentsTab({
                 .filter((p) => {
                   if (activeFilter === "PENDING_APPROVAL") return p.status === "PENDING_ADMIN_APPROVAL";
                   if (activeFilter === "PAID") return p.status === "PAID";
-                  if (activeFilter === "REFUNDED") return p.status === "REFUNDED" || p.status === "DISPUTED" || p.status === "REJECTED";
+                  if (activeFilter === "DISPUTED") return p.status === "DISPUTED";
+                  if (activeFilter === "REFUNDED") return p.status === "REFUNDED" || p.status === "REJECTED";
                   return true;
                 })
                 .map((payment) => {
@@ -544,14 +635,41 @@ export default function PaymentsTab({
                         ) : payment.status === "REFUNDED" || payment.status === "REJECTED" ? (
                           <span className="payment-payout-refunded">N/A</span>
                         ) : (
-                          <button
-                            onClick={() => handleDisbursePayout(payment.id)}
-                            disabled={actionLoading}
-                            className="payment-payout-action-btn"
-                            title="Disburse ₦5,010 to Agent"
-                          >
-                            <i className="fas fa-paper-plane"></i> Disburse ₦5,010
-                          </button>
+                          <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
+                            <button
+                              onClick={() => handleDisbursePayout(payment.id)}
+                              disabled={actionLoading}
+                              className="payment-payout-action-btn"
+                              title="Disburse ₦5,010 to Agent via Paystack"
+                            >
+                              <i className="fas fa-paper-plane"></i> Disburse ₦5,010
+                            </button>
+                            <button
+                              onClick={() => {
+                                setManualPayoutPayment(payment);
+                                setManualBankRef("");
+                                setManualNotes("");
+                              }}
+                              disabled={actionLoading}
+                              style={{
+                                background: "#f1f5f9",
+                                border: "1px solid #cbd5e1",
+                                color: "#334155",
+                                borderRadius: "6px",
+                                padding: "4px 8px",
+                                fontSize: "0.75rem",
+                                fontWeight: 600,
+                                cursor: "pointer",
+                                display: "inline-flex",
+                                alignItems: "center",
+                                gap: "4px",
+                                justifyContent: "center"
+                              }}
+                              title="Record Offline Manual Bank Transfer"
+                            >
+                              <i className="fas fa-money-bill-transfer"></i> Manual Transfer
+                            </button>
+                          </div>
                         )}
                       </td>
 
@@ -612,7 +730,7 @@ export default function PaymentsTab({
                     Inspection Fee Receipt
                   </h3>
                   <span className="payment-modal-subtitle">
-                    Campus Tent 50-50 Escrow & Payment Breakdown
+                    Campus Tent Inspection Fee Escrow & Payment Breakdown
                   </span>
                 </div>
               </div>
@@ -706,15 +824,35 @@ export default function PaymentsTab({
               )}
 
               {/* Refund Info Banner */}
-              {selectedPayment.refundReason && (
-                <div className="payment-refund-box">
-                  <strong className="payment-refund-title">
-                    <i className="fas fa-undo-alt payment-refund-icon"></i>
-                    Refund Processed:
-                  </strong>
-                  <p className="payment-refund-desc">
-                    Reason: {selectedPayment.refundReason}
-                  </p>
+              {selectedPayment.status === "REFUNDED" && (
+                <div className="payment-refund-box" style={{ background: "#fef2f2", border: "1px solid #fecaca", borderRadius: "10px", padding: "14px 18px", margin: "16px 0" }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: "8px", color: "#991b1b", fontWeight: 700, fontSize: "0.95rem" }}>
+                    <i className="fas fa-undo-alt"></i> Refund & Dispute Financial Settlement
+                  </div>
+                  <div style={{ display: "flex", gap: "24px", marginTop: "10px", flexWrap: "wrap", fontSize: "0.9rem" }}>
+                    <div style={{ background: "#ffffff", padding: "8px 14px", borderRadius: "8px", border: "1px solid #fee2e2" }}>
+                      <span style={{ color: "#6b7280", fontSize: "0.8rem", display: "block" }}>Refunded to Student:</span>
+                      <strong style={{ color: "#dc2626", fontSize: "1.1rem" }}>
+                        ₦{(selectedPayment.refundStudentAmount ?? (selectedPayment.amount === 7500 ? 5000 : selectedPayment.amount)).toLocaleString()}
+                      </strong>
+                    </div>
+                    <div style={{ background: "#ffffff", padding: "8px 14px", borderRadius: "8px", border: "1px solid #dcfce7" }}>
+                      <span style={{ color: "#6b7280", fontSize: "0.8rem", display: "block" }}>Platform Cut Retained:</span>
+                      <strong style={{ color: "#065f46", fontSize: "1.1rem" }}>
+                        ₦{(selectedPayment.refundPlatformRetention ?? (selectedPayment.amount === 7500 ? 2500 : 0)).toLocaleString()}
+                      </strong>
+                    </div>
+                  </div>
+                  {selectedPayment.refundReason && (
+                    <p style={{ marginTop: "10px", fontSize: "0.86rem", color: "#4b5563", marginBottom: 0 }}>
+                      <strong>Audit Note:</strong> {selectedPayment.refundReason}
+                    </p>
+                  )}
+                  {selectedPayment.refundedAt && (
+                    <div style={{ marginTop: "6px", fontSize: "0.78rem", color: "#9ca3af" }}>
+                      Settled on: {new Date(selectedPayment.refundedAt).toLocaleString()}
+                    </div>
+                  )}
                 </div>
               )}
 
@@ -728,32 +866,63 @@ export default function PaymentsTab({
                 })}
               </div>
 
-              {/* 50/50 Revenue Split Breakdown */}
+              {/* Revenue Split Breakdown */}
               <div className="payment-split-card">
                 <div className="payment-split-header">
                   <i className="fas fa-calculator payment-split-header-icon"></i>
-                  Fee Split Distribution (50-50)
+                  Fee Split Distribution
                 </div>
                 <div className="payment-split-row bordered">
                   <span>Total Fee Paid by Student</span>
                   <strong>₦{selectedPayment.amount.toLocaleString()}</strong>
                 </div>
-                <div className="payment-split-row bordered">
-                  <span className="payment-split-platform-title">
-                    <i className="fas fa-shield-alt"></i> Campus Tent Platform Fee (50%)
-                  </span>
-                  <strong className="payment-split-platform-val">
-                    ₦{((selectedPayment.amount || 10000) * 0.5).toLocaleString()}
-                  </strong>
-                </div>
-                <div className="payment-split-row">
-                  <span className="payment-split-agent-title">
-                    <i className="fas fa-user-tie"></i> Agent Escrow Payout (50%)
-                  </span>
-                  <strong className="payment-split-agent-val">
-                    ₦{((selectedPayment.amount || 10000) * 0.5).toLocaleString()}
-                  </strong>
-                </div>
+                {selectedPayment.status === "REFUNDED" ? (
+                  <>
+                    <div className="payment-split-row bordered">
+                      <span className="payment-split-platform-title">
+                        <i className="fas fa-shield-alt"></i> Platform Retained Fee
+                      </span>
+                      <strong className="payment-split-platform-val">
+                        ₦{(selectedPayment.refundPlatformRetention ?? 2500).toLocaleString()}
+                      </strong>
+                    </div>
+                    <div className="payment-split-row bordered">
+                      <span style={{ color: "#dc2626" }}>
+                        <i className="fas fa-undo"></i> Student Refund Amount
+                      </span>
+                      <strong style={{ color: "#dc2626" }}>
+                        ₦{(selectedPayment.refundStudentAmount ?? 5000).toLocaleString()}
+                      </strong>
+                    </div>
+                    <div className="payment-split-row">
+                      <span className="payment-split-agent-title">
+                        <i className="fas fa-user-tie"></i> Agent Payout
+                      </span>
+                      <strong className="payment-split-agent-val">
+                        ₦0
+                      </strong>
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <div className="payment-split-row bordered">
+                      <span className="payment-split-platform-title">
+                        <i className="fas fa-shield-alt"></i> Campus Tent Platform Fee
+                      </span>
+                      <strong className="payment-split-platform-val">
+                        ₦{(selectedPayment.amount === 7500 ? 2490 : Math.round(selectedPayment.amount * (2490 / 7500))).toLocaleString()}
+                      </strong>
+                    </div>
+                    <div className="payment-split-row">
+                      <span className="payment-split-agent-title">
+                        <i className="fas fa-user-tie"></i> Agent Escrow Payout
+                      </span>
+                      <strong className="payment-split-agent-val">
+                        ₦{(selectedPayment.amount === 7500 ? 5010 : Math.round(selectedPayment.amount * (5010 / 7500))).toLocaleString()}
+                      </strong>
+                    </div>
+                  </>
+                )}
               </div>
 
               {/* Agent Payout Status Details */}
@@ -870,13 +1039,38 @@ export default function PaymentsTab({
                 )}
 
                 {selectedPayment.status === "PAID" && selectedPayment.payoutStatus !== "DISBURSED" && (
-                  <button
-                    onClick={() => handleDisbursePayout(selectedPayment.id)}
-                    disabled={actionLoading}
-                    className="payment-modal-btn-disburse"
-                  >
-                    <i className="fas fa-paper-plane"></i> Disburse ₦5,010 Payout
-                  </button>
+                  <>
+                    <button
+                      onClick={() => handleDisbursePayout(selectedPayment.id)}
+                      disabled={actionLoading}
+                      className="payment-modal-btn-disburse"
+                    >
+                      <i className="fas fa-paper-plane"></i> Paystack ₦5,010 Payout
+                    </button>
+                    <button
+                      onClick={() => {
+                        setManualPayoutPayment(selectedPayment);
+                        setManualBankRef("");
+                        setManualNotes("");
+                      }}
+                      disabled={actionLoading}
+                      style={{
+                        background: "#f8fafc",
+                        border: "1.5px solid #cbd5e1",
+                        color: "#334155",
+                        padding: "9px 16px",
+                        borderRadius: "8px",
+                        fontWeight: 600,
+                        fontSize: "0.88rem",
+                        cursor: "pointer",
+                        display: "inline-flex",
+                        alignItems: "center",
+                        gap: "6px",
+                      }}
+                    >
+                      <i className="fas fa-money-bill-transfer"></i> Record Manual Bank Transfer
+                    </button>
+                  </>
                 )}
 
                 {selectedPayment.status === "PAID" && (
@@ -926,6 +1120,94 @@ export default function PaymentsTab({
         onConfirm={handleConfirmReject}
         loading={actionLoading}
       />
+
+      {/* 6. Record Manual Payout Modal */}
+      {manualPayoutPayment && (
+        <div className="admin-modal-overlay" onClick={() => setManualPayoutPayment(null)}>
+          <div
+            className="admin-modal-container"
+            style={{ maxWidth: "520px", background: "#ffffff", borderRadius: "16px", overflow: "hidden" }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div style={{ padding: "20px 24px", borderBottom: "1px solid #e2e8f0", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                <div style={{ width: "38px", height: "38px", borderRadius: "8px", background: "#ecfdf5", color: "#059669", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                  <i className="fas fa-money-bill-transfer"></i>
+                </div>
+                <div>
+                  <h3 style={{ margin: 0, fontSize: "1.1rem", fontWeight: 700, color: "#0f172a" }}>Record Manual Bank Payout</h3>
+                  <span style={{ fontSize: "0.82rem", color: "#64748b" }}>Mark agent inspection payout as paid offline</span>
+                </div>
+              </div>
+              <button
+                onClick={() => setManualPayoutPayment(null)}
+                style={{ background: "none", border: "none", cursor: "pointer", color: "#94a3b8", fontSize: "1.1rem" }}
+              >
+                <i className="fas fa-times"></i>
+              </button>
+            </div>
+
+            <form onSubmit={handleRecordManualPayout} style={{ padding: "24px" }}>
+              <div style={{ background: "#f8fafc", padding: "14px", borderRadius: "10px", border: "1px solid #e2e8f0", marginBottom: "18px" }}>
+                <div style={{ fontSize: "0.85rem", color: "#64748b", marginBottom: "4px" }}>Agent:</div>
+                <div style={{ fontWeight: 700, color: "#0f172a" }}>
+                  {manualPayoutPayment.agent.name} {manualPayoutPayment.agent.agencyName ? `(${manualPayoutPayment.agent.agencyName})` : ""}
+                </div>
+                <div style={{ fontSize: "0.85rem", color: "#334155", marginTop: "4px" }}>
+                  Bank: <strong>{manualPayoutPayment.agent.bankName || "N/A"}</strong> • Acct: <strong>{manualPayoutPayment.agent.accountNumber || "N/A"}</strong>
+                </div>
+                <div style={{ marginTop: "8px", fontWeight: 700, color: "#059669", fontSize: "0.95rem" }}>
+                  Payout Amount: ₦5,010
+                </div>
+              </div>
+
+              <div style={{ marginBottom: "16px" }}>
+                <label style={{ display: "block", fontSize: "0.88rem", fontWeight: 600, color: "#334155", marginBottom: "6px" }}>
+                  Bank Transfer Reference / Receipt Code (Optional)
+                </label>
+                <input
+                  type="text"
+                  placeholder="e.g. GTB-TRF-982173 or leave blank for auto ref"
+                  value={manualBankRef}
+                  onChange={(e) => setManualBankRef(e.target.value)}
+                  style={{ width: "100%", padding: "10px 14px", borderRadius: "8px", border: "1.5px solid #cbd5e1", fontSize: "0.9rem", boxSizing: "border-box" }}
+                />
+              </div>
+
+              <div style={{ marginBottom: "20px" }}>
+                <label style={{ display: "block", fontSize: "0.88rem", fontWeight: 600, color: "#334155", marginBottom: "6px" }}>
+                  Internal Audit Notes (Optional)
+                </label>
+                <textarea
+                  placeholder="e.g. Paid manually via bank app on 08/10/2026 by Admin"
+                  value={manualNotes}
+                  onChange={(e) => setManualNotes(e.target.value)}
+                  rows={3}
+                  style={{ width: "100%", padding: "10px 14px", borderRadius: "8px", border: "1.5px solid #cbd5e1", fontSize: "0.9rem", boxSizing: "border-box" }}
+                />
+              </div>
+
+              <div style={{ display: "flex", justifyContent: "flex-end", gap: "10px" }}>
+                <button
+                  type="button"
+                  onClick={() => setManualPayoutPayment(null)}
+                  style={{ padding: "9px 18px", borderRadius: "8px", border: "1.5px solid #cbd5e1", background: "#ffffff", color: "#475569", fontWeight: 600, cursor: "pointer" }}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={actionLoading}
+                  style={{ padding: "9px 20px", borderRadius: "8px", border: "none", background: "#059669", color: "#ffffff", fontWeight: 700, cursor: "pointer", display: "inline-flex", alignItems: "center", gap: "6px" }}
+                >
+                  {actionLoading ? <i className="fas fa-spinner fa-spin"></i> : <i className="fas fa-check"></i>}
+                  Confirm & Mark Disbursed
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

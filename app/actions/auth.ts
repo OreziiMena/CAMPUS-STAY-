@@ -471,19 +471,28 @@ export async function updateAgentPassword(data: any) {
 
 export async function requestPasswordReset(email: string) {
   try {
+    const cleanEmail = (email || "").trim().toLowerCase();
+    if (!cleanEmail) {
+      return { success: false, error: "Please provide a valid email address." };
+    }
+
+    const rateCheck = await checkRateLimit("pwd-reset-request", 5, 5);
+    if (!rateCheck.success) {
+      return { success: false, error: rateCheck.error };
+    }
+
     const user = await prisma.user.findUnique({
-      where: { email },
+      where: { email: cleanEmail },
     });
 
-    if (!user || user.deletedAt) {
-      return { success: false, error: "No account found with this email address." };
+    if (user && !user.deletedAt) {
+      const otpRes = await generateOTP(cleanEmail, "PASSWORD_RESET");
+      if (!otpRes.success) {
+        console.error("Failed to generate password reset OTP:", otpRes.error);
+      }
     }
 
-    const otpRes = await generateOTP(email, "PASSWORD_RESET");
-    if (!otpRes.success) {
-      return { success: false, error: otpRes.error || "Failed to generate verification code." };
-    }
-
+    // Prevent account enumeration by always returning success
     return { success: true };
   } catch (err: any) {
     return { success: false, error: err.message || "An unexpected error occurred." };

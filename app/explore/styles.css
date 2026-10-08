@@ -152,7 +152,7 @@ nav{
 .hero-para{
     color: rgb(2, 53, 28);
     font-size: 22px;
-    font-family: 'Open Sans', sans-serif;
+    font-family: 'Poppins', sans-serif;
     font-weight: 500;
     text-align: center;
     margin-top: 10px;
@@ -171,7 +171,7 @@ nav{
     padding: 12px 20px;
     border-radius: 50px;
     border: 2px solid #ccc;
-    font-family: 'Open Sans', sans-serif;
+    font-family: 'Poppins', sans-serif;
     font-size: 16px;
     outline: none;
 }
@@ -296,7 +296,7 @@ nav{
 .property-location {
     color: #666;
     font-size: 14px;
-    font-family: 'Open Sans', sans-serif;
+    font-family: 'Poppins', sans-serif;
     margin-bottom: 20px;
 }
 .property-location i {
@@ -313,7 +313,7 @@ nav{
 .property-amenities span {
     font-size: 13px;
     color: #555;
-    font-family: 'Open Sans', sans-serif;
+    font-family: 'Poppins', sans-serif;
     display: flex;
     align-items: center;
     gap: 5px;
@@ -370,7 +370,7 @@ nav{
     text-decoration: none;
     color: #dddddd; 
     font-size: 15px;
-    font-family: 'open sans', sans-serif;
+    font-family: 'Poppins', sans-serif;
     transition: color 0.3s ease;
 }
 .main-footer ul li a:hover {
@@ -1073,7 +1073,7 @@ body.dark-mode .filters-horizontal-row input::placeholder {
     font-size: 15px;
     background: transparent;
     color: #333;
-    font-family: 'Open Sans', sans-serif;
+    font-family: 'Poppins', sans-serif;
     box-sizing: border-box;
 }
 
@@ -1131,7 +1131,7 @@ body.dark-mode .filters-horizontal-row input::placeholder {
     border-radius: 8px;
     font-size: 14px;
     outline: none;
-    font-family: 'Open Sans', sans-serif;
+    font-family: 'Poppins', sans-serif;
     width: 100%;
     cursor: pointer;
     border: 1px solid #ccc;
@@ -1160,7 +1160,7 @@ body.dark-mode .filters-horizontal-row input::placeholder {
     background: white;
     outline: none;
     color: #333;
-    font-family: 'Open Sans', sans-serif;
+    font-family: 'Poppins', sans-serif;
 }
 
 .filter-price-separator {
@@ -1299,7 +1299,7 @@ body.dark-mode .filters-horizontal-row input::placeholder {
     color: #444;
     line-height: 1.6;
     max-width: 440px;
-    font-family: 'Open Sans', sans-serif;
+    font-family: 'Poppins', sans-serif;
 }
 
 .tour-footer {

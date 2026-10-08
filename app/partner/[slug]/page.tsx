@@ -6,6 +6,7 @@ import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import { getPartnerBySlug } from "@/app/actions/partner";
 import PartnerInteractive from "./PartnerInteractive";
+import PartnerPropertyList from "./PartnerPropertyList";
 import styles from "./partner.module.css";
 
 interface PageProps {
@@ -145,119 +146,13 @@ export default async function PartnerPage({ params }: PageProps) {
           </div>
         </section>
 
-        {/* Available Properties Section */}
-        <section className={styles.propertiesSection}>
-          <div className={styles.sectionHeader}>
-            <div>
-              <h2 className={styles.sectionTitle}>Available Properties</h2>
-              <p className={styles.sectionSub}>
-                Properties supplied by {partner.agencyName} that are currently available on CampusTent.
-              </p>
-            </div>
-            <span className={styles.propertyCountBadge}>
-              <i className="fas fa-home"></i> {properties.length} {properties.length === 1 ? "Property" : "Properties"} Listed
-            </span>
-          </div>
-
-          {properties.length === 0 ? (
-            <div className={styles.emptyCard}>
-              <div className={styles.emptyIcon}>
-                <i className="fas fa-house-chimney-crack"></i>
-              </div>
-              <h3 className={styles.emptyTitle}>No Live Properties at This Moment</h3>
-              <p className={styles.emptyText}>
-                {partner.agencyName} properties are currently being verified or occupied. Check back shortly or contact the agency directly on WhatsApp.
-              </p>
-              <a
-                href={partner.whatsappLink}
-                target="_blank"
-                rel="noopener noreferrer"
-                className={styles.emptyBtn}
-              >
-                Inquire via WhatsApp
-              </a>
-            </div>
-          ) : (
-            <div className={styles.propertyGrid}>
-              {properties.map((property: any) => {
-                const videoTour = property.images?.find((img: string) =>
-                  img.match(/\.(mp4|webm|ogg|mov|mkv)(\?.*)?$/i)
-                );
-                const firstImage =
-                  property.images?.find((img: string) => !img.match(/\.(mp4|webm|ogg|mov|mkv)(\?.*)?$/i)) ||
-                  "https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80";
-
-                return (
-                  <div key={property.id} className={styles.propertyCard}>
-                    <div className={styles.cardMediaWrapper}>
-                      <img
-                        src={firstImage}
-                        alt={property.title}
-                        className={styles.cardMedia}
-                        loading="lazy"
-                      />
-                      {videoTour && (
-                        <div className={styles.videoBadge}>
-                          <i className="fas fa-video"></i> Video Tour
-                        </div>
-                      )}
-                      <span className={styles.availBadge}>
-                        {property.isAvailable ? "AVAILABLE" : "OCCUPIED"}
-                      </span>
-                    </div>
-
-                    <div className={styles.cardBody}>
-                      {/* Price Row */}
-                      <div className={styles.cardPriceRow}>
-                        <h3 className={styles.cardPrice}>
-                          ₦{property.price?.toLocaleString()}
-                        </h3>
-                        <span className={styles.cardPriceSub}>total package</span>
-                      </div>
-
-                      {/* Fee Breakdown Pills */}
-                      <div className={styles.feeBreakdownRow}>
-                        {property.rentAmount && property.rentAmount > 0 && (
-                          <span className={`${styles.feePill} ${styles.feePillRent}`}>
-                            <i className="fas fa-home"></i> Rent: ₦{property.rentAmount.toLocaleString()}
-                          </span>
-                        )}
-                        {property.agentFee !== undefined && property.agentFee !== null && (
-                          <span className={`${styles.feePill} ${styles.feePillAgent}`}>
-                            <i className="fas fa-user-tie"></i> Agent Fee: ₦{property.agentFee.toLocaleString()}
-                          </span>
-                        )}
-                        {property.cautionFee && property.cautionFee > 0 && (
-                          <span className={styles.feePill}>
-                            <i className="fas fa-shield-alt"></i> Caution: ₦{property.cautionFee.toLocaleString()}
-                          </span>
-                        )}
-                      </div>
-
-                      <h4 className={styles.cardTitle}>{property.title}</h4>
-
-                      <p className={styles.cardLocation}>
-                        <i className="fas fa-location-dot"></i>
-                        <span>
-                          {property.location}
-                          {property.distance ? ` (${property.distance})` : ""}
-                        </span>
-                      </p>
-
-                      {/* Customized Partner Details Link */}
-                      <Link
-                        href={`/apartment-details?id=${property.id}&partner=${partner.slug}`}
-                        className={styles.cardBtn}
-                      >
-                        View Details
-                      </Link>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          )}
-        </section>
+        {/* Available Properties Section with Campus Filters & Pagination */}
+        <PartnerPropertyList
+          properties={properties}
+          partnerSlug={partner.slug}
+          partnerName={partner.agencyName}
+          whatsappLink={partner.whatsappLink}
+        />
       </main>
 
       <Footer />

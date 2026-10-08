@@ -223,29 +223,47 @@ export async function getAmbassadorStatus(identifier: string) {
       return { success: false, error: "No ambassador record found for the provided email or code." };
     }
 
+    const currentUser = await getCurrentUser();
+    const isOwner = !!(
+      currentUser &&
+      (currentUser.id === application.userId ||
+        currentUser.email.toLowerCase() === application.email.toLowerCase() ||
+        currentUser.role === "ADMIN")
+    );
+
+    const maskedEmail = isOwner
+      ? application.email
+      : application.email.replace(/^(.)(.*)(@.*)$/, (_, a, b, c) => `${a}***${c}`);
+
+    const maskedAccountNumber = application.accountNumber
+      ? isOwner
+        ? application.accountNumber
+        : `******${application.accountNumber.slice(-4)}`
+      : null;
+
     return {
       success: true,
       application: {
         id: application.id,
         fullName: application.fullName,
-        email: application.email,
+        email: maskedEmail,
         university: application.university,
         referralCode: application.referralCode,
         status: application.status,
         referralCount: application.referralCount,
         earnings: application.earnings,
-        bankCode: application.bankCode,
+        bankCode: isOwner ? application.bankCode : undefined,
         bankName: application.bankName,
-        accountNumber: application.accountNumber,
-        accountName: application.accountName,
-        recipientCode: application.recipientCode,
+        accountNumber: maskedAccountNumber,
+        accountName: isOwner ? application.accountName : undefined,
+        recipientCode: isOwner ? application.recipientCode : undefined,
         payouts: (application.payouts || []).map((p) => ({
           id: p.id,
           amount: p.amount,
           reference: p.reference,
           bankName: p.bankName,
-          accountNumber: p.accountNumber,
-          accountName: p.accountName,
+          accountNumber: isOwner ? p.accountNumber : `******${p.accountNumber?.slice(-4) || ""}`,
+          accountName: isOwner ? p.accountName : undefined,
           status: p.status,
           note: p.note,
           disbursedAt: p.disbursedAt.toISOString(),
@@ -318,13 +336,14 @@ export async function resolveAmbassadorBankAccount(accountNumber: string, bankCo
  */
 export async function saveAmbassadorBankDetails(data: {
   identifier: string;
+  confirmEmail?: string;
   bankCode: string;
   bankName: string;
   accountNumber: string;
   accountName: string;
 }) {
   try {
-    const { identifier, bankCode, bankName, accountNumber, accountName } = data;
+    const { identifier, confirmEmail, bankCode, bankName, accountNumber, accountName } = data;
     if (!identifier || !bankCode || !bankName || !accountNumber || !accountName) {
       return { success: false, error: "All bank fields and ambassador identifier are required." };
     }
@@ -341,6 +360,27 @@ export async function saveAmbassadorBankDetails(data: {
 
     if (!existing) {
       return { success: false, error: "Ambassador record not found." };
+    }
+
+    // Security check: Only allow authenticated owner or callers confirming the ambassador's registered email
+    const currentUser = await getCurrentUser();
+    const isSessionOwner = !!(
+      currentUser &&
+      (currentUser.id === existing.userId ||
+        currentUser.email.toLowerCase() === existing.email.toLowerCase() ||
+        currentUser.role === "ADMIN")
+    );
+
+    if (!isSessionOwner) {
+      const isEmailProvided = query === existing.email.toLowerCase() ||
+        (confirmEmail && confirmEmail.trim().toLowerCase() === existing.email.toLowerCase());
+
+      if (!isEmailProvided) {
+        return {
+          success: false,
+          error: "Verification required: Please enter your registered ambassador email address to update bank details.",
+        };
+      }
     }
 
     let recipientCode = existing.recipientCode;

@@ -291,8 +291,9 @@ export async function sendChatMessage(chatRoomId: string, text: string) {
               const recipientName = escapeHtml(recipientUser.studentProfile?.fullName || "Student");
               const listingTitle = escapeHtml(chatRoom.property.title);
               const safeText = escapeHtml(text);
-              const senderPhone = user.phone ? escapeHtml(user.phone) : "";
-              const phoneDigits = user.phone ? user.phone.replace(/\D/g, "") : "";
+              const rawPhone = user.phone || (user as any).studentProfile?.phone || "";
+              const senderPhone = rawPhone ? escapeHtml(rawPhone) : "";
+              const phoneDigits = rawPhone ? rawPhone.replace(/\D/g, "") : "";
               const cleanPhone = phoneDigits.startsWith("0") ? `234${phoneDigits.slice(1)}` : phoneDigits;
 
               await sendEmail({
@@ -326,7 +327,9 @@ export async function sendChatMessage(chatRoomId: string, text: string) {
                     </div>
                     <p style="color: #666; font-size: 0.85rem;">Best regards,<br/>The Campus Tent Team</p>
                   </div>
-                `
+                `,
+                allowPhoneNumbers: true,
+                isInspectionMessage: true,
               });
             }
           }

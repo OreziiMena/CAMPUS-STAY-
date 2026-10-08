@@ -49,6 +49,10 @@ export default function ListingModal({
     pop: false,
     prepaidMeter: false,
     runningWater: false,
+    kitchenCabinet: false,
+    waterHeater: false,
+    underDeckingCeiling: false,
+    whiteBoardCeiling: false,
   });
   const [formImages, setFormImages] = useState<string[]>([]);
   const [formImageFiles, setFormImageFiles] = useState<File[]>([]);
@@ -120,6 +124,10 @@ export default function ListingModal({
     if (formAmenities.pop) activeAmenities.push("POP");
     if (formAmenities.prepaidMeter) activeAmenities.push("Prepaid meter");
     if (formAmenities.runningWater) activeAmenities.push("running water");
+    if (formAmenities.kitchenCabinet) activeAmenities.push("Kitchen cabinet");
+    if (formAmenities.waterHeater) activeAmenities.push("Water heater");
+    if (formAmenities.underDeckingCeiling) activeAmenities.push("Under-decking ceiling");
+    if (formAmenities.whiteBoardCeiling) activeAmenities.push("White-board ceiling");
 
     try {
       let uploadedUrls: string[] = [];
@@ -550,6 +558,22 @@ export default function ListingModal({
                   <label className="checkbox-label-custom">
                     <input type="checkbox" checked={formAmenities.runningWater} onChange={() => handleFormCheckboxChange("runningWater")} />
                     running water
+                  </label>
+                  <label className="checkbox-label-custom">
+                    <input type="checkbox" checked={formAmenities.kitchenCabinet} onChange={() => handleFormCheckboxChange("kitchenCabinet")} />
+                    Kitchen cabinet
+                  </label>
+                  <label className="checkbox-label-custom">
+                    <input type="checkbox" checked={formAmenities.waterHeater} onChange={() => handleFormCheckboxChange("waterHeater")} />
+                    Water heater
+                  </label>
+                  <label className="checkbox-label-custom">
+                    <input type="checkbox" checked={formAmenities.underDeckingCeiling} onChange={() => handleFormCheckboxChange("underDeckingCeiling")} />
+                    Under-decking ceiling
+                  </label>
+                  <label className="checkbox-label-custom">
+                    <input type="checkbox" checked={formAmenities.whiteBoardCeiling} onChange={() => handleFormCheckboxChange("whiteBoardCeiling")} />
+                    White-board ceiling
                   </label>
                 </div>
               </div>

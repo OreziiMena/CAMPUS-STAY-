@@ -8,6 +8,7 @@ export interface University {
 export const ACTIVE_UNIVERSITIES: University[] = [
   { code: "FUPRE", name: "Federal University of Petroleum Resources, Effurun (FUPRE)" },
   { code: "DELSU", name: "Delta State University, Abraka (DELSU)" },
+  { code: "DELSU_OLEH", name: "Delta State University, Oleh Campus (DELSU Oleh)" },
   { code: "PTI", name: "Petroleum Training Institute, Effurun (PTI)" },
   { code: "UNIBEN", name: "University of Benin (UNIBEN)" },
   { code: "DOU", name: "Dennis Osadebay University, Asaba (DOU)" },

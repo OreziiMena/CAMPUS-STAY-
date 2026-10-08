@@ -224,6 +224,7 @@
   font-size: 17px;
   font-weight: 700;
   color: rgb(2, 53, 28);
+  white-space: nowrap;
 }
 
 .admin-profile-info {
@@ -499,7 +500,7 @@
   border-spacing: 0;
   text-align: left;
   font-size: 13.5px;
-  font-family: 'Open Sans', sans-serif;
+  font-family: 'Poppins', sans-serif;
 }
 
 .admin-table thead {
@@ -878,7 +879,7 @@
 }
 
 .analytics-dashboard {
-  font-family: 'Open Sans', sans-serif;
+  font-family: 'Poppins', sans-serif;
 }
 
 .analytics-stats-grid {
@@ -1132,7 +1133,7 @@
   color: #64748b;
   font-size: 0.88rem;
   margin: 6px 0 0 0;
-  font-family: 'Open Sans', sans-serif;
+  font-family: 'Poppins', sans-serif;
   line-height: 1.5;
 }
 
@@ -2173,15 +2174,31 @@
 
 @media (max-width: 768px) {
   .admin-header {
-    padding: 12px 16px;
+    padding: 10px 14px;
+    gap: 8px;
+    flex-wrap: nowrap;
   }
   
+  .admin-header-left {
+    gap: 10px;
+    min-width: 0;
+    flex-shrink: 1;
+  }
+
   .header-title h3 {
-    font-size: 15px;
+    font-size: 14px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
   
-  .admin-profile-info span {
+  .admin-profile-name {
     display: none;
+  }
+
+  .admin-profile-info {
+    gap: 8px;
+    flex-shrink: 0;
   }
   
   .admin-card {
@@ -2241,6 +2258,34 @@
 }
 
 @media (max-width: 480px) {
+  .admin-header {
+    padding: 8px 10px;
+    gap: 6px;
+  }
+
+  .admin-header-left {
+    gap: 8px;
+  }
+
+  .header-title h3 {
+    font-size: 13px;
+  }
+
+  .admin-2fa-badge {
+    padding: 4px 8px !important;
+    font-size: 0.72rem !important;
+  }
+
+  .admin-2fa-badge-text {
+    display: none !important;
+  }
+
+  .admin-avatar {
+    width: 30px;
+    height: 30px;
+    font-size: 13px;
+  }
+
   .admin-content {
     padding: 14px 12px;
   }

@@ -11,6 +11,7 @@ import {
   getOrCreateChatRoom 
 } from "@/app/actions/chat";
 import { pusherClient, isPusherClientConfigured } from "@/lib/pusher-client";
+import ChatInput from "@/components/ChatInput";
 import "./chat.css";
 import { useToast } from "@/components/ToastProvider";
 
@@ -50,10 +51,15 @@ function ChatContent() {
 
   const [loadingRooms, setLoadingRooms] = useState(true);
   const [loadingMessages, setLoadingMessages] = useState(false);
-  const [inputText, setInputText] = useState("");
 
   const [isTabVisible, setIsTabVisible] = useState(true);
   const [isIdle, setIsIdle] = useState(false);
+
+  // Keep ref to selectedRoomId so Pusher callbacks have access without resubscribing
+  const selectedRoomIdRef = useRef<string | null>(selectedRoomId);
+  useEffect(() => {
+    selectedRoomIdRef.current = selectedRoomId;
+  }, [selectedRoomId]);
 
   useEffect(() => {
     const handleVisibilityChange = () => {
@@ -105,14 +111,18 @@ function ChatContent() {
 
       const chatContainer = document.querySelector(".chat-container") as HTMLElement;
       if (chatContainer) {
-        // Adjust the container height to fit the visible area between navbar (80px) and keyboard top
-        chatContainer.style.height = `${viewport.height - 80}px`;
+        // Dynamically compute navbar height (70px on mobile/tablet <=1024px, 80px on desktop)
+        const navHeight = window.innerWidth <= 1024 ? 70 : 80;
+        const availableHeight = viewport.height - navHeight;
+        
+        chatContainer.style.setProperty("--chat-container-height", `${availableHeight}px`);
+        chatContainer.style.height = `${availableHeight}px`;
         
         // Offset for top panning (keep navbar at the top of the viewport)
         if (viewport.offsetTop > 0) {
-          chatContainer.style.top = `${80 - viewport.offsetTop}px`;
+          chatContainer.style.top = `${navHeight - viewport.offsetTop}px`;
         } else {
-          chatContainer.style.top = "80px";
+          chatContainer.style.top = `${navHeight}px`;
         }
       }
       
@@ -132,12 +142,12 @@ function ChatContent() {
       if (chatContainer) {
         chatContainer.style.height = "";
         chatContainer.style.top = "";
+        chatContainer.style.removeProperty("--chat-container-height");
       }
     };
   }, []);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
-  const inputRef = useRef<HTMLInputElement>(null);
 
   // Load rooms and handle initial property conversation trigger
   useEffect(() => {
@@ -199,7 +209,8 @@ function ChatContent() {
     loadMessages();
   }, [selectedRoomId]);
 
-  // Real-Time Listener (WebSockets - Pusher) for ALL rooms
+  // Real-Time Listener (WebSockets - Pusher) for ALL rooms with stable subscription lifecycle
+  const roomsIdsSignature = rooms.map((r) => r.id).sort().join(",");
   useEffect(() => {
     if (!pusherClient || !isPusherClientConfigured || rooms.length === 0) return;
 
@@ -208,9 +219,10 @@ function ChatContent() {
       const channel = pusherClient!.subscribe(channelName);
 
       channel.bind("new-message", (data: any) => {
-        // 1. If this message is for the currently selected room, append to messages state
-        if (room.id === selectedRoomId) {
+        // 1. If this message is for the currently active room, append or deduplicate
+        if (room.id === selectedRoomIdRef.current) {
           setMessages((prev) => {
+            // If already present by verified id, ignore
             if (prev.some((m) => m.id === data.id)) return prev;
             
             // Deduplicate optimistic messages (match by text and sender)
@@ -241,7 +253,7 @@ function ChatContent() {
         pusherClient!.unsubscribe(`private-chat-${sub.roomId}`);
       });
     };
-  }, [rooms, selectedRoomId]);
+  }, [roomsIdsSignature]);
 
   // Periodically refresh the entire conversation list to ensure sidebar is updated globally with adaptive intervals
   useEffect(() => {
@@ -300,67 +312,61 @@ function ChatContent() {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
-  const handleInputFocus = () => {
-    // Reset body scrolls immediately to override mobile safari automatic zoom/pan offsets
-    setTimeout(() => {
-      window.scrollTo(0, 0);
-      document.body.scrollTop = 0;
-    }, 40);
-  };
+  const handleSendMessage = async (textToSend: string) => {
+    if (!selectedRoomId || !textToSend.trim()) return;
 
-  const handleSendMessage = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!selectedRoomId || !inputText.trim()) return;
-
-    const textToSend = inputText.trim();
-    setInputText("");
-
-    // Maintain keyboard focus and clear input box immediately
-    inputRef.current?.focus();
-
+    const trimmed = textToSend.trim();
     const tempId = `temp-${Date.now()}`;
     const optimisticMsg: Message = {
       id: tempId,
       chatRoomId: selectedRoomId,
       senderId: currentUserId,
-      text: textToSend,
+      text: trimmed,
       createdAt: new Date().toISOString(),
     };
 
-    // Optimistic UI updates
+    // 1. Optimistic UI updates
     setMessages((prev) => [...prev, optimisticMsg]);
 
     setRooms((prevRooms) =>
       prevRooms.map((room) =>
         room.id === selectedRoomId
-          ? { ...room, lastMessage: textToSend, lastMessageAt: new Date().toISOString() }
+          ? { ...room, lastMessage: trimmed, lastMessageAt: new Date().toISOString() }
           : room
       )
     );
 
-    // Send payload asynchronously in background
-    sendChatMessage(selectedRoomId, textToSend).then((res) => {
+    // 2. Send payload to server
+    try {
+      const res = await sendChatMessage(selectedRoomId, trimmed);
       if (res.success && res.message) {
         const msg = res.message;
-        setMessages((prev) =>
-          prev.map((m) =>
-            m.id === tempId
-              ? {
-                  id: msg.id,
-                  chatRoomId: msg.chatRoomId,
-                  senderId: msg.senderId,
-                  text: msg.text,
-                  createdAt: msg.createdAt.toISOString(),
-                }
-              : m
-          )
-        );
+        const confirmedMsg: Message = {
+          id: msg.id,
+          chatRoomId: msg.chatRoomId,
+          senderId: msg.senderId,
+          text: msg.text,
+          createdAt: typeof msg.createdAt === "string" ? msg.createdAt : msg.createdAt.toISOString(),
+        };
+
+        setMessages((prev) => {
+          // If Pusher already pushed this message by id, ensure tempId is removed
+          if (prev.some((m) => m.id === confirmedMsg.id)) {
+            return prev.filter((m) => m.id !== tempId);
+          }
+          // Otherwise replace the tempId
+          return prev.map((m) => (m.id === tempId ? confirmedMsg : m));
+        });
       } else {
-        // Rollback optimistic message on error
+        // Rollback optimistic message on failure
         setMessages((prev) => prev.filter((m) => m.id !== tempId));
         showToast(res.error || "Failed to send message.", "error");
       }
-    });
+    } catch (err: any) {
+      // Rollback optimistic message on network error
+      setMessages((prev) => prev.filter((m) => m.id !== tempId));
+      showToast("Network error. Please try again.", "error");
+    }
   };
 
   const selectedRoom = rooms.find((r) => r.id === selectedRoomId);
@@ -476,24 +482,11 @@ function ChatContent() {
               </div>
 
               {/* Message Input */}
-              <form onSubmit={handleSendMessage} className="chat-input-bar">
-                <input 
-                  ref={inputRef}
-                  type="text" 
-                  placeholder="Type your message here..."
-                  value={inputText}
-                  onChange={(e) => setInputText(e.target.value)}
-                  onFocus={handleInputFocus}
-                  disabled={loadingMessages}
-                />
-                <button 
-                  type="submit" 
-                  className="send-message-btn"
-                  disabled={!inputText.trim() || loadingMessages}
-                >
-                  <i className="fas fa-paper-plane"></i>
-                </button>
-              </form>
+              <ChatInput
+                onSendMessage={handleSendMessage}
+                disabled={loadingMessages}
+                placeholder="Type your message here..."
+              />
             </>
           )}
         </main>

@@ -444,6 +444,19 @@
   border-radius: 6px;
 }
 
+.unavailBadge {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  background: #fef2f2;
+  color: #b91c1c;
+  border: 1px solid #ef4444;
+  font-size: 0.72rem;
+  font-weight: 800;
+  padding: 3px 8px;
+  border-radius: 6px;
+}
+
 .cardBody {
   padding: 20px;
   display: flex;
@@ -742,5 +755,304 @@
   }
   .referDesc {
     font-size: 0.84rem;
+  }
+}
+
+/* ==========================================================================
+   Campus & Location Filter Controls
+   ========================================================================== */
+.filterContainer {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 14px;
+  padding: 18px 22px;
+  margin-bottom: 24px;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.03);
+}
+
+.filterLabelRow {
+  margin-bottom: 12px;
+}
+
+.filterLabel {
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: #073b24;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.filterLabel i {
+  color: #10b981;
+}
+
+.campusTabList {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.campusTabBtn {
+  background: #f8fafc;
+  border: 1.5px solid #e2e8f0;
+  color: #334155;
+  padding: 8px 16px;
+  border-radius: 10px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  transition: all 0.2s ease;
+}
+
+.campusTabBtn:hover {
+  background: #f1f5f9;
+  border-color: #cbd5e1;
+  color: #0f172a;
+}
+
+.campusTabBtnActive {
+  background: #073b24;
+  border-color: #073b24;
+  color: #ffffff !important;
+  box-shadow: 0 4px 12px rgba(7, 59, 36, 0.2);
+}
+
+.tabCountBadge {
+  background: #e2e8f0;
+  color: #475569;
+  font-size: 0.76rem;
+  padding: 2px 7px;
+  border-radius: 12px;
+  font-weight: 700;
+}
+
+.tabCountBadgeActive {
+  background: rgba(255, 255, 255, 0.25);
+  color: #ffffff;
+}
+
+.subLocationRow {
+  margin-top: 16px;
+  padding-top: 14px;
+  border-top: 1px dashed #e2e8f0;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.subLocLabel {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #64748b;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.subLocPills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.subLocPill {
+  background: #f1f5f9;
+  border: 1px solid #e2e8f0;
+  color: #475569;
+  padding: 5px 12px;
+  border-radius: 18px;
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.18s ease;
+}
+
+.subLocPill:hover {
+  background: #e2e8f0;
+  color: #0f172a;
+}
+
+.subLocPillActive {
+  background: #ecfdf5;
+  border-color: #10b981;
+  color: #065f46;
+  font-weight: 700;
+}
+
+.campusBadge {
+  position: absolute;
+  bottom: 12px;
+  left: 12px;
+  background: rgba(7, 59, 36, 0.85);
+  backdrop-filter: blur(4px);
+  color: #ffffff;
+  font-size: 0.72rem;
+  font-weight: 700;
+  padding: 3px 9px;
+  border-radius: 6px;
+  letter-spacing: 0.5px;
+}
+
+.resetFilterBtn {
+  background: #f1f5f9;
+  color: #334155;
+  border: 1px solid #cbd5e1;
+  padding: 10px 18px;
+  border-radius: 10px;
+  font-weight: 600;
+  font-size: 0.9rem;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  transition: all 0.2s ease;
+}
+
+.resetFilterBtn:hover {
+  background: #e2e8f0;
+}
+
+/* ==========================================================================
+   Pagination Controls
+   ========================================================================== */
+.paginationWrapper {
+  margin-top: 36px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 16px;
+  padding: 16px 20px;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 14px;
+}
+
+.paginationSummary {
+  font-size: 0.9rem;
+  color: #64748b;
+}
+
+.paginationSummary strong {
+  color: #0f172a;
+}
+
+.paginationControls {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.pageBtnArrow {
+  background: #ffffff;
+  border: 1.5px solid #cbd5e1;
+  color: #334155;
+  padding: 7px 14px;
+  border-radius: 8px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  transition: all 0.2s ease;
+}
+
+.pageBtnArrow:hover:not(:disabled) {
+  background: #f8fafc;
+  border-color: #073b24;
+  color: #073b24;
+}
+
+.pageBtnArrow:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.pageNumberList {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.pageNumberBtn {
+  width: 36px;
+  height: 36px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: #ffffff;
+  border: 1.5px solid #e2e8f0;
+  color: #334155;
+  border-radius: 8px;
+  font-size: 0.88rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.pageNumberBtn:hover:not(.pageNumberBtnActive) {
+  background: #f1f5f9;
+  border-color: #cbd5e1;
+}
+
+.pageNumberBtnActive {
+  background: #073b24;
+  border-color: #073b24;
+  color: #ffffff;
+  font-weight: 700;
+}
+
+@media (max-width: 640px) {
+  .paginationWrapper {
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+    padding: 14px 10px;
+    text-align: center;
+    width: 100%;
+    box-sizing: border-box;
+  }
+  .paginationSummary {
+    font-size: 0.82rem;
+    text-align: center;
+  }
+  .paginationControls {
+    width: 100%;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+  .pageBtnArrow {
+    padding: 6px 10px;
+    font-size: 0.8rem;
+  }
+  .pageNumberList {
+    gap: 4px;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+  .pageNumberBtn {
+    width: 32px;
+    height: 32px;
+    font-size: 0.82rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .filterContainer {
+    padding: 14px;
+  }
+  .campusTabList {
+    gap: 6px;
+  }
+  .campusTabBtn {
+    padding: 6px 12px;
+    font-size: 0.82rem;
   }
 }

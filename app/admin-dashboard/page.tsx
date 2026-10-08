@@ -107,6 +107,8 @@ function AdminDashboardContent() {
     agentEscrowLiability: 0,
     totalTransactions: 0,
     paidCount: 0,
+    disputedCount: 0,
+    disputedVolume: 0,
   });
   const [ambassadors, setAmbassadors] = useState<any[]>([]);
 
@@ -567,39 +569,43 @@ function AdminDashboardContent() {
         </div>
       )}
 
-      {/* Global Admin Metrics Overview */}
-      <AdminStatCards
-        totalUsersCount={users.length}
-        totalStudentsCount={studentUsers.length}
-        verifiedAgentsCount={verifiedAgentsCount}
-        totalAgentsCount={agentUsers.length}
-        unverifiedAgentsCount={unverifiedAgentsCount}
-        verifiedPropertiesCount={verifiedPropertiesCount}
-        totalPropertiesCount={allProperties.length}
-        unverifiedPropertiesCount={unverifiedPropertiesCount}
-        pendingQueueCount={agents.length + properties.length}
-        pendingAgentsQueueCount={agents.length}
-        pendingPropertiesQueueCount={properties.length}
-      />
+      {/* Global Admin Metrics Overview (Hidden on Analytics Overview tab) */}
+      {activeTab !== "analytics" && (
+        <AdminStatCards
+          totalUsersCount={users.length}
+          totalStudentsCount={studentUsers.length}
+          verifiedAgentsCount={verifiedAgentsCount}
+          totalAgentsCount={agentUsers.length}
+          unverifiedAgentsCount={unverifiedAgentsCount}
+          verifiedPropertiesCount={verifiedPropertiesCount}
+          totalPropertiesCount={allProperties.length}
+          unverifiedPropertiesCount={unverifiedPropertiesCount}
+          pendingQueueCount={agents.length + properties.length}
+          pendingAgentsQueueCount={agents.length}
+          pendingPropertiesQueueCount={properties.length}
+        />
+      )}
 
-      {/* Dynamic Directory Search Bar & Security CTA */}
-      <div className="admin-search-security-row">
-        <div className="admin-search-wrapper">
-          <AdminSearchBar
-            activeTab={activeTab}
-            searchQuery={searchQuery}
-            setSearchQuery={setSearchQuery}
-          />
+      {/* Dynamic Directory Search Bar & Security CTA (Hidden on Analytics Overview tab) */}
+      {activeTab !== "analytics" && (
+        <div className="admin-search-security-row">
+          <div className="admin-search-wrapper">
+            <AdminSearchBar
+              activeTab={activeTab}
+              searchQuery={searchQuery}
+              setSearchQuery={setSearchQuery}
+            />
+          </div>
+          <button
+            type="button"
+            onClick={() => setShow2FAModal(true)}
+            className="admin-2fa-security-btn"
+          >
+            <i className="fas fa-shield-alt admin-2fa-shield-icon"></i>
+            Admin 2FA Security
+          </button>
         </div>
-        <button
-          type="button"
-          onClick={() => setShow2FAModal(true)}
-          className="admin-2fa-security-btn"
-        >
-          <i className="fas fa-shield-alt admin-2fa-shield-icon"></i>
-          Admin 2FA Security
-        </button>
-      </div>
+      )}
 
       {loading ? (
         <div className="no-data-text">

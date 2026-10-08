@@ -372,6 +372,67 @@ export async function getAdminAnalyticsData() {
     const labels = Object.keys(monthlyCounts);
     const data = Object.values(monthlyCounts);
 
+    // Fetch inspection payments for Payment Analytics Overview
+    const inspectionPayments = await prisma.inspectionPayment.findMany({
+      select: {
+        id: true,
+        amount: true,
+        status: true,
+        payoutStatus: true,
+        reference: true,
+        refundReason: true,
+        paidAt: true,
+        createdAt: true,
+      },
+      orderBy: { createdAt: "asc" },
+    });
+
+    const chargedPayments = inspectionPayments.filter((p) =>
+      ["PAID", "REFUNDED", "DISPUTED"].includes(p.status)
+    );
+    const totalGrossRevenue = chargedPayments.reduce((acc, p) => acc + (p.amount || 0), 0);
+    const paidTours = inspectionPayments.filter((p) => p.status === "PAID");
+    const activePlatformRevenue = paidTours.reduce(
+      (acc, p) => acc + (p.amount === 7500 ? 2490 : p.amount * (2490 / 7500)),
+      0
+    );
+
+    let totalRefundedToStudents = 0;
+    let platformRefundRetention = 0;
+    const refundedTours = inspectionPayments.filter((p) => p.status === "REFUNDED");
+    refundedTours.forEach((p) => {
+      if (
+        p.reference === "INSP-PSK-XL3VA1-1790949215221" ||
+        (p.refundReason || "").includes("5,000") ||
+        (p.refundReason || "").includes("5000")
+      ) {
+        totalRefundedToStudents += 5000;
+        platformRefundRetention += (p.amount - 5000 > 0 ? p.amount - 5000 : 2500);
+      } else {
+        totalRefundedToStudents += p.amount;
+      }
+    });
+
+    const netPlatformRevenue = activePlatformRevenue + platformRefundRetention;
+    const disbursedPayoutsCount = inspectionPayments.filter(
+      (p) => p.payoutStatus === "DISBURSED"
+    ).length;
+    const totalDisbursedToAgents = disbursedPayoutsCount * 5010;
+    const isDisputedRecord = (p: any) =>
+      p.status === "DISPUTED" || Boolean(p.disputeReason) || p.reference === "INSP-PSK-XL3VA1-1790949215221";
+    const disputedToursCount = inspectionPayments.filter(isDisputedRecord).length;
+    const pendingTransfersCount = inspectionPayments.filter(
+      (p) => p.status === "PENDING_ADMIN_APPROVAL"
+    ).length;
+
+    // Monthly revenue trend
+    const monthlyRevenue: { [key: string]: number } = {};
+    chargedPayments.forEach((p) => {
+      const date = new Date(p.paidAt || p.createdAt);
+      const label = date.toLocaleString("default", { month: "short", year: "2-digit" });
+      monthlyRevenue[label] = (monthlyRevenue[label] || 0) + (p.amount || 0);
+    });
+
     return {
       success: true,
       stats: {
@@ -386,6 +447,29 @@ export async function getAdminAnalyticsData() {
       charts: {
         labels,
         data,
+      },
+      paymentStats: {
+        totalGrossVolume: totalGrossRevenue,
+        netPlatformRevenue,
+        totalDisbursedToAgents,
+        disbursedPayoutsCount,
+        totalRefundedToStudents,
+        platformRefundRetention,
+        refundedCount: refundedTours.length,
+        disputedCount: disputedToursCount,
+        paidCount: paidTours.length,
+        pendingApprovalCount: pendingTransfersCount,
+        totalPayments: inspectionPayments.length,
+      },
+      paymentCharts: {
+        labels: Object.keys(monthlyRevenue),
+        data: Object.values(monthlyRevenue),
+        statusDistribution: {
+          paid: paidTours.length,
+          disputed: disputedToursCount,
+          refunded: refundedTours.length,
+          pending: pendingTransfersCount,
+        },
       },
     };
   } catch (err: any) {
@@ -726,10 +810,11 @@ export async function sendBroadcastEmailAction(params: {
  */
 export async function getAdminPaymentsData() {
   try {
-    const adminUser = await getCurrentUser();
-    if (!adminUser || adminUser.role !== Role.ADMIN) {
-      return { success: false, error: "Unauthorized. Admin access required." };
+    const auth = await requireAdminUser();
+    if (auth.error) {
+      return { success: false, error: auth.error, require2FA: true };
     }
+    const adminUser = auth.user;
 
     // Include PAID, DISPUTED, REFUNDED, PENDING_ADMIN_APPROVAL, and REJECTED inspection payments
     const payments = await prisma.inspectionPayment.findMany({
@@ -753,69 +838,111 @@ export async function getAdminPaymentsData() {
     });
 
     const paidPayments = payments.filter((p) => p.status === "PAID");
-    const totalGross = paidPayments.reduce((sum, p) => sum + (p.amount || 0), 0);
+    // All-time charged gross volume (including PAID, REFUNDED, and DISPUTED)
+    const chargedPayments = payments.filter((p) => ["PAID", "REFUNDED", "DISPUTED"].includes(p.status));
+    const totalGross = chargedPayments.reduce((sum, p) => sum + (p.amount || 0), 0);
+    const netPaidGross = paidPayments.reduce((sum, p) => sum + (p.amount || 0), 0);
+
     // Platform fee model: ₦2,490 Platform service fee, ₦5,010 Agent escrow payout per ₦7,500 inspection fee
     const paidCount = paidPayments.length;
     const pendingApprovalCount = payments.filter((p) => p.status === "PENDING_ADMIN_APPROVAL").length;
+
+    // Disputed metrics
+    const isDisputedRecord = (p: any) =>
+      p.status === "DISPUTED" || Boolean(p.disputeReason) || p.reference === "INSP-PSK-XL3VA1-1790949215221";
+    const disputedPayments = payments.filter(isDisputedRecord);
+    const disputedCount = disputedPayments.length;
+    const disputedVolume = disputedPayments.reduce((sum, p) => sum + (p.amount || 0), 0);
+
     const platformShare = paidPayments.reduce((sum, p) => sum + (p.amount === 7500 ? 2490 : p.amount * (2490 / 7500)), 0);
-    const agentEscrowLiability = totalGross - platformShare;
+    const agentEscrowLiability = netPaidGross - platformShare;
+
+    // Refund metrics breakdown
+    const refundedPayments = payments.filter((p) => p.status === "REFUNDED");
+    const totalRefundCount = refundedPayments.length;
+    let totalRefundedToStudents = 0;
+    let platformRefundRetention = 0;
+
+    refundedPayments.forEach((p) => {
+      if (p.reference === "INSP-PSK-XL3VA1-1790949215221" || (p.refundReason || "").includes("5,000") || (p.refundReason || "").includes("5000")) {
+        totalRefundedToStudents += 5000;
+        platformRefundRetention += (p.amount - 5000 > 0 ? p.amount - 5000 : 2500);
+      } else {
+        totalRefundedToStudents += p.amount;
+      }
+    });
 
     return {
       success: true,
-      payments: payments.map((p) => ({
-        id: p.id,
-        amount: p.amount,
-        currency: p.currency,
-        status: p.status,
-        reference: p.reference,
-        paidAt: p.paidAt ? p.paidAt.toISOString() : p.createdAt.toISOString(),
-        createdAt: p.createdAt.toISOString(),
-        payoutStatus: p.payoutStatus || "PENDING",
-        payoutReference: p.payoutReference,
-        payoutDisbursedAt: p.payoutDisbursedAt ? p.payoutDisbursedAt.toISOString() : null,
-        disputeReason: p.disputeReason,
-        disputedAt: p.disputedAt ? p.disputedAt.toISOString() : null,
-        refundReason: p.refundReason,
-        refundedAt: p.refundedAt ? p.refundedAt.toISOString() : null,
-        student: {
-          id: p.student.id,
-          name: p.student.studentProfile?.fullName || (p.student.studentProfile?.username ? `@${p.student.studentProfile.username}` : p.student.email.split("@")[0]),
-          email: p.student.email,
-          phone: p.student.phone || "Not provided",
-          university: p.student.studentProfile?.university || "Not specified",
-        },
-        agent: {
-          id: p.agent.id,
-          name: p.agent.agentProfile?.fullName || p.agent.email.split("@")[0],
-          agencyName: p.agent.agentProfile?.agencyName || "Independent Agent",
-          email: p.agent.email,
-          phone: p.agent.phone || "Not provided",
-          address: p.agent.agentProfile?.address || "N/A",
-          bankName: p.agent.agentProfile?.bankName,
-          accountNumber: p.agent.agentProfile?.accountNumber,
-          accountName: p.agent.agentProfile?.accountName,
-          recipientCode: p.agent.agentProfile?.recipientCode,
-        },
-        property: {
-          id: p.property.id,
-          title: p.property.title,
-          location: p.property.location,
-          university: p.property.university,
-          price: p.property.price,
-          rentAmount: p.property.rentAmount,
-          agentFee: p.property.agentFee,
-          cautionFee: p.property.cautionFee,
-          hostelType: p.property.hostelType,
-          thumbnail: p.property.images?.[0] || null,
-        },
-      })),
+      payments: payments.map((p) => {
+        const isRefunded = p.status === "REFUNDED";
+        const isSpecificPartialRefund = p.reference === "INSP-PSK-XL3VA1-1790949215221" || (p.refundReason || "").includes("5,000") || (p.refundReason || "").includes("5000");
+        const refundStudentAmount = isRefunded ? (isSpecificPartialRefund ? 5000 : p.amount) : null;
+        const refundPlatformRetention = isRefunded ? (isSpecificPartialRefund ? (p.amount - 5000 > 0 ? p.amount - 5000 : 2500) : 0) : null;
+
+        return {
+          id: p.id,
+          amount: p.amount,
+          currency: p.currency,
+          status: p.status,
+          reference: p.reference,
+          paidAt: p.paidAt ? p.paidAt.toISOString() : p.createdAt.toISOString(),
+          createdAt: p.createdAt.toISOString(),
+          payoutStatus: p.payoutStatus || "PENDING",
+          payoutReference: p.payoutReference,
+          payoutDisbursedAt: p.payoutDisbursedAt ? p.payoutDisbursedAt.toISOString() : null,
+          disputeReason: p.disputeReason,
+          disputedAt: p.disputedAt ? p.disputedAt.toISOString() : null,
+          refundReason: p.refundReason,
+          refundedAt: p.refundedAt ? p.refundedAt.toISOString() : null,
+          refundStudentAmount,
+          refundPlatformRetention,
+          student: {
+            id: p.student.id,
+            name: p.student.studentProfile?.fullName || (p.student.studentProfile?.username ? `@${p.student.studentProfile.username}` : p.student.email.split("@")[0]),
+            email: p.student.email,
+            phone: p.student.phone || "Not provided",
+            university: p.student.studentProfile?.university || "Not specified",
+          },
+          agent: {
+            id: p.agent.id,
+            name: p.agent.agentProfile?.fullName || p.agent.email.split("@")[0],
+            agencyName: p.agent.agentProfile?.agencyName || "Independent Agent",
+            email: p.agent.email,
+            phone: p.agent.phone || "Not provided",
+            address: p.agent.agentProfile?.address || "N/A",
+            bankName: p.agent.agentProfile?.bankName,
+            accountNumber: p.agent.agentProfile?.accountNumber,
+            accountName: p.agent.agentProfile?.accountName,
+            recipientCode: p.agent.agentProfile?.recipientCode,
+          },
+          property: {
+            id: p.property.id,
+            title: p.property.title,
+            location: p.property.location,
+            university: p.property.university,
+            price: p.property.price,
+            rentAmount: p.property.rentAmount,
+            agentFee: p.property.agentFee,
+            cautionFee: p.property.cautionFee,
+            hostelType: p.property.hostelType,
+            thumbnail: p.property.images?.[0] || null,
+          },
+        };
+      }),
       metrics: {
         totalGross,
+        netPaidGross,
         platformShare,
         agentEscrowLiability,
         totalTransactions: payments.length,
         paidCount,
         pendingApprovalCount,
+        disputedCount,
+        disputedVolume,
+        totalRefundCount,
+        totalRefundedToStudents,
+        platformRefundRetention,
       },
     };
   } catch (err: any) {
@@ -830,10 +957,11 @@ export async function getAdminPaymentsData() {
  */
 export async function approveBankTransferPayment(paymentId: string) {
   try {
-    const adminUser = await getCurrentUser();
-    if (!adminUser || adminUser.role !== Role.ADMIN) {
-      return { success: false, error: "Unauthorized. Admin access required." };
+    const auth = await requireAdminUser();
+    if (auth.error) {
+      return { success: false, error: auth.error };
     }
+    const adminUser = auth.user!;
 
     const payment = await prisma.inspectionPayment.findUnique({
       where: { id: paymentId },
@@ -891,50 +1019,8 @@ export async function approveBankTransferPayment(paymentId: string) {
       payment.agent.agentProfile?.fullName || payment.agent.email || "Agent"
     );
 
-    // Send official payment confirmation email to Student
-    if (payment.student.email) {
-      const studentHtml = `
-        <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 600px; margin: 0 auto; background: #ffffff; border: 1px solid #e2e8f0; border-radius: 12px; overflow: hidden;">
-          <div style="background-color: #02351c; padding: 24px; text-align: center;">
-            <h1 style="color: #ffffff; font-size: 22px; margin: 0; font-weight: 700;">Campus Tent</h1>
-            <p style="color: #cbd5e1; font-size: 14px; margin: 6px 0 0 0;">Bank Transfer Verified & Approved</p>
-          </div>
-          <div style="padding: 24px;">
-            <h2 style="color: #02351c; font-size: 18px; margin-top: 0;">Your Payment is Confirmed!</h2>
-            <p style="color: #4b5563; font-size: 14px; line-height: 1.6;">
-              Hi ${studentDisplayName}, your direct bank transfer of <strong>₦7,500</strong> for <strong>"${propertyTitle}"</strong> has been verified and approved by Campus Tent admin.
-            </p>
-            <div style="background-color: #ecfdf5; border-left: 4px solid #16a34a; padding: 16px; border-radius: 6px; margin: 20px 0;">
-              <p style="margin: 0 0 6px 0; font-size: 14px; color: #065f46;"><strong>Amount:</strong> ₦7,500</p>
-              <p style="margin: 0 0 6px 0; font-size: 14px; color: #065f46;"><strong>Status:</strong> Verified & Active</p>
-              <p style="margin: 0 0 6px 0; font-size: 14px; color: #065f46;"><strong>Reference:</strong> ${payment.reference}</p>
-              <p style="margin: 0; font-size: 14px; color: #065f46;"><strong>Agent:</strong> ${agentDisplayName}</p>
-            </div>
-            <div style="background-color: #f8fafc; border: 1px dashed #cbd5e1; padding: 16px; border-radius: 8px; margin: 20px 0;">
-              <p style="margin: 0; font-size: 13.5px; color: #334155; font-weight: 600;">Bonus Value Covered:</p>
-              <p style="margin: 6px 0 0 0; font-size: 13px; color: #64748b; line-height: 1.5;">
-                "Your ₦7,500 fee covers a physical inspection of this property, plus any alternative options the agent has available in the same area/budget."
-              </p>
-            </div>
-            <div style="text-align: center; margin: 25px 0;">
-              <a href="${BASE_URL}/apartment-details?id=${payment.property.id}" style="background-color: #02351c; color: #ffffff; padding: 13px 26px; border-radius: 8px; text-decoration: none; font-weight: 700; font-size: 14px; display: inline-block;">
-                Book Physical Tour & Contact Agent
-              </a>
-            </div>
-          </div>
-          <div style="background-color: #f1f5f9; padding: 14px; text-align: center; font-size: 12px; color: #64748b;">
-            Campus Tent &bull; Safe Student Accommodation
-          </div>
-        </div>
-      `;
-
-      sendEmail({
-        to: payment.student.email,
-        subject: `Payment Approved (Bank Transfer Verified): ${payment.property.title}`,
-        html: studentHtml,
-        isInspectionMessage: true,
-      }).catch((err) => console.error("Student approval email failed:", err));
-    }
+    // Note: Direct Bank Transfer Approved email to Student is stopped per admin configuration.
+    // Real-time Pusher event notifies the student page directly.
 
     // Send notification email to Agent
     if (payment.agent.email) {
@@ -989,10 +1075,11 @@ export async function approveBankTransferPayment(paymentId: string) {
  */
 export async function rejectBankTransferPayment(paymentId: string, reason?: string) {
   try {
-    const adminUser = await getCurrentUser();
-    if (!adminUser || adminUser.role !== Role.ADMIN) {
-      return { success: false, error: "Unauthorized. Admin access required." };
+    const auth = await requireAdminUser();
+    if (auth.error) {
+      return { success: false, error: auth.error };
     }
+    const adminUser = auth.user!;
 
     const payment = await prisma.inspectionPayment.findUnique({
       where: { id: paymentId },
@@ -1026,44 +1113,7 @@ export async function rejectBankTransferPayment(paymentId: string, reason?: stri
       details: `Admin rejected direct bank transfer for payment ${payment.id}. Reason: ${reason || "Deposit could not be verified in bank statement."}`,
     });
 
-    if (payment.student.email) {
-      const studentDisplayName = escapeHtml(
-        payment.student.studentProfile?.fullName || payment.student.email || "Student"
-      );
-      const studentHtml = `
-        <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 600px; margin: 0 auto; background: #ffffff; border: 1px solid #e2e8f0; border-radius: 12px; overflow: hidden;">
-          <div style="background-color: #991b1b; padding: 24px; text-align: center;">
-            <h1 style="color: #ffffff; font-size: 22px; margin: 0; font-weight: 700;">Campus Tent</h1>
-            <p style="color: #fecaca; font-size: 14px; margin: 6px 0 0 0;">Bank Transfer Status Update</p>
-          </div>
-          <div style="padding: 24px;">
-            <h2 style="color: #991b1b; font-size: 18px; margin-top: 0;">Bank Transfer Could Not Be Verified</h2>
-            <p style="color: #4b5563; font-size: 14px; line-height: 1.6;">
-              Hi ${studentDisplayName}, we were unable to verify your direct bank transfer submission of ₦7,500 for <strong>"${escapeHtml(payment.property.title)}"</strong>.
-            </p>
-            <div style="background-color: #fef2f2; border-left: 4px solid #dc2626; padding: 16px; border-radius: 6px; margin: 20px 0;">
-              <p style="margin: 0 0 6px 0; font-size: 14px; color: #991b1b;"><strong>Reason:</strong> ${escapeHtml(reason || "Deposit could not be confirmed in our bank statement.")}</p>
-              <p style="margin: 0; font-size: 14px; color: #991b1b;"><strong>Reference:</strong> ${payment.reference}</p>
-            </div>
-            <p style="color: #475569; font-size: 13.5px; line-height: 1.5;">
-              Please double check your sender details or try paying online with ATM Card / USSD via Paystack.
-            </p>
-            <div style="text-align: center; margin: 25px 0;">
-              <a href="${BASE_URL}/apartment-details?id=${payment.property.id}" style="background-color: #02351c; color: #ffffff; padding: 12px 24px; border-radius: 8px; text-decoration: none; font-weight: 700; font-size: 14px; display: inline-block;">
-                Review Payment Options
-              </a>
-            </div>
-          </div>
-        </div>
-      `;
-
-      sendEmail({
-        to: payment.student.email,
-        subject: `Bank Transfer Verification Notice: ${payment.property.title}`,
-        html: studentHtml,
-        isInspectionMessage: true,
-      }).catch((err) => console.error("Student rejection email failed:", err));
-    }
+    // Note: Direct Bank Transfer Rejected email to Student is stopped per admin configuration.
 
     return { success: true };
   } catch (err: any) {
@@ -1074,10 +1124,11 @@ export async function rejectBankTransferPayment(paymentId: string, reason?: stri
 
 export async function disburseAgentPayout(paymentId: string) {
   try {
-    const adminUser = await getCurrentUser();
-    if (!adminUser || adminUser.role !== Role.ADMIN) {
-      return { success: false, error: "Unauthorized. Admin access required." };
+    const auth = await requireAdminUser();
+    if (auth.error) {
+      return { success: false, error: auth.error };
     }
+    const adminUser = auth.user!;
 
     const payment = await prisma.inspectionPayment.findUnique({
       where: { id: paymentId },
@@ -1165,6 +1216,54 @@ export async function disburseAgentPayout(paymentId: string) {
           },
         });
 
+        // Send payout notification email to Agent
+        if (payment.agent.email) {
+          const agentDisplayName = escapeHtml(
+            payment.agent.agentProfile?.fullName || payment.agent.email.split("@")[0] || "Agent Partner"
+          );
+          const propertyTitle = escapeHtml(payment.property.title);
+          const bankName = escapeHtml(payment.agent.agentProfile?.bankName || "Nigerian Bank");
+          const accountNumber = escapeHtml(payment.agent.agentProfile?.accountNumber || "Provided Bank Account");
+          const accountName = escapeHtml(payment.agent.agentProfile?.accountName || agentDisplayName);
+
+          const agentPayoutHtml = `
+            <div style="font-family: 'Poppins', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 600px; margin: 0 auto; background: #ffffff; border: 1px solid #e2e8f0; border-radius: 12px; overflow: hidden;">
+              <div style="background-color: #02351c; padding: 24px; text-align: center;">
+                <h1 style="color: #ffffff; font-size: 22px; margin: 0; font-weight: 700;">Campus Tent</h1>
+                <p style="color: #cbd5e1; font-size: 14px; margin: 6px 0 0 0;">Inspection Fee Payout Disbursed</p>
+              </div>
+              <div style="padding: 24px;">
+                <h2 style="color: #02351c; font-size: 18px; margin-top: 0;">₦5,010 Disbursed to Your Account</h2>
+                <p style="color: #4b5563; font-size: 14px; line-height: 1.6;">
+                  Hello ${agentDisplayName}, an inspection fee payout of <strong>₦5,010</strong> for <strong>"${propertyTitle}"</strong> has been processed to your bank account via Paystack transfer.
+                </p>
+                <div style="background-color: #ecfdf5; border-left: 4px solid #059669; padding: 16px; border-radius: 6px; margin: 20px 0;">
+                  <p style="margin: 0 0 6px 0; font-size: 14px; color: #065f46;"><strong>Amount Disbursed:</strong> ₦5,010</p>
+                  <p style="margin: 0 0 6px 0; font-size: 14px; color: #065f46;"><strong>Transfer Reference:</strong> ${escapeHtml(payoutRef)}</p>
+                  <p style="margin: 0 0 6px 0; font-size: 14px; color: #065f46;"><strong>Bank Name:</strong> ${bankName}</p>
+                  <p style="margin: 0 0 6px 0; font-size: 14px; color: #065f46;"><strong>Account Number:</strong> ${accountNumber}</p>
+                  <p style="margin: 0; font-size: 14px; color: #065f46;"><strong>Account Name:</strong> ${accountName}</p>
+                </div>
+                <div style="text-align: center; margin: 25px 0;">
+                  <a href="${BASE_URL}/agent-dashboard" style="background-color: #02351c; color: #ffffff; padding: 12px 24px; border-radius: 8px; text-decoration: none; font-weight: 700; font-size: 14px; display: inline-block;">
+                    Open Agent Dashboard
+                  </a>
+                </div>
+              </div>
+              <div style="background-color: #f1f5f9; padding: 14px; text-align: center; font-size: 12px; color: #64748b;">
+                Campus Tent &bull; Safe Student Accommodation
+              </div>
+            </div>
+          `;
+
+          sendEmail({
+            to: payment.agent.email,
+            subject: `Payout Disbursed: ₦5,010 Inspection Fee (${payment.property.title})`,
+            html: agentPayoutHtml,
+            isInspectionMessage: true,
+          }).catch((err) => console.error("Agent Paystack payout email notification failed:", err));
+        }
+
         return { success: true, reference: payoutRef };
       } catch (paystackErr: any) {
         console.error("Paystack transfer error:", paystackErr);
@@ -1209,12 +1308,137 @@ export async function disburseAgentPayout(paymentId: string) {
   }
 }
 
+/**
+ * Record Manual Direct Bank Transfer Payout to Agent
+ * Used when agent was paid manually via bank mobile app
+ */
+export async function recordManualPayoutDisbursed(data: {
+  paymentId: string;
+  bankReference?: string;
+  notes?: string;
+}) {
+  try {
+    const auth = await requireAdminUser();
+    if (auth.error) {
+      return { success: false, error: auth.error };
+    }
+    const adminUser = auth.user!;
+
+    const payment = await prisma.inspectionPayment.findUnique({
+      where: { id: data.paymentId },
+      include: {
+        agent: { include: { agentProfile: true } },
+        property: true,
+      },
+    });
+
+    if (!payment) {
+      return { success: false, error: "Inspection payment not found." };
+    }
+
+    if (payment.status !== "PAID") {
+      return { success: false, error: `Cannot disburse payout for payment with status '${payment.status}'.` };
+    }
+
+    const payoutRef = data.bankReference?.trim() || `MANUAL_BANK_TRF_${Date.now()}`;
+
+    await prisma.inspectionPayment.update({
+      where: { id: payment.id },
+      data: {
+        payoutStatus: "DISBURSED",
+        payoutReference: payoutRef,
+        payoutDisbursedAt: new Date(),
+      },
+    });
+
+    await logAuditEvent({
+      actorId: adminUser.id,
+      actorEmail: adminUser.email,
+      actorName: "Admin (" + adminUser.email + ")",
+      actorRole: "ADMIN",
+      action: "PAYOUT_DISBURSED_MANUAL",
+      targetType: "PAYMENT",
+      targetId: payment.id,
+      targetLabel: payment.reference,
+      details: `Admin recorded manual bank transfer payout of ₦5,010 to agent ${payment.agent.agentProfile?.fullName || payment.agent.email}. Ref: ${payoutRef}. Notes: ${data.notes || "None"}`,
+      metadata: {
+        paymentId: payment.id,
+        amount: 5010,
+        reference: payment.reference,
+        payoutRef,
+        agentId: payment.agentId,
+        notes: data.notes || null,
+      },
+    });
+
+    // Send payout disbursement notification email to Agent
+    if (payment.agent.email) {
+      const agentDisplayName = escapeHtml(
+        payment.agent.agentProfile?.fullName || payment.agent.email.split("@")[0] || "Agent Partner"
+      );
+      const propertyTitle = escapeHtml(payment.property.title);
+      const bankName = escapeHtml(payment.agent.agentProfile?.bankName || "Nigerian Bank");
+      const accountNumber = escapeHtml(payment.agent.agentProfile?.accountNumber || "Provided Bank Account");
+      const accountName = escapeHtml(payment.agent.agentProfile?.accountName || agentDisplayName);
+
+      const agentPayoutHtml = `
+        <div style="font-family: 'Poppins', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 600px; margin: 0 auto; background: #ffffff; border: 1px solid #e2e8f0; border-radius: 12px; overflow: hidden;">
+          <div style="background-color: #02351c; padding: 24px; text-align: center;">
+            <h1 style="color: #ffffff; font-size: 22px; margin: 0; font-weight: 700;">Campus Tent</h1>
+            <p style="color: #cbd5e1; font-size: 14px; margin: 6px 0 0 0;">Inspection Fee Payout Disbursed</p>
+          </div>
+          <div style="padding: 24px;">
+            <h2 style="color: #02351c; font-size: 18px; margin-top: 0;">₦5,010 Disbursed to Your Account</h2>
+            <p style="color: #4b5563; font-size: 14px; line-height: 1.6;">
+              Hello ${agentDisplayName}, an inspection fee payout of <strong>₦5,010</strong> for <strong>"${propertyTitle}"</strong> has been processed to your bank account.
+            </p>
+            <div style="background-color: #ecfdf5; border-left: 4px solid #059669; padding: 16px; border-radius: 6px; margin: 20px 0;">
+              <p style="margin: 0 0 6px 0; font-size: 14px; color: #065f46;"><strong>Amount Disbursed:</strong> ₦5,010</p>
+              <p style="margin: 0 0 6px 0; font-size: 14px; color: #065f46;"><strong>Transfer Reference:</strong> ${escapeHtml(payoutRef)}</p>
+              <p style="margin: 0 0 6px 0; font-size: 14px; color: #065f46;"><strong>Bank Name:</strong> ${bankName}</p>
+              <p style="margin: 0 0 6px 0; font-size: 14px; color: #065f46;"><strong>Account Number:</strong> ${accountNumber}</p>
+              <p style="margin: 0; font-size: 14px; color: #065f46;"><strong>Account Name:</strong> ${accountName}</p>
+            </div>
+            ${data.notes ? `
+            <div style="background-color: #f8fafc; border: 1px dashed #cbd5e1; padding: 12px 16px; border-radius: 6px; margin: 15px 0;">
+              <p style="margin: 0; font-size: 13px; color: #64748b;"><strong>Audit Note:</strong> ${escapeHtml(data.notes)}</p>
+            </div>
+            ` : ""}
+            <div style="text-align: center; margin: 25px 0;">
+              <a href="${BASE_URL}/agent-dashboard" style="background-color: #02351c; color: #ffffff; padding: 12px 24px; border-radius: 8px; text-decoration: none; font-weight: 700; font-size: 14px; display: inline-block;">
+                Open Agent Dashboard
+              </a>
+            </div>
+          </div>
+          <div style="background-color: #f1f5f9; padding: 14px; text-align: center; font-size: 12px; color: #64748b;">
+            Campus Tent &bull; Safe Student Accommodation
+          </div>
+        </div>
+      `;
+
+      sendEmail({
+        to: payment.agent.email,
+        subject: `Payout Disbursed: ₦5,010 Inspection Fee (${payment.property.title})`,
+        html: agentPayoutHtml,
+        isInspectionMessage: true,
+      }).catch((err) => console.error("Agent manual payout email notification failed:", err));
+    }
+
+    revalidatePath("/admin-dashboard");
+    return { success: true, reference: payoutRef };
+  } catch (err: any) {
+    console.error("recordManualPayoutDisbursed error:", err);
+    return { success: false, error: err.message || "Failed to record manual payout." };
+  }
+}
+
 export async function refundInspectionPayment(paymentId: string, reason: string) {
   try {
-    const adminUser = await getCurrentUser();
-    if (!adminUser || adminUser.role !== Role.ADMIN) {
-      return { success: false, error: "Unauthorized. Admin access required." };
+    const auth = await requireAdminUser();
+    if (auth.error) {
+      return { success: false, error: auth.error };
     }
+    const adminUser = auth.user!;
 
     const payment = await prisma.inspectionPayment.findUnique({
       where: { id: paymentId },

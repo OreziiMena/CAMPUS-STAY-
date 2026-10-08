@@ -8,6 +8,7 @@ export async function sendEmail({
   from,
   replyTo,
   isInspectionMessage = false,
+  allowPhoneNumbers = false,
 }: {
   to: string;
   subject: string;
@@ -16,14 +17,15 @@ export async function sendEmail({
   from?: string;
   replyTo?: string;
   isInspectionMessage?: boolean;
+  allowPhoneNumbers?: boolean;
 }): Promise<{ success: boolean; error?: string; debug?: boolean; data?: any }> {
   // 1. Remove all inline emojis from subject and body content
   const cleanedSubject = removeEmojis(subject).trim();
   let cleanedHtml = removeEmojis(html).trim();
   let cleanedText = text ? removeEmojis(text).trim() : cleanedHtml.replace(/<[^>]*>/g, " ").trim();
 
-  // 2. Remove / mask phone numbers from email unless it is an inspection message
-  if (!isInspectionMessage) {
+  // 2. Remove / mask phone numbers from email unless it is an inspection or allowed message (e.g. roommate requests)
+  if (!isInspectionMessage && !allowPhoneNumbers) {
     cleanedHtml = maskPhoneNumbers(cleanedHtml);
     cleanedText = maskPhoneNumbers(cleanedText);
   }

@@ -53,7 +53,7 @@
 
 .roommate-welcome-banner p {
     font-size: 14px;
-    font-family: 'Open Sans', sans-serif;
+    font-family: 'Poppins', sans-serif;
     opacity: 0.9;
     margin: 0;
 }
@@ -105,7 +105,7 @@
 
 .success-banner-card p {
     color: var(--text-muted);
-    font-family: 'Open Sans', sans-serif;
+    font-family: 'Poppins', sans-serif;
     font-size: 15px;
     margin: 0;
 }
@@ -117,7 +117,7 @@
     box-shadow: 0 10px 30px rgba(0, 0, 0, 0.02);
     border: 1px solid var(--border-light);
     margin-bottom: 40px;
-    font-family: 'Open Sans', sans-serif;
+    font-family: 'Poppins', sans-serif;
     width: 100%;
     max-width: 100%;
     min-width: 0;
@@ -200,7 +200,7 @@
     padding: 12px 15px;
     border: 1px solid #cbd5e0;
     border-radius: var(--radius-sm);
-    font-family: 'Open Sans', sans-serif;
+    font-family: 'Poppins', sans-serif;
     font-size: 15px;
     color: var(--text-dark);
     outline: none;
@@ -241,7 +241,7 @@
     align-items: center;
     gap: 10px;
     cursor: pointer;
-    font-family: 'Open Sans', sans-serif;
+    font-family: 'Poppins', sans-serif;
     font-size: 14.5px;
     color: var(--text-dark);
 }

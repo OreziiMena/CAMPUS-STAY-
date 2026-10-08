@@ -433,6 +433,8 @@ export async function getAvailabilityQueryInfo(token: string) {
   }
 }
 
+const resendAvailabilityCooldown = new Map<string, number>();
+
 /**
  * Resend availability confirmation email to student
  */
@@ -441,6 +443,15 @@ export async function resendAvailabilityEmail(token: string) {
     if (!token) return { success: false, error: "Missing token." };
 
     const cleanToken = token.trim();
+
+    // Rate limit: 60 seconds cooldown per request token
+    const now = Date.now();
+    const lastSent = resendAvailabilityCooldown.get(cleanToken) || 0;
+    if (now - lastSent < 60000) {
+      const waitSec = Math.ceil((60000 - (now - lastSent)) / 1000);
+      return { success: false, error: `Please wait ${waitSec} seconds before resending another notification.` };
+    }
+    resendAvailabilityCooldown.set(cleanToken, now);
 
     const query = await prisma.availabilityQuery.findUnique({
       where: { token: cleanToken },
@@ -1142,6 +1153,8 @@ async function checkAndTriggerAutomatedPayout(params: {
 
     let payoutRef = `TRF-AUTO-${Date.now()}`;
     const paystackSecret = process.env.PAYSTACK_SECRET_KEY;
+    let transferSuccessful = false;
+    let transferFailureReason = "";
 
     if (
       agentProfile.recipientCode &&
@@ -1167,12 +1180,31 @@ async function checkAndTriggerAutomatedPayout(params: {
         const transferData = await transferRes.json();
         if (transferRes.ok && transferData.status) {
           payoutRef = transferData.data?.reference || transferData.data?.transfer_code || payoutRef;
+          transferSuccessful = true;
         } else {
+          transferFailureReason = transferData.message || "Paystack transfer declined";
           console.warn("[Auto-Payout] Paystack transfer response not ok:", transferData);
         }
-      } catch (paystackErr) {
+      } catch (paystackErr: any) {
+        transferFailureReason = paystackErr.message || "Network error communicating with Paystack";
         console.error("[Auto-Payout] Network error calling Paystack transfer:", paystackErr);
       }
+    } else {
+      // Local development or simulated fallback
+      transferSuccessful = true;
+    }
+
+    if (!transferSuccessful) {
+      await prisma.inspectionPayment.update({
+        where: { id: payment.id },
+        data: {
+          payoutStatus: "FAILED",
+          payoutReference: `FAILED: ${transferFailureReason.slice(0, 100)}`,
+        },
+      });
+
+      console.error(`[Auto-Payout] Automated payout for payment ${payment.reference} failed (${transferFailureReason}). Retained in admin queue for manual bank settlement.`);
+      return { disbursed: false, reason: transferFailureReason };
     }
 
     await prisma.inspectionPayment.update({

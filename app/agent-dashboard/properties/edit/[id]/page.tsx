@@ -34,6 +34,10 @@ export default function EditProperty() {
     pop: false,
     prepaidMeter: false,
     runningWater: false,
+    kitchenCabinet: false,
+    waterHeater: false,
+    underDeckingCeiling: false,
+    whiteBoardCeiling: false,
   });
 
   // Stored URL strings in DB
@@ -81,14 +85,19 @@ export default function EditProperty() {
         setExistingImages(prop.images || []);
 
         // Parse amenities
+        const amList: string[] = prop.amenities || [];
         const parsedAmenities = {
-          fencedCompound: prop.amenities.includes("Fenced compound"),
-          gatedCompound: prop.amenities.includes("Gated compound"),
-          wardrobe: prop.amenities.includes("Wardrobe"),
-          pvc: prop.amenities.includes("PVC"),
-          pop: prop.amenities.includes("POP"),
-          prepaidMeter: prop.amenities.includes("Prepaid meter"),
-          runningWater: prop.amenities.includes("running water"),
+          fencedCompound: amList.some((a) => a.toLowerCase().includes("fenced")),
+          gatedCompound: amList.some((a) => a.toLowerCase().includes("gated")),
+          wardrobe: amList.some((a) => a.toLowerCase().includes("wardrobe")),
+          pvc: amList.some((a) => a.toLowerCase() === "pvc"),
+          pop: amList.some((a) => a.toLowerCase() === "pop"),
+          prepaidMeter: amList.some((a) => a.toLowerCase().includes("prepaid")),
+          runningWater: amList.some((a) => a.toLowerCase().includes("water") && !a.toLowerCase().includes("heater")),
+          kitchenCabinet: amList.some((a) => a.toLowerCase().includes("kitchen")),
+          waterHeater: amList.some((a) => a.toLowerCase().includes("heater")),
+          underDeckingCeiling: amList.some((a) => a.toLowerCase().includes("under-decking") || a.toLowerCase().includes("under decking")),
+          whiteBoardCeiling: amList.some((a) => a.toLowerCase().includes("white-board") || a.toLowerCase().includes("white board")),
         };
         setAmenities(parsedAmenities);
       } else {
@@ -165,6 +174,10 @@ export default function EditProperty() {
     if (amenities.pop) activeAmenities.push("POP");
     if (amenities.prepaidMeter) activeAmenities.push("Prepaid meter");
     if (amenities.runningWater) activeAmenities.push("running water");
+    if (amenities.kitchenCabinet) activeAmenities.push("Kitchen cabinet");
+    if (amenities.waterHeater) activeAmenities.push("Water heater");
+    if (amenities.underDeckingCeiling) activeAmenities.push("Under-decking ceiling");
+    if (amenities.whiteBoardCeiling) activeAmenities.push("White-board ceiling");
 
     try {
       const newlyUploadedUrls: string[] = [];
@@ -557,6 +570,38 @@ export default function EditProperty() {
                 onChange={() => handleCheckboxChange("runningWater")}
               />
               <span>running water</span>
+            </label>
+            <label className="checkbox-item">
+              <input
+                type="checkbox"
+                checked={amenities.kitchenCabinet}
+                onChange={() => handleCheckboxChange("kitchenCabinet")}
+              />
+              <span>Kitchen cabinet</span>
+            </label>
+            <label className="checkbox-item">
+              <input
+                type="checkbox"
+                checked={amenities.waterHeater}
+                onChange={() => handleCheckboxChange("waterHeater")}
+              />
+              <span>Water heater</span>
+            </label>
+            <label className="checkbox-item">
+              <input
+                type="checkbox"
+                checked={amenities.underDeckingCeiling}
+                onChange={() => handleCheckboxChange("underDeckingCeiling")}
+              />
+              <span>Under-decking ceiling</span>
+            </label>
+            <label className="checkbox-item">
+              <input
+                type="checkbox"
+                checked={amenities.whiteBoardCeiling}
+                onChange={() => handleCheckboxChange("whiteBoardCeiling")}
+              />
+              <span>White-board ceiling</span>
             </label>
           </div>
 

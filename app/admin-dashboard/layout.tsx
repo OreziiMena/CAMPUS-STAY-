@@ -209,7 +209,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
               <i className="fas fa-bars"></i>
             </button>
             <div className="header-title">
-              <h3>Campus Tent Admin Portal</h3>
+              <h3>ADMIN PORTAL</h3>
             </div>
           </div>
           <div className="admin-profile-info">
@@ -217,6 +217,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
               type="button"
               onClick={() => setShow2FAModal(true)}
               title="Two-Factor Security Configuration"
+              className="admin-2fa-badge"
               style={{
                 display: "inline-flex",
                 alignItems: "center",
@@ -229,16 +230,15 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                 fontSize: "0.8rem",
                 fontWeight: 600,
                 cursor: "pointer",
-                marginRight: "12px",
               }}
             >
               <i className={`fas ${is2FAEnabled ? "fa-shield-alt" : "fa-exclamation-triangle"}`}></i>
-              {is2FAEnabled ? "2FA Protected" : "2FA Required"}
+              <span className="admin-2fa-badge-text">{is2FAEnabled ? "2FA Protected" : "2FA Required"}</span>
             </button>
             <div className="admin-avatar">
               {adminName.charAt(0).toUpperCase()}
             </div>
-            <span>{adminName}</span>
+            <span className="admin-profile-name">{adminName}</span>
           </div>
         </header>
 

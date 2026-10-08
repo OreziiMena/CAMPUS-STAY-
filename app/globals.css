@@ -10,13 +10,13 @@ html{
     scroll-behavior: smooth;
     max-width: 100vw;
     overflow-x: hidden;
-    font-family: 'Poppins', 'Open Sans', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    font-family: 'Poppins', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
 }
 body{
     min-height: 100vh;
     max-width: 100vw;
     overflow-x: hidden;
-    font-family: 'Poppins', 'Open Sans', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    font-family: 'Poppins', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
     color: #333;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
@@ -162,7 +162,7 @@ nav{
 .hero-para{
     color: rgb(2, 53, 28);
     font-size: 22px;
-    font-family: 'Open Sans', sans-serif;
+    font-family: 'Poppins', sans-serif;
     font-weight: 500;
     text-align: center;
     margin-top: 10px;
@@ -211,7 +211,7 @@ nav{
     margin-top: 10%;
     margin-right: 30px;
     font-size: 17px;
-    font-family: 'Open Sans', sans-serif;
+    font-family: 'Poppins', sans-serif;
     font-weight: 500;
 }
 .cta-buttons {
@@ -342,7 +342,7 @@ nav{
     color: #666;
     font-size: 15px;
     line-height: 1.6;
-    font-family: 'Open Sans', sans-serif;
+    font-family: 'Poppins', sans-serif;
 }
 
 .faq-section {
@@ -370,7 +370,7 @@ nav{
     color: rgb(2, 53, 28); 
     text-decoration: underline;
     font-weight: 600;
-    font-family: 'Open sans', sans-serif;
+    font-family: 'Poppins', sans-serif;
 }
 .faq-right {
     flex: 2;
@@ -396,7 +396,7 @@ nav{
     padding-right: 40px;
     font-size: 15px;
     font-weight: 400;
-    font-family: 'Open Sans', sans-serif;
+    font-family: 'Poppins', sans-serif;
 }
 .icon-box i.arrow-icon {
     color: #999;
@@ -447,7 +447,7 @@ nav{
 }
 .cta-description {
     color: #cccccc; 
-    font-family: 'open sans', sans-serif;
+    font-family: 'Poppins', sans-serif;
     font-size: 15px;
     line-height: 1.6;
     margin-bottom: 30px;
@@ -459,7 +459,7 @@ nav{
 .feature-list li {
     color: #ffffff;
     font-size: 15px;
-    font-family: 'open sans', sans-serif;
+    font-family: 'Poppins', sans-serif;
     margin-bottom: 15px;
     display: flex;
     align-items: center;
@@ -525,7 +525,7 @@ nav{
     text-decoration: none;
     color: #dddddd; 
     font-size: 15px;
-    font-family: 'open sans', sans-serif;
+    font-family: 'Poppins', sans-serif;
     transition: color 0.3s ease;
 }
 .main-footer ul li a:hover {
@@ -939,7 +939,7 @@ select {
     padding-right: 40px !important;
     border: 1px solid #ccc;
     border-radius: 8px;
-    font-family: 'Open Sans', sans-serif;
+    font-family: 'Poppins', sans-serif;
     font-size: 14px;
     color: #333;
     background-color: #ffffff;

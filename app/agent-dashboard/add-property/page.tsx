@@ -31,6 +31,10 @@ export default function AddProperty() {
     pop: false,
     prepaidMeter: false,
     runningWater: true,
+    kitchenCabinet: false,
+    waterHeater: false,
+    underDeckingCeiling: false,
+    whiteBoardCeiling: false,
   });
 
   const [images, setImages] = useState<string[]>([]);
@@ -107,6 +111,10 @@ export default function AddProperty() {
     if (amenities.pop) activeAmenities.push("POP");
     if (amenities.prepaidMeter) activeAmenities.push("Prepaid meter");
     if (amenities.runningWater) activeAmenities.push("running water");
+    if (amenities.kitchenCabinet) activeAmenities.push("Kitchen cabinet");
+    if (amenities.waterHeater) activeAmenities.push("Water heater");
+    if (amenities.underDeckingCeiling) activeAmenities.push("Under-decking ceiling");
+    if (amenities.whiteBoardCeiling) activeAmenities.push("White-board ceiling");
 
     try {
       const uploadedUrls: string[] = [];
@@ -487,6 +495,38 @@ export default function AddProperty() {
                 onChange={() => handleCheckboxChange("runningWater")}
               />
               <span>running water</span>
+            </label>
+            <label className="checkbox-item">
+              <input
+                type="checkbox"
+                checked={amenities.kitchenCabinet}
+                onChange={() => handleCheckboxChange("kitchenCabinet")}
+              />
+              <span>Kitchen cabinet</span>
+            </label>
+            <label className="checkbox-item">
+              <input
+                type="checkbox"
+                checked={amenities.waterHeater}
+                onChange={() => handleCheckboxChange("waterHeater")}
+              />
+              <span>Water heater</span>
+            </label>
+            <label className="checkbox-item">
+              <input
+                type="checkbox"
+                checked={amenities.underDeckingCeiling}
+                onChange={() => handleCheckboxChange("underDeckingCeiling")}
+              />
+              <span>Under-decking ceiling</span>
+            </label>
+            <label className="checkbox-item">
+              <input
+                type="checkbox"
+                checked={amenities.whiteBoardCeiling}
+                onChange={() => handleCheckboxChange("whiteBoardCeiling")}
+              />
+              <span>White-board ceiling</span>
             </label>
           </div>
 

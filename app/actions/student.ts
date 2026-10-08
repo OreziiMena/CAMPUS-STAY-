@@ -462,21 +462,22 @@ export async function scheduleViewing(data: {
       },
     }).catch(() => null);
 
-    // 2. Send instant Email Notification to the Agent / Landlord via Resend
+    // 2. Send instant Email Notification to the Agent / Student Host via Resend
     if (recipientUser?.email) {
-      const agentHtml = `
+      const isRoommate = !!property.isRoommateOption;
+      const hostHtml = `
         <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 600px; margin: 0 auto; background: #ffffff; border: 1px solid #e2e8f0; border-radius: 12px; overflow: hidden;">
           <div style="background-color: #02351c; padding: 24px; text-align: center;">
             <h1 style="color: #ffffff; font-size: 22px; margin: 0; font-weight: 700;">Campus Tent</h1>
-            <p style="color: #cbd5e1; font-size: 14px; margin: 6px 0 0 0;">New Physical Viewing Request</p>
+            <p style="color: #cbd5e1; font-size: 14px; margin: 6px 0 0 0;">${isRoommate ? "New Roommate Viewing Request" : "New Physical Viewing Request"}</p>
           </div>
           <div style="padding: 24px;">
-            <h2 style="color: #02351c; font-size: 18px; margin-top: 0;">Viewing Requested</h2>
+            <h2 style="color: #02351c; font-size: 18px; margin-top: 0;">${isRoommate ? "Roommate Viewing Requested" : "Viewing Requested"}</h2>
             <p style="color: #4b5563; font-size: 14px; line-height: 1.6;">
-              A student has requested to inspect your hostel listing in person.
+              ${isRoommate ? "A student has requested to view your roommate listing in person." : "A student has requested to inspect your hostel listing in person."}
             </p>
             <div style="background-color: #f8fafc; border-left: 4px solid #d35400; padding: 16px; border-radius: 6px; margin: 20px 0;">
-              <p style="margin: 0 0 8px 0; font-size: 14px; color: #1e293b;"><strong>Property:</strong> ${propertyTitle}</p>
+              <p style="margin: 0 0 8px 0; font-size: 14px; color: #1e293b;"><strong>${isRoommate ? "Roommate Listing" : "Property"}:</strong> ${propertyTitle}</p>
               <p style="margin: 0 0 8px 0; font-size: 14px; color: #1e293b;"><strong>Date & Time:</strong> ${formattedTime}</p>
               <p style="margin: 0 0 8px 0; font-size: 14px; color: #1e293b;"><strong>Student:</strong> ${studentName}</p>
               <p style="margin: 0 0 8px 0; font-size: 14px; color: #1e293b;"><strong>Phone:</strong> ${studentPhone}</p>
@@ -496,14 +497,16 @@ export async function scheduleViewing(data: {
 
       sendEmail({
         to: recipientUser.email,
-        subject: `New Viewing Request: ${property.title}`,
-        html: agentHtml,
+        subject: isRoommate ? `New Roommate Viewing Request: ${property.title}` : `New Viewing Request: ${property.title}`,
+        html: hostHtml,
         isInspectionMessage: true,
-      }).catch((e) => console.error("Agent viewing email notification failed:", e));
+      }).catch((e) => console.error("Host viewing email notification failed:", e));
     }
 
     // 3. Send confirmation Email to Student
     if (user.email) {
+      const isRoommate = !!property.isRoommateOption;
+      const recipientRole = isRoommate ? "student" : "agent";
       const studentHtml = `
         <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 600px; margin: 0 auto; background: #ffffff; border: 1px solid #e2e8f0; border-radius: 12px; overflow: hidden;">
           <div style="background-color: #02351c; padding: 24px; text-align: center;">
@@ -513,14 +516,14 @@ export async function scheduleViewing(data: {
           <div style="padding: 24px;">
             <h2 style="color: #02351c; font-size: 18px; margin-top: 0;">Viewing Request Sent</h2>
             <p style="color: #4b5563; font-size: 14px; line-height: 1.6;">
-              Hi ${studentName}, your inspection request for <strong>"${propertyTitle}"</strong> has been sent to the agent.
+              Hi ${studentName}, your inspection request for <strong>"${propertyTitle}"</strong> has been sent to the ${recipientRole}.
             </p>
             <div style="background-color: #ecfdf5; border-left: 4px solid #10b981; padding: 16px; border-radius: 6px; margin: 20px 0;">
               <p style="margin: 0 0 8px 0; font-size: 14px; color: #065f46;"><strong>Scheduled Time:</strong> ${formattedTime}</p>
               <p style="margin: 0; font-size: 14px; color: #065f46;"><strong>Location:</strong> ${propertyLocation}</p>
             </div>
             <p style="color: #4b5563; font-size: 13.5px;">
-              The agent will contact you shortly or reply via Campus Tent Chat to confirm details.
+              The ${recipientRole} will contact you shortly or reply via Campus Tent Chat to confirm details.
             </p>
           </div>
         </div>

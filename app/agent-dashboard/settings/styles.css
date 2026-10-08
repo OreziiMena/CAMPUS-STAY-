@@ -47,7 +47,7 @@
     color: var(--text-muted);
     margin: 0;
     font-size: 15px;
-    font-family: 'Open Sans', sans-serif;
+    font-family: 'Poppins', sans-serif;
 }
 
 .profile-tabs {
@@ -128,7 +128,7 @@
 }
 
 .settings-info p {
-    font-family: 'Open Sans', sans-serif;
+    font-family: 'Poppins', sans-serif;
     color: var(--text-muted);
     margin: 0;
     font-size: 14px;
@@ -149,7 +149,7 @@
     padding-right: 40px !important;
     border: 1px solid var(--border-light);
     border-radius: var(--radius-sm);
-    font-family: 'Open Sans', sans-serif;
+    font-family: 'Poppins', sans-serif;
     font-size: 15px;
     color: var(--text-main);
     background-color: var(--bg-white);
@@ -191,7 +191,7 @@
 }
 
 .danger-info p {
-    font-family: 'Open Sans', sans-serif;
+    font-family: 'Poppins', sans-serif;
     color: var(--text-muted);
     margin: 0;
     font-size: 14px;

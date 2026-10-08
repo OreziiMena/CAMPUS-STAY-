@@ -70,7 +70,7 @@
 }
 
 .input-group label {
-    font-family: 'Open Sans', sans-serif;
+    font-family: 'Poppins', sans-serif;
     font-size: 14px;
     font-weight: 600;
     color: var(--primary-green);
@@ -88,7 +88,7 @@
     padding: 12px 15px;
     border: 1px solid #ccc;
     border-radius: var(--radius-sm);
-    font-family: 'Open Sans', sans-serif;
+    font-family: 'Poppins', sans-serif;
     font-size: 15px;
     color: var(--text-dark);
     outline: none;
@@ -129,7 +129,7 @@
     align-items: center;
     gap: 10px;
     cursor: pointer;
-    font-family: 'Open Sans', sans-serif;
+    font-family: 'Poppins', sans-serif;
     font-size: 15px;
     color: var(--text-dark);
 }
@@ -167,7 +167,7 @@
 }
 
 .file-upload-zone p {
-    font-family: 'Open Sans', sans-serif;
+    font-family: 'Poppins', sans-serif;
     color: var(--text-muted);
     font-size: 15px;
     margin: 0;
@@ -264,7 +264,7 @@
     padding: 12px 20px;
     border-radius: var(--radius-sm);
     margin-bottom: 20px;
-    font-family: 'Open Sans', sans-serif;
+    font-family: 'Poppins', sans-serif;
     font-size: 15px;
     display: flex;
     align-items: center;

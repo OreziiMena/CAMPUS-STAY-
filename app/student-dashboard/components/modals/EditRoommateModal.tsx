@@ -59,6 +59,10 @@ export default function EditRoommateModal({
     pop: false,
     prepaidMeter: false,
     runningWater: false,
+    kitchenCabinet: false,
+    waterHeater: false,
+    underDeckingCeiling: false,
+    whiteBoardCeiling: false,
   });
 
   const [loading, setLoading] = useState(false);
@@ -91,7 +95,11 @@ export default function EditRoommateModal({
         pvc: amLower.some((a: string) => a.includes("pvc")),
         pop: amLower.some((a: string) => a.includes("pop")),
         prepaidMeter: amLower.some((a: string) => a.includes("prepaid") || a.includes("meter")),
-        runningWater: amLower.some((a: string) => a.includes("water")),
+        runningWater: amLower.some((a: string) => a.includes("water") && !a.includes("heater")),
+        kitchenCabinet: amLower.some((a: string) => a.includes("kitchen")),
+        waterHeater: amLower.some((a: string) => a.includes("heater")),
+        underDeckingCeiling: amLower.some((a: string) => a.includes("under-decking") || a.includes("under decking")),
+        whiteBoardCeiling: amLower.some((a: string) => a.includes("white-board") || a.includes("white board")),
       });
       setError("");
     }
@@ -134,6 +142,10 @@ export default function EditRoommateModal({
     if (amenities.pop) activeAmenities.push("POP");
     if (amenities.prepaidMeter) activeAmenities.push("Prepaid meter");
     if (amenities.runningWater) activeAmenities.push("running water");
+    if (amenities.kitchenCabinet) activeAmenities.push("Kitchen cabinet");
+    if (amenities.waterHeater) activeAmenities.push("Water heater");
+    if (amenities.underDeckingCeiling) activeAmenities.push("Under-decking ceiling");
+    if (amenities.whiteBoardCeiling) activeAmenities.push("White-board ceiling");
 
     try {
       const updateData: any = {
@@ -411,6 +423,38 @@ export default function EditRoommateModal({
                     onChange={() => handleCheckboxChange("runningWater")}
                   />
                   <span>Running Water</span>
+                </label>
+                <label className="edit-checkbox-item">
+                  <input
+                    type="checkbox"
+                    checked={amenities.kitchenCabinet}
+                    onChange={() => handleCheckboxChange("kitchenCabinet")}
+                  />
+                  <span>Kitchen Cabinet</span>
+                </label>
+                <label className="edit-checkbox-item">
+                  <input
+                    type="checkbox"
+                    checked={amenities.waterHeater}
+                    onChange={() => handleCheckboxChange("waterHeater")}
+                  />
+                  <span>Water Heater</span>
+                </label>
+                <label className="edit-checkbox-item">
+                  <input
+                    type="checkbox"
+                    checked={amenities.underDeckingCeiling}
+                    onChange={() => handleCheckboxChange("underDeckingCeiling")}
+                  />
+                  <span>Under-decking Ceiling</span>
+                </label>
+                <label className="edit-checkbox-item">
+                  <input
+                    type="checkbox"
+                    checked={amenities.whiteBoardCeiling}
+                    onChange={() => handleCheckboxChange("whiteBoardCeiling")}
+                  />
+                  <span>White-board Ceiling</span>
                 </label>
               </div>
             </div>

@@ -63,7 +63,7 @@ export default function Analytics() {
     const textColor = isDark ? "#a0a0a0" : "#666";
     const gridColor = isDark ? "#333" : "#eaeaea";
     Chart.defaults.color = textColor;
-    Chart.defaults.font.family = "'Open Sans', sans-serif";
+    Chart.defaults.font.family = "'Poppins', sans-serif";
 
     const ctx1 = document.getElementById("engagementChart") as HTMLCanvasElement;
     const ctx2 = document.getElementById("propertyViewsChart") as HTMLCanvasElement;
