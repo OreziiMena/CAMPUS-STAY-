@@ -26,13 +26,11 @@ The platform bridges university students, verified property agents/landlords, an
 - **Compatibility Preferences**: Department, level, lifestyle preferences, and study habits.
 
 ### 3. Inspection Booking & Escrow Protection
-- **Standardized Inspection Fee**: Flat ₦7,500 inspection fee with dual payment gateways (Paystack Instant Checkout & Direct Bank Transfer).
-- **Financial Escrow Breakdown**:
-  - **Campus Tent Platform Fee**: ₦2,490
-  - **Agent Escrow Payout**: ₦5,010
+- **Standardized Inspection Fee**: Inspection fee with dual payment gateways (Paystack Instant Checkout & Direct Bank Transfer).
+
 - **Automated Dispute & Refund Settlement**:
   - Full dispute audit trails for unsatisfactory or misrepresented inspections.
-  - Settle disputes with student refund allocation (e.g. ₦5,000 refunded to student, ₦2,500 platform retention).
+  - Settle disputes with student refund allocation.
 
 ### 4. Real-Time WebSocket Chat
 - **Instant Messaging**: Powered by **Pusher WebSockets** with fallback polling.
